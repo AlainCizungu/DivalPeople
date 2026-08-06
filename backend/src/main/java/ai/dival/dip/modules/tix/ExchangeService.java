@@ -2,6 +2,7 @@ package ai.dival.dip.modules.tix;
 
 import ai.dival.dip.common.audit.AuditService;
 import ai.dival.dip.common.tenancy.TenantContext;
+import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,17 +33,33 @@ public class ExchangeService {
     private final DebtRecordRepository debtRecords;
     private final IdentityMatcher matcher;
     private final AuditService audit;
+    private final EntityManager entityManager;
 
     public ExchangeService(SubjectRepository subjects,
                            SubjectIdentifierRepository identifiers,
                            DebtRecordRepository debtRecords,
                            IdentityMatcher matcher,
-                           AuditService audit) {
+                           AuditService audit,
+                           EntityManager entityManager) {
         this.subjects = subjects;
         this.identifiers = identifiers;
         this.debtRecords = debtRecords;
         this.matcher = matcher;
         this.audit = audit;
+        this.entityManager = entityManager;
+    }
+
+    /**
+     * Opts this transaction into reading debt records across operators.
+     *
+     * <p>{@code SET LOCAL} scopes the flag to the transaction, so it is discarded at commit or
+     * rollback and cannot survive onto a pooled connection. The matching policy admits the flag
+     * only for reads — a transaction in exchange mode still cannot write outside its own tenant.
+     */
+    private void enterExchangeMode() {
+        entityManager
+                .createNativeQuery("SELECT set_config('app.exchange', 'on', true)")
+                .getSingleResult();
     }
 
     /**
@@ -66,6 +83,7 @@ public class ExchangeService {
             return InquiryResult.reviewRequired(subject.getId(), confidence);
         }
 
+        enterExchangeMode();
         List<DebtRecord> records = debtRecords.findAcrossOperators(subject.getId(), EXCHANGEABLE_STATUSES);
         Set<DebtStatus> statuses = new LinkedHashSet<>();
         boolean outstanding = false;

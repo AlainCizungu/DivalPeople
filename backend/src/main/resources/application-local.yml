@@ -3,12 +3,20 @@
 # Assumes `docker compose -f infra/docker-compose.yml up -d` is running.
 
 spring:
+  # 127.0.0.1 rather than localhost, deliberately: localhost may resolve to ::1 first and
+  # reach a locally installed PostgreSQL instead of the container.
   datasource:
-    # 127.0.0.1 rather than localhost, deliberately: localhost may resolve to ::1 first and
-    # reach a locally installed PostgreSQL instead of the container.
     url: jdbc:postgresql://127.0.0.1:${POSTGRES_HOST_PORT:55432}/dip
-    username: dip
+    username: dip_app
+    password: dip_app
+
+  # Owner credentials, used only to run migrations.
+  flyway:
+    url: jdbc:postgresql://127.0.0.1:${POSTGRES_HOST_PORT:55432}/dip
+    user: dip
     password: dip
+    placeholders:
+      dip_app_password: dip_app
 
   jpa:
     properties:
@@ -37,6 +45,10 @@ dip:
     # Seeds two telecom tenants whose IDs match the tenant_id attributes of the
     # operator-a and operator-b users in infra/keycloak/realm-dip.json.
     seed-tenants: true
+
+    # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
+    # actually crosses the tenant boundary and exercises exchange mode.
+    seed-tix: true
 
 logging:
   level:

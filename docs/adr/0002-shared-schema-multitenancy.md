@@ -20,14 +20,25 @@ Enforcement is layered, because a discriminator column alone is one forgotten `W
 
 ### Current state of enforcement
 
-Layers 1, 2 and 4 are implemented. Layer 3 is **defined but not yet binding**: the policies exist on
-tenant-owned tables and key off `current_setting('app.tenant_id')`, but they only take effect once
-the application connects as the non-owner `dip_app` role and sets that GUC per connection
-checkout. Local development currently connects as the schema owner, which bypasses RLS.
+All four layers are implemented. The application connects as the unprivileged `dip_app` role,
+which does not own the schema and therefore cannot bypass RLS, and every connection is bound to
+its tenant at checkout by `TenantAwareDataSource`. Migrations run separately as the owner.
 
-Until that wiring lands, application-level scoping and the isolation tests are the *primary*
-control rather than a backstop. This is the single most valuable follow-up in the tenancy area
-and should not be left open once real customer data exists.
+Two consequences worth stating plainly:
+
+**A transaction is pinned to one tenant.** The setting is applied at connection checkout, so a
+transaction cannot change tenant halfway through. That matches one request, one tenant — and it
+is why integration tests that deliberately act as two tenants in a single transaction connect as
+the owner instead. Those tests prove the application-level scoping; `RowLevelSecurityTest` proves
+the policies themselves, over plain JDBC as `dip_app`.
+
+**The exchange needs a documented escape.** TIX exists to read debt records across operators,
+which RLS would otherwise forbid. The policy therefore admits `app_exchange_mode()`, a flag set
+with `SET LOCAL` inside the reading transaction only, so it is discarded at commit and cannot
+leak onto a pooled connection. The flag appears in `USING` but never in `WITH CHECK`: a
+transaction may read across operators and still cannot write outside its own tenant.
+
+Adding another such escape is a security-relevant change and needs an ADR of its own.
 
 The only permitted cross-tenant reads are explicit platform-administration services and the TIX exchange services, both of which are separately authorized and fully audited.
 
@@ -38,4 +49,4 @@ Dedicated schema or database per tenant remains available as a deployment option
 
 **Negative.** The blast radius of an isolation bug is large, which is precisely why RLS is enabled rather than trusting the ORM. Noisy-neighbour effects must be managed with indexing and, later, read replicas.
 
-**Follow-up.** Every new tenant-owned table must extend the shared base entity and add its RLS policy in the same migration. CI fails the build if a tenant-owned table has no policy.
+**Follow-up.** Every new tenant-owned table must extend the shared base entity and add its RLS policy — with both `USING` and `WITH CHECK` — in the same migration. CI should fail the build if a tenant-owned table has no policy; that check is not yet written.

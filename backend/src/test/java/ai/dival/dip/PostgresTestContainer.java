@@ -15,9 +15,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
  * <p>One container for the whole run, not one per class: startup dominates the runtime of these
  * tests. It is never stopped explicitly; Ryuk reaps it when the JVM exits.
  */
-final class PostgresTestContainer {
+public final class PostgresTestContainer {
 
-    static final PostgreSQLContainer<?> INSTANCE = new PostgreSQLContainer<>("postgres:16-alpine")
+    public static final PostgreSQLContainer<?> INSTANCE = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("dip")
             .withUsername("dip")
             .withPassword("dip");

@@ -228,6 +228,23 @@ EOF
             exit 1
         fi
 
+        info "Running a TIX inquiry that crosses the tenant boundary..."
+        INQUIRY="$(curl -fsS -X POST "$API_URL/api/v1/tix/inquiries" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"identifiers":[{"type":"NATIONAL_ID","value":"CD-1234-5678"}],
+                 "fullName":"Jean Kabila","purpose":"ONBOARDING_CHECK"}')"
+
+        # The debt is held by operator B while the caller is operator A, so a correct result
+        # proves the exchange read worked *through* row-level security rather than around it.
+        if printf '%s' "$INQUIRY" | grep -q '"OUTSTANDING_DEBT"'; then
+            ok "Exchange read crossed operators: $INQUIRY"
+        else
+            fail "Expected OUTSTANDING_DEBT from the cross-operator inquiry, got: $INQUIRY"
+            echo "    If this says NO_MATCH, the demo subject was not seeded — restart the API." >&2
+            exit 1
+        fi
+
         info "Confirming operator-b sees only its own members..."
         TOKEN_B="$(fetch_token operator-b)"
         curl -fsS -o /dev/null -H "Authorization: Bearer $TOKEN_B" "$API_URL/api/v1/users/me"

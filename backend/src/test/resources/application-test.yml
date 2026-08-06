@@ -4,6 +4,9 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+    placeholders:
+      # Local-only credential for the unprivileged application role created by V4.
+      dip_app_password: dip_app
   data:
     redis:
       # Redis is not required by the tests in this module.

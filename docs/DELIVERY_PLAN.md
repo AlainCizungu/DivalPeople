@@ -12,7 +12,7 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
-| 1 — Platform | **~55%** | Authentication, role mapping, audit write path, EN/FR, tenant entity, isolation tests and the users module are in. Organization structure, notifications and file storage are not. |
+| 1 — Platform | **~60%** | Authentication, role mapping, audit write path, EN/FR, tenant entity, isolation tests and the users module are in. Organization structure, notifications and file storage are not. |
 | 2 — Core HR | Not started | Blocked on Phase 1 users and organization structure. |
 | 3 — Recruitment & onboarding | Not started | |
 | 4 — Time, performance, learning | Not started | |
@@ -27,7 +27,8 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 - **Backend** — 6 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
   `tix_subject_identifier`, `tix_debt_record`), 3 modules (`tenants`, `users`, `tix`), 7 endpoints,
-  20 passing tests including cross-tenant isolation against real PostgreSQL.
+  26 passing tests, including cross-tenant isolation and row-level security proven
+  over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, TIX verification screen,
   bilingual throughout with parity enforced in CI.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
@@ -43,8 +44,8 @@ it. Section 2 is largely about refilling that middle before the gap compounds.
 
 ## 2. Priority now — tenancy and identity foundation
 
-These three are treated as **one piece of work** because they touch the same layer. Doing them
-separately means touching tenancy three times.
+These three are treated as **one piece of work** because they touch the same layer. P0.1 and
+P0.3 are complete; P0.2 remains.
 
 ### P0.1 — Local user records and tenant membership — **done**
 
@@ -74,17 +75,27 @@ create one.
 **Deliverables:** platform-admin endpoint to create and deactivate a tenant; the local seeder
 becomes a caller of the same service rather than a parallel path.
 
-### P0.3 — Make row-level security bind
+### P0.3 — Make row-level security bind — **done**
 
-Documented as open in [ADR 0002](adr/0002-shared-schema-multitenancy.md). Policies exist on
-tenant-owned tables but do not apply, because the application connects as the schema owner.
-Application-level scoping is currently the only control.
+The application now connects as the unprivileged `dip_app` role, which cannot bypass RLS, and
+`TenantAwareDataSource` binds each connection to its tenant at checkout. Migrations run
+separately as the owner.
 
-This is inert risk today — there is no customer data — and it is deliberately scheduled here
-rather than earlier for that reason. It should not survive contact with real data.
+Decisions worth remembering:
 
-**Deliverables:** connect as the non-owner `dip_app` role; set `app.tenant_id` per connection
-checkout; a test proving raw SQL cannot cross tenants; ADR 0002 updated.
+- **The exchange needed a documented escape.** TIX exists to read debt records across operators,
+  which RLS would otherwise forbid. The policy admits `app_exchange_mode()`, set with `SET LOCAL`
+  inside the reading transaction so it is discarded at commit and cannot leak onto a pooled
+  connection. It appears in `USING` but never in `WITH CHECK`: read across operators, never write
+  outside your own tenant.
+- **A transaction is pinned to one tenant**, because the binding happens at connection checkout.
+  That matches one request, one tenant.
+- **Spring integration tests still connect as the owner**, since several deliberately act as two
+  tenants in a single transaction. They prove application-level scoping; `RowLevelSecurityTest`
+  proves the policies themselves over plain JDBC as `dip_app`.
+
+Verified: 26 tests pass, and `infra/dev.sh check` shows operator A receiving `OUTSTANDING_DEBT`
+for a debt held by operator B — the exchange read going *through* the policy, not around it.
 
 ---
 
@@ -98,8 +109,8 @@ checkout; a test proving raw SQL cannot cross tenants; ADR 0002 updated.
 | Architecture guardrails in CI | `AGENTS.md` states rules that nothing enforces: module boundaries, an RLS policy for every tenant-owned table, no cross-module repository access. Rules that are not checked decay. |
 
 **Phase 1 exit criteria** (from `ROADMAP.md`): two isolated tenants, no cross-tenant access,
-bilingual UI, security tests passing. The first three hold today; the fourth is partial until
-P0.3 lands.
+bilingual UI, security tests passing. **All four now hold** — isolation is enforced by the
+database as well as by application code.
 
 ---
 
@@ -122,7 +133,7 @@ TIX depth can then be built on a real foundation:
 
 | Gap | Severity | Where |
 |---|---|---|
-| RLS defined but not binding | High once real data exists | ADR 0002, P0.3 |
+| Spring integration tests connect as the schema owner | Low — deliberate, and RLS is covered separately | `AbstractIntegrationTest`, ADR 0002 |
 | `common/web` imports from `modules/*` | Low, but it is the boundary violation CI should catch | `GlobalExceptionHandler` |
 | Tokens held in browser session storage | Medium — production should use a backend-for-frontend | `frontend/src/auth/config.ts` |
 | No staging or production environment, no CD | Medium | Phase 0 remainder |

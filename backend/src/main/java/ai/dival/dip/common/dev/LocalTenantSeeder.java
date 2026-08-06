@@ -9,6 +9,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,12 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Profile("local")
 @ConditionalOnProperty(name = "dip.local.seed-tenants", havingValue = "true")
+@Order(10) // before LocalTixSeeder, which needs these tenants to exist
 public class LocalTenantSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(LocalTenantSeeder.class);
 
-    static final UUID OPERATOR_A = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    static final UUID OPERATOR_B = UUID.fromString("22222222-2222-2222-2222-222222222222");
+    public static final UUID OPERATOR_A = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    public static final UUID OPERATOR_B = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
     private final TenantRepository tenants;
     private final JdbcTemplate jdbcTemplate;

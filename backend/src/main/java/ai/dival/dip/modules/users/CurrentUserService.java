@@ -90,7 +90,12 @@ public class CurrentUserService {
             return created;
         } catch (DataIntegrityViolationException ex) {
             // Two first requests arriving together: one insert wins, the other reads the winner.
-            return users.findBySubject(subject).orElseThrow(() -> ex);
+            //
+            // A re-read that still finds nothing means the row exists but is invisible, which
+            // under row-level security means it belongs to another tenant. That is the same
+            // condition the explicit check above catches when RLS is not in force.
+            return users.findBySubject(subject)
+                    .orElseThrow(() -> new TenantMismatchException(subject));
         }
     }
 
