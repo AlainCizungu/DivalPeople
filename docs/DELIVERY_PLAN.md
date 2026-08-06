@@ -13,9 +13,9 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
 | 1 — Platform | **Complete** | Tenants, authentication, roles, organization structure, users, audit, EN/FR, notifications and file storage all in. |
-| 2 — Core HR | **Complete** | Employees, reporting lines, contracts, dependents, emergency contacts, documents, and expiry alerts for both contracts and documents. |
-| 3 — Recruitment & onboarding | **Next** | Requisitions, candidates, interviews, offers, onboarding checklists. |
-| 4 — Time, performance, learning | Not started | |
+| 2 — Core HR | **Complete** | Employees, reporting lines, contracts, dependents, emergency contacts, documents, expiry alerts, probation decisions and work patterns. |
+| 3 — Recruitment & onboarding | **Complete** | Requisitions, candidates, applications, interviews, offers, the hire handover into Core HR, and onboarding/offboarding checklists. |
+| 4 — Time, performance, learning | **In progress** | Leave is built: entitlements, balances with a ledger, requests, approvals, accrual, carryover and part-time work patterns. Attendance, shifts and overtime are not. Performance and learning are not started. |
 | 5 — Payroll preparation | Not started | |
 | 6 — Employee self-service | Not started | |
 | 7 — Financial services | Not started | |
@@ -25,17 +25,19 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ### What exists today
 
-- **Backend** — 14 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
-  `tix_subject_identifier`, `tix_debt_record`, `org_unit`, `notification`, `stored_file`, `employee`, `employment_contract`, `employee_dependent`,
-  `employee_emergency_contact`, `employee_document`), 7 modules (`tenants`, `users`, `organizations`, `notifications`, `files`,
-  `employees`, `tix`), 39 endpoints,
-  59 passing tests, including cross-tenant isolation and row-level security proven
-  over raw JDBC as the unprivileged application role.
-- **Frontend** — public landing page, authenticated product shell, people directory,
-  organization structure, notifications and TIX verification screens,
-  bilingual throughout with parity enforced in CI.
+- **Backend** — 29 tables across 13 migrations, 10 modules (`tenants`, `users`, `organizations`,
+  `notifications`, `files`, `employees`, `recruitment`, `lifecycle`, `leave`, `tix`),
+  98 endpoints. 185 tests passing at the last verified run; the part-time suite added since has
+  not yet been run. Cross-tenant isolation and row-level security are proven over raw JDBC as the
+  unprivileged application role.
+- **Frontend** — public landing page, authenticated product shell, and screens for the people
+  directory, recruitment pipeline, onboarding and offboarding, leave balances, organization
+  structure, notifications and TIX verification. Bilingual throughout, with parity enforced in CI.
+- **Scheduled work** — contract and document expiry alerts, probation reminders, overdue
+  checklist chasing, and monthly leave accrual.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
-  three fixture users across two tenants, and a scripted end-to-end check.
+  three fixture users across two tenants, seeded demo data for every module, and a scripted
+  end-to-end check.
 
 ### Building TIX first — the trade-off we took
 
