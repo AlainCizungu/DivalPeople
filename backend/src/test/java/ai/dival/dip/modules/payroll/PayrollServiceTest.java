@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.payroll;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ai.dival.dip.AbstractIntegrationTest;
@@ -19,8 +20,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 /**
  * The arithmetic a payslip rests on, and the controls around signing it off.
@@ -298,13 +299,18 @@ class PayrollServiceTest extends AbstractIntegrationTest {
         assertThat(result.payslipsProduced()).isEqualTo(1);
         assertThat(result.skippedForNoSalary()).containsExactly(financeOfficer.displayName());
 
-        // The assertion this test was missing. Skipping somebody used to leave the transaction
-        // marked rollback-only, so calculate() returned this tidy result and the commit failed
-        // afterwards with nothing pointing at why. A rolled-back test never commits, so the
-        // suite could not see it — ResponseMappingTest, which does commit, found it instead.
-        assertThat(TransactionAspectSupport.currentTransactionStatus().isRollbackOnly())
-                .as("a skipped employee must not poison the run")
-                .isFalse();
+        // The assertion this test was missing, and the only form of it that works. Skipping
+        // somebody used to leave the transaction marked rollback-only, so calculate() returned
+        // this tidy result and the commit failed afterwards with nothing pointing at why.
+        //
+        // A rolled-back test cannot see that: the damage only shows at commit, which is why the
+        // whole suite passed while payroll was broken. So this one test commits, deliberately.
+        // Each test builds its own tenant, so the rows it leaves behind are nobody else's
+        // business.
+        assertThatCode(() -> {
+            TestTransaction.flagForCommit();
+            TestTransaction.end();
+        }).as("a skipped employee must not poison the run").doesNotThrowAnyException();
     }
 
     @Test
