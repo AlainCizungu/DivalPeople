@@ -17,7 +17,8 @@
     "tix": "Échange télécoms",
     "reports": "Rapports",
     "administration": "Administration",
-    "organization": "Organisation"
+    "organization": "Organisation",
+    "notifications": "Notifications"
   },
   "common": {
     "search": "Rechercher",
@@ -392,6 +393,26 @@
       "DEPARTMENT": "Département",
       "COST_CENTER": "Centre de coûts",
       "LOCATION": "Site"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Alertes et rappels qui vous sont adressés",
+    "empty": "Rien à signaler.",
+    "markAllRead": "Tout marquer comme lu",
+    "unread": "non lues",
+    "loadFailed": "Impossible de charger vos notifications.",
+    "severity": {
+      "INFO": "Information",
+      "WARNING": "Attention",
+      "CRITICAL": "Urgent"
+    },
+    "messages": {
+      "contractExpiring": "Le contrat de {employee} expire dans {days} jours",
+      "debtDeclared": "Un impayé de {amount} a été déclaré à l'encontre de {subject}",
+      "debtDisputed": "{subject} conteste un impayé déclaré",
+      "orgUnitCreated": "{name} a été ajouté à la structure organisationnelle",
+      "welcome": "Bienvenue chez {tenant}"
     }
   }
 }

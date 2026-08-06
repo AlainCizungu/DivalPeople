@@ -1,6 +1,8 @@
 package ai.dival.dip.modules.users;
 
 import ai.dival.dip.common.error.AccessRefusedException;
+import ai.dival.dip.modules.notifications.Notification;
+import ai.dival.dip.modules.notifications.NotificationService;
 import ai.dival.dip.common.tenancy.TenantContext;
 import java.util.List;
 import java.util.Optional;
@@ -30,9 +32,13 @@ public class CurrentUserService {
     private static final String ROLE_PREFIX = "ROLE_";
 
     private final UserAccountRepository users;
+    private final NotificationService notifications;
 
-    public CurrentUserService(UserAccountRepository users) {
+    // Depends on the notifications *service*, not its repository: cross-module access goes
+    // through the published interface, which scripts/check_architecture.py enforces.
+    public CurrentUserService(UserAccountRepository users, NotificationService notifications) {
         this.users = users;
+        this.notifications = notifications;
     }
 
     /**
@@ -88,6 +94,17 @@ public class CurrentUserService {
         try {
             UserAccount created = users.save(new UserAccount(subject, email, displayName, roles));
             log.info("Provisioned local user account for subject ending {}", tail(subject));
+
+            // A first sign-in with an empty feed looks broken. This also proves the delivery
+            // path works on the very first request rather than the first business event.
+            notifications.notify(
+                    created.getId(),
+                    "welcome",
+                    java.util.Map.of("tenant", created.getTenantId().toString()),
+                    Notification.Severity.INFO,
+                    "UserAccount",
+                    created.getId().toString());
+
             return created;
         } catch (DataIntegrityViolationException ex) {
             // Two first requests arriving together: one insert wins, the other reads the winner.

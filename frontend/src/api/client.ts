@@ -106,6 +106,42 @@ export const organizationApi = {
   },
 };
 
+export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
+
+export type AppNotification = {
+  id: string;
+  /** Translation key such as "contractExpiring"; the server never sends rendered text. */
+  messageKey: string;
+  params: Record<string, string>;
+  severity: NotificationSeverity;
+  resourceType: string | null;
+  resourceId: string | null;
+  read: boolean;
+  createdAt: string;
+};
+
+export const notificationsApi = {
+  list(accessToken: string): Promise<AppNotification[]> {
+    return request<AppNotification[]>("/api/v1/notifications", accessToken);
+  },
+
+  unreadCount(accessToken: string): Promise<{ unread: number }> {
+    return request<{ unread: number }>("/api/v1/notifications/unread-count", accessToken);
+  },
+
+  markRead(id: string, accessToken: string): Promise<AppNotification> {
+    return request<AppNotification>(`/api/v1/notifications/${id}/read`, accessToken, {
+      method: "POST",
+    });
+  },
+
+  markAllRead(accessToken: string): Promise<{ marked: number }> {
+    return request<{ marked: number }>("/api/v1/notifications/read-all", accessToken, {
+      method: "POST",
+    });
+  },
+};
+
 export const tixApi = {
   inquire(body: InquiryRequest, accessToken: string): Promise<InquiryResult> {
     return request<InquiryResult>("/api/v1/tix/inquiries", accessToken, {

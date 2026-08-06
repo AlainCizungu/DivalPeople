@@ -17,7 +17,8 @@
     "tix": "Telecom Exchange",
     "reports": "Reports",
     "administration": "Administration",
-    "organization": "Organization"
+    "organization": "Organization",
+    "notifications": "Notifications"
   },
   "common": {
     "search": "Search",
@@ -392,6 +393,26 @@
       "DEPARTMENT": "Department",
       "COST_CENTER": "Cost center",
       "LOCATION": "Location"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Alerts and reminders addressed to you",
+    "empty": "Nothing to catch up on.",
+    "markAllRead": "Mark all as read",
+    "unread": "unread",
+    "loadFailed": "Could not load your notifications.",
+    "severity": {
+      "INFO": "Information",
+      "WARNING": "Attention",
+      "CRITICAL": "Urgent"
+    },
+    "messages": {
+      "contractExpiring": "{employee}'s contract expires in {days} days",
+      "debtDeclared": "A debt of {amount} was declared against {subject}",
+      "debtDisputed": "{subject} has disputed a declared debt",
+      "orgUnitCreated": "{name} was added to the organization structure",
+      "welcome": "Welcome to {tenant}"
     }
   }
 }

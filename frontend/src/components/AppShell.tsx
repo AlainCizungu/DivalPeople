@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useAuth } from "react-oidc-context";
+import { notificationsApi } from "@/api/client";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { BrandMark } from "./BrandMark";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -16,6 +18,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const auth = useAuth();
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  const token = auth.user?.access_token;
+
+  // Polled rather than pushed. A websocket for a number that changes a few times a day is a
+  // connection to keep alive, reconnect and authorise for very little gain.
+  useEffect(() => {
+    if (!token) return;
+
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const { unread } = await notificationsApi.unreadCount(token);
+        if (!cancelled) setUnreadCount(unread);
+      } catch {
+        // A failed badge refresh must never interrupt whatever the user is doing.
+      }
+    };
+
+    void refresh();
+    const timer = setInterval(() => void refresh(), 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [token, pathname]);
+
   const profile = auth.user?.profile;
   const displayName =
     profile?.name ?? profile?.preferred_username ?? profile?.email ?? "";
@@ -27,9 +55,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Only routes that exist. A nav full of links to nothing makes the product feel broken and
   // makes it impossible to tell a missing feature from a bug; entries are added as they ship.
   const navigation = [
-    { href: "/app", label: messages.nav.home },
-    { href: "/app/organization", label: messages.nav.organization },
-    { href: "/app/tix", label: messages.nav.tix },
+    { href: "/app", label: messages.nav.home, badge: 0 },
+    { href: "/app/organization", label: messages.nav.organization, badge: 0 },
+    { href: "/app/notifications", label: messages.nav.notifications, badge: unreadCount },
+    { href: "/app/tix", label: messages.nav.tix, badge: 0 },
   ];
 
   return (
@@ -53,11 +82,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   aria-current={active ? "page" : undefined}
                   className={
                     active
-                      ? "block rounded border-l-2 border-blue bg-soft px-3 py-2 text-sm font-semibold text-blue"
-                      : "block rounded px-3 py-2 text-sm text-ink transition hover:bg-soft"
+                      ? "flex items-center justify-between gap-2 rounded border-l-2 border-blue bg-soft px-3 py-2 text-sm font-semibold text-blue"
+                      : "flex items-center justify-between gap-2 rounded px-3 py-2 text-sm text-ink transition hover:bg-soft"
                   }
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className="rounded-full bg-blue px-2 py-0.5 text-xs font-bold text-white tabular-nums">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               </li>
             );

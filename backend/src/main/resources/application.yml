@@ -44,6 +44,19 @@ spring:
           issuer-uri: ${DIP_OIDC_ISSUER_URI:http://localhost:8081/realms/dip}
 
 dip:
+  files:
+    # 20 MB. Uploads are read into memory to checksum them, so this also bounds heap per request.
+    max-size-bytes: ${DIP_FILES_MAX_SIZE_BYTES:20971520}
+    # Allowlist, not blocklist: a blocklist is a guess about every dangerous type ever invented.
+    allowed-content-types:
+      - application/pdf
+      - image/jpeg
+      - image/png
+      - image/webp
+      - text/csv
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
   cors:
     # Empty by default: an unconfigured environment refuses cross-origin requests rather than
     # accepting every origin. Set explicitly per environment.

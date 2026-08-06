@@ -12,8 +12,8 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
-| 1 — Platform | **~80%** | Authentication, role mapping, audit, EN/FR, tenants, users and organization structure are in. Notifications and file storage are not. |
-| 2 — Core HR | Not started | **Unblocked** — users and organization structure now exist. |
+| 1 — Platform | **Complete** | Tenants, authentication, roles, organization structure, users, audit, EN/FR, notifications and file storage all in. |
+| 2 — Core HR | **Next** | Unblocked: employees have a person to reference, a unit to belong to, documents to attach and a channel for contract alerts. |
 | 3 — Recruitment & onboarding | Not started | |
 | 4 — Time, performance, learning | Not started | |
 | 5 — Payroll preparation | Not started | |
@@ -25,8 +25,9 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ### What exists today
 
-- **Backend** — 7 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
-  `tix_subject_identifier`, `tix_debt_record`, `org_unit`), 4 modules (`tenants`, `users`, `organizations`, `tix`), 20 endpoints,
+- **Backend** — 9 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
+  `tix_subject_identifier`, `tix_debt_record`, `org_unit`, `notification`, `stored_file`), 6 modules (`tenants`, `users`, `organizations`, `notifications`, `files`, `tix`),
+  30 endpoints,
   34 passing tests, including cross-tenant isolation and row-level security proven
   over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, organization structure and
@@ -113,18 +114,26 @@ for a debt held by operator B — the exchange read going *through* the policy, 
 
 ---
 
-## 3. Next — completing Phase 1
+## 3. Phase 1 — complete
 
 | Item | Why it matters |
 |---|---|
 | ~~Organization structure~~ | **Done.** Typed self-referencing tree (`org_unit`) with cycle prevention, cascading deactivation, per-tenant codes and a read-only screen. Reporting lines wait for employees. |
-| Notifications | Contract expiry, approvals and alerts all need a delivery channel. |
-| File storage | Documents, identity attachments, payslips. S3-compatible with signed URLs per `SECURITY_MODEL.md`. |
+| ~~Notifications~~ | **Done.** Stored as message key plus parameters so a notification renders in the reader's language, not the raiser's. In-app channel; email and SMS become adapters over the same records. |
+| ~~File storage~~ | **Done.** Content-type allowlist, size limit, SHA-256 checksum, randomised keys, audited reads, filesystem implementation behind a `FileStorage` interface so S3 drops in without a caller changing. |
 | ~~Architecture guardrails in CI~~ | **Done.** `scripts/check_architecture.py` enforces three rules and runs in CI. It caught two real violations the day it was written. |
 
 **Phase 1 exit criteria** (from `ROADMAP.md`): two isolated tenants, no cross-tenant access,
-bilingual UI, security tests passing. **All four now hold** — isolation is enforced by the
-database as well as by application code.
+bilingual UI, security tests passing. **All four hold** — isolation is enforced by the database as
+well as by application code.
+
+Deferred deliberately, each with a reason rather than an oversight:
+
+| Deferred | Why |
+|---|---|
+| Pre-signed URLs for downloads | Bytes are served through the API so authorization and the audit entry stay on the same request. Signed URLs need their own expiry and audit design, and are only meaningful once storage is S3-compatible. |
+| Malware scanning on upload | Needs a scanning service; the allowlist, size cap and checksum are in place to build on. |
+| Email and SMS delivery | Adapters over the notification records that already exist. Keeping the record independent of delivery means nothing is lost when a provider is down, and nothing is shown twice when it recovers. |
 
 ---
 
