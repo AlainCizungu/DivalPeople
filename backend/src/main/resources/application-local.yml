@@ -1,0 +1,41 @@
+# Local development profile. Activated automatically by `./gradlew bootRun`.
+#
+# Assumes `docker compose -f infra/docker-compose.yml up -d` is running.
+
+spring:
+  datasource:
+    # 127.0.0.1 rather than localhost, deliberately: localhost may resolve to ::1 first and
+    # reach a locally installed PostgreSQL instead of the container.
+    url: jdbc:postgresql://127.0.0.1:${POSTGRES_HOST_PORT:55432}/dip
+    username: dip
+    password: dip
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: 127.0.0.1
+      # Matches REDIS_HOST_PORT in infra/docker-compose.yml, which avoids 6379 because a
+      # locally installed Redis usually has it.
+      port: ${REDIS_HOST_PORT:56379}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/dip
+
+dip:
+  local:
+    # Seeds two telecom tenants whose IDs match the tenant_id attributes of the
+    # operator-a and operator-b users in infra/keycloak/realm-dip.json.
+    seed-tenants: true
+
+logging:
+  level:
+    ai.dival.dip: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.springframework.security: DEBUG

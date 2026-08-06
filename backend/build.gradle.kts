@@ -43,3 +43,9 @@ tasks.withType<Test> {
         events("passed", "skipped", "failed")
     }
 }
+
+// `./gradlew bootRun` is only ever local development, so activate that profile by default
+// rather than making every developer remember an environment variable.
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    systemProperty("spring.profiles.active", System.getProperty("spring.profiles.active", "local"))
+}

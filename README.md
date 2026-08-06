@@ -32,17 +32,47 @@ DIP/
 # 1. One-time backend bootstrap (creates ./gradlew, checks your JDK)
 cd backend && ./bootstrap.sh && cd ..
 
-# 2. Start infrastructure (PostgreSQL, Redis, Keycloak)
-docker compose -f infra/docker-compose.yml up -d
+# 2. Start infrastructure and wait for the Keycloak realm to import
+./infra/dev.sh up
 
-# 3. Run the backend — http://localhost:8080
+# 3. Run the backend — http://localhost:8080  (local profile is automatic)
 cd backend && ./gradlew bootRun
 
 # 4. Run the frontend — http://localhost:3000
 cd frontend && npm install && npm run dev
+
+# 5. Verify the whole chain
+./infra/dev.sh check
 ```
 
-The backend applies Flyway migrations on startup and seeds two demo tenants in the `local` profile, which is what the cross-tenant isolation tests exercise.
+`dev.sh check` fetches a real token from Keycloak, confirms the `tenant_id` claim is present,
+calls the TIX API, and asserts that an unauthenticated request gets 401 and a user without TIX
+roles gets 403.
+
+The backend applies Flyway migrations on startup and, under the `local` profile, seeds two demo
+tenants whose IDs match the `tenant_id` attributes of the Keycloak users.
+
+### Local identities
+
+| User | Password | Tenant | Roles |
+|---|---|---|---|
+| `operator-a` | `password` | `1111…1111` | TIX_INQUIRER, TIX_DECLARANT, TENANT_ADMIN |
+| `operator-b` | `password` | `2222…2222` | TIX_INQUIRER, TIX_DECLARANT, TENANT_ADMIN |
+| `no-roles` | `password` | `1111…1111` | EMPLOYEE only — used to prove authorization denies |
+
+Keycloak admin console: http://localhost:8081 (`admin` / `admin`). These are local-only fixtures.
+
+```bash
+./infra/dev.sh token operator-b          # print a token
+./infra/dev.sh down                      # stop everything
+```
+
+Editing `infra/keycloak/realm-dip.json` requires recreating the container, since the realm is
+imported only on first start:
+
+```bash
+docker compose -f infra/docker-compose.yml up -d --force-recreate keycloak
+```
 
 ## Verify the setup
 

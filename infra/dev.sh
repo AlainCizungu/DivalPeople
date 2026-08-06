@@ -1,0 +1,219 @@
+#!/usr/bin/env bash
+#
+# Local development helper.
+#
+#   ./infra/dev.sh up               start infrastructure and wait for it to be ready
+#   ./infra/dev.sh down             stop it
+#   ./infra/dev.sh token [user]     print an access token (default: operator-a)
+#   ./infra/dev.sh check            end-to-end smoke test against the running API
+#
+# Credentials here are local-only fixtures from infra/keycloak/realm-dip.json.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
+
+KEYCLOAK_URL="http://localhost:8081"
+REALM="dip"
+CLIENT_ID="dip-local"
+API_URL="http://localhost:8080"
+DEFAULT_PASSWORD="password"
+
+info() { printf '\033[0;34m•\033[0m %s\n' "$1"; }
+ok()   { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
+fail() { printf '\033[0;31m✗\033[0m %s\n' "$1" >&2; }
+
+require_docker() {
+    if ! docker info >/dev/null 2>&1; then
+        fail "Docker is not running. Start Docker Desktop and try again."
+        exit 1
+    fi
+}
+
+# Fails fast with an actionable message instead of letting Compose die halfway through.
+check_ports() {
+    # If our own stack is already up, the ports are legitimately held by us — `up -d` is
+    # idempotent from here, so there is nothing to warn about.
+    if [ -n "$(docker compose -f "$COMPOSE_FILE" ps -q 2>/dev/null)" ]; then
+        return 0
+    fi
+
+    local clashes=0
+    local entries=(
+        "${POSTGRES_HOST_PORT:-55432}|PostgreSQL|POSTGRES_HOST_PORT"
+        "${REDIS_HOST_PORT:-56379}|Redis|REDIS_HOST_PORT"
+        "${KEYCLOAK_HOST_PORT:-8081}|Keycloak|KEYCLOAK_HOST_PORT"
+    )
+
+    for entry in "${entries[@]}"; do
+        local port name var
+        IFS='|' read -r port name var <<< "$entry"
+
+        if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
+            fail "Port $port ($name) is already in use by another process."
+            echo "    Free it, or choose another port:  export $var=<port>" >&2
+            clashes=1
+        fi
+    done
+
+    if [ "$clashes" -eq 1 ]; then
+        exit 1
+    fi
+}
+
+# Confirms the database reachable on the host port is OUR container and not some other
+# PostgreSQL. Getting this wrong surfaces much later as 'role "dip" does not exist'.
+verify_postgres() {
+    local port="${POSTGRES_HOST_PORT:-55432}"
+
+    info "Waiting for PostgreSQL..."
+    for _ in $(seq 1 30); do
+        if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U dip -d dip >/dev/null 2>&1; then
+            ok "PostgreSQL container is accepting connections"
+            break
+        fi
+        sleep 2
+    done
+
+    # The container may be healthy while the host port reaches something else entirely.
+    if command -v psql >/dev/null 2>&1; then
+        if ! PGPASSWORD=dip psql -h 127.0.0.1 -p "$port" -U dip -d dip -tAc 'SELECT 1' >/dev/null 2>&1; then
+            fail "127.0.0.1:$port is not our database."
+            echo "    Another PostgreSQL is probably bound to that port." >&2
+            echo "    Choose a free one:  export POSTGRES_HOST_PORT=<port>  && ./infra/dev.sh up" >&2
+            exit 1
+        fi
+        ok "127.0.0.1:$port resolves to the DIP database"
+    fi
+}
+
+wait_for() {
+    local name="$1" url="$2" attempts="${3:-60}"
+    info "Waiting for $name..."
+    for _ in $(seq 1 "$attempts"); do
+        if curl -fsS -o /dev/null "$url" 2>/dev/null; then
+            ok "$name is ready"
+            return 0
+        fi
+        sleep 2
+    done
+    fail "$name did not become ready at $url"
+    return 1
+}
+
+fetch_token() {
+    local user="${1:-operator-a}"
+    curl -fsS -X POST \
+        "$KEYCLOAK_URL/realms/$REALM/protocol/openid-connect/token" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "client_id=$CLIENT_ID" \
+        -d "username=$user" \
+        -d "password=$DEFAULT_PASSWORD" \
+        -d "grant_type=password" \
+        | sed -E 's/.*"access_token":"([^"]+)".*/\1/'
+}
+
+case "${1:-up}" in
+    up)
+        require_docker
+        check_ports
+        info "Starting PostgreSQL, Redis and Keycloak..."
+        docker compose -f "$COMPOSE_FILE" up -d
+        verify_postgres
+        wait_for "Keycloak realm '$REALM'" "$KEYCLOAK_URL/realms/$REALM"
+        cat <<EOF
+
+Infrastructure is up.
+
+  PostgreSQL   127.0.0.1:${POSTGRES_HOST_PORT:-55432}   dip / dip
+  Redis        127.0.0.1:${REDIS_HOST_PORT:-56379}
+  Keycloak     $KEYCLOAK_URL   admin / admin
+
+  Users        operator-a, operator-b, no-roles  (password: $DEFAULT_PASSWORD)
+
+Next, in separate terminals:
+
+  cd backend
+  ./gradlew bootRun
+
+  cd frontend
+  npm run dev
+
+  ./infra/dev.sh check
+
+EOF
+        ;;
+
+    down)
+        docker compose -f "$COMPOSE_FILE" down
+        ok "Stopped"
+        ;;
+
+    token)
+        fetch_token "${2:-operator-a}"
+        ;;
+
+    check)
+        info "Fetching a token for operator-a..."
+        TOKEN="$(fetch_token operator-a)"
+        if [ -z "$TOKEN" ]; then
+            fail "Could not obtain a token. Is Keycloak up and the realm imported?"
+            exit 1
+        fi
+        ok "Got a token ($(printf '%s' "$TOKEN" | wc -c | tr -d ' ') chars)"
+
+        info "Checking the tenant_id claim is present..."
+        PAYLOAD="$(printf '%s' "$TOKEN" | cut -d. -f2)"
+        # base64url -> base64, padded
+        PADDED="$(printf '%s' "$PAYLOAD" | tr '_-' '/+')"
+        while [ $(( ${#PADDED} % 4 )) -ne 0 ]; do PADDED="${PADDED}="; done
+        if printf '%s' "$PADDED" | base64 -d 2>/dev/null | grep -q 'tenant_id'; then
+            ok "tenant_id claim present"
+        else
+            fail "tenant_id claim is MISSING — the protocol mapper did not apply."
+            echo "  Recreate Keycloak to re-import the realm:" >&2
+            echo "  docker compose -f infra/docker-compose.yml up -d --force-recreate keycloak" >&2
+            exit 1
+        fi
+
+        info "Calling the API..."
+        if ! curl -fsS -o /dev/null "$API_URL/actuator/health"; then
+            fail "The API is not responding at $API_URL. Start it with: cd backend && ./gradlew bootRun"
+            exit 1
+        fi
+        ok "API is up"
+
+        info "GET /api/v1/tix/debt-records as operator-a..."
+        RESPONSE="$(curl -fsS -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/tix/debt-records")"
+        ok "Authorized request succeeded: ${RESPONSE:-[]}"
+
+        info "Confirming an unauthenticated request is rejected..."
+        STATUS="$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/api/v1/tix/debt-records")"
+        if [ "$STATUS" = "401" ]; then
+            ok "Unauthenticated request rejected with 401"
+        else
+            fail "Expected 401 for an unauthenticated request, got $STATUS"
+            exit 1
+        fi
+
+        info "Confirming a user without TIX roles is refused..."
+        NO_ROLE_TOKEN="$(fetch_token no-roles)"
+        STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $NO_ROLE_TOKEN" "$API_URL/api/v1/tix/debt-records")"
+        if [ "$STATUS" = "403" ]; then
+            ok "User without TIX roles refused with 403"
+        else
+            fail "Expected 403 for a user without TIX roles, got $STATUS"
+            exit 1
+        fi
+
+        printf '\n\033[0;32mEnd-to-end check passed.\033[0m\n\n'
+        ;;
+
+    *)
+        fail "Unknown command: $1"
+        sed -n '3,12p' "$0" >&2
+        exit 1
+        ;;
+esac
