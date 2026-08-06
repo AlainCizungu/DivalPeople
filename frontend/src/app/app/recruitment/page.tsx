@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
 import {
@@ -34,8 +34,9 @@ const APPLICATION_STYLES: Record<ApplicationStatus, string> = {
 
 export default function RecruitmentPage() {
   const messages = useMessages();
-  const auth = useAuth();
-  const token = auth.user?.access_token;
+  const { status } = useSession();
+  // The proxy attaches the token; the page only needs to know whether it may call yet.
+  const ready = status === "authenticated";
 
   const [requisitions, setRequisitions] = useState<Requisition[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -43,9 +44,9 @@ export default function RecruitmentPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!ready) return;
     try {
-      const list = await recruitmentApi.listRequisitions(token);
+      const list = await recruitmentApi.listRequisitions();
       setRequisitions(list);
       setError(null);
       // Opening on the first role means the page is never a list of links to nothing.
@@ -53,18 +54,18 @@ export default function RecruitmentPage() {
     } catch {
       setError(messages.recruitment.loadFailed);
     }
-  }, [token, messages.recruitment.loadFailed]);
+  }, [ready, messages.recruitment.loadFailed]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   useEffect(() => {
-    if (!token || !selected) return;
+    if (!ready || !selected) return;
     let cancelled = false;
     setApplications(null);
     recruitmentApi
-      .applications(selected, token)
+      .applications(selected)
       .then((rows) => {
         // The pipeline of a role the user has since clicked away from is not worth showing.
         if (!cancelled) setApplications(rows);
@@ -75,7 +76,7 @@ export default function RecruitmentPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, selected, messages.recruitment.loadFailed]);
+  }, [ready, selected, messages.recruitment.loadFailed]);
 
   const openCount = requisitions?.filter((role) => role.status === "OPEN").length ?? 0;
 

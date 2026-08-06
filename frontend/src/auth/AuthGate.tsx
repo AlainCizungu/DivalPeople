@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { BrandMark } from "@/components/BrandMark";
 
@@ -11,10 +11,10 @@ import { BrandMark } from "@/components/BrandMark";
  * hiding UI proves nothing, per docs/SECURITY_MODEL.md.
  */
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const auth = useAuth();
+  const { status, signIn } = useSession();
   const messages = useMessages();
 
-  if (auth.isLoading) {
+  if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted">{messages.common.loading}</p>
@@ -22,25 +22,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (auth.error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-6">
-        <div className="max-w-md rounded-lg border border-line bg-white p-8 text-center">
-          <h1 className="mb-2 text-xl font-bold text-navy">{messages.auth.errorTitle}</h1>
-          <p className="mb-5 text-sm text-muted">{auth.error.message}</p>
-          <button
-            type="button"
-            onClick={() => void auth.signinRedirect()}
-            className="rounded bg-blue px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-dark"
-          >
-            {messages.auth.signIn}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!auth.isAuthenticated) {
+  if (status !== "authenticated") {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="w-full max-w-md rounded-lg border border-line bg-white p-10 text-center">
@@ -51,7 +33,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           <p className="mb-7 text-muted">{messages.auth.signInPrompt}</p>
           <button
             type="button"
-            onClick={() => void auth.signinRedirect()}
+            onClick={() => signIn()}
             className="w-full rounded bg-blue px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-dark"
           >
             {messages.auth.signIn}

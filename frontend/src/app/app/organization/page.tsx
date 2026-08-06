@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { organizationApi, type OrgUnit, type OrgUnitType } from "@/api/client";
 
@@ -22,22 +22,22 @@ const TYPE_STYLES: Record<OrgUnitType, string> = {
  */
 export default function OrganizationPage() {
   const messages = useMessages();
-  const auth = useAuth();
+  const { status } = useSession();
 
   const [units, setUnits] = useState<OrgUnit[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const token = auth.user?.access_token;
+  const ready = status === "authenticated";
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!ready) return;
     try {
-      setUnits(await organizationApi.listUnits(token));
+      setUnits(await organizationApi.listUnits());
       setError(null);
     } catch {
       setError(messages.org.loadFailed);
     }
-  }, [token, messages.org.loadFailed]);
+  }, [ready, messages.org.loadFailed]);
 
   useEffect(() => {
     void load();

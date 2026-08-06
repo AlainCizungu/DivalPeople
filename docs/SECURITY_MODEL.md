@@ -19,6 +19,21 @@ RBAC with optional attributes. Roles may include Platform Admin, Tenant Admin, H
 
 Authorization is enforced server-side. Hiding a frontend control is not authorization.
 
+## Browser sessions
+Tokens never reach the browser. The Next.js application acts as a backend-for-frontend: it runs
+the authorization code flow server-side, keeps the access, refresh and id tokens in Redis, and
+gives the browser only an opaque session identifier in an `httpOnly`, `SameSite=Lax` cookie —
+`Secure` outside development. Every API call is proxied through `/api/proxy/*`, which attaches
+the bearer token on the server. Token refresh happens there too, invisibly.
+
+The consequence worth stating plainly: a cross-site scripting flaw can still act as the user
+while the page is open, because the browser attaches the cookie. What it can no longer do is
+steal a refresh token and keep the session alive afterwards.
+
+Because the credential is now a cookie, cross-site request forgery is possible in a way it was
+not with a bearer header. `SameSite=Lax` and an explicit `Origin` check at the proxy are both in
+place. See ADR 0003.
+
 ## Tenant isolation
 - Authenticated context establishes tenant.
 - All queries, cache keys, files, jobs, and search indexes are tenant-scoped.

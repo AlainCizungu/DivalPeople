@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -14,7 +14,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
  */
 export function LandingHeader() {
   const messages = useMessages();
-  const auth = useAuth();
+  const { status, signIn } = useSession();
 
   const links = [
     { href: "#platform", label: messages.landing.nav.platform },
@@ -43,7 +43,7 @@ export function LandingHeader() {
 
         <div className="flex items-center gap-2.5">
           <LanguageSwitcher />
-          {auth.isAuthenticated ? (
+          {status === "authenticated" ? (
             <Link
               href="/app"
               className="rounded bg-blue px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-dark"
@@ -54,7 +54,7 @@ export function LandingHeader() {
             <>
               <button
                 type="button"
-                onClick={() => void auth.signinRedirect()}
+                onClick={() => signIn("/app")}
                 className="hidden rounded border border-ink px-4 py-3 text-sm font-bold text-ink transition hover:bg-soft sm:inline-flex"
               >
                 {messages.landing.actions.signIn}

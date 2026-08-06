@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import {
   ApiError,
@@ -30,7 +30,7 @@ const OUTCOME_STYLES: Record<InquiryOutcome, string> = {
 
 export default function TixPage() {
   const messages = useMessages();
-  const auth = useAuth();
+  const { status } = useSession();
 
   const [identifierType, setIdentifierType] = useState<IdentifierType>("NATIONAL_ID");
   const [identifier, setIdentifier] = useState("");
@@ -47,8 +47,8 @@ export default function TixPage() {
     setError(null);
     setResult(null);
 
-    const token = auth.user?.access_token;
-    if (!token) {
+    const ready = status === "authenticated";
+    if (!ready) {
       setError(messages.auth.sessionExpired);
       setSubmitting(false);
       return;
@@ -61,7 +61,6 @@ export default function TixPage() {
           fullName: fullName || undefined,
           purpose,
         },
-        token,
       );
       setResult(response);
     } catch (caught) {

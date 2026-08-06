@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
 import { notificationsApi, type AppNotification, type NotificationSeverity } from "@/api/client";
@@ -20,35 +20,36 @@ const SEVERITY_DOT: Record<NotificationSeverity, string> = {
 
 export default function NotificationsPage() {
   const messages = useMessages();
-  const auth = useAuth();
-  const token = auth.user?.access_token;
+  const { status } = useSession();
+  // The proxy attaches the token; the page only needs to know whether it may call yet.
+  const ready = status === "authenticated";
 
   const [items, setItems] = useState<AppNotification[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!ready) return;
     try {
-      setItems(await notificationsApi.list(token));
+      setItems(await notificationsApi.list());
       setError(null);
     } catch {
       setError(messages.notifications.loadFailed);
     }
-  }, [token, messages.notifications.loadFailed]);
+  }, [ready, messages.notifications.loadFailed]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   async function onMarkRead(id: string) {
-    if (!token) return;
-    await notificationsApi.markRead(id, token);
+    if (!ready) return;
+    await notificationsApi.markRead(id);
     await load();
   }
 
   async function onMarkAllRead() {
-    if (!token) return;
-    await notificationsApi.markAllRead(token);
+    if (!ready) return;
+    await notificationsApi.markAllRead();
     await load();
   }
 

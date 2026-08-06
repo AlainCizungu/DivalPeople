@@ -1,4 +1,3 @@
-import { apiBaseUrl } from "@/auth/config";
 
 /** Shapes mirroring the backend DTOs in ai.dival.dip.modules.tix. */
 export type IdentifierType =
@@ -49,16 +48,22 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(
-  path: string,
-  accessToken: string,
-  init?: RequestInit,
-): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+/**
+ * Calls the API through this application's own server.
+ *
+ * <p>There is no access token in this file, and no parameter to pass one. The proxy attaches it
+ * server-side from a session the browser cannot read — see ADR 0003. `credentials: "include"`
+ * is what carries the session cookie.
+ */
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // /api/v1/employees becomes /api/proxy/employees; the proxy puts the version back.
+  const proxied = path.replace(/^\/api\/v1/, "/api/proxy");
+
+  const response = await fetch(proxied, {
     ...init,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
       ...init?.headers,
     },
   });
@@ -101,8 +106,8 @@ export type OrgUnit = {
 };
 
 export const organizationApi = {
-  listUnits(accessToken: string): Promise<OrgUnit[]> {
-    return request<OrgUnit[]>("/api/v1/organization/units", accessToken);
+  listUnits(): Promise<OrgUnit[]> {
+    return request<OrgUnit[]>("/api/v1/organization/units");
   },
 };
 
@@ -123,8 +128,8 @@ export type EmployeeSummary = {
 };
 
 export const employeesApi = {
-  list(accessToken: string): Promise<EmployeeSummary[]> {
-    return request<EmployeeSummary[]>("/api/v1/employees", accessToken);
+  list(): Promise<EmployeeSummary[]> {
+    return request<EmployeeSummary[]>("/api/v1/employees");
   },
 };
 
@@ -181,14 +186,13 @@ export type Application = {
 };
 
 export const recruitmentApi = {
-  listRequisitions(accessToken: string): Promise<Requisition[]> {
-    return request<Requisition[]>("/api/v1/recruitment/requisitions", accessToken);
+  listRequisitions(): Promise<Requisition[]> {
+    return request<Requisition[]>("/api/v1/recruitment/requisitions");
   },
 
-  applications(requisitionId: string, accessToken: string): Promise<Application[]> {
+  applications(requisitionId: string): Promise<Application[]> {
     return request<Application[]>(
       `/api/v1/recruitment/requisitions/${requisitionId}/applications`,
-      accessToken,
     );
   },
 };
@@ -252,20 +256,19 @@ export type ChecklistDetail = {
 };
 
 export const lifecycleApi = {
-  open(accessToken: string): Promise<ChecklistSummary[]> {
-    return request<ChecklistSummary[]>("/api/v1/lifecycle/checklists", accessToken);
+  open(): Promise<ChecklistSummary[]> {
+    return request<ChecklistSummary[]>("/api/v1/lifecycle/checklists");
   },
 
-  checklist(id: string, accessToken: string): Promise<ChecklistDetail> {
-    return request<ChecklistDetail>(`/api/v1/lifecycle/checklists/${id}`, accessToken);
+  checklist(id: string): Promise<ChecklistDetail> {
+    return request<ChecklistDetail>(`/api/v1/lifecycle/checklists/${id}`);
   },
 
   settle(
     id: string,
     body: { status: ItemStatus; notes?: string; completedByEmployeeId?: string },
-    accessToken: string,
   ): Promise<ChecklistItem> {
-    return request<ChecklistItem>(`/api/v1/lifecycle/items/${id}/status`, accessToken, {
+    return request<ChecklistItem>(`/api/v1/lifecycle/items/${id}/status`, {
       method: "POST",
       body: JSON.stringify(body),
     });
@@ -327,29 +330,26 @@ export type LeaveLedgerEntry = {
 };
 
 export const leaveApi = {
-  balances(employeeId: string, accessToken: string, year?: number): Promise<LeaveBalance[]> {
+  balances(employeeId: string, year?: number): Promise<LeaveBalance[]> {
     const query = year === undefined ? "" : `?year=${year}`;
     return request<LeaveBalance[]>(
       `/api/v1/leave/employees/${employeeId}/balances${query}`,
-      accessToken,
     );
   },
 
-  requests(employeeId: string, accessToken: string): Promise<LeaveRequest[]> {
+  requests(employeeId: string): Promise<LeaveRequest[]> {
     return request<LeaveRequest[]>(
       `/api/v1/leave/employees/${employeeId}/requests`,
-      accessToken,
     );
   },
 
-  pending(accessToken: string): Promise<LeaveRequest[]> {
-    return request<LeaveRequest[]>("/api/v1/leave/requests/pending", accessToken);
+  pending(): Promise<LeaveRequest[]> {
+    return request<LeaveRequest[]>("/api/v1/leave/requests/pending");
   },
 
-  ledger(balanceId: string, accessToken: string): Promise<LeaveLedgerEntry[]> {
+  ledger(balanceId: string): Promise<LeaveLedgerEntry[]> {
     return request<LeaveLedgerEntry[]>(
       `/api/v1/leave/balances/${balanceId}/ledger`,
-      accessToken,
     );
   },
 };
@@ -405,39 +405,30 @@ export type Timesheet = {
 };
 
 export const attendanceApi = {
-  entries(
-    employeeId: string,
+  entries(employeeId: string,
     from: string,
-    to: string,
-    accessToken: string,
-  ): Promise<TimeEntry[]> {
+    to: string): Promise<TimeEntry[]> {
     return request<TimeEntry[]>(
       `/api/v1/attendance/employees/${employeeId}/entries?from=${from}&to=${to}`,
-      accessToken,
     );
   },
 
-  preview(
-    employeeId: string,
+  preview(employeeId: string,
     from: string,
-    to: string,
-    accessToken: string,
-  ): Promise<TimesheetTotals> {
+    to: string): Promise<TimesheetTotals> {
     return request<TimesheetTotals>(
       `/api/v1/attendance/employees/${employeeId}/preview?from=${from}&to=${to}`,
-      accessToken,
     );
   },
 
-  timesheets(employeeId: string, accessToken: string): Promise<Timesheet[]> {
+  timesheets(employeeId: string): Promise<Timesheet[]> {
     return request<Timesheet[]>(
       `/api/v1/attendance/employees/${employeeId}/timesheets`,
-      accessToken,
     );
   },
 
-  pending(accessToken: string): Promise<Timesheet[]> {
-    return request<Timesheet[]>("/api/v1/attendance/timesheets/pending", accessToken);
+  pending(): Promise<Timesheet[]> {
+    return request<Timesheet[]>("/api/v1/attendance/timesheets/pending");
   },
 };
 
@@ -456,36 +447,36 @@ export type AppNotification = {
 };
 
 export const notificationsApi = {
-  list(accessToken: string): Promise<AppNotification[]> {
-    return request<AppNotification[]>("/api/v1/notifications", accessToken);
+  list(): Promise<AppNotification[]> {
+    return request<AppNotification[]>("/api/v1/notifications");
   },
 
-  unreadCount(accessToken: string): Promise<{ unread: number }> {
-    return request<{ unread: number }>("/api/v1/notifications/unread-count", accessToken);
+  unreadCount(): Promise<{ unread: number }> {
+    return request<{ unread: number }>("/api/v1/notifications/unread-count");
   },
 
-  markRead(id: string, accessToken: string): Promise<AppNotification> {
-    return request<AppNotification>(`/api/v1/notifications/${id}/read`, accessToken, {
+  markRead(id: string): Promise<AppNotification> {
+    return request<AppNotification>(`/api/v1/notifications/${id}/read`, {
       method: "POST",
     });
   },
 
-  markAllRead(accessToken: string): Promise<{ marked: number }> {
-    return request<{ marked: number }>("/api/v1/notifications/read-all", accessToken, {
+  markAllRead(): Promise<{ marked: number }> {
+    return request<{ marked: number }>("/api/v1/notifications/read-all", {
       method: "POST",
     });
   },
 };
 
 export const tixApi = {
-  inquire(body: InquiryRequest, accessToken: string): Promise<InquiryResult> {
-    return request<InquiryResult>("/api/v1/tix/inquiries", accessToken, {
+  inquire(body: InquiryRequest): Promise<InquiryResult> {
+    return request<InquiryResult>("/api/v1/tix/inquiries", {
       method: "POST",
       body: JSON.stringify(body),
     });
   },
 
-  listDebtRecords(accessToken: string) {
-    return request<unknown[]>("/api/v1/tix/debt-records", accessToken);
+  listDebtRecords() {
+    return request<unknown[]>("/api/v1/tix/debt-records");
   },
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import {
   attendanceApi,
@@ -39,8 +39,9 @@ function clockTime(iso: string): string {
 
 export default function AttendancePage() {
   const messages = useMessages();
-  const auth = useAuth();
-  const token = auth.user?.access_token;
+  const { status } = useSession();
+  // The proxy attaches the token; the page only needs to know whether it may call yet.
+  const ready = status === "authenticated";
 
   const [people, setPeople] = useState<EmployeeSummary[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -53,23 +54,23 @@ export default function AttendancePage() {
   weekEnd.setDate(weekEnd.getDate() + 6);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!ready) return;
     try {
-      const directory = await employeesApi.list(token);
+      const directory = await employeesApi.list();
       setPeople(directory);
       setError(null);
       setSelected((current) => current ?? directory[0]?.id ?? null);
     } catch {
       setError(messages.attendance.loadFailed);
     }
-  }, [token, messages.attendance.loadFailed]);
+  }, [ready, messages.attendance.loadFailed]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   useEffect(() => {
-    if (!token || !selected) return;
+    if (!ready || !selected) return;
     let cancelled = false;
     setEntries(null);
     setTotals(null);
@@ -78,8 +79,8 @@ export default function AttendancePage() {
     const to = isoDate(weekEnd);
 
     Promise.all([
-      attendanceApi.entries(selected, from, to, token),
-      attendanceApi.preview(selected, from, to, token),
+      attendanceApi.entries(selected, from, to),
+      attendanceApi.preview(selected, from, to),
     ])
       .then(([found, summary]) => {
         // Results for a week or a person the user has since moved away from are stale.
@@ -95,7 +96,7 @@ export default function AttendancePage() {
       cancelled = true;
     };
     // weekStart is a Date; comparing by value avoids refetching on every render.
-  }, [token, selected, weekStart.getTime(), messages.attendance.loadFailed]);
+  }, [ready, selected, weekStart.getTime(), messages.attendance.loadFailed]);
 
   const shiftWeek = (weeks: number) => {
     const next = new Date(weekStart);

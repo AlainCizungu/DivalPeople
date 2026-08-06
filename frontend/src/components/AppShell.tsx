@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { notificationsApi } from "@/api/client";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { BrandMark } from "./BrandMark";
@@ -16,20 +16,20 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const messages = useMessages();
   const pathname = usePathname();
-  const auth = useAuth();
+  const { profile, signOut } = useSession();
 
   const [unreadCount, setUnreadCount] = useState(0);
-  const token = auth.user?.access_token;
+  const authenticated = profile !== null;
 
   // Polled rather than pushed. A websocket for a number that changes a few times a day is a
   // connection to keep alive, reconnect and authorise for very little gain.
   useEffect(() => {
-    if (!token) return;
+    if (!authenticated) return;
 
     let cancelled = false;
     const refresh = async () => {
       try {
-        const { unread } = await notificationsApi.unreadCount(token);
+        const { unread } = await notificationsApi.unreadCount();
         if (!cancelled) setUnreadCount(unread);
       } catch {
         // A failed badge refresh must never interrupt whatever the user is doing.
@@ -42,15 +42,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [token, pathname]);
+  }, [authenticated, pathname]);
 
-  const profile = auth.user?.profile;
   const displayName =
-    profile?.name ?? profile?.preferred_username ?? profile?.email ?? "";
-  // Claim carried by the access token and enforced server-side; shown so it is obvious which
+    profile?.name ?? profile?.preferredUsername ?? profile?.email ?? "";
+  // Read from the session on the server and enforced there too; shown so it is obvious which
   // operator the current session is acting as.
-  const tenantId =
-    typeof profile?.tenant_id === "string" ? profile.tenant_id : undefined;
+  const tenantId = profile?.tenantId;
 
   // Only routes that exist. A nav full of links to nothing makes the product feel broken and
   // makes it impossible to tell a missing feature from a bug; entries are added as they ship.
@@ -127,7 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <LanguageSwitcher />
             <button
               type="button"
-              onClick={() => void auth.signoutRedirect()}
+              onClick={() => void signOut()}
               className="rounded px-3 py-1.5 text-sm font-semibold text-ink transition hover:text-blue"
             >
               {messages.common.signOut}

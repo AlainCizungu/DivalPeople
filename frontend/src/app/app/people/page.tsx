@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { employeesApi, type EmployeeStatus, type EmployeeSummary } from "@/api/client";
 
@@ -14,21 +14,22 @@ const STATUS_STYLES: Record<EmployeeStatus, string> = {
 
 export default function PeoplePage() {
   const messages = useMessages();
-  const auth = useAuth();
-  const token = auth.user?.access_token;
+  const { status } = useSession();
+  // The proxy attaches the token; the page only needs to know whether it may call yet.
+  const ready = status === "authenticated";
 
   const [people, setPeople] = useState<EmployeeSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!ready) return;
     try {
-      setPeople(await employeesApi.list(token));
+      setPeople(await employeesApi.list());
       setError(null);
     } catch {
       setError(messages.employees.loadFailed);
     }
-  }, [token, messages.employees.loadFailed]);
+  }, [ready, messages.employees.loadFailed]);
 
   useEffect(() => {
     void load();

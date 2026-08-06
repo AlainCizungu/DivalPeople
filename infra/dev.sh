@@ -17,6 +17,9 @@ COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 KEYCLOAK_URL="http://localhost:8081"
 REALM="dip"
 CLIENT_ID="dip-local"
+# The client became confidential with ADR 0003, so the direct-grant calls below need the
+# secret. Development only; it lives in the realm import next to this file.
+CLIENT_SECRET="dip-local-development-secret"
 API_URL="http://localhost:8080"
 DEFAULT_PASSWORD="password"
 
@@ -108,6 +111,7 @@ fetch_token() {
         "$KEYCLOAK_URL/realms/$REALM/protocol/openid-connect/token" \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "client_id=$CLIENT_ID" \
+        -d "client_secret=$CLIENT_SECRET" \
         -d "username=$user" \
         -d "password=$DEFAULT_PASSWORD" \
         -d "grant_type=password" \
@@ -138,9 +142,14 @@ Next, in separate terminals:
   ./gradlew bootRun
 
   cd frontend
+  cp .env.local.example .env.local     # first run only
+  npm install                          # first run after ADR 0003
   npm run dev
 
   ./infra/dev.sh check
+
+Sessions now live in Redis and tokens never reach the browser (ADR 0003), so the
+frontend needs Redis running - which it already is, above.
 
 EOF
         ;;

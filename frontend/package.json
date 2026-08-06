@@ -14,10 +14,10 @@
   },
   "dependencies": {
     "next": "16.3.0",
-    "oidc-client-ts": "^3.5.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-oidc-context": "^3.3.1"
+    "redis": "^5.9.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

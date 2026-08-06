@@ -52,16 +52,14 @@
       "clientId": "dip-local",
       "name": "DIP local development client",
       "enabled": true,
-      "publicClient": true,
+      "publicClient": false,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
       "redirectUris": [
-        "http://localhost:3000/*"
+        "http://localhost:3000/api/auth/callback"
       ],
-      "webOrigins": [
-        "http://localhost:3000"
-      ],
+      "webOrigins": [],
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:3000/*"
       },
@@ -80,7 +78,8 @@
             "userinfo.token.claim": "true"
           }
         }
-      ]
+      ],
+      "secret": "dip-local-development-secret"
     }
   ],
   "users": [

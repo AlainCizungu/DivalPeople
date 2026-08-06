@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import {
   employeesApi,
@@ -21,8 +21,9 @@ const STATUS_STYLES: Record<LeaveRequestStatus, string> = {
 
 export default function LeavePage() {
   const messages = useMessages();
-  const auth = useAuth();
-  const token = auth.user?.access_token;
+  const { status } = useSession();
+  // The proxy attaches the token; the page only needs to know whether it may call yet.
+  const ready = status === "authenticated";
 
   const [people, setPeople] = useState<EmployeeSummary[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -31,28 +32,28 @@ export default function LeavePage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!ready) return;
     try {
-      const directory = await employeesApi.list(token);
+      const directory = await employeesApi.list();
       setPeople(directory);
       setError(null);
       setSelected((current) => current ?? directory[0]?.id ?? null);
     } catch {
       setError(messages.leave.loadFailed);
     }
-  }, [token, messages.leave.loadFailed]);
+  }, [ready, messages.leave.loadFailed]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   useEffect(() => {
-    if (!token || !selected) return;
+    if (!ready || !selected) return;
     let cancelled = false;
     setBalances(null);
     setRequests(null);
 
-    Promise.all([leaveApi.balances(selected, token), leaveApi.requests(selected, token)])
+    Promise.all([leaveApi.balances(selected), leaveApi.requests(selected)])
       .then(([found, history]) => {
         // Results for somebody the user has since clicked away from are not worth showing.
         if (cancelled) return;
@@ -66,7 +67,7 @@ export default function LeavePage() {
     return () => {
       cancelled = true;
     };
-  }, [token, selected, messages.leave.loadFailed]);
+  }, [ready, selected, messages.leave.loadFailed]);
 
   return (
     <div className="mx-auto max-w-6xl">

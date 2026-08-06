@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { CheckList, Eyebrow, FeatureCard, SectionHeading, gradientFor } from "./primitives";
 
@@ -234,7 +234,7 @@ export function IndustriesSection() {
 
 export function FinalCta() {
   const { landing } = useMessages();
-  const auth = useAuth();
+  const { status, signIn } = useSession();
 
   return (
     <section id="demo" className="mx-auto my-16 max-w-7xl px-6">
@@ -247,7 +247,7 @@ export function FinalCta() {
         </div>
         <button
           type="button"
-          onClick={() => void auth.signinRedirect()}
+          onClick={() => signIn("/app")}
           className="shrink-0 rounded bg-blue px-6 py-3.5 text-sm font-bold text-white transition hover:bg-blue-dark"
         >
           {landing.finalCta.button}

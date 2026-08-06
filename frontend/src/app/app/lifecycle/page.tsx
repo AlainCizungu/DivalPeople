@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
 import {
@@ -26,8 +26,9 @@ const ITEM_STYLES: Record<ItemStatus, string> = {
 
 export default function LifecyclePage() {
   const messages = useMessages();
-  const auth = useAuth();
-  const token = auth.user?.access_token;
+  const { status } = useSession();
+  // The proxy attaches the token; the page only needs to know whether it may call yet.
+  const ready = status === "authenticated";
 
   const [checklists, setChecklists] = useState<ChecklistSummary[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -35,27 +36,27 @@ export default function LifecyclePage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!ready) return;
     try {
-      const list = await lifecycleApi.open(token);
+      const list = await lifecycleApi.open();
       setChecklists(list);
       setError(null);
       setSelected((current) => current ?? list[0]?.id ?? null);
     } catch {
       setError(messages.lifecycle.loadFailed);
     }
-  }, [token, messages.lifecycle.loadFailed]);
+  }, [ready, messages.lifecycle.loadFailed]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   useEffect(() => {
-    if (!token || !selected) return;
+    if (!ready || !selected) return;
     let cancelled = false;
     setDetail(null);
     lifecycleApi
-      .checklist(selected, token)
+      .checklist(selected)
       .then((found) => {
         // The steps of a list the user has since clicked away from are not worth showing.
         if (!cancelled) setDetail(found);
@@ -66,7 +67,7 @@ export default function LifecyclePage() {
     return () => {
       cancelled = true;
     };
-  }, [token, selected, messages.lifecycle.loadFailed]);
+  }, [ready, selected, messages.lifecycle.loadFailed]);
 
   const today = new Date().toISOString().slice(0, 10);
 

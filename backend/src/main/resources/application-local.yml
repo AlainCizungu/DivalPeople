@@ -38,8 +38,10 @@ spring:
 
 dip:
   cors:
-    allowed-origins:
-      - http://localhost:3000
+    # Empty since ADR 0003. The browser talks only to the Next.js application, which calls this
+    # API server-to-server, so no cross-origin request should reach here at all. Leaving an
+    # allowed origin configured would keep a door open that nothing walks through any more.
+    allowed-origins: []
 
   local:
     # Seeds two telecom tenants whose IDs match the tenant_id attributes of the

@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "react-oidc-context";
+import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { CheckList, Eyebrow } from "./primitives";
 
 /** Hero with the executive-overview panel from the prototype. */
 export function Hero() {
   const messages = useMessages();
-  const auth = useAuth();
+  const { status, signIn } = useSession();
   const { hero, board, actions } = messages.landing;
 
   return (
@@ -28,7 +28,7 @@ export function Hero() {
             >
               {actions.seePlatform}
             </a>
-            {auth.isAuthenticated ? (
+            {status === "authenticated" ? (
               <Link
                 href="/app"
                 className="rounded border border-ink bg-white px-5 py-3.5 text-sm font-bold text-ink transition hover:bg-soft"
