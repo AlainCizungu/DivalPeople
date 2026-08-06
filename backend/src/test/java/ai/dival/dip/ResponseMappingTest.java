@@ -25,6 +25,9 @@ import ai.dival.dip.modules.lifecycle.LifecycleController;
 import ai.dival.dip.modules.lifecycle.LifecycleService;
 import ai.dival.dip.modules.organizations.OrgUnitService;
 import ai.dival.dip.modules.organizations.OrgUnitType;
+import ai.dival.dip.modules.recruitment.CandidateSource;
+import ai.dival.dip.modules.recruitment.InterviewMode;
+import ai.dival.dip.modules.recruitment.InterviewStage;
 import ai.dival.dip.modules.recruitment.RecruitmentController;
 import ai.dival.dip.modules.recruitment.RecruitmentService;
 import ai.dival.dip.modules.tenants.Tenant;
@@ -39,6 +42,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * Builds every list response the way a real request does: outside a transaction.
@@ -52,6 +57,10 @@ import org.springframework.beans.factory.annotation.Autowired;
  * mapping has to survive the transaction ending, which is the condition a controller runs under.
  * A future response record that reaches for an unfetched association fails here rather than in
  * somebody's browser.
+ *
+ * <p>The controllers are called rather than their mapping methods, which is both closer to a real
+ * request and the only way to reach package-private {@code from} methods from here. It also means
+ * {@code @PreAuthorize} is exercised, so an endpoint whose roles are wrong fails here too.
  */
 @RequiresDocker
 class ResponseMappingTest extends AbstractIntegrationTest {
@@ -77,12 +86,30 @@ class ResponseMappingTest extends AbstractIntegrationTest {
     @Autowired
     private TimesheetService timesheets;
 
+    @Autowired
+    private EmployeeController employeeController;
+    @Autowired
+    private RecruitmentController recruitmentController;
+    @Autowired
+    private LifecycleController lifecycleController;
+    @Autowired
+    private LeaveController leaveController;
+    @Autowired
+    private AttendanceController attendanceController;
+
     private UUID tenantId;
     private Employee employee;
     private Employee manager;
 
     @BeforeEach
     void setUp() {
+        // Tenant admin reaches every read endpoint here. Without an authentication the
+        // method-security proxy would refuse before any mapping ran, and the test would
+        // pass for the wrong reason.
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken("response-mapping-test", "n/a",
+                        "ROLE_TENANT_ADMIN"));
+
         tenantId = tenants.save(new Tenant("RM", "rm-" + UUID.randomUUID(),
                 Tenant.Edition.ENTERPRISE, "en")).getId();
         TenantContext.set(tenantId);
@@ -102,22 +129,21 @@ class ResponseMappingTest extends AbstractIntegrationTest {
     @AfterEach
     void tearDown() {
         TenantContext.clear();
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     @DisplayName("the employee directory maps outside a transaction")
     void employeeResponsesMap() {
         assertThatCode(() -> {
-            var summaries = employees.list().stream()
-                    .map(EmployeeController.EmployeeSummary::from).toList();
+            var summaries = employeeController.list();
             assertThat(summaries).isNotEmpty();
             // The name, not just the id: reading an id off a proxy never touches the database,
             // which is exactly why this class of bug hides.
             assertThat(summaries.get(0).orgUnitName()).isNotNull();
 
-            EmployeeController.EmployeeDetail.from(employees.get(employee.getId()));
-            contracts.forEmployee(employee.getId()).stream()
-                    .map(EmployeeController.ContractResponse::from).toList();
+            employeeController.get(employee.getId());
+            employeeController.contracts(employee.getId());
         }).doesNotThrowAnyException();
     }
 
@@ -131,21 +157,20 @@ class ResponseMappingTest extends AbstractIntegrationTest {
         recruitment.openRequisition(requisition.getId(), null);
 
         var candidate = recruitment.registerCandidate("Marie", "Ilunga", "marie@example.cd",
-                null, null);
+                CandidateSource.DIRECT, null);
         var application = recruitment.apply(requisition.getId(), candidate.getId(),
                 LocalDate.now(), null);
-        recruitment.scheduleInterview(application.getId(), null, null,
-                Instant.now().plus(2, ChronoUnit.DAYS), manager.getId(), null);
+        // Stage is NOT NULL, and this test commits for real rather than rolling back, so a
+        // null would fail on insert rather than being quietly tolerated.
+        recruitment.scheduleInterview(application.getId(), InterviewStage.SCREENING,
+                InterviewMode.VIDEO, Instant.now().plus(2, ChronoUnit.DAYS),
+                manager.getId(), null);
 
         assertThatCode(() -> {
-            assertThat(recruitment.listRequisitions().stream()
-                    .map(RecruitmentController.RequisitionResponse::from).toList()).isNotEmpty();
-            assertThat(recruitment.applicationsFor(requisition.getId()).stream()
-                    .map(RecruitmentController.ApplicationResponse::from).toList()).isNotEmpty();
-            assertThat(recruitment.interviewsFor(application.getId()).stream()
-                    .map(RecruitmentController.InterviewResponse::from).toList()).isNotEmpty();
-            recruitment.listCandidates().stream()
-                    .map(RecruitmentController.CandidateResponse::from).toList();
+            assertThat(recruitmentController.listRequisitions()).isNotEmpty();
+            assertThat(recruitmentController.applications(requisition.getId())).isNotEmpty();
+            assertThat(recruitmentController.interviews(application.getId())).isNotEmpty();
+            recruitmentController.listCandidates();
         }).doesNotThrowAnyException();
     }
 
@@ -160,18 +185,15 @@ class ResponseMappingTest extends AbstractIntegrationTest {
                 manager.getId(), null);
 
         assertThatCode(() -> {
-            var open = lifecycle.openChecklists().stream()
-                    .map(LifecycleController.ChecklistSummary::from).toList();
+            var open = lifecycleController.open();
             assertThat(open).isNotEmpty();
             assertThat(open.get(0).employeeName()).isNotBlank();
 
-            var detail = LifecycleController.ChecklistDetail.from(
-                    lifecycle.checklist(checklist.getId()));
+            var detail = lifecycleController.checklist(checklist.getId());
             assertThat(detail.items()).isNotEmpty();
             assertThat(detail.items().get(0).assigneeName()).isNotBlank();
 
-            lifecycle.listTemplates().stream()
-                    .map(LifecycleController.TemplateResponse::from).toList();
+            lifecycleController.listTemplates();
         }).doesNotThrowAnyException();
     }
 
@@ -190,21 +212,17 @@ class ResponseMappingTest extends AbstractIntegrationTest {
         leave.approve(request.getId(), manager.getId(), null, null);
 
         assertThatCode(() -> {
-            var forYear = balances.balancesFor(employee.getId(), year).stream()
-                    .map(LeaveController.BalanceResponse::from).toList();
+            var forYear = leaveController.balances(employee.getId(), year);
             assertThat(forYear).isNotEmpty();
             assertThat(forYear.get(0).leaveTypeName()).isNotBlank();
 
-            var history = leave.forEmployee(employee.getId()).stream()
-                    .map(LeaveController.RequestResponse::from).toList();
+            var history = leaveController.forEmployee(employee.getId());
             assertThat(history).isNotEmpty();
             assertThat(history.get(0).employeeName()).isNotBlank();
             assertThat(history.get(0).approverName()).isNotBlank();
 
-            leave.approvedBetween(from, from.plusDays(6)).stream()
-                    .map(LeaveController.RequestResponse::from).toList();
-            balances.ledgerFor(forYear.get(0).id()).stream()
-                    .map(LeaveController.LedgerResponse::from).toList();
+            leaveController.calendar(from, from.plusDays(6));
+            leaveController.ledger(forYear.get(0).id());
         }).doesNotThrowAnyException();
     }
 
@@ -220,20 +238,17 @@ class ResponseMappingTest extends AbstractIntegrationTest {
         timesheets.submit(sheet.getId(), null);
 
         assertThatCode(() -> {
-            var entries = attendance.between(employee.getId(), monday, monday.plusDays(6)).stream()
-                    .map(AttendanceController.EntryResponse::from).toList();
+            var entries =
+                    attendanceController.entries(employee.getId(), monday, monday.plusDays(6));
             assertThat(entries).isNotEmpty();
             assertThat(entries.get(0).employeeName()).isNotBlank();
 
-            var sheets = timesheets.forEmployee(employee.getId()).stream()
-                    .map(AttendanceController.TimesheetResponse::from).toList();
+            var sheets = attendanceController.timesheets(employee.getId());
             assertThat(sheets).isNotEmpty();
             assertThat(sheets.get(0).employeeName()).isNotBlank();
 
-            timesheets.awaitingDecision().stream()
-                    .map(AttendanceController.TimesheetResponse::from).toList();
-            attendance.historyFor(employee.getId(), monday).stream()
-                    .map(AttendanceController.EntryResponse::from).toList();
+            attendanceController.pending();
+            attendanceController.dayHistory(employee.getId(), monday);
         }).doesNotThrowAnyException();
     }
 }
