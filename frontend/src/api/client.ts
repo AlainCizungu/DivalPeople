@@ -672,6 +672,208 @@ export const payrollApi = {
   },
 };
 
+// --- self-service ------------------------------------------------------------
+//
+// These types are deliberately narrower than the HR ones above. The server serves a different,
+// smaller shape to a person reading about themselves, and mirroring that here keeps the two from
+// quietly converging.
+
+export type Me = {
+  employeeId: string;
+  employeeNumber: string;
+  displayName: string;
+  hireDate: string;
+  status: string;
+  managerName: string | null;
+  orgUnitName: string | null;
+  personalEmail: string | null;
+  phone: string | null;
+};
+
+export type TeamMember = {
+  employeeId: string;
+  employeeNumber: string;
+  displayName: string;
+  status: string;
+};
+
+export type MyPayslipLine = {
+  componentName: string;
+  componentType: ComponentType;
+  basis: string | null;
+  amount: string;
+};
+
+export type MyPayslip = {
+  id: string;
+  periodName: string;
+  periodStart: string;
+  periodEnd: string;
+  paymentDate: string | null;
+  currency: string;
+  baseAmount: string;
+  grossEarnings: string;
+  totalDeductions: string;
+  netPay: string;
+  unpaidLeaveDays: string;
+  overtimeMinutes: number;
+  lines: MyPayslipLine[];
+};
+
+export type MyLeaveBalance = {
+  leaveTypeId: string;
+  leaveTypeName: string;
+  leaveYear: number;
+  accruedDays: string;
+  takenDays: string;
+  pendingDays: string;
+  availableDays: string;
+};
+
+export type LeaveTypeOption = {
+  id: string;
+  code: string;
+  name: string;
+  allowsHalfDay: boolean;
+  paid: boolean;
+};
+
+export type MyLeaveRequest = {
+  id: string;
+  leaveTypeId: string;
+  leaveTypeName: string;
+  startDate: string;
+  endDate: string;
+  halfDayStart: boolean;
+  halfDayEnd: boolean;
+  days: string;
+  reason: string | null;
+  status: LeaveRequestStatus;
+  approverName: string | null;
+  decidedAt: string | null;
+  decisionNotes: string | null;
+};
+
+export type MyTimesheet = {
+  id: string;
+  periodStart: string;
+  periodEnd: string;
+  workedMinutes: number;
+  expectedMinutes: number;
+  overtimeMinutes: number;
+  absentMinutes: number;
+  status: string;
+  submittedAt: string | null;
+  decisionNotes: string | null;
+};
+
+export type MyGoal = {
+  id: string;
+  cycleName: string | null;
+  title: string;
+  description: string | null;
+  measure: string | null;
+  targetDate: string | null;
+  progressPercent: number;
+  status: string;
+};
+
+export type MyReview = {
+  id: string;
+  cycleName: string;
+  reviewerName: string | null;
+  selfAssessment: string | null;
+  selfSubmittedAt: string | null;
+  reviewerAssessment: string | null;
+  effectiveRating: string | null;
+  status: string;
+  sharedAt: string | null;
+  acknowledgedAt: string | null;
+  employeeResponse: string | null;
+  employeeDisagrees: boolean;
+};
+
+export type MyTraining = {
+  id: string;
+  courseTitle: string;
+  mandatory: boolean;
+  status: EnrolmentStatus;
+  enrolledOn: string;
+  completedOn: string | null;
+  score: number | null;
+  expiresOn: string | null;
+  certificateFileId: string | null;
+};
+
+export type BookLeaveRequest = {
+  leaveTypeId: string;
+  startDate: string;
+  endDate: string;
+  halfDayStart: boolean;
+  halfDayEnd: boolean;
+  reason?: string | null;
+};
+
+/** Nothing here takes an employee id. The server reads that from the session. */
+export const meApi = {
+  profile(): Promise<Me> {
+    return request<Me>("/api/v1/me");
+  },
+
+  team(): Promise<TeamMember[]> {
+    return request<TeamMember[]>("/api/v1/me/team");
+  },
+
+  payslips(): Promise<MyPayslip[]> {
+    return request<MyPayslip[]>("/api/v1/me/payslips");
+  },
+
+  leaveBalances(year?: number): Promise<MyLeaveBalance[]> {
+    return request<MyLeaveBalance[]>(
+      year
+        ? `/api/v1/me/leave/balances?year=${year}`
+        : "/api/v1/me/leave/balances",
+    );
+  },
+
+  leaveTypes(): Promise<LeaveTypeOption[]> {
+    return request<LeaveTypeOption[]>("/api/v1/me/leave/types");
+  },
+
+  leaveRequests(): Promise<MyLeaveRequest[]> {
+    return request<MyLeaveRequest[]>("/api/v1/me/leave/requests");
+  },
+
+  bookLeave(body: BookLeaveRequest): Promise<MyLeaveRequest> {
+    return request<MyLeaveRequest>("/api/v1/me/leave/requests", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  cancelLeave(id: string): Promise<MyLeaveRequest> {
+    return request<MyLeaveRequest>(`/api/v1/me/leave/requests/${id}/cancel`, {
+      method: "POST",
+    });
+  },
+
+  timesheets(): Promise<MyTimesheet[]> {
+    return request<MyTimesheet[]>("/api/v1/me/timesheets");
+  },
+
+  goals(): Promise<MyGoal[]> {
+    return request<MyGoal[]>("/api/v1/me/goals");
+  },
+
+  reviews(): Promise<MyReview[]> {
+    return request<MyReview[]>("/api/v1/me/reviews");
+  },
+
+  training(): Promise<MyTraining[]> {
+    return request<MyTraining[]>("/api/v1/me/training");
+  },
+};
+
 export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
 
 export type AppNotification = {

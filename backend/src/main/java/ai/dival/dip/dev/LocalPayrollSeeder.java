@@ -70,7 +70,7 @@ public class LocalPayrollSeeder implements ApplicationRunner {
             Employee director = employee(tenantId, "EMP-001");
             Employee engineer = employee(tenantId, "EMP-002");
             Employee analyst = employee(tenantId, "EMP-003");
-            if (director == null || engineer == null) {
+            if (director == null || engineer == null || analyst == null) {
                 log.info("No employees to seed payroll for");
                 return;
             }
@@ -81,9 +81,10 @@ public class LocalPayrollSeeder implements ApplicationRunner {
             pay(engineer, new BigDecimal("1600"), LocalDate.of(2023, 9, 15), "Appointment");
             pay(engineer, new BigDecimal("1850"), LocalDate.of(LocalDate.now().getYear(), 1, 1),
                     "Annual review");
-            if (analyst != null) {
-                pay(analyst, new BigDecimal("1400"), LocalDate.of(2025, 2, 1), "Appointment");
-            }
+            // The analyst is deliberately left off the payroll. Somebody has to be able to sign
+            // a run off, and nobody approves a payroll they are paid by — so the approver cannot
+            // be one of the people on it. It also means the skip report is exercised by the
+            // seeded data rather than only by a test.
 
             PayComponent transport = payroll.createComponent("TRANSPORT", "Transport allowance",
                     ComponentType.EARNING, CalculationMethod.FIXED, new BigDecimal("120"),
@@ -113,19 +114,44 @@ public class LocalPayrollSeeder implements ApplicationRunner {
                         null, null);
             }
 
-            LocalDate monthStart = LocalDate.now().withDayOfMonth(1).minusMonths(1);
-            LocalDate monthEnd = monthStart.plusMonths(1).minusDays(1);
-            PayrollPeriod period = payroll.createPeriod(
-                    monthStart.getMonth() + " " + monthStart.getYear(),
-                    monthStart, monthEnd, monthEnd.plusDays(5), null);
+            // Two runs, because one is not a payroll. The older one is signed off and paid, so
+            // self-service has a payslip to show; the recent one is calculated and waiting, so
+            // somebody can walk the sign-off themselves. An employee sees only the first.
+            PayrollPeriod settled = run(analyst, 2);
+            PayrollPeriod pending = run(null, 1);
 
-            var result = payroll.calculate(period.getId(), PayFrequency.MONTHLY, null);
-
-            // Left unapproved on purpose, so somebody can walk the sign-off themselves.
-            log.info("Seeded payroll for {}: {} payslips, {} skipped for want of a salary",
-                    period.getName(), result.payslipsProduced(),
-                    result.skippedForNoSalary().size());
+            log.info("Seeded payroll: {} is {}, {} is {}",
+                    settled.getName(), settled.getStatus(),
+                    pending.getName(), pending.getStatus());
         }));
+    }
+
+    /**
+     * One month's run, ending {@code monthsAgo} months before this one.
+     *
+     * @param approver whom to sign it off as, or null to leave it waiting. Nobody approves a
+     *                 payroll they are paid by, so this is only ever somebody off the run — and
+     *                 in the seeded data that means it stays unapproved when the only candidate
+     *                 is on it.
+     */
+    private PayrollPeriod run(Employee approver, int monthsAgo) {
+        LocalDate start = LocalDate.now().withDayOfMonth(1).minusMonths(monthsAgo);
+        LocalDate end = start.plusMonths(1).minusDays(1);
+
+        PayrollPeriod period = payroll.createPeriod(
+                start.getMonth() + " " + start.getYear(), start, end, end.plusDays(5), null);
+        var result = payroll.calculate(period.getId(), PayFrequency.MONTHLY, null);
+
+        if (!result.skippedForNoSalary().isEmpty()) {
+            log.info("Payroll {} skipped {} for want of a salary",
+                    period.getName(), result.skippedForNoSalary());
+        }
+
+        if (approver != null) {
+            payroll.approve(period.getId(), approver.getId(), "Checked against contracts", null);
+            payroll.markPaid(period.getId(), null);
+        }
+        return payroll.period(period.getId());
     }
 
     private void pay(Employee employee, BigDecimal amount, LocalDate from, String reason) {

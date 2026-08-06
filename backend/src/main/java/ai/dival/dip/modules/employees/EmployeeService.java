@@ -9,6 +9,7 @@ import ai.dival.dip.modules.organizations.OrgUnitService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -196,6 +197,17 @@ public class EmployeeService {
         employee.setWorkPattern(workPatternId == null ? null : workPattern(workPatternId));
         audit.recordSuccess("EMPLOYEE_WORK_PATTERN_SET", "Employee", id.toString(), actorId);
         return employee;
+    }
+
+    /**
+     * The employee behind a sign-in, if there is one.
+     *
+     * <p>Empty is an ordinary answer, not a failure: most people who can sign in to administer
+     * the platform are not on the payroll of the tenant they administer.
+     */
+    @Transactional(readOnly = true)
+    public Optional<Employee> forUserAccount(UUID userAccountId) {
+        return employees.findByTenantIdAndUserAccountId(TenantContext.require(), userAccountId);
     }
 
     /** Links a login to this employee, so self-service can find the right record. */

@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.performance;
 
 import ai.dival.dip.common.security.Roles;
+import ai.dival.dip.modules.employees.CurrentEmployee;
 import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -26,11 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <p>Every response that carries a review goes through the entity's own visibility methods rather
  * than reading the fields directly, so the blind-write rule cannot be bypassed by adding an
- * endpoint. The {@code asSubject} flag says which side is asking.
+ * endpoint. Which side is asking decides how much of it is filled in.
  *
- * <p>That flag is a stand-in. Deciding it from the caller's own employee record belongs with
- * employee self-service in Phase 6; until then it is passed explicitly and this is recorded in
- * DELIVERY_PLAN as a gap, because an access rule the caller chooses is not an access rule.
+ * <p>That used to be a request parameter the caller set. It no longer is: {@link CurrentEmployee}
+ * resolves it from the token by comparing the caller's own employee record to the review's
+ * subject. An access rule the caller chooses is not an access rule, and anybody who wanted a
+ * reviewer's unshared rating only had to ask for it with the flag turned off.
  */
 @RestController
 @RequestMapping("/api/v1/performance")
@@ -46,10 +47,14 @@ public class PerformanceController {
 
     private final PerformanceService performance;
     private final CurrentUserService currentUser;
+    private final CurrentEmployee currentEmployee;
 
-    public PerformanceController(PerformanceService performance, CurrentUserService currentUser) {
+    public PerformanceController(PerformanceService performance,
+                                 CurrentUserService currentUser,
+                                 CurrentEmployee currentEmployee) {
         this.performance = performance;
         this.currentUser = currentUser;
+        this.currentEmployee = currentEmployee;
     }
 
     // --- cycles ------------------------------------------------------------
@@ -126,9 +131,8 @@ public class PerformanceController {
     }
 
     @GetMapping("/employees/{employeeId}/reviews")
-    public List<ReviewResponse> reviewsFor(
-            @PathVariable UUID employeeId,
-            @RequestParam(defaultValue = "true") boolean asSubject) {
+    public List<ReviewResponse> reviewsFor(@PathVariable UUID employeeId) {
+        boolean asSubject = currentEmployee.isSelf(employeeId);
         return performance.reviewsFor(employeeId).stream()
                 .map(review -> ReviewResponse.from(review, asSubject)).toList();
     }
@@ -141,9 +145,9 @@ public class PerformanceController {
     }
 
     @GetMapping("/reviews/{id}")
-    public ReviewResponse review(@PathVariable UUID id,
-                                 @RequestParam(defaultValue = "true") boolean asSubject) {
-        return ReviewResponse.from(performance.review(id), asSubject);
+    public ReviewResponse review(@PathVariable UUID id) {
+        PerformanceReview found = performance.review(id);
+        return ReviewResponse.from(found, currentEmployee.isSelf(found.getEmployee().getId()));
     }
 
     @PostMapping("/reviews")
@@ -205,9 +209,10 @@ public class PerformanceController {
     // --- feedback ----------------------------------------------------------
 
     @GetMapping("/reviews/{id}/feedback")
-    public List<FeedbackResponse> feedback(
-            @PathVariable UUID id,
-            @RequestParam(defaultValue = "true") boolean asSubject) {
+    public List<FeedbackResponse> feedback(@PathVariable UUID id) {
+        // Anonymity is decided by who is reading, so it is read from the token like everything
+        // else. A colleague who asked not to be named must not be named by a query string.
+        boolean asSubject = currentEmployee.isSelf(performance.review(id).getEmployee().getId());
         return performance.feedbackFor(id).stream()
                 .map(given -> FeedbackResponse.from(given, asSubject)).toList();
     }

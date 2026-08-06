@@ -84,6 +84,7 @@
   ],
   "users": [
     {
+      "id": "aaaaaaaa-0000-4000-8000-00000000000a",
       "username": "operator-a",
       "enabled": true,
       "emailVerified": true,
@@ -110,6 +111,7 @@
       ]
     },
     {
+      "id": "bbbbbbbb-0000-4000-8000-00000000000b",
       "username": "operator-b",
       "enabled": true,
       "emailVerified": true,
@@ -136,6 +138,7 @@
       ]
     },
     {
+      "id": "cccccccc-0000-4000-8000-00000000000c",
       "username": "no-roles",
       "enabled": true,
       "emailVerified": true,
@@ -159,6 +162,7 @@
       ]
     },
     {
+      "id": "dddddddd-0000-4000-8000-00000000000d",
       "username": "platform-admin",
       "enabled": true,
       "emailVerified": true,

@@ -34,7 +34,7 @@ test could catch.
 | 5 — Payroll | **Complete**, within a stated boundary | Effective-dated salaries, configurable pay components, payslips that reconcile by construction, and a sign-off path. **No statutory tax rates anywhere** — see `docs/PAYROLL_SCOPE.md`. |
 | 4 — Time, performance, learning | **Complete** | Leave, attendance, work patterns, performance and learning are all in. Shift planning is deliberately out of scope and recorded below. |
 | 5 — Payroll preparation | Not started | |
-| 6 — Employee self-service | Not started | |
+| 6 — Employee self-service | **Complete** | A portal under `/api/v1/me` that never accepts an employee id. Closes the `asSubject` gap: the server now decides who is asking. |
 | 7 — Financial services | Not started | |
 | 8 — Fraud intelligence | Not started | |
 | 9 — Industry editions | **TIX partially built, out of order** | The telecom exchange was built ahead of its phase for commercial reasons. Subjects, identifiers, debt records, deterministic matching, inquiry API and UI exist. |
@@ -42,7 +42,7 @@ test could catch.
 
 ### What exists today
 
-- **Backend** — 43 tables across 17 migrations, 14 modules (`attendance`, `employees`, `files`, `learning`, `leave`, `lifecycle`, `notifications`, `organizations`, `payroll`, `performance`, `recruitment`, `tenants`, `tix`, `users`),
+- **Backend** — 43 tables across 17 migrations, 15 modules (`attendance`, `employees`, `files`, `learning`, `leave`, `lifecycle`, `notifications`, `organizations`, `payroll`, `performance`, `recruitment`, `selfservice`, `tenants`, `tix`, `users`),
   ~165 endpoints, 310 passing tests. Cross-tenant isolation and row-level security are
   proven over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, and screens for the people
@@ -269,7 +269,63 @@ Also deliberately absent, and recorded rather than hidden:
 
 ---
 
-## 8. Then — TIX depth
+## 8. Phase 6 — employee self-service
+
+| Item | State |
+|---|---|
+| Identity from the token | **Done.** `CurrentEmployee` maps the authenticated subject to a user account to an employee. Every `/api/v1/me` endpoint resolves the person that way, and **none of them accept an employee id**. |
+| The portal | **Done.** Profile, payslips, leave balances, booking and cancelling leave, timesheets, attendance, goals, reviews and training — each scoped to the caller. |
+| Manager's team | **Done.** Direct reports, with names and status and nothing else. Empty for most people, which is an answer rather than an error. |
+| Narrower responses | **Done.** Self-service has its own response records rather than reusing the HR ones. They cannot grow a field because an HR screen wanted one. |
+| The `asSubject` gap | **Closed.** See below. |
+
+### Why no endpoint takes an employee id
+
+The usual shape is to accept an id and check it belongs to the caller. That works until somebody
+adds a second endpoint, or moves the check behind a condition, or writes a new one by copying an
+old one and dropping the check. A parameter that must be validated is a parameter that will
+eventually be used without validation.
+
+Three endpoints do take an id — cancelling leave, submitting a timesheet, reading one payslip —
+because the id names a record rather than a person. All three go through a single `mine` helper,
+so a new one either uses it or is visibly missing it. The refusal does not distinguish "not
+yours" from "not there", because a difference between those two enumerates other people's
+records.
+
+### The access rule the caller used to choose
+
+The performance API carried an `asSubject` request parameter deciding how much of a review to
+fill in. Anyone who wanted a reviewer's unshared rating only had to ask for it with the flag
+turned off. It is gone: `CurrentEmployee.isSelf` compares the caller's own employee record to the
+review's subject, server-side. The same now decides whether anonymous feedback shows its author.
+
+### Two things deliberately withheld
+
+- **A payslip from a run that has not been signed off.** `PeriodStatus.isVisibleToEmployee` is
+  true only once payroll has approved it. A calculated run is still being checked, and showing
+  somebody a net figure that is about to be corrected starts a conversation that cannot be taken
+  back.
+- **A review that has not been shared.** Enforced by the entity, as before, not by the route.
+
+### Local fixture change
+
+The Keycloak realm users now carry fixed ids, so a sign-in can be seeded against a particular
+person. **After pulling this you must recreate the container**, or the ids will be whatever the
+first import generated:
+
+```
+docker compose -f infra/docker-compose.yml up -d --force-recreate keycloak
+```
+
+`LocalSelfServiceSeeder` then links `operator-a` to the director and `no-roles` to an engineer —
+the second on purpose, because a portal that has only ever been opened by an administrator has
+not been tested. Writing a user account nobody has authenticated as is something an identity
+provider exists to prevent; it is acceptable only because these are development fixtures, and the
+seeder says so.
+
+---
+
+## 9. Then — TIX depth
 
 TIX can now be built on a real foundation:
 
@@ -281,7 +337,7 @@ TIX can now be built on a real foundation:
 
 ---
 
-## 9. Known open gaps
+## 10. Known open gaps
 
 | Gap | Severity | Where |
 |---|---|---|
@@ -289,6 +345,7 @@ TIX can now be built on a real foundation:
 | ~~Tokens held in browser session storage~~ | **Closed.** Moved behind a backend-for-frontend; see ADR 0003. | `frontend/src/server/` |
 | Cookie-borne session invites CSRF | Low — `SameSite=Lax` plus an explicit `Origin` check at the proxy | ADR 0003, `api/proxy` |
 | Integration tests are `@Transactional`, so anything that only fails at commit succeeds in them | Medium — it hid a 500 on five screens, then hid a payroll run that reported success and failed on commit | `ResponseMappingTest` commits and has now caught two distinct defect classes; new response records need adding to it |
+| Self-service has no profile editing: people can read their record but not correct it | Low — a change of address is an HR conversation for now | Section 8 |
 | Payroll has no proration, no corrections and no payslip document | Medium — stated in `PAYROLL_SCOPE.md` and on the screen, not hidden | Section 7 |
 | Pay component rates are unverified by anyone qualified | **High before production.** The platform holds no rates of its own; whatever a tenant configures is what people are paid. | `docs/PAYROLL_SCOPE.md` |
 | No staging or production environment, no CD | Medium | Phase 0 remainder |
@@ -298,7 +355,7 @@ TIX can now be built on a real foundation:
 
 ---
 
-## 10. Working agreement
+## 11. Working agreement
 
 - Every tenant-owned table adds its RLS policy in the same migration that creates it.
 - A module is not done until a cross-tenant isolation test proves the boundary holds.

@@ -44,8 +44,10 @@ import ai.dival.dip.modules.recruitment.InterviewMode;
 import ai.dival.dip.modules.recruitment.InterviewStage;
 import ai.dival.dip.modules.recruitment.RecruitmentController;
 import ai.dival.dip.modules.recruitment.RecruitmentService;
+import ai.dival.dip.modules.selfservice.SelfServiceController;
 import ai.dival.dip.modules.tenants.Tenant;
 import ai.dival.dip.modules.tenants.TenantRepository;
+import ai.dival.dip.modules.users.CurrentUserService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -58,6 +60,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * Builds every list response the way a real request does: outside a transaction.
@@ -99,6 +102,8 @@ class ResponseMappingTest extends AbstractIntegrationTest {
     private AttendanceService attendance;
     @Autowired
     private TimesheetService timesheets;
+    @Autowired
+    private CurrentUserService currentUser;
 
     @Autowired
     private EmployeeController employeeController;
@@ -108,6 +113,8 @@ class ResponseMappingTest extends AbstractIntegrationTest {
     private LifecycleController lifecycleController;
     @Autowired
     private LeaveController leaveController;
+    @Autowired
+    private SelfServiceController selfServiceController;
     @Autowired
     private AttendanceController attendanceController;
     @Autowired
@@ -313,10 +320,10 @@ class ResponseMappingTest extends AbstractIntegrationTest {
             assertThat(inCycle.get(0).reviewerName()).isNotBlank();
             assertThat(inCycle.get(0).cycleName()).isNotBlank();
 
-            performanceController.reviewsFor(employee.getId(), true);
+            performanceController.reviewsFor(employee.getId());
             performanceController.reviewsToWrite(manager.getId());
-            performanceController.review(review.getId(), false);
-            assertThat(performanceController.feedback(review.getId(), false)).isNotEmpty();
+            performanceController.review(review.getId());
+            assertThat(performanceController.feedback(review.getId())).isNotEmpty();
         }).doesNotThrowAnyException();
     }
 
@@ -384,5 +391,58 @@ class ResponseMappingTest extends AbstractIntegrationTest {
             payrollController.payslipsFor(employee.getId());
             payrollController.payslip(slips.get(0).id());
         }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("self-service responses map outside a transaction")
+    void selfServiceResponsesMap() {
+        // A real token, because self-service resolves the person from one. The tenant-admin
+        // principal the rest of this class uses is a plain string and would not reach the
+        // employee record behind it.
+        String subject = UUID.randomUUID().toString();
+        signInAs(subject, "Didier Lokwa");
+        employees.linkUserAccount(employee.getId(), currentUser.requireCurrentUser().getId(), null);
+
+        payrollService.setCompensation(employee.getId(), LocalDate.of(2024, 2, 5),
+                new BigDecimal("1200"), "USD", PayFrequency.MONTHLY, "Test", null);
+        PayrollPeriod period = payrollService.createPeriod("Self-service June 2026",
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30),
+                LocalDate.of(2026, 7, 5), null);
+        payrollService.calculate(period.getId(), PayFrequency.MONTHLY, null);
+        payrollService.approve(period.getId(), manager.getId(), "Checked", null);
+
+        assertThatCode(() -> {
+            assertThat(selfServiceController.me().employeeNumber()).isEqualTo("EMP-002");
+            selfServiceController.team();
+
+            // Lines and period name are both reached through associations, so this is the read
+            // most likely to break the way five screens once did.
+            var slips = selfServiceController.payslips();
+            assertThat(slips).isNotEmpty();
+            assertThat(slips.get(0).periodName()).isNotBlank();
+            assertThat(slips.get(0).lines()).isNotEmpty();
+            selfServiceController.payslip(slips.get(0).id());
+
+            selfServiceController.leaveTypes();
+            selfServiceController.leaveBalances(2026);
+            selfServiceController.leaveRequests();
+            selfServiceController.timesheets();
+            selfServiceController.attendance(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30));
+            selfServiceController.goals();
+            selfServiceController.reviews();
+            selfServiceController.training();
+        }).doesNotThrowAnyException();
+    }
+
+    /** A JWT principal, the way the resource server presents one. */
+    private void signInAs(String subject, String name) {
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "RS256")
+                .subject(subject)
+                .claim("email", subject + "@example.test")
+                .claim("name", name)
+                .build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken(jwt, "n/a", "ROLE_TENANT_ADMIN", "ROLE_EMPLOYEE"));
     }
 }

@@ -53,6 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Only routes that exist. A nav full of links to nothing makes the product feel broken and
   // makes it impossible to tell a missing feature from a bug; entries are added as they ship.
   const navigation = [
+    { href: "/app/me", label: messages.nav.myself, badge: 0 },
     { href: "/app", label: messages.nav.home, badge: 0 },
     { href: "/app/people", label: messages.nav.people, badge: 0 },
     { href: "/app/recruitment", label: messages.nav.recruitment, badge: 0 },

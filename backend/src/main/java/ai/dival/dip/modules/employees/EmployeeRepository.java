@@ -18,6 +18,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     Optional<Employee> findByTenantIdAndEmployeeNumber(UUID tenantId, String employeeNumber);
 
+    /**
+     * The employee a sign-in belongs to.
+     *
+     * <p>At most one, guaranteed by {@code uq_employee_user_account}. Two employees behind one
+     * login would make "me" a question with two answers.
+     */
+    @EntityGraph(attributePaths = {"orgUnit", "manager", "workPattern"})
+    Optional<Employee> findByTenantIdAndUserAccountId(UUID tenantId, UUID userAccountId);
+
     List<Employee> findByTenantIdAndOrgUnitId(UUID tenantId, UUID orgUnitId);
 
     List<Employee> findByTenantIdAndManagerId(UUID tenantId, UUID managerId);
