@@ -31,7 +31,7 @@ test could catch.
 | 1 — Platform | **Complete** | Tenants, authentication, roles, organization structure, users, audit, EN/FR, notifications and file storage all in. |
 | 2 — Core HR | **Complete** | Employees, reporting lines, contracts, dependents, emergency contacts, documents, expiry alerts, probation decisions and work patterns. |
 | 3 — Recruitment & onboarding | **Complete** | Requisitions, candidates, applications, interviews, offers, the hire handover into Core HR, and onboarding/offboarding checklists. |
-| 4 — Time, performance, learning | **In progress** | Time and performance are built. Learning and shift planning are not. |
+| 4 — Time, performance, learning | **Complete** | Leave, attendance, work patterns, performance and learning are all in. Shift planning is deliberately out of scope and recorded below. |
 | 5 — Payroll preparation | Not started | |
 | 6 — Employee self-service | Not started | |
 | 7 — Financial services | Not started | |
@@ -41,16 +41,16 @@ test could catch.
 
 ### What exists today
 
-- **Backend** — 31 tables across 14 migrations, 11 modules (`tenants`, `users`, `organizations`,
-  `notifications`, `files`, `employees`, `recruitment`, `lifecycle`, `leave`, `attendance`,
-  `tix`), 112 endpoints, 228 passing tests. Cross-tenant isolation and row-level security are
-  proven over raw JDBC as the unprivileged application role.
+- **Backend** — 37 tables across 16 migrations, 13 modules (`attendance`, `employees`, `files`, `learning`, `leave`, `lifecycle`, `notifications`, `organizations`, `performance`, `recruitment`, `tenants`, `tix`, `users`),
+  148 endpoints. 228 tests passing at the last verified run; the performance and
+  learning suites added since have not yet been run. Cross-tenant isolation and row-level
+  security are proven over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, and screens for the people
   directory, recruitment pipeline, onboarding and offboarding, leave balances, weekly
   attendance, organization structure, notifications and TIX verification. Bilingual
   throughout, with parity enforced in CI.
-- **Scheduled work** — contract and document expiry alerts, probation reminders, overdue
-  checklist chasing, and monthly leave accrual.
+- **Scheduled work** — contract, document and certification expiry alerts, probation
+  reminders, overdue checklist chasing, and monthly leave accrual.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
   three fixture users across two tenants, seeded demo data for every module, and a scripted
   end-to-end check.

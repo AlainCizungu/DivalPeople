@@ -23,6 +23,11 @@ import ai.dival.dip.modules.lifecycle.ChecklistType;
 import ai.dival.dip.modules.lifecycle.ItemCategory;
 import ai.dival.dip.modules.lifecycle.LifecycleController;
 import ai.dival.dip.modules.lifecycle.LifecycleService;
+import ai.dival.dip.modules.learning.Course;
+import ai.dival.dip.modules.learning.CourseEnrolment;
+import ai.dival.dip.modules.learning.DeliveryMode;
+import ai.dival.dip.modules.learning.LearningController;
+import ai.dival.dip.modules.learning.LearningService;
 import ai.dival.dip.modules.organizations.OrgUnitService;
 import ai.dival.dip.modules.performance.FeedbackRelationship;
 import ai.dival.dip.modules.performance.PerformanceController;
@@ -105,6 +110,10 @@ class ResponseMappingTest extends AbstractIntegrationTest {
     private PerformanceService performance;
     @Autowired
     private PerformanceController performanceController;
+    @Autowired
+    private LearningService learning;
+    @Autowired
+    private LearningController learningController;
 
     private UUID tenantId;
     private Employee employee;
@@ -300,6 +309,33 @@ class ResponseMappingTest extends AbstractIntegrationTest {
             performanceController.reviewsToWrite(manager.getId());
             performanceController.review(review.getId(), false);
             assertThat(performanceController.feedback(review.getId(), false)).isNotEmpty();
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("learning responses map outside a transaction")
+    void learningResponsesMap() {
+        Course course = learning.createCourse("TOWER-SAFETY", "Tower climbing safety",
+                DeliveryMode.CLASSROOM, null, "National Safety Board", 480, true, 24, 70, null);
+        CourseEnrolment enrolment = learning.enrol(employee.getId(), course.getId(),
+                LocalDate.now().minusMonths(1), null);
+        learning.complete(enrolment.getId(), LocalDate.now().minusDays(1), 85, null, null);
+
+        assertThatCode(() -> {
+            assertThat(learningController.courses(true)).isNotEmpty();
+
+            var held = learningController.enrolmentsFor(employee.getId());
+            assertThat(held).isNotEmpty();
+            // The names, not just the ids.
+            assertThat(held.get(0).employeeName()).isNotBlank();
+            assertThat(held.get(0).courseTitle()).isNotBlank();
+
+            assertThat(learningController.enrolmentsOn(course.getId())).isNotEmpty();
+            learningController.course(course.getId());
+
+            // The compliance report reaches across every employee, so it is the one most likely
+            // to touch an unfetched association.
+            learningController.compliance(LocalDate.now());
         }).doesNotThrowAnyException();
     }
 }

@@ -73,6 +73,11 @@ dip:
 
     leave-accrual-cron: ${DIP_LEAVE_ACCRUAL_CRON:0 30 5 1 * *}
 
+    # Longer than the contract window: booking a safety refresher means finding a course
+    # date and a day the person can be spared, which takes weeks rather than days.
+    certification-notice-days: ${DIP_CERTIFICATION_NOTICE_DAYS:60}
+    certification-expiry-cron: ${DIP_CERTIFICATION_EXPIRY_CRON:0 30 6 * * *}
+
   files:
     # 20 MB. Uploads are read into memory to checksum them, so this also bounds heap per request.
     max-size-bytes: ${DIP_FILES_MAX_SIZE_BYTES:20971520}
