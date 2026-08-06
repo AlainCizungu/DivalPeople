@@ -46,8 +46,8 @@ test could catch.
   proven over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, and screens for the people
   directory, recruitment pipeline, onboarding and offboarding, leave balances, weekly
-  attendance, organization structure, notifications and TIX verification. Bilingual
-  throughout, with parity enforced in CI.
+  attendance, performance, learning and compliance, organization structure, notifications
+  and TIX verification. Bilingual throughout, with parity enforced in CI.
 - **Scheduled work** — contract, document and certification expiry alerts, probation
   reminders, overdue checklist chasing, and monthly leave accrual.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,

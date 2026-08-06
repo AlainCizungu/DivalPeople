@@ -59,6 +59,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/app/lifecycle", label: messages.nav.onboarding, badge: 0 },
     { href: "/app/leave", label: messages.nav.timeAndLeave, badge: 0 },
     { href: "/app/attendance", label: messages.nav.attendance, badge: 0 },
+    { href: "/app/performance", label: messages.nav.performanceNav, badge: 0 },
+    { href: "/app/learning", label: messages.nav.learningNav, badge: 0 },
     { href: "/app/organization", label: messages.nav.organization, badge: 0 },
     { href: "/app/notifications", label: messages.nav.notifications, badge: unreadCount },
     { href: "/app/tix", label: messages.nav.tix, badge: 0 },

@@ -71,6 +71,14 @@ dip:
     # correction, and a part-timer whose week is expected to be shorter.
     seed-attendance: true
 
+    # Seeds a review cycle with reviews at different stages, including one shared and
+    # disagreed with - the case people most want to see working before trusting the module.
+    seed-performance: true
+
+    # Seeds courses and training records that produce a real compliance gap: one current
+    # ticket, one lapsed, one never sat.
+    seed-learning: true
+
     # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
     # actually crosses the tenant boundary and exercises exchange mode.
     seed-tix: true

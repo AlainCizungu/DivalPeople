@@ -432,6 +432,167 @@ export const attendanceApi = {
   },
 };
 
+export type CycleStatus = "DRAFT" | "OPEN" | "CLOSED" | "CANCELLED";
+
+export type GoalStatus =
+  | "DRAFT"
+  | "ACTIVE"
+  | "ACHIEVED"
+  | "PARTIALLY_MET"
+  | "MISSED"
+  | "CANCELLED";
+
+export type Rating =
+  | "UNSATISFACTORY"
+  | "DEVELOPING"
+  | "MEETS"
+  | "EXCEEDS"
+  | "OUTSTANDING";
+
+export type ReviewStatus =
+  | "PENDING"
+  | "IN_PROGRESS"
+  | "BOTH_SUBMITTED"
+  | "CALIBRATED"
+  | "SHARED"
+  | "ACKNOWLEDGED";
+
+export type ReviewCycle = {
+  id: string;
+  name: string;
+  periodStart: string;
+  periodEnd: string;
+  dueOn: string | null;
+  status: CycleStatus;
+};
+
+export type Goal = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  cycleId: string | null;
+  cycleName: string | null;
+  title: string;
+  description: string | null;
+  measure: string | null;
+  weight: string;
+  supportsGoalId: string | null;
+  targetDate: string | null;
+  progressPercent: number;
+  status: GoalStatus;
+  outcomeNotes: string | null;
+};
+
+/**
+ * A review, showing only what this side may see.
+ *
+ * <p>A null assessment is "not yet", not "empty" — the blind-write rule is enforced on the
+ * server and the screen has to render the difference.
+ */
+export type PerformanceReview = {
+  id: string;
+  cycleId: string;
+  cycleName: string;
+  employeeId: string;
+  employeeName: string;
+  reviewerId: string;
+  reviewerName: string;
+  selfAssessment: string | null;
+  selfSubmittedAt: string | null;
+  reviewerAssessment: string | null;
+  reviewerSubmittedAt: string | null;
+  proposedRating: Rating | null;
+  calibratedRating: Rating | null;
+  effectiveRating: Rating | null;
+  calibrationNotes: string | null;
+  status: ReviewStatus;
+  sharedAt: string | null;
+  acknowledgedAt: string | null;
+  employeeResponse: string | null;
+  employeeDisagrees: boolean;
+};
+
+export const performanceApi = {
+  cycles(): Promise<ReviewCycle[]> {
+    return request<ReviewCycle[]>("/api/v1/performance/cycles");
+  },
+
+  goals(employeeId: string): Promise<Goal[]> {
+    return request<Goal[]>(`/api/v1/performance/employees/${employeeId}/goals`);
+  },
+
+  reviewsInCycle(cycleId: string): Promise<PerformanceReview[]> {
+    return request<PerformanceReview[]>(
+      `/api/v1/performance/cycles/${cycleId}/reviews`,
+    );
+  },
+};
+
+export type DeliveryMode = "ONLINE" | "CLASSROOM" | "ON_THE_JOB" | "EXTERNAL";
+
+export type EnrolmentStatus =
+  | "ENROLLED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "FAILED"
+  | "WITHDRAWN"
+  | "EXPIRED";
+
+export type Course = {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  provider: string | null;
+  deliveryMode: DeliveryMode;
+  durationMinutes: number | null;
+  mandatory: boolean;
+  validityMonths: number | null;
+  passScore: number | null;
+  active: boolean;
+};
+
+export type CourseEnrolment = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  courseId: string;
+  courseTitle: string;
+  mandatory: boolean;
+  status: EnrolmentStatus;
+  enrolledOn: string;
+  startedAt: string | null;
+  completedOn: string | null;
+  score: number | null;
+  expiresOn: string | null;
+  certificateFileId: string | null;
+  notes: string | null;
+};
+
+/** A mandatory course and the people who do not currently hold it. */
+export type ComplianceGap = {
+  courseId: string;
+  courseTitle: string;
+  missingCount: number;
+  missing: { employeeId: string; employeeNumber: string; displayName: string }[];
+};
+
+export const learningApi = {
+  courses(): Promise<Course[]> {
+    return request<Course[]>("/api/v1/learning/courses");
+  },
+
+  enrolments(employeeId: string): Promise<CourseEnrolment[]> {
+    return request<CourseEnrolment[]>(
+      `/api/v1/learning/employees/${employeeId}/enrolments`,
+    );
+  },
+
+  compliance(): Promise<ComplianceGap[]> {
+    return request<ComplianceGap[]>("/api/v1/learning/compliance");
+  },
+};
+
 export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
 
 export type AppNotification = {

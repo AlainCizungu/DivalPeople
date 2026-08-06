@@ -19,7 +19,9 @@
     "administration": "Administration",
     "organization": "Organization",
     "notifications": "Notifications",
-    "attendance": "Attendance"
+    "attendance": "Attendance",
+    "performanceNav": "Performance",
+    "learningNav": "Learning"
   },
   "common": {
     "search": "Search",
@@ -419,7 +421,13 @@
       "checklistItemOverdue": "\"{task}\" for {employee} is {days} day(s) overdue",
       "leaveRequested": "{employee} has requested {days} day(s) from {from}",
       "leaveApproved": "Your {days} day(s) from {from} were approved",
-      "leaveRejected": "Your {days} day(s) from {from} were refused"
+      "leaveRejected": "Your {days} day(s) from {from} were refused",
+      "reviewAssigned": "You have a review to write for {employee} in {cycle}",
+      "reviewOpened": "Your {cycle} review is open",
+      "reviewBothSubmitted": "Both assessments are in for {employee} in {cycle}",
+      "reviewShared": "Your {cycle} review has been shared with you",
+      "reviewDisputed": "{employee} has disputed their {cycle} review",
+      "certificationExpiring": "{employee}'s {course} expires in {days} day(s)"
     }
   },
   "employees": {
@@ -599,6 +607,94 @@
       "BIOMETRIC": "Biometric",
       "IMPORT": "Imported",
       "MANUAL": "Entered by hand"
+    }
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Goals, review cycles and what was said",
+    "loadFailed": "Could not load performance.",
+    "cycle": "Cycle",
+    "noCycles": "No review cycles yet.",
+    "goals": "Goals",
+    "noGoals": "No goals set.",
+    "reviews": "Reviews",
+    "noReviews": "No reviews opened.",
+    "goal": "Goal",
+    "progress": "Progress",
+    "weight": "Weight",
+    "target": "Target",
+    "employee": "Employee",
+    "reviewer": "Reviewer",
+    "rating": "Rating",
+    "status": "Status",
+    "notYet": "Not yet",
+    "moderated": "Moderated from {from}",
+    "disagreed": "Disagreed",
+    "cycleStatus": {
+      "DRAFT": "Draft",
+      "OPEN": "Open",
+      "CLOSED": "Closed",
+      "CANCELLED": "Cancelled"
+    },
+    "goalStatus": {
+      "DRAFT": "Draft",
+      "ACTIVE": "Active",
+      "ACHIEVED": "Achieved",
+      "PARTIALLY_MET": "Partly met",
+      "MISSED": "Missed",
+      "CANCELLED": "Cancelled"
+    },
+    "reviewStatus": {
+      "PENDING": "Not started",
+      "IN_PROGRESS": "In progress",
+      "BOTH_SUBMITTED": "Both submitted",
+      "CALIBRATED": "Calibrated",
+      "SHARED": "Shared",
+      "ACKNOWLEDGED": "Acknowledged"
+    },
+    "rating_": {
+      "UNSATISFACTORY": "Unsatisfactory",
+      "DEVELOPING": "Developing",
+      "MEETS": "Meets",
+      "EXCEEDS": "Exceeds",
+      "OUTSTANDING": "Outstanding"
+    }
+  },
+  "learningModule": {
+    "title": "Learning",
+    "subtitle": "Courses, training records and who is not yet qualified",
+    "loadFailed": "Could not load learning.",
+    "catalogue": "Courses",
+    "noCourses": "No courses yet.",
+    "records": "Training record",
+    "noRecords": "Nothing recorded.",
+    "compliance": "Compliance gaps",
+    "noGaps": "Everybody holds every mandatory course.",
+    "course": "Course",
+    "mandatory": "Mandatory",
+    "provider": "Provider",
+    "validity": "Valid for",
+    "months": "months",
+    "completed": "Completed",
+    "expires": "Expires",
+    "score": "Score",
+    "status": "Status",
+    "missing": "Not qualified",
+    "missingCount": "{count} not qualified",
+    "never": "Does not expire",
+    "deliveryMode": {
+      "ONLINE": "Online",
+      "CLASSROOM": "Classroom",
+      "ON_THE_JOB": "On the job",
+      "EXTERNAL": "External"
+    },
+    "enrolmentStatus": {
+      "ENROLLED": "Booked",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Held",
+      "FAILED": "Not passed",
+      "WITHDRAWN": "Withdrawn",
+      "EXPIRED": "Lapsed"
     }
   }
 }

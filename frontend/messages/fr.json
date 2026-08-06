@@ -19,7 +19,9 @@
     "administration": "Administration",
     "organization": "Organisation",
     "notifications": "Notifications",
-    "attendance": "Présence"
+    "attendance": "Présence",
+    "performanceNav": "Performance",
+    "learningNav": "Formation"
   },
   "common": {
     "search": "Rechercher",
@@ -419,7 +421,13 @@
       "checklistItemOverdue": "« {task} » pour {employee} est en retard de {days} jour(s)",
       "leaveRequested": "{employee} demande {days} jour(s) à partir du {from}",
       "leaveApproved": "Vos {days} jour(s) à partir du {from} ont été approuvés",
-      "leaveRejected": "Vos {days} jour(s) à partir du {from} ont été refusés"
+      "leaveRejected": "Vos {days} jour(s) à partir du {from} ont été refusés",
+      "reviewAssigned": "Vous avez une évaluation à rédiger pour {employee} ({cycle})",
+      "reviewOpened": "Votre évaluation {cycle} est ouverte",
+      "reviewBothSubmitted": "Les deux évaluations sont soumises pour {employee} ({cycle})",
+      "reviewShared": "Votre évaluation {cycle} vous a été partagée",
+      "reviewDisputed": "{employee} conteste son évaluation {cycle}",
+      "certificationExpiring": "{course} de {employee} expire dans {days} jour(s)"
     }
   },
   "employees": {
@@ -599,6 +607,94 @@
       "BIOMETRIC": "Biométrique",
       "IMPORT": "Importé",
       "MANUAL": "Saisi manuellement"
+    }
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Objectifs, cycles d'évaluation et ce qui a été dit",
+    "loadFailed": "Impossible de charger la performance.",
+    "cycle": "Cycle",
+    "noCycles": "Aucun cycle d'évaluation.",
+    "goals": "Objectifs",
+    "noGoals": "Aucun objectif défini.",
+    "reviews": "Évaluations",
+    "noReviews": "Aucune évaluation ouverte.",
+    "goal": "Objectif",
+    "progress": "Avancement",
+    "weight": "Poids",
+    "target": "Échéance",
+    "employee": "Collaborateur",
+    "reviewer": "Évaluateur",
+    "rating": "Note",
+    "status": "Statut",
+    "notYet": "Pas encore",
+    "moderated": "Modérée depuis {from}",
+    "disagreed": "Contestée",
+    "cycleStatus": {
+      "DRAFT": "Brouillon",
+      "OPEN": "Ouvert",
+      "CLOSED": "Clos",
+      "CANCELLED": "Annulé"
+    },
+    "goalStatus": {
+      "DRAFT": "Brouillon",
+      "ACTIVE": "En cours",
+      "ACHIEVED": "Atteint",
+      "PARTIALLY_MET": "Partiellement atteint",
+      "MISSED": "Non atteint",
+      "CANCELLED": "Annulé"
+    },
+    "reviewStatus": {
+      "PENDING": "Non commencée",
+      "IN_PROGRESS": "En cours",
+      "BOTH_SUBMITTED": "Les deux soumises",
+      "CALIBRATED": "Calibrée",
+      "SHARED": "Partagée",
+      "ACKNOWLEDGED": "Accusée réception"
+    },
+    "rating_": {
+      "UNSATISFACTORY": "Insuffisant",
+      "DEVELOPING": "En progression",
+      "MEETS": "Conforme",
+      "EXCEEDS": "Au-dessus",
+      "OUTSTANDING": "Exceptionnel"
+    }
+  },
+  "learningModule": {
+    "title": "Formation",
+    "subtitle": "Cours, historique et qui n'est pas encore qualifié",
+    "loadFailed": "Impossible de charger les formations.",
+    "catalogue": "Cours",
+    "noCourses": "Aucun cours.",
+    "records": "Historique de formation",
+    "noRecords": "Rien d'enregistré.",
+    "compliance": "Écarts de conformité",
+    "noGaps": "Tout le monde détient chaque formation obligatoire.",
+    "course": "Cours",
+    "mandatory": "Obligatoire",
+    "provider": "Organisme",
+    "validity": "Valable",
+    "months": "mois",
+    "completed": "Terminé",
+    "expires": "Expire",
+    "score": "Note",
+    "status": "Statut",
+    "missing": "Non qualifié",
+    "missingCount": "{count} non qualifié(s)",
+    "never": "N'expire pas",
+    "deliveryMode": {
+      "ONLINE": "En ligne",
+      "CLASSROOM": "En salle",
+      "ON_THE_JOB": "En situation",
+      "EXTERNAL": "Externe"
+    },
+    "enrolmentStatus": {
+      "ENROLLED": "Inscrit",
+      "IN_PROGRESS": "En cours",
+      "COMPLETED": "Détenu",
+      "FAILED": "Non réussi",
+      "WITHDRAWN": "Retiré",
+      "EXPIRED": "Expiré"
     }
   }
 }
