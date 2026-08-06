@@ -25,14 +25,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     typeof profile?.tenant_id === "string" ? profile.tenant_id : undefined;
 
   const navigation = [
-    { href: "/", label: messages.nav.home },
-    { href: "/people", label: messages.nav.people },
-    { href: "/recruitment", label: messages.nav.recruitment },
-    { href: "/time-and-leave", label: messages.nav.timeAndLeave },
-    { href: "/payroll", label: messages.nav.payroll },
-    { href: "/fraud-intelligence", label: messages.nav.fraudIntelligence },
-    { href: "/tix", label: messages.nav.tix },
-    { href: "/reports", label: messages.nav.reports },
+    { href: "/app", label: messages.nav.home },
+    { href: "/app/people", label: messages.nav.people },
+    { href: "/app/recruitment", label: messages.nav.recruitment },
+    { href: "/app/time-and-leave", label: messages.nav.timeAndLeave },
+    { href: "/app/payroll", label: messages.nav.payroll },
+    { href: "/app/fraud-intelligence", label: messages.nav.fraudIntelligence },
+    { href: "/app/tix", label: messages.nav.tix },
+    { href: "/app/reports", label: messages.nav.reports },
   ];
 
   return (
@@ -41,10 +41,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         aria-label={messages.app.name}
         className="hidden w-64 shrink-0 flex-col border-r border-line bg-white md:flex"
       >
-        <div className="flex items-center gap-2 border-b border-line px-5 py-4">
+        <Link href="/" className="flex items-center gap-2 border-b border-line px-5 py-4">
           <BrandMark size={26} />
           <span className="text-lg font-bold text-navy">{messages.app.name}</span>
-        </div>
+        </Link>
 
         <ul className="flex-1 space-y-0.5 p-3">
           {navigation.map((item) => {

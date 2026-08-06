@@ -1,31 +1,45 @@
 "use client";
 
 import { useMessages } from "@/i18n/LocaleProvider";
+import { LandingHeader } from "@/components/landing/LandingHeader";
+import { Hero } from "@/components/landing/Hero";
+import {
+  FinalCta,
+  FinancialSection,
+  FraudSection,
+  IndustriesSection,
+  LandingFooter,
+  LifecycleSection,
+  PlatformSection,
+  QuickLinks,
+} from "@/components/landing/sections";
 
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-line bg-white p-5">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-1 text-3xl font-bold text-navy tabular-nums">{value}</p>
-    </div>
-  );
-}
-
-export default function DashboardPage() {
+/**
+ * Public marketing page. No authentication required — the product lives under /app.
+ */
+export default function LandingPage() {
   const messages = useMessages();
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-navy">{messages.dashboard.title}</h1>
-        <p className="mt-1 text-muted">{messages.dashboard.subtitle}</p>
-      </header>
+    <div className="bg-white">
+      <p className="bg-blue px-4 py-2.5 text-center text-sm font-semibold text-white">
+        {messages.landing.announce}
+      </p>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <MetricCard label={messages.dashboard.totalEmployees} value="2,486" />
-        <MetricCard label={messages.dashboard.payrollAccuracy} value="99.4%" />
-        <MetricCard label={messages.dashboard.openAlerts} value="18" />
-      </div>
+      <LandingHeader />
+
+      <main>
+        <Hero />
+        <QuickLinks />
+        <PlatformSection />
+        <LifecycleSection />
+        <FinancialSection />
+        <FraudSection />
+        <IndustriesSection />
+        <FinalCta />
+      </main>
+
+      <LandingFooter />
     </div>
   );
 }

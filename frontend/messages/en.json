@@ -61,5 +61,283 @@
     "signInPrompt": "Sign in to continue to your workspace.",
     "errorTitle": "Sign-in failed",
     "sessionExpired": "Your session has expired. Please sign in again."
+  },
+  "landing": {
+    "announce": "Prototype: bilingual HR, workforce intelligence, financial services, and fraud prevention.",
+    "nav": {
+      "platform": "Platform",
+      "hr": "HR Solutions",
+      "financial": "Financial Services",
+      "industries": "Industries",
+      "security": "Security"
+    },
+    "actions": {
+      "signIn": "Sign in",
+      "dashboard": "Go to dashboard",
+      "requestDemo": "Request demo",
+      "seePlatform": "See the platform",
+      "exploreCapabilities": "Explore capabilities"
+    },
+    "hero": {
+      "eyebrow": "Dival Intelligence Platform",
+      "title": "One platform for your people, intelligence, and growth.",
+      "body": "Manage the employee lifecycle, connect workers to financial benefits, automate HR operations, and protect your organization with AI-powered fraud and anomaly detection.",
+      "checks": [
+        "English + Français",
+        "Cloud or private deployment",
+        "Built for Africa"
+      ]
+    },
+    "board": {
+      "title": "Workforce Intelligence",
+      "subtitle": "Executive overview",
+      "period": "August 2026",
+      "totalEmployees": "Total Employees",
+      "payrollAccuracy": "Payroll Accuracy",
+      "openAlerts": "Open Alerts"
+    },
+    "quick": [
+      "Employee Management",
+      "Salary Advances",
+      "Fraud Intelligence",
+      "Bank & NGO Editions",
+      "AI Workforce Insights"
+    ],
+    "platform": {
+      "eyebrow": "Built on DIP",
+      "title": "A modular platform that grows with your organization.",
+      "body": "Start with core HR. Add employee financial services, fraud prevention, sector compliance, analytics, and AI as your needs grow.",
+      "cards": [
+        {
+          "badge": "HR",
+          "title": "Core HR & Employee Records",
+          "body": "Digital employee files, contracts, departments, branches, document tracking, workflows, and role-based access.",
+          "more": "Explore Core HR"
+        },
+        {
+          "badge": "AI",
+          "title": "AI Workforce Intelligence",
+          "body": "Turnover signals, contract alerts, staffing insights, policy assistance, workforce forecasting, and executive reporting.",
+          "more": "Explore AI insights"
+        },
+        {
+          "badge": "$",
+          "title": "Employee Financial Services",
+          "body": "Salary advances, affordable credit, health insurance, savings products, benefits, and payroll-connected services.",
+          "more": "Explore financial services"
+        },
+        {
+          "badge": "!",
+          "title": "Fraud & Anomaly Prevention",
+          "body": "Detect ghost employees, duplicate identities, suspicious payroll changes, conflicts of interest, and unusual activity.",
+          "more": "Explore fraud intelligence"
+        }
+      ]
+    },
+    "lifecycle": {
+      "eyebrow": "Complete Employee Lifecycle",
+      "title": "Everything HR teams need. One connected experience.",
+      "tiles": [
+        {
+          "tag": "Hire",
+          "title": "Recruitment & Onboarding",
+          "body": "Applicant tracking, interviews, offers, background checks, and digital onboarding."
+        },
+        {
+          "tag": "Manage",
+          "title": "Time, Leave & Attendance",
+          "body": "Leave requests, shifts, overtime, country calendars, approvals, and attendance."
+        },
+        {
+          "tag": "Develop",
+          "title": "Performance & Learning",
+          "body": "Goals, reviews, probation, skills, training compliance, and succession planning."
+        },
+        {
+          "tag": "Pay",
+          "title": "Payroll Preparation",
+          "body": "Salaries, deductions, allowances, bonuses, bank exports, payslips, and approvals."
+        },
+        {
+          "tag": "Serve",
+          "title": "Employee Self-Service",
+          "body": "Mobile-friendly access to payslips, leave, documents, benefits, and policies."
+        },
+        {
+          "tag": "Automate",
+          "title": "Workflow Automation",
+          "body": "Approvals for hiring, promotion, travel, expenses, contracts, and disciplinary cases."
+        }
+      ]
+    },
+    "financial": {
+      "eyebrow": "Employee Financial Wellbeing",
+      "title": "Connect workers to financial services through the workplace.",
+      "body": "Give employees access to responsible financial products while employers retain secure, governed administration.",
+      "feature": {
+        "eyebrow": "Embedded Financial Services",
+        "title": "Turn payroll into a gateway to financial wellbeing.",
+        "body": "Partner with banks, insurers, and regulated lenders to offer salary-linked products directly within Dival People.",
+        "cta": "Explore partner model"
+      },
+      "minis": [
+        {
+          "title": "Salary Advances",
+          "body": "Controlled access to earned wages and employer-approved advances."
+        },
+        {
+          "title": "Affordable Credit",
+          "body": "Connect employees to responsible banks and microfinance partners."
+        },
+        {
+          "title": "Health Insurance",
+          "body": "Compare plans, enroll dependents, and manage contributions."
+        },
+        {
+          "title": "Savings & Benefits",
+          "body": "Support savings plans, pensions, and financial education."
+        }
+      ]
+    },
+    "fraud": {
+      "eyebrow": "Fraud Intelligence",
+      "title": "Built-in protection for banks, telecoms, NGOs, and regulated organizations.",
+      "body": "Dival People identifies suspicious patterns and routes them for human review without replacing compliance or investigative judgment.",
+      "checks": [
+        "Ghost employee detection",
+        "Duplicate identity alerts",
+        "Payroll anomaly monitoring",
+        "Conflict-of-interest checks"
+      ],
+      "cta": "See fraud controls",
+      "panel": {
+        "title": "Risk & Compliance Review",
+        "openAlerts": "18 open alerts",
+        "high": "High",
+        "review": "Review",
+        "clear": "Clear",
+        "rows": [
+          {
+            "name": "Possible duplicate bank account",
+            "area": "Payroll"
+          },
+          {
+            "name": "Employee identity similarity",
+            "area": "Identity"
+          },
+          {
+            "name": "Contract expiration approaching",
+            "area": "Compliance"
+          },
+          {
+            "name": "Unusual salary override",
+            "area": "Payroll"
+          },
+          {
+            "name": "Training compliance completed",
+            "area": "Learning"
+          }
+        ]
+      }
+    },
+    "industries": {
+      "eyebrow": "Industry Editions",
+      "title": "One platform. Tailored for each organization.",
+      "body": "Deploy specialized workflows, controls, and analytics on the same DIP foundation.",
+      "cards": [
+        {
+          "badge": "BANK",
+          "title": "Financial Services",
+          "body": "HR, compliance training, insider-risk controls, background verification, and payroll anomaly detection.",
+          "more": "Explore banking edition"
+        },
+        {
+          "badge": "NGO",
+          "title": "NGOs & Development",
+          "body": "Grant staffing, project timesheets, consultant records, contract alerts, safeguarding, and donor reporting.",
+          "more": "Explore NGO edition"
+        },
+        {
+          "badge": "TELCO",
+          "title": "Telecommunications",
+          "body": "Workforce management, compliance, employee fraud controls, and the TIX customer risk exchange.",
+          "more": "Explore telecom edition"
+        },
+        {
+          "badge": "GOV",
+          "title": "Government",
+          "body": "Workforce records, controlled approvals, audit trails, document compliance, and public-sector reporting.",
+          "more": "Explore government edition"
+        },
+        {
+          "badge": "HEALTH",
+          "title": "Healthcare",
+          "body": "Credential tracking, shifts, clinical training compliance, workforce planning, and secure employee records.",
+          "more": "Explore healthcare edition"
+        },
+        {
+          "badge": "ENT",
+          "title": "Enterprise",
+          "body": "A flexible edition for education, insurance, mining, logistics, and multi-country employers.",
+          "more": "Explore enterprise edition"
+        }
+      ]
+    },
+    "finalCta": {
+      "title": "Ready to visualize Dival People inside your organization?",
+      "body": "Start with a guided prototype and configure the first industry edition around a real workflow.",
+      "button": "Request a prototype demo"
+    },
+    "footer": {
+      "columns": [
+        {
+          "title": "Dival People",
+          "links": [
+            "Overview",
+            "Core HR",
+            "Payroll",
+            "Self-Service"
+          ]
+        },
+        {
+          "title": "Intelligence",
+          "links": [
+            "AI Assistant",
+            "Fraud Prevention",
+            "Analytics",
+            "Compliance"
+          ]
+        },
+        {
+          "title": "Industries",
+          "links": [
+            "Financial Services",
+            "NGOs",
+            "Telecom",
+            "Government"
+          ]
+        },
+        {
+          "title": "Company",
+          "links": [
+            "About Dival AI",
+            "Insights",
+            "Partners",
+            "Contact"
+          ]
+        },
+        {
+          "title": "Language",
+          "links": [
+            "English",
+            "Français",
+            "Privacy",
+            "Security"
+          ]
+        }
+      ],
+      "copyright": "© 2026 Dival AI. Prototype concept.",
+      "builtOn": "Built on the Dival Intelligence Platform (DIP)."
+    }
   }
 }

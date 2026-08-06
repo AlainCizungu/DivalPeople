@@ -16,9 +16,10 @@ export const oidcConfig: AuthProviderProps = {
     process.env.NEXT_PUBLIC_OIDC_AUTHORITY ?? "http://localhost:8081/realms/dip",
   client_id: process.env.NEXT_PUBLIC_OIDC_CLIENT_ID ?? "dip-local",
   redirect_uri:
-    process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI ?? "http://localhost:3000/",
+    process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI ?? "http://localhost:3000/app",
+  // Signing out returns to the public landing page, not back into the product.
   post_logout_redirect_uri:
-    process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI ?? "http://localhost:3000/",
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000/",
   response_type: "code",
   scope: "openid profile email",
   automaticSilentRenew: true,

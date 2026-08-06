@@ -61,5 +61,283 @@
     "signInPrompt": "Connectez-vous pour accéder à votre espace de travail.",
     "errorTitle": "Échec de la connexion",
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
+  },
+  "landing": {
+    "announce": "Prototype : RH bilingues, intelligence du personnel, services financiers et prévention de la fraude.",
+    "nav": {
+      "platform": "Plateforme",
+      "hr": "Solutions RH",
+      "financial": "Services financiers",
+      "industries": "Secteurs",
+      "security": "Sécurité"
+    },
+    "actions": {
+      "signIn": "Se connecter",
+      "dashboard": "Accéder au tableau de bord",
+      "requestDemo": "Demander une démo",
+      "seePlatform": "Découvrir la plateforme",
+      "exploreCapabilities": "Explorer les fonctionnalités"
+    },
+    "hero": {
+      "eyebrow": "Dival Intelligence Platform",
+      "title": "Une plateforme pour vos équipes, votre intelligence et votre croissance.",
+      "body": "Gérez le cycle de vie des employés, connectez vos collaborateurs aux avantages financiers, automatisez les opérations RH et protégez votre organisation grâce à la détection de la fraude et des anomalies par IA.",
+      "checks": [
+        "English + Français",
+        "Cloud ou déploiement privé",
+        "Conçu pour l'Afrique"
+      ]
+    },
+    "board": {
+      "title": "Intelligence du personnel",
+      "subtitle": "Vue d'ensemble",
+      "period": "Août 2026",
+      "totalEmployees": "Effectif total",
+      "payrollAccuracy": "Exactitude de la paie",
+      "openAlerts": "Alertes ouvertes"
+    },
+    "quick": [
+      "Gestion du personnel",
+      "Avances sur salaire",
+      "Prévention de la fraude",
+      "Éditions Banque & ONG",
+      "Analyses RH par IA"
+    ],
+    "platform": {
+      "eyebrow": "Bâti sur DIP",
+      "title": "Une plateforme modulaire qui grandit avec votre organisation.",
+      "body": "Commencez par les RH essentielles. Ajoutez les services financiers, la prévention de la fraude, la conformité sectorielle, l'analytique et l'IA au fil de vos besoins.",
+      "cards": [
+        {
+          "badge": "RH",
+          "title": "RH & dossiers du personnel",
+          "body": "Dossiers numériques, contrats, départements, agences, suivi documentaire, flux de travail et accès par rôle.",
+          "more": "Découvrir les RH essentielles"
+        },
+        {
+          "badge": "IA",
+          "title": "Intelligence RH par IA",
+          "body": "Signaux de départ, alertes de contrats, analyses d'effectifs, assistance sur les politiques, prévisions et rapports de direction.",
+          "more": "Découvrir les analyses IA"
+        },
+        {
+          "badge": "$",
+          "title": "Services financiers aux employés",
+          "body": "Avances sur salaire, crédit abordable, assurance santé, épargne, avantages et services adossés à la paie.",
+          "more": "Découvrir les services financiers"
+        },
+        {
+          "badge": "!",
+          "title": "Prévention de la fraude et des anomalies",
+          "body": "Détectez les employés fictifs, les identités dupliquées, les modifications de paie suspectes et les conflits d'intérêts.",
+          "more": "Découvrir la prévention de la fraude"
+        }
+      ]
+    },
+    "lifecycle": {
+      "eyebrow": "Cycle de vie complet de l'employé",
+      "title": "Tout ce dont les équipes RH ont besoin. Une expérience unifiée.",
+      "tiles": [
+        {
+          "tag": "Recruter",
+          "title": "Recrutement & intégration",
+          "body": "Suivi des candidatures, entretiens, offres, vérifications et intégration numérique."
+        },
+        {
+          "tag": "Gérer",
+          "title": "Temps, congés & présence",
+          "body": "Demandes de congés, équipes, heures supplémentaires, calendriers par pays, approbations et présence."
+        },
+        {
+          "tag": "Développer",
+          "title": "Performance & formation",
+          "body": "Objectifs, évaluations, période d'essai, compétences, conformité des formations et plans de succession."
+        },
+        {
+          "tag": "Payer",
+          "title": "Préparation de la paie",
+          "body": "Salaires, retenues, indemnités, primes, exports bancaires, bulletins et approbations."
+        },
+        {
+          "tag": "Servir",
+          "title": "Libre-service employé",
+          "body": "Accès mobile aux bulletins, congés, documents, avantages et politiques internes."
+        },
+        {
+          "tag": "Automatiser",
+          "title": "Automatisation des flux",
+          "body": "Approbations pour embauches, promotions, déplacements, frais, contrats et procédures disciplinaires."
+        }
+      ]
+    },
+    "financial": {
+      "eyebrow": "Bien-être financier des employés",
+      "title": "Connectez vos collaborateurs aux services financiers via l'employeur.",
+      "body": "Offrez à vos employés des produits financiers responsables tout en conservant une administration sécurisée et encadrée.",
+      "feature": {
+        "eyebrow": "Services financiers intégrés",
+        "title": "Faites de la paie une porte d'entrée vers le bien-être financier.",
+        "body": "Associez-vous à des banques, assureurs et prêteurs régulés pour proposer des produits adossés au salaire directement dans Dival People.",
+        "cta": "Découvrir le modèle partenaire"
+      },
+      "minis": [
+        {
+          "title": "Avances sur salaire",
+          "body": "Accès encadré au salaire acquis et aux avances approuvées par l'employeur."
+        },
+        {
+          "title": "Crédit abordable",
+          "body": "Mise en relation avec des banques et institutions de microfinance responsables."
+        },
+        {
+          "title": "Assurance santé",
+          "body": "Comparez les offres, inscrivez les ayants droit et gérez les cotisations."
+        },
+        {
+          "title": "Épargne & avantages",
+          "body": "Plans d'épargne, pensions et éducation financière."
+        }
+      ]
+    },
+    "fraud": {
+      "eyebrow": "Prévention de la fraude",
+      "title": "Une protection intégrée pour les banques, télécoms, ONG et organisations régulées.",
+      "body": "Dival People identifie les schémas suspects et les oriente vers une revue humaine, sans se substituer au jugement des équipes de conformité.",
+      "checks": [
+        "Détection des employés fictifs",
+        "Alertes d'identités dupliquées",
+        "Surveillance des anomalies de paie",
+        "Contrôle des conflits d'intérêts"
+      ],
+      "cta": "Voir les contrôles anti-fraude",
+      "panel": {
+        "title": "Revue des risques et de la conformité",
+        "openAlerts": "18 alertes ouvertes",
+        "high": "Élevé",
+        "review": "À revoir",
+        "clear": "Conforme",
+        "rows": [
+          {
+            "name": "Compte bancaire potentiellement dupliqué",
+            "area": "Paie"
+          },
+          {
+            "name": "Similarité d'identité entre employés",
+            "area": "Identité"
+          },
+          {
+            "name": "Échéance de contrat proche",
+            "area": "Conformité"
+          },
+          {
+            "name": "Modification de salaire inhabituelle",
+            "area": "Paie"
+          },
+          {
+            "name": "Formation de conformité terminée",
+            "area": "Formation"
+          }
+        ]
+      }
+    },
+    "industries": {
+      "eyebrow": "Éditions sectorielles",
+      "title": "Une plateforme. Adaptée à chaque organisation.",
+      "body": "Déployez des flux, contrôles et analyses spécialisés sur la même fondation DIP.",
+      "cards": [
+        {
+          "badge": "BANQUE",
+          "title": "Services financiers",
+          "body": "RH, formations de conformité, contrôle du risque interne, vérifications et détection des anomalies de paie.",
+          "more": "Découvrir l'édition bancaire"
+        },
+        {
+          "badge": "ONG",
+          "title": "ONG & développement",
+          "body": "Personnel sur financement, feuilles de temps projet, consultants, alertes de contrats et rapports aux bailleurs.",
+          "more": "Découvrir l'édition ONG"
+        },
+        {
+          "badge": "TÉLÉCOM",
+          "title": "Télécommunications",
+          "body": "Gestion du personnel de terrain, conformité, contrôles anti-fraude et échange des risques clients TIX.",
+          "more": "Découvrir l'édition télécom"
+        },
+        {
+          "badge": "GOUV",
+          "title": "Secteur public",
+          "body": "Dossiers du personnel, approbations encadrées, pistes d'audit, conformité documentaire et reporting public.",
+          "more": "Découvrir l'édition publique"
+        },
+        {
+          "badge": "SANTÉ",
+          "title": "Santé",
+          "body": "Suivi des accréditations, plannings, conformité des formations cliniques et planification des effectifs.",
+          "more": "Découvrir l'édition santé"
+        },
+        {
+          "badge": "ENT",
+          "title": "Entreprise",
+          "body": "Une édition flexible pour l'éducation, l'assurance, les mines, la logistique et les employeurs multi-pays.",
+          "more": "Découvrir l'édition entreprise"
+        }
+      ]
+    },
+    "finalCta": {
+      "title": "Prêt à visualiser Dival People dans votre organisation ?",
+      "body": "Commencez par un prototype guidé et configurez la première édition sectorielle autour d'un flux réel.",
+      "button": "Demander une démo du prototype"
+    },
+    "footer": {
+      "columns": [
+        {
+          "title": "Dival People",
+          "links": [
+            "Présentation",
+            "RH essentielles",
+            "Paie",
+            "Libre-service"
+          ]
+        },
+        {
+          "title": "Intelligence",
+          "links": [
+            "Assistant IA",
+            "Prévention de la fraude",
+            "Analytique",
+            "Conformité"
+          ]
+        },
+        {
+          "title": "Secteurs",
+          "links": [
+            "Services financiers",
+            "ONG",
+            "Télécom",
+            "Secteur public"
+          ]
+        },
+        {
+          "title": "Entreprise",
+          "links": [
+            "À propos de Dival AI",
+            "Analyses",
+            "Partenaires",
+            "Contact"
+          ]
+        },
+        {
+          "title": "Langue",
+          "links": [
+            "English",
+            "Français",
+            "Confidentialité",
+            "Sécurité"
+          ]
+        }
+      ],
+      "copyright": "© 2026 Dival AI. Concept prototype.",
+      "builtOn": "Bâti sur la Dival Intelligence Platform (DIP)."
+    }
   }
 }
