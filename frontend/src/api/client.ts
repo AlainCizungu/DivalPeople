@@ -272,6 +272,88 @@ export const lifecycleApi = {
   },
 };
 
+export type LeaveRequestStatus = "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELLED";
+
+export type LedgerEntryType =
+  | "OPENING"
+  | "ACCRUAL"
+  | "GRANT"
+  | "TAKEN"
+  | "RETURNED"
+  | "ADJUSTMENT"
+  | "LAPSED";
+
+/** Every figure that goes into the total, so the number is never taken on trust. */
+export type LeaveBalance = {
+  id: string;
+  employeeId: string;
+  leaveTypeId: string;
+  leaveTypeName: string;
+  leaveYear: number;
+  openingDays: string;
+  accruedDays: string;
+  takenDays: string;
+  pendingDays: string;
+  adjustmentDays: string;
+  availableDays: string;
+};
+
+export type LeaveRequest = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  leaveTypeId: string;
+  leaveTypeName: string;
+  startDate: string;
+  endDate: string;
+  halfDayStart: boolean;
+  halfDayEnd: boolean;
+  days: string;
+  reason: string | null;
+  status: LeaveRequestStatus;
+  approverId: string | null;
+  approverName: string | null;
+  decidedAt: string | null;
+  decisionNotes: string | null;
+};
+
+export type LeaveLedgerEntry = {
+  id: string;
+  entryType: LedgerEntryType;
+  days: string;
+  requestId: string | null;
+  reason: string | null;
+  createdAt: string;
+};
+
+export const leaveApi = {
+  balances(employeeId: string, accessToken: string, year?: number): Promise<LeaveBalance[]> {
+    const query = year === undefined ? "" : `?year=${year}`;
+    return request<LeaveBalance[]>(
+      `/api/v1/leave/employees/${employeeId}/balances${query}`,
+      accessToken,
+    );
+  },
+
+  requests(employeeId: string, accessToken: string): Promise<LeaveRequest[]> {
+    return request<LeaveRequest[]>(
+      `/api/v1/leave/employees/${employeeId}/requests`,
+      accessToken,
+    );
+  },
+
+  pending(accessToken: string): Promise<LeaveRequest[]> {
+    return request<LeaveRequest[]>("/api/v1/leave/requests/pending", accessToken);
+  },
+
+  ledger(balanceId: string, accessToken: string): Promise<LeaveLedgerEntry[]> {
+    return request<LeaveLedgerEntry[]>(
+      `/api/v1/leave/balances/${balanceId}/ledger`,
+      accessToken,
+    );
+  },
+};
+
 export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
 
 export type AppNotification = {

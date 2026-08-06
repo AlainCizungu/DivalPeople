@@ -415,7 +415,10 @@
       "welcome": "Bienvenue chez {tenant}",
       "documentExpiring": "Le document « {document} » de {employee} expire dans {days} jours",
       "probationEnding": "La période d'essai de {employee} se termine dans {days} jour(s) sans décision enregistrée",
-      "checklistItemOverdue": "« {task} » pour {employee} est en retard de {days} jour(s)"
+      "checklistItemOverdue": "« {task} » pour {employee} est en retard de {days} jour(s)",
+      "leaveRequested": "{employee} demande {days} jour(s) à partir du {from}",
+      "leaveApproved": "Vos {days} jour(s) à partir du {from} ont été approuvés",
+      "leaveRejected": "Vos {days} jour(s) à partir du {from} ont été refusés"
     }
   },
   "employees": {
@@ -520,5 +523,44 @@
       "OTHER": "Autre"
     },
     "status": "Statut"
+  },
+  "leave": {
+    "title": "Congés",
+    "subtitle": "Soldes, demandes et absences en cours",
+    "loadFailed": "Impossible de charger les congés.",
+    "balances": "Soldes",
+    "noBalances": "Aucun droit enregistré pour cette année.",
+    "requests": "Demandes",
+    "noRequests": "Aucune demande de congé.",
+    "pendingQueue": "En attente de décision",
+    "available": "Disponible",
+    "opening": "Report",
+    "accrued": "Acquis",
+    "taken": "Pris",
+    "pending": "Réservé",
+    "adjustment": "Régularisations",
+    "days": "jours",
+    "dates": "Dates",
+    "type": "Type",
+    "status": "Statut",
+    "approver": "Décidé par",
+    "reason": "Motif",
+    "halfDay": "demi-journée",
+    "to": "au",
+    "requestStatus": {
+      "SUBMITTED": "En attente de décision",
+      "APPROVED": "Approuvée",
+      "REJECTED": "Refusée",
+      "CANCELLED": "Retirée"
+    },
+    "ledger": {
+      "OPENING": "Report",
+      "ACCRUAL": "Acquis",
+      "GRANT": "Attribué",
+      "TAKEN": "Pris",
+      "RETURNED": "Restitué",
+      "ADJUSTMENT": "Régularisation",
+      "LAPSED": "Expiré"
+    }
   }
 }

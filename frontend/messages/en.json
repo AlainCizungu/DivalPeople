@@ -415,7 +415,10 @@
       "welcome": "Welcome to {tenant}",
       "documentExpiring": "{employee}'s {document} expires in {days} days",
       "probationEnding": "Probation for {employee} ends in {days} day(s) with no decision recorded",
-      "checklistItemOverdue": "\"{task}\" for {employee} is {days} day(s) overdue"
+      "checklistItemOverdue": "\"{task}\" for {employee} is {days} day(s) overdue",
+      "leaveRequested": "{employee} has requested {days} day(s) from {from}",
+      "leaveApproved": "Your {days} day(s) from {from} were approved",
+      "leaveRejected": "Your {days} day(s) from {from} were refused"
     }
   },
   "employees": {
@@ -520,5 +523,44 @@
       "OTHER": "Other"
     },
     "status": "Status"
+  },
+  "leave": {
+    "title": "Leave",
+    "subtitle": "Balances, requests and who is off",
+    "loadFailed": "Could not load leave.",
+    "balances": "Balances",
+    "noBalances": "No entitlements recorded for this year.",
+    "requests": "Requests",
+    "noRequests": "No leave requested yet.",
+    "pendingQueue": "Awaiting a decision",
+    "available": "Available",
+    "opening": "Brought forward",
+    "accrued": "Accrued",
+    "taken": "Taken",
+    "pending": "Reserved",
+    "adjustment": "Adjustments",
+    "days": "days",
+    "dates": "Dates",
+    "type": "Type",
+    "status": "Status",
+    "approver": "Decided by",
+    "reason": "Reason",
+    "halfDay": "half day",
+    "to": "to",
+    "requestStatus": {
+      "SUBMITTED": "Awaiting a decision",
+      "APPROVED": "Approved",
+      "REJECTED": "Refused",
+      "CANCELLED": "Withdrawn"
+    },
+    "ledger": {
+      "OPENING": "Brought forward",
+      "ACCRUAL": "Accrued",
+      "GRANT": "Granted",
+      "TAKEN": "Taken",
+      "RETURNED": "Returned",
+      "ADJUSTMENT": "Adjustment",
+      "LAPSED": "Lapsed"
+    }
   }
 }

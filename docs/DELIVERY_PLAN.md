@@ -172,7 +172,31 @@ Still open in Phase 3:
 
 ---
 
-## 6. Then — TIX depth
+## 6. Phase 4 — time and leave
+
+Chosen ahead of performance and learning because payroll in Phase 5 cannot be built without leave
+balances, and because it is the feature HR staff touch every day.
+
+| Item | State |
+|---|---|
+| Working-day arithmetic | **Done.** Weekends and per-tenant public holidays are not charged, half days come off either end, and a half day marked on a Saturday takes nothing off — it would otherwise subtract half a day that was never charged. This is the arithmetic people check, and getting it wrong quietly takes days from them. |
+| Balances and ledger | **Done.** A running total alongside an append-only ledger. The total is what the overdraft check reads; the ledger is why it says what it says. `leave_ledger_entry` has no UPDATE grant — corrections are further entries, never edits, because a balance that can be quietly rewritten is worth nothing in a dispute. |
+| Requests and approvals | **Done.** Days are reserved on **submission**, not approval: two pending requests that each fit the balance could otherwise both be approved, and the person finds out months later. Nobody approves their own leave. A refusal must carry a reason. Leave that has already started cannot be cancelled away — that is a correction somebody makes deliberately. |
+| Accrual | **Done.** The monthly job tops people up to what they should have by now rather than adding a slice and hoping it ran exactly once. Running twice adds nothing; a missed month catches up on its own. A mid-year joiner accrues from their hire date. |
+| Carryover | **Done.** Capped, with the lapsed remainder written as its own ledger entry. Somebody who loses six days at year end is entitled to see that it happened. |
+
+Known limits, recorded rather than hidden:
+
+- The working week is configuration, not a per-employee pattern. Somebody on a four-day week is
+  charged as though they work five. **This is wrong for part-time staff and needs fixing before
+  the module is trusted for payroll.**
+- A leave year is a calendar year. A tenant whose year starts in April cannot be served yet;
+  requests crossing 31 December are refused rather than silently split.
+- Attendance, shifts and overtime are not built. Only leave is.
+
+---
+
+## 7. Then — TIX depth
 
 TIX can now be built on a real foundation:
 

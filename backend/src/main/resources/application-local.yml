@@ -61,6 +61,10 @@ dip:
     # overdue reminder scan has something real to find.
     seed-lifecycle: true
 
+    # Seeds leave types, the DRC holiday calendar, entitlements and two requests - one still
+    # awaiting a decision, so the approval queue is not empty.
+    seed-leave: true
+
     # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
     # actually crosses the tenant boundary and exercises exchange mode.
     seed-tix: true
