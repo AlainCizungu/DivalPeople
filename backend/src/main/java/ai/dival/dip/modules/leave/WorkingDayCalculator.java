@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.leave;
 
 import ai.dival.dip.common.tenancy.TenantContext;
+import ai.dival.dip.modules.employees.WorkPattern;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -16,13 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
  * How many days a stretch of dates actually costs somebody.
  *
  * <p>This is the arithmetic people check. A system that charges a full week for Monday to Friday
- * over Easter, or counts a Saturday, is quietly taking days from them — the kind of bug nobody
- * reports and everybody resents. Weekends and public holidays are free; half days at either end
- * cost half.
+ * over Easter, or counts a Saturday, or bills somebody on a four-day week for five days, is
+ * quietly taking days from them — the kind of bug nobody reports and everybody resents.
  *
- * <p>The working week is configuration rather than a per-employee pattern. That is a real
- * limitation: somebody on a four-day week is charged as though they work five. Per-employee work
- * patterns are recorded in the delivery plan and are not pretended at here.
+ * <p>Three things reduce what a day costs: the office being closed for a public holiday, the
+ * person not working that weekday, and a half day marked at either end. A day already free is not
+ * discounted twice.
  */
 @Component
 public class WorkingDayCalculator {
@@ -30,25 +30,29 @@ public class WorkingDayCalculator {
     private static final BigDecimal HALF = new BigDecimal("0.5");
 
     private final PublicHolidayRepository holidays;
-    private final Set<DayOfWeek> workingDays;
+
+    /** Used for anybody with no pattern of their own, which is most people. */
+    private final Set<DayOfWeek> defaultWorkingDays;
+
+    private final BigDecimal fullTimeWeeklyDays;
 
     public WorkingDayCalculator(PublicHolidayRepository holidays,
                                 @Value("${dip.hr.working-days:MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY}")
-                                List<DayOfWeek> workingDays) {
+                                List<DayOfWeek> defaultWorkingDays) {
         this.holidays = holidays;
-        this.workingDays = workingDays.isEmpty()
+        this.defaultWorkingDays = defaultWorkingDays.isEmpty()
                 ? EnumSet.range(DayOfWeek.MONDAY, DayOfWeek.FRIDAY)
-                : EnumSet.copyOf(workingDays);
+                : EnumSet.copyOf(defaultWorkingDays);
+        this.fullTimeWeeklyDays = BigDecimal.valueOf(this.defaultWorkingDays.size());
     }
 
     /**
-     * Working days between two dates inclusive, minus any half days.
+     * What a stretch of dates costs the person with this pattern.
      *
-     * <p>A half day only comes off when that end is itself a working day. Marking a Saturday
-     * start as a half day would otherwise subtract half a day that was never charged.
+     * @param pattern how much of a week they work; null means full time on the default week
      */
     @Transactional(readOnly = true)
-    public BigDecimal countDays(LocalDate start, LocalDate end,
+    public BigDecimal countDays(WorkPattern pattern, LocalDate start, LocalDate end,
                                 boolean halfDayStart, boolean halfDayEnd) {
         if (start == null || end == null) {
             throw new IllegalArgumentException("A leave request needs a start and an end date");
@@ -61,25 +65,54 @@ public class WorkingDayCalculator {
 
         BigDecimal days = BigDecimal.ZERO;
         for (LocalDate day = start; !day.isAfter(end); day = day.plusDays(1)) {
-            if (isWorkingDay(day, closed)) {
-                days = days.add(BigDecimal.ONE);
-            }
+            days = days.add(fractionOn(pattern, day, closed));
         }
 
-        if (halfDayStart && isWorkingDay(start, closed)) {
-            days = days.subtract(HALF);
+        // Half of whatever that day was worth, not a flat half day: somebody who works Wednesday
+        // mornings and takes that morning off has used a quarter of a normal day, and charging
+        // them half would take more than they had.
+        if (halfDayStart) {
+            days = days.subtract(fractionOn(pattern, start, closed).multiply(HALF));
         }
-        // A single-day request marked as a half day at both ends is still half a day, not zero.
-        if (halfDayEnd && !end.equals(start) && isWorkingDay(end, closed)) {
-            days = days.subtract(HALF);
+        // A single-day request marked at both ends is still half that day, not zero.
+        if (halfDayEnd && !end.equals(start)) {
+            days = days.subtract(fractionOn(pattern, end, closed).multiply(HALF));
         }
 
         return days.max(BigDecimal.ZERO);
     }
 
-    /** True when the office is open and the calendar is not closed. */
-    public boolean isWorkingDay(LocalDate day, Set<LocalDate> closedDates) {
-        return workingDays.contains(day.getDayOfWeek()) && !closedDates.contains(day);
+    /** Full time on the default working week. */
+    @Transactional(readOnly = true)
+    public BigDecimal countDays(LocalDate start, LocalDate end,
+                                boolean halfDayStart, boolean halfDayEnd) {
+        return countDays(null, start, end, halfDayStart, halfDayEnd);
+    }
+
+    /**
+     * What one calendar date is worth to this person: nothing when the office is closed or they
+     * do not work that day, otherwise their share of it.
+     */
+    public BigDecimal fractionOn(WorkPattern pattern, LocalDate day, Set<LocalDate> closedDates) {
+        if (closedDates.contains(day)) {
+            return BigDecimal.ZERO;
+        }
+        if (pattern == null) {
+            return defaultWorkingDays.contains(day.getDayOfWeek())
+                    ? BigDecimal.ONE
+                    : BigDecimal.ZERO;
+        }
+        return pattern.fractionOn(day.getDayOfWeek());
+    }
+
+    /**
+     * The share of a full-time entitlement this pattern earns.
+     *
+     * <p>Pro-rating both sides is what keeps it fair: four fifths of the days, and a week off
+     * costs four. A part-timer and a full-timer end up with the same number of weeks away.
+     */
+    public BigDecimal shareOfFullTime(WorkPattern pattern) {
+        return pattern == null ? BigDecimal.ONE : pattern.shareOfFullTime(fullTimeWeeklyDays);
     }
 
     @Transactional(readOnly = true)
@@ -90,7 +123,11 @@ public class WorkingDayCalculator {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
-    public Set<DayOfWeek> getWorkingDays() {
-        return Set.copyOf(workingDays);
+    public Set<DayOfWeek> getDefaultWorkingDays() {
+        return Set.copyOf(defaultWorkingDays);
+    }
+
+    public BigDecimal getFullTimeWeeklyDays() {
+        return fullTimeWeeklyDays;
     }
 }

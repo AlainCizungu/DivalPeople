@@ -185,14 +185,18 @@ balances, and because it is the feature HR staff touch every day.
 | Accrual | **Done.** The monthly job tops people up to what they should have by now rather than adding a slice and hoping it ran exactly once. Running twice adds nothing; a missed month catches up on its own. A mid-year joiner accrues from their hire date. |
 | Carryover | **Done.** Capped, with the lapsed remainder written as its own ledger entry. Somebody who loses six days at year end is entitled to see that it happened. |
 
+| Work patterns | **Done**, and it closed a real defect. The working week was tenant-wide configuration, so somebody on four days was charged five for a week off *and* accrued a full entitlement — a quarter of their leave taken by a default. Each employee can now carry a pattern giving every weekday a fraction. Both sides scale: four fifths of the entitlement, four days for a week off, so a part-timer gets the same number of weeks away as anybody else. A half day comes off in proportion to the day worked, because half of half a day is a quarter. |
+
 Known limits, recorded rather than hidden:
 
-- The working week is configuration, not a per-employee pattern. Somebody on a four-day week is
-  charged as though they work five. **This is wrong for part-time staff and needs fixing before
-  the module is trusted for payroll.**
 - A leave year is a calendar year. A tenant whose year starts in April cannot be served yet;
   requests crossing 31 December are refused rather than silently split.
 - Attendance, shifts and overtime are not built. Only leave is.
+- Work patterns have no history. Changing somebody's pattern changes future requests and future
+  accrual but leaves past requests at the days they were charged — correct, but it means a
+  mid-year change to a part-time contract does not pro-rate the year they are in. That needs
+  effective-dated patterns, which payroll will want anyway.
+- Work patterns can be created and assigned through the API but have no screen yet.
 
 ---
 

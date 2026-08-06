@@ -5,6 +5,7 @@ import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -92,6 +93,30 @@ public class EmployeeController {
         return EmployeeDetail.from(employees.assignToOrgUnit(id, request.orgUnitId(), actorId()));
     }
 
+    @GetMapping("/work-patterns")
+    @PreAuthorize(HR_WRITE)
+    public List<WorkPatternResponse> workPatterns() {
+        return employees.listWorkPatterns().stream().map(WorkPatternResponse::from).toList();
+    }
+
+    @PostMapping("/work-patterns")
+    @PreAuthorize(HR_WRITE)
+    public ResponseEntity<WorkPatternResponse> createWorkPattern(
+            @Valid @RequestBody WorkPatternRequest request) {
+        WorkPattern created = employees.createWorkPattern(request.code(), request.name(),
+                request.week(), actorId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(WorkPatternResponse.from(created));
+    }
+
+    /** Null clears the pattern, putting somebody back on the default working week. */
+    @PostMapping("/{id}/work-pattern")
+    @PreAuthorize(HR_WRITE)
+    public EmployeeDetail setWorkPattern(@PathVariable UUID id,
+                                         @RequestBody WorkPatternAssignment request) {
+        return EmployeeDetail.from(
+                employees.setWorkPattern(id, request.workPatternId(), actorId()));
+    }
+
     @PostMapping("/{id}/manager")
     @PreAuthorize(HR_WRITE)
     public EmployeeDetail setManager(@PathVariable UUID id, @RequestBody ManagerRequest request) {
@@ -157,6 +182,16 @@ public class EmployeeController {
     public record ManagerRequest(UUID managerId) {
     }
 
+    /** @param week seven fractions, Monday first: 1 for a full day, 0.5 for a half, 0 for none */
+    public record WorkPatternRequest(
+            @NotBlank String code,
+            @NotBlank String name,
+            @NotNull BigDecimal[] week) {
+    }
+
+    public record WorkPatternAssignment(UUID workPatternId) {
+    }
+
     public record TerminateRequest(@NotNull LocalDate terminationDate) {
     }
 
@@ -212,6 +247,8 @@ public class EmployeeController {
             LocalDate terminationDate,
             UUID orgUnitId,
             UUID managerId,
+            UUID workPatternId,
+            String workPatternName,
             UUID userAccountId) {
 
         static EmployeeDetail from(Employee employee) {
@@ -230,7 +267,40 @@ public class EmployeeController {
                     employee.getTerminationDate(),
                     employee.getOrgUnit() == null ? null : employee.getOrgUnit().getId(),
                     employee.getManager() == null ? null : employee.getManager().getId(),
+                    employee.getWorkPattern() == null ? null : employee.getWorkPattern().getId(),
+                    employee.getWorkPattern() == null ? null : employee.getWorkPattern().getName(),
                     employee.getUserAccountId());
+        }
+    }
+
+    public record WorkPatternResponse(
+            UUID id,
+            String code,
+            String name,
+            BigDecimal monday,
+            BigDecimal tuesday,
+            BigDecimal wednesday,
+            BigDecimal thursday,
+            BigDecimal friday,
+            BigDecimal saturday,
+            BigDecimal sunday,
+            BigDecimal weeklyDays,
+            boolean active) {
+
+        static WorkPatternResponse from(WorkPattern pattern) {
+            return new WorkPatternResponse(
+                    pattern.getId(),
+                    pattern.getCode(),
+                    pattern.getName(),
+                    pattern.getMonday(),
+                    pattern.getTuesday(),
+                    pattern.getWednesday(),
+                    pattern.getThursday(),
+                    pattern.getFriday(),
+                    pattern.getSaturday(),
+                    pattern.getSunday(),
+                    pattern.weeklyDays(),
+                    pattern.isActive());
         }
     }
 

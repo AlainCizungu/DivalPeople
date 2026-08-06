@@ -60,6 +60,17 @@ public class Employee extends TenantOwnedEntity {
     @JoinColumn(name = "manager_id")
     private Employee manager;
 
+    /**
+     * How much of a week this person works.
+     *
+     * <p>Null means full time on the tenant's configured working week. Nullable rather than
+     * mandatory because making it required would have meant inventing a pattern for everybody
+     * already on file, and a migration that guesses at somebody's contract is worse than a null.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "work_pattern_id")
+    private WorkPattern workPattern;
+
     /** The employee's login, when they have one. Stored as an id to avoid coupling the modules. */
     @Column(name = "user_account_id")
     private UUID userAccountId;
@@ -118,6 +129,10 @@ public class Employee extends TenantOwnedEntity {
 
     public void assignTo(OrgUnit orgUnit) {
         this.orgUnit = orgUnit;
+    }
+
+    public void setWorkPattern(WorkPattern workPattern) {
+        this.workPattern = workPattern;
     }
 
     /** Cycle detection lives in the service, which can walk the whole chain. */
@@ -185,6 +200,10 @@ public class Employee extends TenantOwnedEntity {
 
     public OrgUnit getOrgUnit() {
         return orgUnit;
+    }
+
+    public WorkPattern getWorkPattern() {
+        return workPattern;
     }
 
     public Employee getManager() {

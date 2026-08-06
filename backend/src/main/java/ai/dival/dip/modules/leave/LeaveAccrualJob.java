@@ -6,6 +6,7 @@ import ai.dival.dip.modules.employees.EmployeeService;
 import ai.dival.dip.modules.tenants.Tenant;
 import ai.dival.dip.modules.tenants.TenantService;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -33,16 +34,19 @@ public class LeaveAccrualJob {
     private final LeaveTypeRepository types;
     private final LeaveBalanceRepository balanceRepository;
     private final EmployeeService employees;
+    private final WorkingDayCalculator calculator;
     private final TransactionTemplate transactionTemplate;
 
     public LeaveAccrualJob(TenantService tenants, LeaveBalanceService balances,
                            LeaveTypeRepository types, LeaveBalanceRepository balanceRepository,
-                           EmployeeService employees, TransactionTemplate transactionTemplate) {
+                           EmployeeService employees, WorkingDayCalculator calculator,
+                           TransactionTemplate transactionTemplate) {
         this.tenants = tenants;
         this.balances = balances;
         this.types = types;
         this.balanceRepository = balanceRepository;
         this.employees = employees;
+        this.calculator = calculator;
         this.transactionTemplate = transactionTemplate;
     }
 
@@ -107,6 +111,10 @@ public class LeaveAccrualJob {
      * <p>Somebody hired in March has earned nine months by December, not twelve. Counting from
      * the later of the hire date and the start of the year is what makes a mid-year joiner's
      * first balance honest.
+     *
+     * <p>The result is then scaled by how much of a week they work. Someone on four days earns
+     * four fifths of the entitlement — and a week off costs them four days rather than five, so
+     * both sides scale and they get the same number of weeks away as anybody else.
      */
     private boolean topUp(Employee employee, LeaveType type, LocalDate asOf) {
         int year = asOf.getYear();
@@ -127,7 +135,9 @@ public class LeaveAccrualJob {
             return false;
         }
 
-        BigDecimal earned = type.accrualForMonths(months);
+        BigDecimal earned = type.accrualForMonths(months)
+                .multiply(calculator.shareOfFullTime(employee.getWorkPattern()))
+                .setScale(2, RoundingMode.HALF_UP);
         LeaveBalance balance =
                 balanceRepository.findByTenantIdAndEmployeeIdAndLeaveTypeIdAndLeaveYear(
                                 TenantContext.require(), employee.getId(), type.getId(), year)

@@ -3,6 +3,8 @@ package ai.dival.dip.dev;
 import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.employees.Employee;
 import ai.dival.dip.modules.employees.EmployeeRepository;
+import ai.dival.dip.modules.employees.EmployeeService;
+import ai.dival.dip.modules.employees.WorkPattern;
 import ai.dival.dip.modules.leave.AccrualMethod;
 import ai.dival.dip.modules.leave.LeaveBalanceService;
 import ai.dival.dip.modules.leave.LeaveRequest;
@@ -12,6 +14,7 @@ import ai.dival.dip.modules.leave.LeaveTypeRepository;
 import ai.dival.dip.modules.leave.LedgerEntryType;
 import ai.dival.dip.modules.leave.PublicHolidayService;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -47,17 +50,19 @@ public class LocalLeaveSeeder implements ApplicationRunner {
     private final PublicHolidayService holidays;
     private final LeaveTypeRepository types;
     private final EmployeeRepository employees;
+    private final EmployeeService employeeService;
     private final TransactionTemplate transactionTemplate;
 
     public LocalLeaveSeeder(LeaveBalanceService balances, LeaveRequestService requests,
                             PublicHolidayService holidays, LeaveTypeRepository types,
-                            EmployeeRepository employees,
+                            EmployeeRepository employees, EmployeeService employeeService,
                             TransactionTemplate transactionTemplate) {
         this.balances = balances;
         this.requests = requests;
         this.holidays = holidays;
         this.types = types;
         this.employees = employees;
+        this.employeeService = employeeService;
         this.transactionTemplate = transactionTemplate;
     }
 
@@ -106,6 +111,18 @@ public class LocalLeaveSeeder implements ApplicationRunner {
                 return;
             }
 
+            // The analyst works four days a week. Seeded so the part-time arithmetic is
+            // visible on screen rather than only in a test: their entitlement is four fifths of
+            // everybody else's, and a week off will cost them four days.
+            WorkPattern fourDay = employeeService.createWorkPattern("4-DAY", "Four-day week",
+                    new BigDecimal[] {
+                            BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
+                            BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO},
+                    null);
+            if (analyst != null) {
+                employeeService.setWorkPattern(analyst.getId(), fourDay.getId(), null);
+            }
+
             // Annual leave accrues monthly, so credit what has actually been earned by now
             // rather than the whole year. Granting twelve months in August would show everybody
             // holding days they have not worked for, which is exactly what the accrual method
@@ -117,7 +134,11 @@ public class LocalLeaveSeeder implements ApplicationRunner {
                 if (employee == null) {
                     continue;
                 }
-                balances.grant(employee.getId(), annual.getId(), year, earned,
+                BigDecimal share = employee.getWorkPattern() == null
+                        ? BigDecimal.ONE
+                        : employee.getWorkPattern().shareOfFullTime(new BigDecimal("5"));
+                balances.grant(employee.getId(), annual.getId(), year,
+                        earned.multiply(share).setScale(2, RoundingMode.HALF_UP),
                         LedgerEntryType.ACCRUAL, monthsSoFar + " month(s) accrued", null);
                 balances.grant(employee.getId(), sick.getId(), year, new BigDecimal("12"),
                         LedgerEntryType.GRANT, year + " entitlement", null);
@@ -136,7 +157,8 @@ public class LocalLeaveSeeder implements ApplicationRunner {
                     takenFrom.plusDays(2), false, true, "Long weekend", null, null);
             requests.approve(taken.getId(), director.getId(), null, null);
 
-            log.info("Seeded 3 leave types, 9 holidays and 2 requests for operator A");
+            log.info("Seeded 3 leave types, 9 holidays, a four-day pattern and 2 requests "
+                    + "for operator A");
         }));
     }
 

@@ -6,6 +6,7 @@ import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.organizations.OrgUnit;
 import ai.dival.dip.modules.organizations.OrgUnitService;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -26,13 +27,16 @@ public class EmployeeService {
     private final EmployeeRepository employees;
     private final EmploymentContractRepository contracts;
     private final OrgUnitService orgUnits;
+    private final WorkPatternRepository patterns;
     private final AuditService audit;
 
     public EmployeeService(EmployeeRepository employees, EmploymentContractRepository contracts,
-                           OrgUnitService orgUnits, AuditService audit) {
+                           OrgUnitService orgUnits, WorkPatternRepository patterns,
+                           AuditService audit) {
         this.employees = employees;
         this.contracts = contracts;
         this.orgUnits = orgUnits;
+        this.patterns = patterns;
         this.audit = audit;
     }
 
@@ -137,6 +141,63 @@ public class EmployeeService {
         return employee;
     }
 
+    // --- work patterns -----------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public List<WorkPattern> listWorkPatterns() {
+        return patterns.findByTenantIdOrderByNameAsc(TenantContext.require());
+    }
+
+    @Transactional(readOnly = true)
+    public WorkPattern workPattern(UUID id) {
+        return patterns.findByIdAndTenantId(id, TenantContext.require())
+                .orElseThrow(() -> new WorkPatternNotFoundException(id));
+    }
+
+    @Transactional
+    public WorkPattern createWorkPattern(String code, String name, BigDecimal[] week,
+                                         UUID actorId) {
+        UUID tenantId = TenantContext.require();
+
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("A work pattern needs a name");
+        }
+        if (week == null || week.length != 7) {
+            throw new IllegalArgumentException(
+                    "A work pattern needs a fraction for each of the seven days");
+        }
+        String normalized = WorkPattern.normalizeCode(code);
+        if (normalized.isBlank()) {
+            throw new IllegalArgumentException("A work pattern code is required");
+        }
+        if (patterns.findByTenantIdAndCode(tenantId, normalized).isPresent()) {
+            throw new ConflictException("Work pattern code already in use: " + normalized);
+        }
+
+        WorkPattern pattern = new WorkPattern(normalized, name);
+        pattern.setWeek(week[0], week[1], week[2], week[3], week[4], week[5], week[6]);
+
+        WorkPattern saved = patterns.save(pattern);
+        audit.recordSuccess("WORK_PATTERN_CREATED", "WorkPattern",
+                saved.getId().toString(), actorId);
+        return saved;
+    }
+
+    /**
+     * Puts somebody on a work pattern, or back on the default week.
+     *
+     * <p>Changing this changes what future leave costs them and what they accrue. It does not
+     * touch leave already requested: those requests stored the days they were charged, and
+     * rewriting history because a contract changed today would be worse than the inconsistency.
+     */
+    @Transactional
+    public Employee setWorkPattern(UUID id, UUID workPatternId, UUID actorId) {
+        Employee employee = get(id);
+        employee.setWorkPattern(workPatternId == null ? null : workPattern(workPatternId));
+        audit.recordSuccess("EMPLOYEE_WORK_PATTERN_SET", "Employee", id.toString(), actorId);
+        return employee;
+    }
+
     /** Links a login to this employee, so self-service can find the right record. */
     @Transactional
     public Employee linkUserAccount(UUID id, UUID userAccountId, UUID actorId) {
@@ -176,6 +237,12 @@ public class EmployeeService {
     public static class EmployeeNotFoundException extends ResourceNotFoundException {
         public EmployeeNotFoundException(UUID id) {
             super("Employee not found: " + id);
+        }
+    }
+
+    public static class WorkPatternNotFoundException extends ResourceNotFoundException {
+        public WorkPatternNotFoundException(UUID id) {
+            super("Work pattern not found: " + id);
         }
     }
 

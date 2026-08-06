@@ -112,9 +112,13 @@ public class LeaveRequestService {
                             + clashes.get(0).getStartDate());
         }
 
-        BigDecimal days = calculator.countDays(start, end, halfDayStart, halfDayEnd);
+        // Charged against this person's own week. Somebody on four days must not be billed
+        // five for a week off.
+        BigDecimal days = calculator.countDays(
+                employee.getWorkPattern(), start, end, halfDayStart, halfDayEnd);
         if (days.signum() <= 0) {
-            // Every day in the range was a weekend or a holiday. Recording a zero-day absence
+            // Every day in the range was a holiday, a weekend, or a day they do not work.
+            // Recording a zero-day absence
             // would leave a request nobody can approve and a balance nobody charged.
             throw new ConflictException(
                     "That range contains no working days");
