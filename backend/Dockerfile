@@ -26,9 +26,15 @@ COPY src ./src
 # and a build that silently skips its tests is worse than one that never had them.
 RUN ./gradlew --no-daemon bootJar -x test
 
+# Renamed before extracting, and that is not cosmetic. The tools jarmode keeps the source jar's
+# name for the thin jar it puts in the application layer, so extracting
+# dip-backend-0.1.0-SNAPSHOT.jar gives a runtime image whose entrypoint has to know the project
+# version. Copying to a fixed name first makes the entrypoint stable across releases.
+RUN cp build/libs/*.jar application.jar
+
 # Unpacked so the layers below can be cached separately: dependencies change rarely, application
 # classes change every commit.
-RUN java -Djarmode=tools -jar build/libs/*.jar extract --layers --destination extracted
+RUN java -Djarmode=tools -jar application.jar extract --layers --destination extracted
 
 # --- runtime -----------------------------------------------------------------
 FROM eclipse-temurin:21.0.6_7-jre-jammy AS runtime
@@ -62,4 +68,8 @@ ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
 HEALTHCHECK --interval=15s --timeout=3s --start-period=60s --retries=3 \
     CMD ["/bin/sh", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"status\":\"UP\"' <&3"]
 
-ENTRYPOINT ["/bin/sh", "-c", "exec java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+# `-jar application.jar`, not the JarLauncher class. Boot 3.3 replaced the layertools jarmode
+# with tools, and the application layer it produces is a thin jar whose manifest resolves the
+# dependency layers through its Class-Path. Naming the launcher class directly is the old
+# layout and fails with ClassNotFoundException.
+ENTRYPOINT ["/bin/sh", "-c", "exec java $JAVA_OPTS -jar application.jar"]

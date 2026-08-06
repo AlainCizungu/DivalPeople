@@ -239,10 +239,15 @@ docker run --rm \
   dip-frontend:test
 ```
 
-It must exit before it listens, not on the first request. That is what `src/instrumentation.ts`
+It must exit during start-up, not on the first request. That is what `src/instrumentation.ts`
 is for: a container that exits immediately is caught by whoever deployed it, while they are still
 watching. One that starts healthy and fails on the first real request is caught by a user, and
 looks like an outage rather than a typo.
+
+Note that Next.js prints `✓ Ready` **before** running the instrumentation hook, so the output
+reads as though it started successfully and then changed its mind. It did not serve anything —
+`Failed to prepare server` follows and the process exits. Judge it by the exit code, not by the
+Ready line.
 
 ---
 
