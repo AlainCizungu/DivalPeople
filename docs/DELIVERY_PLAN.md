@@ -27,9 +27,8 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 - **Backend** — 31 tables across 14 migrations, 11 modules (`tenants`, `users`, `organizations`,
   `notifications`, `files`, `employees`, `recruitment`, `lifecycle`, `leave`, `attendance`,
-  `tix`), 112 endpoints. 197 tests passing at the last verified run; the attendance suites
-  added since have not yet been run. Cross-tenant isolation and row-level security are proven
-  over raw JDBC as the unprivileged application role.
+  `tix`), 112 endpoints, 223 passing tests. Cross-tenant isolation and row-level security are
+  proven over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, and screens for the people
   directory, recruitment pipeline, onboarding and offboarding, leave balances, weekly
   attendance, organization structure, notifications and TIX verification. Bilingual
