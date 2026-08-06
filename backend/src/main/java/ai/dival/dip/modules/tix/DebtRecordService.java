@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.tix;
 
 import ai.dival.dip.common.audit.AuditService;
+import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import java.util.List;
 import java.util.UUID;
@@ -61,7 +62,7 @@ public class DebtRecordService {
     }
 
     /** Deliberately does not reveal whether the record exists under another tenant. */
-    public static class DebtRecordNotFoundException extends RuntimeException {
+    public static class DebtRecordNotFoundException extends ResourceNotFoundException {
         public DebtRecordNotFoundException(UUID id) {
             super("Debt record not found: " + id);
         }

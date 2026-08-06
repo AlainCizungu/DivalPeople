@@ -1,9 +1,9 @@
 package ai.dival.dip.common.web;
 
+import ai.dival.dip.common.error.AccessRefusedException;
+import ai.dival.dip.common.error.ConflictException;
+import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
-import ai.dival.dip.modules.tenants.TenantService;
-import ai.dival.dip.modules.tix.DebtRecordService;
-import ai.dival.dip.modules.users.CurrentUserService;
 import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +17,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * Translates exceptions into a stable error shape.
  *
- * <p>Messages are intentionally generic. An error response must not reveal whether a record
- * exists under a different tenant, which would turn a 404 into an enumeration oracle.
+ * <p>Handles the abstractions in {@code common.error} rather than the concrete exceptions modules
+ * throw, so the web layer needs to know nothing about debt records or tenants. That keeps the
+ * dependency pointing one way and is enforced by {@code scripts/check_architecture.py}.
+ *
+ * <p>Messages are deliberately generic except for conflicts. An error response must not reveal
+ * whether a record exists under a different tenant, which would turn a 404 into an enumeration
+ * oracle.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,12 +42,28 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of("VALIDATION_FAILED", "The request payload is not valid"));
     }
 
-    @ExceptionHandler(DebtRecordService.DebtRecordNotFoundException.class)
-    public ResponseEntity<ApiError> handleNotFound(DebtRecordService.DebtRecordNotFoundException ex) {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiError.of("NOT_FOUND", "The requested resource was not found"));
     }
 
+    /** A conflict is the caller's to resolve, so the reason is safe and useful to return. */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("CONFLICT", ex.getMessage()));
+    }
+
+    /** A refusal decided by the domain. Logged, because it should not happen in normal operation. */
+    @ExceptionHandler(AccessRefusedException.class)
+    public ResponseEntity<ApiError> handleAccessRefused(AccessRefusedException ex) {
+        log.warn("Refused a request: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of("FORBIDDEN", "You do not have permission to perform this action"));
+    }
+
+    /** A refusal decided by Spring Security's declarative role checks. */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -54,30 +75,6 @@ public class GlobalExceptionHandler {
         log.warn("Tenant-scoped operation reached without a bound tenant");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiError.of("TENANT_REQUIRED", "Authentication is required"));
-    }
-
-    /**
-     * A token whose tenant claim disagrees with the stored record for that identity. Treated as
-     * forbidden and logged, because it should be impossible in normal operation.
-     */
-    @ExceptionHandler(CurrentUserService.TenantMismatchException.class)
-    public ResponseEntity<ApiError> handleTenantMismatch(CurrentUserService.TenantMismatchException ex) {
-        log.warn("Rejected a request whose token tenant disagrees with the stored user record");
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiError.of("FORBIDDEN", "You do not have permission to perform this action"));
-    }
-
-    @ExceptionHandler(TenantService.TenantNotFoundException.class)
-    public ResponseEntity<ApiError> handleTenantNotFound(TenantService.TenantNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiError.of("NOT_FOUND", "The requested resource was not found"));
-    }
-
-    /** A slug clash is the caller's to resolve, so the reason is safe and useful to return. */
-    @ExceptionHandler(TenantService.SlugAlreadyUsedException.class)
-    public ResponseEntity<ApiError> handleSlugTaken(TenantService.SlugAlreadyUsedException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiError.of("SLUG_ALREADY_USED", ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

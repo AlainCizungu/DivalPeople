@@ -16,7 +16,8 @@
     "fraudIntelligence": "Fraud Intelligence",
     "tix": "Telecom Exchange",
     "reports": "Reports",
-    "administration": "Administration"
+    "administration": "Administration",
+    "organization": "Organization"
   },
   "common": {
     "search": "Search",
@@ -375,6 +376,22 @@
           "No autonomous employment, credit, insurance, fraud or payroll decisions"
         ]
       }
+    }
+  },
+  "org": {
+    "title": "Organization structure",
+    "subtitle": "Legal entities, branches, departments, cost centers and locations",
+    "empty": "No organization structure yet.",
+    "emptyHint": "A tenant administrator can create the first legal entity.",
+    "loadFailed": "Could not load the organization structure.",
+    "inactive": "Inactive",
+    "unitCount": "units",
+    "type": {
+      "LEGAL_ENTITY": "Legal entity",
+      "BRANCH": "Branch",
+      "DEPARTMENT": "Department",
+      "COST_CENTER": "Cost center",
+      "LOCATION": "Location"
     }
   }
 }

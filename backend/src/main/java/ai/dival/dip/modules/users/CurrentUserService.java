@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.users;
 
+import ai.dival.dip.common.error.AccessRefusedException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import java.util.List;
 import java.util.Optional;
@@ -134,8 +135,13 @@ public class CurrentUserService {
         return subject.length() <= 6 ? "******" : "…" + subject.substring(subject.length() - 6);
     }
 
-    /** The token's tenant claim disagrees with the stored record for this identity. */
-    public static class TenantMismatchException extends IllegalStateException {
+    /**
+     * The token's tenant claim disagrees with the stored record for this identity.
+     *
+     * <p>Not an {@code IllegalStateException}: {@link #currentUserIdOrNull()} treats those as
+     * "no user available" and returns null, which would silently swallow a genuine refusal.
+     */
+    public static class TenantMismatchException extends AccessRefusedException {
         public TenantMismatchException(String subject) {
             super("Authenticated subject belongs to a different tenant than the request context");
         }

@@ -16,7 +16,8 @@
     "fraudIntelligence": "Prévention de la fraude",
     "tix": "Échange télécoms",
     "reports": "Rapports",
-    "administration": "Administration"
+    "administration": "Administration",
+    "organization": "Organisation"
   },
   "common": {
     "search": "Rechercher",
@@ -375,6 +376,22 @@
           "Aucune décision autonome en matière d'emploi, de crédit, d'assurance, de fraude ou de paie"
         ]
       }
+    }
+  },
+  "org": {
+    "title": "Structure organisationnelle",
+    "subtitle": "Entités juridiques, agences, départements, centres de coûts et sites",
+    "empty": "Aucune structure organisationnelle pour le moment.",
+    "emptyHint": "Un administrateur du locataire peut créer la première entité juridique.",
+    "loadFailed": "Impossible de charger la structure organisationnelle.",
+    "inactive": "Inactif",
+    "unitCount": "unités",
+    "type": {
+      "LEGAL_ENTITY": "Entité juridique",
+      "BRANCH": "Agence",
+      "DEPARTMENT": "Département",
+      "COST_CENTER": "Centre de coûts",
+      "LOCATION": "Site"
     }
   }
 }

@@ -1,4 +1,4 @@
-package ai.dival.dip.common.dev;
+package ai.dival.dip.dev;
 
 import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.tix.DebtRecord;

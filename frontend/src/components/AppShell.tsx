@@ -24,15 +24,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const tenantId =
     typeof profile?.tenant_id === "string" ? profile.tenant_id : undefined;
 
+  // Only routes that exist. A nav full of links to nothing makes the product feel broken and
+  // makes it impossible to tell a missing feature from a bug; entries are added as they ship.
   const navigation = [
     { href: "/app", label: messages.nav.home },
-    { href: "/app/people", label: messages.nav.people },
-    { href: "/app/recruitment", label: messages.nav.recruitment },
-    { href: "/app/time-and-leave", label: messages.nav.timeAndLeave },
-    { href: "/app/payroll", label: messages.nav.payroll },
-    { href: "/app/fraud-intelligence", label: messages.nav.fraudIntelligence },
+    { href: "/app/organization", label: messages.nav.organization },
     { href: "/app/tix", label: messages.nav.tix },
-    { href: "/app/reports", label: messages.nav.reports },
   ];
 
   return (

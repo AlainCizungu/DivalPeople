@@ -1,6 +1,8 @@
 package ai.dival.dip.modules.tenants;
 
 import ai.dival.dip.common.audit.AuditService;
+import ai.dival.dip.common.error.ConflictException;
+import ai.dival.dip.common.error.ResourceNotFoundException;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -130,13 +132,13 @@ public class TenantService {
         }
     }
 
-    public static class TenantNotFoundException extends RuntimeException {
+    public static class TenantNotFoundException extends ResourceNotFoundException {
         public TenantNotFoundException(UUID id) {
             super("Tenant not found: " + id);
         }
     }
 
-    public static class SlugAlreadyUsedException extends RuntimeException {
+    public static class SlugAlreadyUsedException extends ConflictException {
         public SlugAlreadyUsedException(String slug) {
             super("Slug already in use: " + slug);
         }

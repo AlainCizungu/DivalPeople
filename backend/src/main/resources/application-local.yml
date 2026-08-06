@@ -46,6 +46,9 @@ dip:
     # operator-a and operator-b users in infra/keycloak/realm-dip.json.
     seed-tenants: true
 
+    # Seeds a small organisation tree per tenant so the structure screen has something to show.
+    seed-organization: true
+
     # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
     # actually crosses the tenant boundary and exercises exchange mode.
     seed-tix: true

@@ -57,8 +57,20 @@ cd backend  && ./gradlew test            # backend tests, includes tenant isolat
 cd backend  && ./gradlew bootRun         # run API on :8080
 cd frontend && npm run typecheck         # TypeScript
 cd frontend && npm run build             # production build
-docker compose -f infra/docker-compose.yml up -d
+python3 scripts/check_architecture.py    # module boundaries and RLS policies
+./infra/dev.sh up && ./infra/dev.sh check
 ```
+
+## What is actually enforced
+
+Three of the rules below are checked by `scripts/check_architecture.py`, which runs in CI:
+
+1. `common/` never imports from `modules/` — shared code is the foundation, not a peer.
+2. No module imports another module's repository — go through its service.
+3. Every tenant-owned table has a row-level security policy with both `USING` and `WITH CHECK`.
+
+Composition code that must know about modules — the local seeders, for instance — lives in
+`dev/`, a sibling of `common/` and `modules/`, not inside `common/`.
 
 ## Non-negotiables for every change
 

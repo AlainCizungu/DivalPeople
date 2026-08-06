@@ -12,8 +12,8 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
-| 1 — Platform | **~70%** | Authentication, role mapping, audit write path, EN/FR, tenant entity, isolation tests and the users module are in. Organization structure, notifications and file storage are not. |
-| 2 — Core HR | Not started | Blocked on Phase 1 users and organization structure. |
+| 1 — Platform | **~80%** | Authentication, role mapping, audit, EN/FR, tenants, users and organization structure are in. Notifications and file storage are not. |
+| 2 — Core HR | Not started | **Unblocked** — users and organization structure now exist. |
 | 3 — Recruitment & onboarding | Not started | |
 | 4 — Time, performance, learning | Not started | |
 | 5 — Payroll preparation | Not started | |
@@ -25,11 +25,12 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ### What exists today
 
-- **Backend** — 6 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
-  `tix_subject_identifier`, `tix_debt_record`), 3 modules (`tenants`, `users`, `tix`), 13 endpoints,
+- **Backend** — 7 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
+  `tix_subject_identifier`, `tix_debt_record`, `org_unit`), 4 modules (`tenants`, `users`, `organizations`, `tix`), 20 endpoints,
   34 passing tests, including cross-tenant isolation and row-level security proven
   over raw JDBC as the unprivileged application role.
-- **Frontend** — public landing page, authenticated product shell, TIX verification screen,
+- **Frontend** — public landing page, authenticated product shell, organization structure and
+  TIX verification screens,
   bilingual throughout with parity enforced in CI.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
   three fixture users across two tenants, and a scripted end-to-end check.
@@ -116,10 +117,10 @@ for a debt held by operator B — the exchange read going *through* the policy, 
 
 | Item | Why it matters |
 |---|---|
-| Organization structure | Legal entities, branches, departments, cost centers, reporting lines. Phase 2 cannot start without it. |
+| ~~Organization structure~~ | **Done.** Typed self-referencing tree (`org_unit`) with cycle prevention, cascading deactivation, per-tenant codes and a read-only screen. Reporting lines wait for employees. |
 | Notifications | Contract expiry, approvals and alerts all need a delivery channel. |
 | File storage | Documents, identity attachments, payslips. S3-compatible with signed URLs per `SECURITY_MODEL.md`. |
-| Architecture guardrails in CI | `AGENTS.md` states rules that nothing enforces: module boundaries, an RLS policy for every tenant-owned table, no cross-module repository access. Rules that are not checked decay. |
+| ~~Architecture guardrails in CI~~ | **Done.** `scripts/check_architecture.py` enforces three rules and runs in CI. It caught two real violations the day it was written. |
 
 **Phase 1 exit criteria** (from `ROADMAP.md`): two isolated tenants, no cross-tenant access,
 bilingual UI, security tests passing. **All four now hold** — isolation is enforced by the
@@ -129,8 +130,8 @@ database as well as by application code.
 
 ## 4. Then — Phase 2 and TIX depth
 
-Phase 2 (employees, contracts, documents, history, expiry alerts) becomes unblocked once
-organization structure exists.
+Phase 2 (employees, contracts, documents, history, expiry alerts) is now unblocked: an employee
+needs a person to reference and a unit to belong to, and both exist.
 
 TIX depth can then be built on a real foundation:
 
@@ -147,7 +148,6 @@ TIX depth can then be built on a real foundation:
 | Gap | Severity | Where |
 |---|---|---|
 | Spring integration tests connect as the schema owner | Low — deliberate, and RLS is covered separately | `AbstractIntegrationTest`, ADR 0002 |
-| `common/web` imports from `modules/*` | Low, but it is the boundary violation CI should catch | `GlobalExceptionHandler` |
 | Tokens held in browser session storage | Medium — production should use a backend-for-frontend | `frontend/src/auth/config.ts` |
 | No staging or production environment, no CD | Medium | Phase 0 remainder |
 | `AGENTS.md` rules unenforced by CI | Medium — rules decay silently | Section 3 |

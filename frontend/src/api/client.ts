@@ -83,6 +83,29 @@ async function request<T>(
   return (await response.json()) as T;
 }
 
+export type OrgUnitType =
+  | "LEGAL_ENTITY"
+  | "BRANCH"
+  | "DEPARTMENT"
+  | "COST_CENTER"
+  | "LOCATION";
+
+export type OrgUnit = {
+  id: string;
+  parentId: string | null;
+  unitType: OrgUnitType;
+  code: string;
+  name: string;
+  depth: number;
+  active: boolean;
+};
+
+export const organizationApi = {
+  listUnits(accessToken: string): Promise<OrgUnit[]> {
+    return request<OrgUnit[]>("/api/v1/organization/units", accessToken);
+  },
+};
+
 export const tixApi = {
   inquire(body: InquiryRequest, accessToken: string): Promise<InquiryResult> {
     return request<InquiryResult>("/api/v1/tix/inquiries", accessToken, {

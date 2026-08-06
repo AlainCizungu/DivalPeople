@@ -1,4 +1,4 @@
-package ai.dival.dip.common.dev;
+package ai.dival.dip.dev;
 
 import ai.dival.dip.modules.tenants.Tenant;
 import ai.dival.dip.modules.tenants.TenantService;

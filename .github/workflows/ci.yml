@@ -59,6 +59,16 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+  architecture:
+    name: Architecture rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The rules in AGENTS.md are only real if something checks them.
+      - name: Check module boundaries and tenant isolation policies
+        run: python3 scripts/check_architecture.py
+
   translations:
     name: Translation parity
     runs-on: ubuntu-latest
