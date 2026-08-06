@@ -1,6 +1,7 @@
 package ai.dival.dip.common.web;
 
 import ai.dival.dip.common.tenancy.TenantContext;
+import ai.dival.dip.modules.tenants.TenantService;
 import ai.dival.dip.modules.tix.DebtRecordService;
 import ai.dival.dip.modules.users.CurrentUserService;
 import java.time.Instant;
@@ -64,6 +65,19 @@ public class GlobalExceptionHandler {
         log.warn("Rejected a request whose token tenant disagrees with the stored user record");
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiError.of("FORBIDDEN", "You do not have permission to perform this action"));
+    }
+
+    @ExceptionHandler(TenantService.TenantNotFoundException.class)
+    public ResponseEntity<ApiError> handleTenantNotFound(TenantService.TenantNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of("NOT_FOUND", "The requested resource was not found"));
+    }
+
+    /** A slug clash is the caller's to resolve, so the reason is safe and useful to return. */
+    @ExceptionHandler(TenantService.SlugAlreadyUsedException.class)
+    public ResponseEntity<ApiError> handleSlugTaken(TenantService.SlugAlreadyUsedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("SLUG_ALREADY_USED", ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -21,11 +21,30 @@
   },
   "roles": {
     "realm": [
-      { "name": "TENANT_ADMIN", "description": "Administers a single tenant" },
-      { "name": "TIX_INQUIRER", "description": "May submit TIX verification inquiries" },
-      { "name": "TIX_DECLARANT", "description": "May declare and settle TIX debt records" },
-      { "name": "COMPLIANCE_OFFICER", "description": "Reviews alerts and audit trails" },
-      { "name": "EMPLOYEE", "description": "Baseline self-service access" }
+      {
+        "name": "PLATFORM_ADMIN",
+        "description": "Administers the platform itself, across all tenants"
+      },
+      {
+        "name": "TENANT_ADMIN",
+        "description": "Administers a single tenant"
+      },
+      {
+        "name": "TIX_INQUIRER",
+        "description": "May submit TIX verification inquiries"
+      },
+      {
+        "name": "TIX_DECLARANT",
+        "description": "May declare and settle TIX debt records"
+      },
+      {
+        "name": "COMPLIANCE_OFFICER",
+        "description": "Reviews alerts and audit trails"
+      },
+      {
+        "name": "EMPLOYEE",
+        "description": "Baseline self-service access"
+      }
     ]
   },
   "clients": [
@@ -37,8 +56,12 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:3000"],
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:3000/*"
       },
@@ -69,12 +92,23 @@
       "firstName": "Operator",
       "lastName": "A",
       "attributes": {
-        "tenant_id": ["11111111-1111-1111-1111-111111111111"]
+        "tenant_id": [
+          "11111111-1111-1111-1111-111111111111"
+        ]
       },
       "credentials": [
-        { "type": "password", "value": "password", "temporary": false }
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
       ],
-      "realmRoles": ["TIX_INQUIRER", "TIX_DECLARANT", "TENANT_ADMIN", "EMPLOYEE"]
+      "realmRoles": [
+        "TIX_INQUIRER",
+        "TIX_DECLARANT",
+        "TENANT_ADMIN",
+        "EMPLOYEE"
+      ]
     },
     {
       "username": "operator-b",
@@ -84,12 +118,23 @@
       "firstName": "Operator",
       "lastName": "B",
       "attributes": {
-        "tenant_id": ["22222222-2222-2222-2222-222222222222"]
+        "tenant_id": [
+          "22222222-2222-2222-2222-222222222222"
+        ]
       },
       "credentials": [
-        { "type": "password", "value": "password", "temporary": false }
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
       ],
-      "realmRoles": ["TIX_INQUIRER", "TIX_DECLARANT", "TENANT_ADMIN", "EMPLOYEE"]
+      "realmRoles": [
+        "TIX_INQUIRER",
+        "TIX_DECLARANT",
+        "TENANT_ADMIN",
+        "EMPLOYEE"
+      ]
     },
     {
       "username": "no-roles",
@@ -99,12 +144,38 @@
       "firstName": "No",
       "lastName": "Roles",
       "attributes": {
-        "tenant_id": ["11111111-1111-1111-1111-111111111111"]
+        "tenant_id": [
+          "11111111-1111-1111-1111-111111111111"
+        ]
       },
       "credentials": [
-        { "type": "password", "value": "password", "temporary": false }
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
       ],
-      "realmRoles": ["EMPLOYEE"]
+      "realmRoles": [
+        "EMPLOYEE"
+      ]
+    },
+    {
+      "username": "platform-admin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "platform-admin@example.test",
+      "firstName": "Platform",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PLATFORM_ADMIN"
+      ]
     }
   ]
 }

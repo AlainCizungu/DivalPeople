@@ -12,7 +12,7 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
-| 1 — Platform | **~60%** | Authentication, role mapping, audit write path, EN/FR, tenant entity, isolation tests and the users module are in. Organization structure, notifications and file storage are not. |
+| 1 — Platform | **~70%** | Authentication, role mapping, audit write path, EN/FR, tenant entity, isolation tests and the users module are in. Organization structure, notifications and file storage are not. |
 | 2 — Core HR | Not started | Blocked on Phase 1 users and organization structure. |
 | 3 — Recruitment & onboarding | Not started | |
 | 4 — Time, performance, learning | Not started | |
@@ -26,8 +26,8 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 ### What exists today
 
 - **Backend** — 6 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
-  `tix_subject_identifier`, `tix_debt_record`), 3 modules (`tenants`, `users`, `tix`), 7 endpoints,
-  26 passing tests, including cross-tenant isolation and row-level security proven
+  `tix_subject_identifier`, `tix_debt_record`), 3 modules (`tenants`, `users`, `tix`), 13 endpoints,
+  34 passing tests, including cross-tenant isolation and row-level security proven
   over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, TIX verification screen,
   bilingual throughout with parity enforced in CI.
@@ -44,8 +44,8 @@ it. Section 2 is largely about refilling that middle before the gap compounds.
 
 ## 2. Priority now — tenancy and identity foundation
 
-These three are treated as **one piece of work** because they touch the same layer. P0.1 and
-P0.3 are complete; P0.2 remains.
+These three were treated as **one piece of work** because they touch the same layer.
+**All three are now complete.** The tenancy and identity foundation is in place.
 
 ### P0.1 — Local user records and tenant membership — **done**
 
@@ -67,13 +67,26 @@ Decisions worth remembering:
 Verified: 20 backend tests pass, including six covering provisioning, idempotency, profile
 refresh, tenant scoping and the mismatch refusal.
 
-### P0.2 — Tenant provisioning
+### P0.2 — Tenant provisioning — **done**
 
-Tenants are seeded by hand with fixed UUIDs in a local-only bean. There is no supported way to
-create one.
+Delivered: `TenantService` with slug validation, uniqueness and audit; a `PLATFORM_ADMIN`-only
+API under `/api/v1/platform/tenants`; and the local seeder rewritten as a caller of that service
+instead of raw SQL, so there is no path that skips validation.
 
-**Deliverables:** platform-admin endpoint to create and deactivate a tenant; the local seeder
-becomes a caller of the same service rather than a parallel path.
+Decisions worth remembering:
+
+- **Tenant identifiers are application-assigned**, which is what lets seeding and migration honour
+  an id decided elsewhere while still going through the same service. `Persistable` is implemented
+  so Spring Data does not read a non-null id as "existing" and issue a SELECT before every insert.
+- **Deactivation keeps the row.** Users, audit entries and debt records reference it; deleting
+  would orphan that history.
+- **`provision()` is a genuine no-op when the id exists** — it does not overwrite, so restarts and
+  re-runs are safe.
+- **A platform administrator belongs to no tenant**, so nothing on this path may depend on a bound
+  tenant context, and the audit actor may legitimately be null.
+
+Verified: 34 tests pass; `infra/dev.sh check` covers 403 for a tenant admin, successful creation
+by `platform-admin`, and 409 on a duplicate slug.
 
 ### P0.3 — Make row-level security bind — **done**
 

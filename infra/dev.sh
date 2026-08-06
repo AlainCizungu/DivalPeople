@@ -245,6 +245,48 @@ EOF
             exit 1
         fi
 
+        info "Confirming a tenant admin cannot provision tenants..."
+        STATUS="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/api/v1/platform/tenants" \
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d '{"name":"Should Not Exist","slug":"should-not-exist","edition":"TELECOM","defaultLocale":"fr"}')"
+        if [ "$STATUS" = "403" ]; then
+            ok "Tenant provisioning refused for a tenant admin (403)"
+        else
+            fail "Expected 403 when a tenant admin provisions a tenant, got $STATUS"
+            exit 1
+        fi
+
+        info "Provisioning a tenant as platform-admin..."
+        ADMIN_TOKEN="$(fetch_token platform-admin 2>/dev/null || true)"
+        if [ -z "$ADMIN_TOKEN" ]; then
+            fail "No platform-admin user in the realm."
+            echo "    The realm gained one; recreate Keycloak to import it:" >&2
+            echo "    docker compose -f infra/docker-compose.yml up -d --force-recreate keycloak" >&2
+            exit 1
+        fi
+
+        NEW_SLUG="check-$(date +%s)"
+        CREATED="$(curl -fsS -X POST "$API_URL/api/v1/platform/tenants" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+            -d "{\"name\":\"Check Tenant\",\"slug\":\"$NEW_SLUG\",\"edition\":\"TELECOM\",\"defaultLocale\":\"fr\"}")"
+        if printf '%s' "$CREATED" | grep -q "\"$NEW_SLUG\""; then
+            ok "Tenant provisioned: $CREATED"
+        else
+            fail "Unexpected response provisioning a tenant: $CREATED"
+            exit 1
+        fi
+
+        info "Confirming a duplicate slug is refused..."
+        STATUS="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/api/v1/platform/tenants" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+            -d "{\"name\":\"Duplicate\",\"slug\":\"$NEW_SLUG\",\"edition\":\"TELECOM\",\"defaultLocale\":\"fr\"}")"
+        if [ "$STATUS" = "409" ]; then
+            ok "Duplicate slug refused with 409"
+        else
+            fail "Expected 409 for a duplicate slug, got $STATUS"
+            exit 1
+        fi
+
         info "Confirming operator-b sees only its own members..."
         TOKEN_B="$(fetch_token operator-b)"
         curl -fsS -o /dev/null -H "Authorization: Bearer $TOKEN_B" "$API_URL/api/v1/users/me"
