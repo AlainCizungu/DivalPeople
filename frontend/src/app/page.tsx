@@ -1,9 +1,9 @@
 "use client";
 
-import { useMessages } from "@/i18n/LocaleProvider";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Hero } from "@/components/landing/Hero";
 import {
+  AiSection,
   FinalCta,
   FinancialSection,
   FraudSection,
@@ -18,14 +18,8 @@ import {
  * Public marketing page. No authentication required — the product lives under /app.
  */
 export default function LandingPage() {
-  const messages = useMessages();
-
   return (
     <div className="bg-white">
-      <p className="bg-blue px-4 py-2.5 text-center text-sm font-semibold text-white">
-        {messages.landing.announce}
-      </p>
-
       <LandingHeader />
 
       <main>
@@ -33,6 +27,7 @@ export default function LandingPage() {
         <QuickLinks />
         <PlatformSection />
         <LifecycleSection />
+        <AiSection />
         <FinancialSection />
         <FraudSection />
         <IndustriesSection />

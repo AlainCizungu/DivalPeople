@@ -63,13 +63,13 @@
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
   },
   "landing": {
-    "announce": "Prototype : RH bilingues, intelligence du personnel, services financiers et prévention de la fraude.",
     "nav": {
       "platform": "Plateforme",
       "hr": "Solutions RH",
       "financial": "Services financiers",
       "industries": "Secteurs",
-      "security": "Sécurité"
+      "security": "Sécurité",
+      "ai": "IA"
     },
     "actions": {
       "signIn": "Se connecter",
@@ -338,6 +338,43 @@
       ],
       "copyright": "© 2026 Dival AI. Concept prototype.",
       "builtOn": "Bâti sur la Dival Intelligence Platform (DIP)."
+    },
+    "ai": {
+      "eyebrow": "Intelligence artificielle",
+      "title": "Une IA qui assiste. Des humains qui décident.",
+      "body": "L'IA est présente dans tout Dival People : elle résume, rapproche, explique et recommande. Et s'arrête là. Les décisions d'emploi, de crédit, d'assurance, de fraude et de paie restent humaines, par conception et par politique.",
+      "capabilities": [
+        {
+          "badge": "ASSISTER",
+          "title": "Assistant IA",
+          "body": "Réponses aux questions de politique interne à partir de vos propres documents, accompagnement des demandes RH, alertes d'échéance de contrat et synthèses pour la direction."
+        },
+        {
+          "badge": "PRÉDIRE",
+          "title": "Analyses prédictives du personnel",
+          "body": "Signaux de départ, prévisions d'effectifs, tendances d'absentéisme et lacunes de compétences, identifiés assez tôt pour agir."
+        },
+        {
+          "badge": "DÉTECTER",
+          "title": "Détection de la fraude et des anomalies",
+          "body": "Employés fictifs, identités dupliquées, comptes bancaires partagés, anomalies de paie et conflits d'intérêts — chacun présenté avec ses éléments probants."
+        },
+        {
+          "badge": "RAPPROCHER",
+          "title": "Intelligence des identités",
+          "body": "Un rapprochement probabiliste qui reconnaît une même personne malgré des données incomplètes ou saisies de façon incohérente, avec un score de confiance sur chaque correspondance."
+        }
+      ],
+      "safeguards": {
+        "title": "Comment l'IA reste redevable",
+        "items": [
+          "Chaque résultat est signalé comme indicatif et présente les éléments qui le fondent",
+          "La recherche documentaire respecte les habilitations de la personne qui interroge",
+          "Les alertes sont des indicateurs nécessitant une revue, jamais des constats de faute",
+          "L'accès aux modèles et leurs résultats sont audités comme toute autre action",
+          "Aucune décision autonome en matière d'emploi, de crédit, d'assurance, de fraude ou de paie"
+        ]
+      }
     }
   }
 }

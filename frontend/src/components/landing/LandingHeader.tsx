@@ -19,6 +19,7 @@ export function LandingHeader() {
   const links = [
     { href: "#platform", label: messages.landing.nav.platform },
     { href: "#hr", label: messages.landing.nav.hr },
+    { href: "#ai", label: messages.landing.nav.ai },
     { href: "#financial", label: messages.landing.nav.financial },
     { href: "#industries", label: messages.landing.nav.industries },
     { href: "#security", label: messages.landing.nav.security },

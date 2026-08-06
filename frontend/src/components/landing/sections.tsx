@@ -60,6 +60,58 @@ export function LifecycleSection() {
   );
 }
 
+/**
+ * Artificial intelligence.
+ *
+ * <p>The safeguards are given equal weight to the capabilities on purpose. "AI is advisory,
+ * humans decide" is a rule the platform actually enforces (see docs/SECURITY_MODEL.md), so
+ * stating it plainly is accurate rather than decorative — and for buyers in regulated sectors
+ * it is the part that matters most.
+ */
+export function AiSection() {
+  const { landing } = useMessages();
+  const { ai } = landing;
+
+  return (
+    <section id="ai" className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading eyebrow={ai.eyebrow} title={ai.title} body={ai.body} />
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {ai.capabilities.map((capability, index) => (
+            <article
+              key={capability.title}
+              className="flex flex-col border border-line bg-white p-6"
+            >
+              <span
+                className={`mb-4 w-fit px-2.5 py-1 text-xs font-extrabold tracking-wider text-white ${gradientFor(index)}`}
+              >
+                {capability.badge}
+              </span>
+              <h3 className="mb-3 text-xl font-bold text-navy">{capability.title}</h3>
+              <p className="text-muted">{capability.body}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-8 border-l-4 border-teal bg-white p-8">
+          <h3 className="mb-4 text-xl font-bold text-navy">{ai.safeguards.title}</h3>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {ai.safeguards.items.map((item) => (
+              <li key={item} className="flex gap-2.5 text-ink">
+                <span aria-hidden="true" className="font-extrabold text-teal">
+                  ✓
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function FinancialSection() {
   const { landing } = useMessages();
   const icons = ["⚡", "🏦", "🩺", "💰"];

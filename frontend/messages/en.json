@@ -63,13 +63,13 @@
     "sessionExpired": "Your session has expired. Please sign in again."
   },
   "landing": {
-    "announce": "Prototype: bilingual HR, workforce intelligence, financial services, and fraud prevention.",
     "nav": {
       "platform": "Platform",
       "hr": "HR Solutions",
       "financial": "Financial Services",
       "industries": "Industries",
-      "security": "Security"
+      "security": "Security",
+      "ai": "AI"
     },
     "actions": {
       "signIn": "Sign in",
@@ -338,6 +338,43 @@
       ],
       "copyright": "© 2026 Dival AI. Prototype concept.",
       "builtOn": "Built on the Dival Intelligence Platform (DIP)."
+    },
+    "ai": {
+      "eyebrow": "Artificial Intelligence",
+      "title": "Intelligence that assists. People who decide.",
+      "body": "AI runs throughout Dival People — summarizing, matching, explaining and recommending. It stops there. Employment, credit, insurance, fraud and payroll outcomes remain human decisions, by design and by policy.",
+      "capabilities": [
+        {
+          "badge": "ASSIST",
+          "title": "AI Assistant",
+          "body": "Policy questions answered from your own documents, guidance through HR requests, contract expiry alerts, and workforce summaries written for executives."
+        },
+        {
+          "badge": "PREDICT",
+          "title": "Predictive Workforce Insights",
+          "body": "Turnover signals, staffing forecasts, absence patterns and skills gaps surfaced early enough to do something about them."
+        },
+        {
+          "badge": "DETECT",
+          "title": "Fraud & Anomaly Detection",
+          "body": "Ghost employees, duplicate identities, shared bank accounts, payroll anomalies and conflicts of interest — each presented with its evidence."
+        },
+        {
+          "badge": "MATCH",
+          "title": "Identity Intelligence",
+          "body": "Probabilistic matching that resolves the same person across incomplete and inconsistently entered records, with a confidence score on every match."
+        }
+      ],
+      "safeguards": {
+        "title": "How the AI is kept accountable",
+        "items": [
+          "Every output is labelled advisory and shows the evidence behind it",
+          "Retrieval respects the permissions of the person asking",
+          "Alerts are indicators requiring review, never findings of misconduct",
+          "Model access and output are audited like any other action",
+          "No autonomous employment, credit, insurance, fraud or payroll decisions"
+        ]
+      }
     }
   }
 }
