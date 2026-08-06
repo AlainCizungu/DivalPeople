@@ -37,4 +37,23 @@ public interface EmploymentContractRepository extends JpaRepository<EmploymentCo
             """)
     List<EmploymentContract> findExpiringWithoutAlert(
             @Param("tenantId") UUID tenantId, @Param("cutoff") LocalDate cutoff);
+
+    /**
+     * Running contracts whose probation is ending with no decision recorded, not yet alerted.
+     *
+     * <p>The window is deliberately narrower than the contract-expiry one. A probation decision
+     * has to land before the period ends: after it, in most jurisdictions, the answer has already
+     * been given by silence.
+     */
+    @Query("""
+            select c from EmploymentContract c
+            where c.tenantId = :tenantId
+              and c.status = ai.dival.dip.modules.employees.ContractStatus.ACTIVE
+              and c.probationEndDate is not null
+              and c.probationEndDate <= :cutoff
+              and c.probationOutcome is null
+              and c.probationNotifiedAt is null
+            """)
+    List<EmploymentContract> findProbationEndingWithoutAlert(
+            @Param("tenantId") UUID tenantId, @Param("cutoff") LocalDate cutoff);
 }

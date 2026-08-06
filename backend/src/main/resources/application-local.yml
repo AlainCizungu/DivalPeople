@@ -57,6 +57,10 @@ dip:
     # recruitment board shows more than one column.
     seed-recruitment: true
 
+    # Seeds onboarding and offboarding templates plus one live list anchored in the past, so the
+    # overdue reminder scan has something real to find.
+    seed-lifecycle: true
+
     # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
     # actually crosses the tenant boundary and exercises exchange mode.
     seed-tix: true

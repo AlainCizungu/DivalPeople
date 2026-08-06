@@ -98,6 +98,29 @@ public class EmployeeController {
         return EmployeeDetail.from(employees.setManager(id, request.managerId(), actorId()));
     }
 
+    /**
+     * Records how probation ended.
+     *
+     * <p>Against the contract rather than the employee, because probation belongs to the
+     * engagement: somebody rehired later starts a fresh one.
+     */
+    @PostMapping("/contracts/{contractId}/probation")
+    @PreAuthorize(HR_WRITE)
+    public ContractResponse decideProbation(@PathVariable UUID contractId,
+                                            @Valid @RequestBody ProbationRequest request) {
+        return ContractResponse.from(contracts.decideProbation(
+                contractId, request.outcome(), request.notes(), request.decidedByEmployeeId(),
+                request.lastWorkingDay(), actorId()));
+    }
+
+    @PostMapping("/contracts/{contractId}/probation/extend")
+    @PreAuthorize(HR_WRITE)
+    public ContractResponse extendProbation(@PathVariable UUID contractId,
+                                            @Valid @RequestBody ExtendProbationRequest request) {
+        return ContractResponse.from(
+                contracts.extendProbation(contractId, request.probationEndDate(), actorId()));
+    }
+
     @PostMapping("/{id}/terminate")
     @PreAuthorize(HR_WRITE)
     public EmployeeDetail terminate(@PathVariable UUID id,
@@ -135,6 +158,20 @@ public class EmployeeController {
     }
 
     public record TerminateRequest(@NotNull LocalDate terminationDate) {
+    }
+
+    /**
+     * @param lastWorkingDay only read when the outcome is FAILED; defaults to the probation end
+     *                       date, so a failed probation cannot leave somebody employed by accident
+     */
+    public record ProbationRequest(
+            @NotNull ProbationOutcome outcome,
+            String notes,
+            UUID decidedByEmployeeId,
+            LocalDate lastWorkingDay) {
+    }
+
+    public record ExtendProbationRequest(@NotNull LocalDate probationEndDate) {
     }
 
     /** Directory view. Deliberately carries no personal data beyond a name. */
@@ -205,6 +242,8 @@ public class EmployeeController {
             LocalDate startDate,
             LocalDate endDate,
             LocalDate probationEndDate,
+            ProbationOutcome probationOutcome,
+            String probationNotes,
             ContractStatus status) {
 
         static ContractResponse from(EmploymentContract contract) {
@@ -216,6 +255,8 @@ public class EmployeeController {
                     contract.getStartDate(),
                     contract.getEndDate(),
                     contract.getProbationEndDate(),
+                    contract.getProbationOutcome(),
+                    contract.getProbationNotes(),
                     contract.getStatus());
         }
     }

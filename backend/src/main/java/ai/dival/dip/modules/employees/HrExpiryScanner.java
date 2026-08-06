@@ -45,12 +45,15 @@ public class HrExpiryScanner {
     private final NotificationService notifications;
     private final TransactionTemplate transactionTemplate;
     private final int noticeDays;
+    /** Shorter than the contract window: a probation decision has to land before it ends. */
+    private final int probationNoticeDays;
 
     public HrExpiryScanner(TenantService tenants, EmploymentContractRepository contracts,
                            EmployeeDocumentRepository documents,
                            UserAccountService users, NotificationService notifications,
                            TransactionTemplate transactionTemplate,
-                           @Value("${dip.hr.contract-expiry-notice-days:30}") int noticeDays) {
+                           @Value("${dip.hr.contract-expiry-notice-days:30}") int noticeDays,
+                           @Value("${dip.hr.probation-notice-days:14}") int probationNoticeDays) {
         this.tenants = tenants;
         this.contracts = contracts;
         this.documents = documents;
@@ -58,6 +61,7 @@ public class HrExpiryScanner {
         this.notifications = notifications;
         this.transactionTemplate = transactionTemplate;
         this.noticeDays = noticeDays;
+        this.probationNoticeDays = probationNoticeDays;
     }
 
     /** Early morning, before the working day, so alerts are waiting rather than interrupting. */
@@ -73,6 +77,8 @@ public class HrExpiryScanner {
             try {
                 raised += scanContracts(tenant.getId(), cutoff);
                 raised += scanDocuments(tenant.getId(), cutoff);
+                raised += scanProbation(tenant.getId(),
+                        LocalDate.now().plusDays(probationNoticeDays));
             } catch (RuntimeException ex) {
                 // One tenant's bad data must not stop every other tenant's alerts.
                 log.error("Expiry scan failed for tenant {}", tenant.getId(), ex);
@@ -155,6 +161,46 @@ public class HrExpiryScanner {
                         document.markExpiryNotified();
                     }
                     return expiring.size();
+                }));
+    }
+
+    /**
+     * Probation periods ending with nobody having decided.
+     *
+     * <p>CRITICAL rather than WARNING, and deliberately so. A contract expiring without action
+     * leaves a gap somebody notices; a probation expiring without action silently confirms the
+     * employee, and the chance to decide is gone.
+     */
+    private int scanProbation(UUID tenantId, LocalDate cutoff) {
+        return TenantContext.runAsResult(tenantId, () ->
+                transactionTemplate.execute(status -> {
+                    List<EmploymentContract> ending =
+                            contracts.findProbationEndingWithoutAlert(tenantId, cutoff);
+                    if (ending.isEmpty()) {
+                        return 0;
+                    }
+
+                    List<UUID> recipients = recipientsFor(tenantId);
+                    if (recipients.isEmpty()) {
+                        log.warn("Tenant {} has {} probation periods ending but no HR or "
+                                + "tenant admin", tenantId, ending.size());
+                        return 0;
+                    }
+
+                    for (EmploymentContract contract : ending) {
+                        notifications.notifyAll(
+                                recipients,
+                                "probationEnding",
+                                Map.of(
+                                        "employee", contract.getEmployee().displayName(),
+                                        "days", String.valueOf(
+                                                daysUntil(contract.getProbationEndDate()))),
+                                Notification.Severity.CRITICAL,
+                                "EmploymentContract",
+                                contract.getId().toString());
+                        contract.markProbationNotified();
+                    }
+                    return ending.size();
                 }));
     }
 

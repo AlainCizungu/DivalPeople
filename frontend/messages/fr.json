@@ -413,7 +413,9 @@
       "debtDisputed": "{subject} conteste un impayé déclaré",
       "orgUnitCreated": "{name} a été ajouté à la structure organisationnelle",
       "welcome": "Bienvenue chez {tenant}",
-      "documentExpiring": "Le document « {document} » de {employee} expire dans {days} jours"
+      "documentExpiring": "Le document « {document} » de {employee} expire dans {days} jours",
+      "probationEnding": "La période d'essai de {employee} se termine dans {days} jour(s) sans décision enregistrée",
+      "checklistItemOverdue": "« {task} » pour {employee} est en retard de {days} jour(s)"
     }
   },
   "employees": {
@@ -475,5 +477,48 @@
       "INTERNSHIP": "Stage",
       "CONSULTANT": "Consultant"
     }
+  },
+  "lifecycle": {
+    "title": "Intégration et départ",
+    "subtitle": "Arrivées et départs, sous forme de tâches attribuées",
+    "empty": "Aucune liste en cours.",
+    "loadFailed": "Impossible de charger les listes.",
+    "inProgress": "en cours",
+    "anchorDate": "Date de référence",
+    "progress": "{settled} sur {total} traitée(s)",
+    "outstanding": "{count} étape(s) obligatoire(s) en attente",
+    "steps": "Étapes",
+    "step": "Étape",
+    "owner": "Responsable",
+    "due": "Échéance",
+    "unassigned": "Non attribuée",
+    "noDue": "—",
+    "required": "Obligatoire",
+    "checklistType": {
+      "ONBOARDING": "Intégration",
+      "OFFBOARDING": "Départ"
+    },
+    "checklistStatus": {
+      "IN_PROGRESS": "En cours",
+      "COMPLETED": "Terminée",
+      "CANCELLED": "Annulée"
+    },
+    "itemStatus": {
+      "PENDING": "À faire",
+      "DONE": "Faite",
+      "BLOCKED": "Bloquée",
+      "NOT_APPLICABLE": "Sans objet"
+    },
+    "category": {
+      "PAPERWORK": "Documents",
+      "EQUIPMENT": "Matériel",
+      "ACCESS": "Accès",
+      "PAYROLL": "Paie",
+      "TRAINING": "Formation",
+      "INTRODUCTION": "Présentations",
+      "COMPLIANCE": "Conformité",
+      "OTHER": "Autre"
+    },
+    "status": "Statut"
   }
 }

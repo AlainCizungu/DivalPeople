@@ -193,6 +193,85 @@ export const recruitmentApi = {
   },
 };
 
+export type ChecklistType = "ONBOARDING" | "OFFBOARDING";
+
+export type ChecklistStatus = "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export type ItemStatus = "PENDING" | "DONE" | "BLOCKED" | "NOT_APPLICABLE";
+
+export type ItemCategory =
+  | "PAPERWORK"
+  | "EQUIPMENT"
+  | "ACCESS"
+  | "PAYROLL"
+  | "TRAINING"
+  | "INTRODUCTION"
+  | "COMPLIANCE"
+  | "OTHER";
+
+/** List view. Carries counts rather than every step of every checklist. */
+export type ChecklistSummary = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  checklistType: ChecklistType;
+  templateName: string;
+  anchorDate: string;
+  status: ChecklistStatus;
+  settledCount: number;
+  itemCount: number;
+  outstandingMandatory: number;
+};
+
+export type ChecklistItem = {
+  id: string;
+  checklistId: string;
+  sortOrder: number;
+  title: string;
+  instructions: string | null;
+  category: ItemCategory;
+  assigneeId: string | null;
+  assigneeName: string | null;
+  dueOn: string | null;
+  mandatory: boolean;
+  status: ItemStatus;
+  completedAt: string | null;
+  notes: string | null;
+};
+
+export type ChecklistDetail = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  checklistType: ChecklistType;
+  templateName: string;
+  anchorDate: string;
+  status: ChecklistStatus;
+  completedAt: string | null;
+  items: ChecklistItem[];
+};
+
+export const lifecycleApi = {
+  open(accessToken: string): Promise<ChecklistSummary[]> {
+    return request<ChecklistSummary[]>("/api/v1/lifecycle/checklists", accessToken);
+  },
+
+  checklist(id: string, accessToken: string): Promise<ChecklistDetail> {
+    return request<ChecklistDetail>(`/api/v1/lifecycle/checklists/${id}`, accessToken);
+  },
+
+  settle(
+    id: string,
+    body: { status: ItemStatus; notes?: string; completedByEmployeeId?: string },
+    accessToken: string,
+  ): Promise<ChecklistItem> {
+    return request<ChecklistItem>(`/api/v1/lifecycle/items/${id}/status`, accessToken, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+};
+
 export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
 
 export type AppNotification = {

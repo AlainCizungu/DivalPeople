@@ -158,13 +158,17 @@ Deferred deliberately, each with a reason rather than an oversight:
 | Interviews | **Done.** One row per interviewer rather than one shared verdict, so a dissenting voice survives. Feedback is what completes an interview; one marked done with nothing written down is indistinguishable later from one that never happened. |
 | Offers and the hire | **Done.** `OfferService` sits apart from `RecruitmentService` because acceptance crosses into Core HR. One transaction covers the offer, the application, the requisition headcount, the employee and their first contract — a hire that half-happens leaves somebody starting on Monday with no contract. The contract is drafted, not activated: it takes effect on the agreed start date. |
 
+| Onboarding and offboarding | **Done.** Templates are copied, not referenced: editing a template next year must not rewrite what somebody was actually asked to do last year. A checklist cannot be closed while a mandatory step is outstanding — being able to tick "offboarding complete" over an unrevoked building pass is the failure the table exists to prevent. Blocking or skipping a step requires an explanation. |
+| Probation | **Done.** Confirm, extend or fail, recorded against the contract with the author and the moment. An unconfirmed probation quietly becomes a confirmed one in most jurisdictions, so silence still decides the outcome — it just leaves nobody who can be shown to have decided it. A failed probation ends the employment in the same transaction. |
+| Overdue and probation alerts | **Done.** The HR scan gained a probation sweep (CRITICAL, and on a shorter window than contract expiry, because the decision has to land *before* the period ends). Checklist reminders live in their own scanner inside the lifecycle module rather than reaching into another module's repository, and go to the step's assignee first — an alert addressed to everybody is addressed to nobody. |
+
 Still open in Phase 3:
 
-- onboarding and offboarding checklists
-- probation tracking and confirmation
 - candidate retention rules per country — **required before production.** Candidates are the only
   people in the platform with no relationship to the employer, most will be rejected, and their
   data should not linger indefinitely.
+- checklist items cannot yet be ticked off from the UI; the screen is read-only and the endpoint
+  is there, so this is a form, not a design question.
 
 ---
 

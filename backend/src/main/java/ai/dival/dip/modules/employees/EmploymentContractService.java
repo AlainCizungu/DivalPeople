@@ -122,6 +122,45 @@ public class EmploymentContractService {
         return contract;
     }
 
+    /**
+     * Records the probation decision.
+     *
+     * <p>A failed probation ends the employment in the same transaction. Recording the outcome
+     * and leaving the person on the active headcount would produce two systems that disagree
+     * about whether they still work here.
+     *
+     * @param decidedByEmployeeId who made the call, kept separate from whoever typed it in
+     */
+    @Transactional
+    public EmploymentContract decideProbation(UUID id, ProbationOutcome outcome, String notes,
+                                              UUID decidedByEmployeeId, LocalDate lastWorkingDay,
+                                              UUID actorId) {
+        EmploymentContract contract = get(id);
+        Employee decidedBy =
+                decidedByEmployeeId == null ? null : employees.get(decidedByEmployeeId);
+
+        contract.decideProbation(outcome, notes, decidedBy);
+
+        if (outcome == ProbationOutcome.FAILED) {
+            LocalDate leavingOn =
+                    lastWorkingDay == null ? contract.getProbationEndDate() : lastWorkingDay;
+            employees.terminate(contract.getEmployee().getId(), leavingOn, actorId);
+        }
+
+        audit.recordSuccess("PROBATION_" + outcome, "EmploymentContract", id.toString(), actorId);
+        return contract;
+    }
+
+    /** Gives probation more time, which reopens the decision rather than settling it. */
+    @Transactional
+    public EmploymentContract extendProbation(UUID id, LocalDate newProbationEnd, UUID actorId) {
+        EmploymentContract contract = get(id);
+        contract.extendProbation(newProbationEnd);
+        audit.recordSuccess("PROBATION_PERIOD_EXTENDED", "EmploymentContract",
+                id.toString(), actorId);
+        return contract;
+    }
+
     /** Closes a contract that reached its end date. */
     @Transactional
     public EmploymentContract end(UUID id, UUID actorId) {

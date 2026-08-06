@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.employees;
 
+import ai.dival.dip.common.error.ConflictException;
 import ai.dival.dip.common.tenancy.TenantOwnedEntity;
 import ai.dival.dip.modules.organizations.OrgUnit;
 import jakarta.persistence.Column;
@@ -54,6 +55,23 @@ public class EmploymentContract extends TenantOwnedEntity {
     @Column(name = "expiry_notified_at")
     private Instant expiryNotifiedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "probation_outcome", length = 20)
+    private ProbationOutcome probationOutcome;
+
+    @Column(name = "probation_decided_at")
+    private Instant probationDecidedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "probation_decided_by")
+    private Employee probationDecidedBy;
+
+    @Column(name = "probation_notes", length = 2000)
+    private String probationNotes;
+
+    @Column(name = "probation_notified_at")
+    private Instant probationNotifiedAt;
+
     protected EmploymentContract() {
         // for JPA
     }
@@ -107,6 +125,74 @@ public class EmploymentContract extends TenantOwnedEntity {
         this.expiryNotifiedAt = Instant.now();
     }
 
+    /**
+     * Records how probation ended.
+     *
+     * <p>A decision, not a date passing. In most jurisdictions an unconfirmed probation quietly
+     * becomes a confirmed one, so leaving it unrecorded still decides the outcome — it just leaves
+     * nobody who can be shown to have decided it.
+     *
+     * @param decidedBy the person who made the call, kept separate from whoever typed it in
+     */
+    public void decideProbation(ProbationOutcome outcome, String notes, Employee decidedBy) {
+        if (outcome == null) {
+            throw new IllegalArgumentException("A probation decision needs an outcome");
+        }
+        if (probationEndDate == null) {
+            throw new ConflictException("This contract has no probation period");
+        }
+        if (probationOutcome != null) {
+            throw new ConflictException("Probation has already been decided");
+        }
+        if (!status.isCurrent()) {
+            throw new ConflictException("This contract is not running");
+        }
+        // Ending someone's employment on probation is the one outcome that must be explained.
+        if (outcome == ProbationOutcome.FAILED && (notes == null || notes.isBlank())) {
+            throw new IllegalArgumentException("A failed probation needs a reason");
+        }
+
+        this.probationOutcome = outcome;
+        this.probationNotes = notes;
+        this.probationDecidedBy = decidedBy;
+        this.probationDecidedAt = Instant.now();
+    }
+
+    /**
+     * Gives probation more time.
+     *
+     * <p>Clears the decision so the extended period ends in a decision of its own. An extension
+     * that closed the question would be an extension in name only.
+     */
+    public void extendProbation(LocalDate newProbationEnd) {
+        if (newProbationEnd == null) {
+            throw new IllegalArgumentException("An extension needs a new probation end date");
+        }
+        if (probationEndDate != null && newProbationEnd.isBefore(probationEndDate)) {
+            throw new IllegalArgumentException("An extension cannot shorten probation");
+        }
+        if (newProbationEnd.isBefore(startDate)) {
+            throw new IllegalArgumentException("Probation cannot end before the contract starts");
+        }
+        this.probationEndDate = newProbationEnd;
+        this.probationOutcome = null;
+        this.probationDecidedAt = null;
+        this.probationDecidedBy = null;
+        this.probationNotifiedAt = null;
+    }
+
+    public void markProbationNotified() {
+        this.probationNotifiedAt = Instant.now();
+    }
+
+    /** Running, on probation, with the end in sight and nobody having decided yet. */
+    public boolean probationUndecidedBy(LocalDate day) {
+        return status.isCurrent()
+                && probationEndDate != null
+                && probationOutcome == null
+                && !probationEndDate.isAfter(day);
+    }
+
     /** True when the contract is running and its end date falls on or before the given day. */
     public boolean expiresOnOrBefore(LocalDate day) {
         return status.isCurrent() && endDate != null && !endDate.isAfter(day);
@@ -146,5 +232,25 @@ public class EmploymentContract extends TenantOwnedEntity {
 
     public Instant getExpiryNotifiedAt() {
         return expiryNotifiedAt;
+    }
+
+    public ProbationOutcome getProbationOutcome() {
+        return probationOutcome;
+    }
+
+    public Instant getProbationDecidedAt() {
+        return probationDecidedAt;
+    }
+
+    public Employee getProbationDecidedBy() {
+        return probationDecidedBy;
+    }
+
+    public String getProbationNotes() {
+        return probationNotes;
+    }
+
+    public Instant getProbationNotifiedAt() {
+        return probationNotifiedAt;
     }
 }

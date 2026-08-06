@@ -413,7 +413,9 @@
       "debtDisputed": "{subject} has disputed a declared debt",
       "orgUnitCreated": "{name} was added to the organization structure",
       "welcome": "Welcome to {tenant}",
-      "documentExpiring": "{employee}'s {document} expires in {days} days"
+      "documentExpiring": "{employee}'s {document} expires in {days} days",
+      "probationEnding": "Probation for {employee} ends in {days} day(s) with no decision recorded",
+      "checklistItemOverdue": "\"{task}\" for {employee} is {days} day(s) overdue"
     }
   },
   "employees": {
@@ -475,5 +477,48 @@
       "INTERNSHIP": "Internship",
       "CONSULTANT": "Consultant"
     }
+  },
+  "lifecycle": {
+    "title": "Onboarding & Offboarding",
+    "subtitle": "Joining and leaving, as work somebody owns",
+    "empty": "No checklists in progress.",
+    "loadFailed": "Could not load the checklists.",
+    "inProgress": "in progress",
+    "anchorDate": "Anchor date",
+    "progress": "{settled} of {total} done",
+    "outstanding": "{count} required step(s) outstanding",
+    "steps": "Steps",
+    "step": "Step",
+    "owner": "Owner",
+    "due": "Due",
+    "unassigned": "Unassigned",
+    "noDue": "—",
+    "required": "Required",
+    "checklistType": {
+      "ONBOARDING": "Onboarding",
+      "OFFBOARDING": "Offboarding"
+    },
+    "checklistStatus": {
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "itemStatus": {
+      "PENDING": "Pending",
+      "DONE": "Done",
+      "BLOCKED": "Blocked",
+      "NOT_APPLICABLE": "Not applicable"
+    },
+    "category": {
+      "PAPERWORK": "Paperwork",
+      "EQUIPMENT": "Equipment",
+      "ACCESS": "Access",
+      "PAYROLL": "Payroll",
+      "TRAINING": "Training",
+      "INTRODUCTION": "Introductions",
+      "COMPLIANCE": "Compliance",
+      "OTHER": "Other"
+    },
+    "status": "Status"
   }
 }
