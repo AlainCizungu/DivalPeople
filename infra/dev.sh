@@ -184,6 +184,26 @@ EOF
         fi
         ok "API is up"
 
+        info "GET /api/v1/users/me as operator-a (provisions the local user record)..."
+        ME="$(curl -fsS -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/users/me")"
+        if printf '%s' "$ME" | grep -q '"tenantId"'; then
+            ok "Local user provisioned: $ME"
+        else
+            fail "Unexpected response from /users/me: $ME"
+            exit 1
+        fi
+
+        info "Confirming the same identity does not create a second record..."
+        curl -fsS -o /dev/null -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/users/me"
+        MEMBERS="$(curl -fsS -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/users")"
+        MEMBER_COUNT="$(printf '%s' "$MEMBERS" | grep -o '"id"' | wc -l | tr -d ' ')"
+        if [ "$MEMBER_COUNT" = "1" ]; then
+            ok "Provisioning is idempotent — 1 member in the tenant"
+        else
+            fail "Expected exactly 1 tenant member after two requests, found $MEMBER_COUNT"
+            exit 1
+        fi
+
         info "GET /api/v1/tix/debt-records as operator-a..."
         RESPONSE="$(curl -fsS -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/tix/debt-records")"
         ok "Authorized request succeeded: ${RESPONSE:-[]}"
@@ -207,6 +227,16 @@ EOF
             fail "Expected 403 for a user without TIX roles, got $STATUS"
             exit 1
         fi
+
+        info "Confirming operator-b sees only its own members..."
+        TOKEN_B="$(fetch_token operator-b)"
+        curl -fsS -o /dev/null -H "Authorization: Bearer $TOKEN_B" "$API_URL/api/v1/users/me"
+        MEMBERS_B="$(curl -fsS -H "Authorization: Bearer $TOKEN_B" "$API_URL/api/v1/users")"
+        if printf '%s' "$MEMBERS_B" | grep -q 'operator-a@example.test'; then
+            fail "Cross-tenant leak: operator-b can see operator-a's members"
+            exit 1
+        fi
+        ok "Member lists are tenant-scoped"
 
         printf '\n\033[0;32mEnd-to-end check passed.\033[0m\n\n'
         ;;

@@ -12,7 +12,7 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
-| 1 — Platform | **~40%** | Authentication, role mapping, audit write path, EN/FR, tenant entity and isolation tests are in. Users, organization structure, notifications and file storage are not. |
+| 1 — Platform | **~55%** | Authentication, role mapping, audit write path, EN/FR, tenant entity, isolation tests and the users module are in. Organization structure, notifications and file storage are not. |
 | 2 — Core HR | Not started | Blocked on Phase 1 users and organization structure. |
 | 3 — Recruitment & onboarding | Not started | |
 | 4 — Time, performance, learning | Not started | |
@@ -25,9 +25,9 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ### What exists today
 
-- **Backend** — 5 tables (`tenant`, `audit_event`, `tix_subject`, `tix_subject_identifier`,
-  `tix_debt_record`), 2 modules (`tenants`, `tix`), 4 endpoints, 14 passing tests including four
-  cross-tenant isolation tests against real PostgreSQL.
+- **Backend** — 6 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
+  `tix_subject_identifier`, `tix_debt_record`), 3 modules (`tenants`, `users`, `tix`), 7 endpoints,
+  20 passing tests including cross-tenant isolation against real PostgreSQL.
 - **Frontend** — public landing page, authenticated product shell, TIX verification screen,
   bilingual throughout with parity enforced in CI.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
@@ -46,18 +46,25 @@ it. Section 2 is largely about refilling that middle before the gap compounds.
 These three are treated as **one piece of work** because they touch the same layer. Doing them
 separately means touching tenancy three times.
 
-### P0.1 — Local user records and tenant membership
+### P0.1 — Local user records and tenant membership — **done**
 
-Identity currently lives entirely in Keycloak. There is no `users` table, which means:
+Delivered: `users` module with a tenant-owned `user_account` keyed by the OIDC `sub` claim,
+just-in-time provisioning on first authenticated request, `GET /users/me`, a tenant-admin member
+list, and `audit_event.actor_id` now pointing at a real record instead of a dangling subject.
 
-- `audit_event.actor_id` holds a Keycloak subject UUID that references nothing, so "who ran this
-  verification" cannot be answered inside the system
-- tenant membership is a Keycloak user attribute, so members cannot be listed or managed
-- nothing can reference a person — Phase 2 employees, approvals and assignments all need to
+Decisions worth remembering:
 
-**Deliverables:** `users` module with a `user_account` table keyed by the OIDC subject; tenant
-membership; provisioning on first authenticated request; audit joined to a real person; admin
-endpoints to list members.
+- **Keyed on `sub`, not email.** Email changes; a changed email must not orphan someone's history.
+- **Stored roles are a display snapshot, not authority.** Permission checks read the access token,
+  so a role revoked at the provider takes effect on the next request regardless of the stored row.
+- **One identity maps to one tenant**, matching the single `tenant_id` claim the provider issues.
+  A token whose claim disagrees with the stored record is refused rather than silently served.
+  Multi-tenant membership needs a separate table and an ADR.
+- **Provisioning lives in a service, not a filter**, so unauthenticated and health endpoints never
+  touch the database, and concurrent first requests resolve through the unique constraint.
+
+Verified: 20 backend tests pass, including six covering provisioning, idempotency, profile
+refresh, tenant scoping and the mismatch refusal.
 
 ### P0.2 — Tenant provisioning
 
@@ -116,7 +123,7 @@ TIX depth can then be built on a real foundation:
 | Gap | Severity | Where |
 |---|---|---|
 | RLS defined but not binding | High once real data exists | ADR 0002, P0.3 |
-| No local user records | High — blocks most modules | P0.1 |
+| `common/web` imports from `modules/*` | Low, but it is the boundary violation CI should catch | `GlobalExceptionHandler` |
 | Tokens held in browser session storage | Medium — production should use a backend-for-frontend | `frontend/src/auth/config.ts` |
 | No staging or production environment, no CD | Medium | Phase 0 remainder |
 | `AGENTS.md` rules unenforced by CI | Medium — rules decay silently | Section 3 |

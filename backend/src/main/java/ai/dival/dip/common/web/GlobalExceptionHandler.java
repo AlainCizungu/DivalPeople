@@ -2,6 +2,7 @@ package ai.dival.dip.common.web;
 
 import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.tix.DebtRecordService;
+import ai.dival.dip.modules.users.CurrentUserService;
 import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,17 @@ public class GlobalExceptionHandler {
         log.warn("Tenant-scoped operation reached without a bound tenant");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiError.of("TENANT_REQUIRED", "Authentication is required"));
+    }
+
+    /**
+     * A token whose tenant claim disagrees with the stored record for that identity. Treated as
+     * forbidden and logged, because it should be impossible in normal operation.
+     */
+    @ExceptionHandler(CurrentUserService.TenantMismatchException.class)
+    public ResponseEntity<ApiError> handleTenantMismatch(CurrentUserService.TenantMismatchException ex) {
+        log.warn("Rejected a request whose token tenant disagrees with the stored user record");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of("FORBIDDEN", "You do not have permission to perform this action"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

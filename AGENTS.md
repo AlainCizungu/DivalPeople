@@ -43,7 +43,10 @@ Backend packages live under `ai.dival.dip`:
 | `common.audit` | Append-only audit log |
 | `common.security` | Authentication, RBAC, method-level authorization |
 | `common.web` | Error handling, API envelope |
-| `modules.<name>` | One package per business module — `tenants`, `users`, `employees`, `tix`, … |
+| `modules.tenants` | Customer organizations |
+| `modules.users` | Local user records, provisioned just-in-time from the OIDC subject |
+| `modules.tix` | Telecom Information Exchange |
+| `modules.<name>` | One package per further business module — `employees`, `payroll`, … |
 
 A module owns its entities and repositories. **Cross-module access goes through the other module's service interface**, never through its repositories or tables directly.
 

@@ -1,13 +1,12 @@
 package ai.dival.dip.modules.tix;
 
 import ai.dival.dip.common.security.Roles;
+import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,18 +26,20 @@ public class TixController {
 
     private final ExchangeService exchange;
     private final DebtRecordService debtRecords;
+    private final CurrentUserService currentUser;
 
-    public TixController(ExchangeService exchange, DebtRecordService debtRecords) {
+    public TixController(ExchangeService exchange, DebtRecordService debtRecords,
+                         CurrentUserService currentUser) {
         this.exchange = exchange;
         this.debtRecords = debtRecords;
+        this.currentUser = currentUser;
     }
 
     /** Verify a prospective customer before activating a credit-bearing service. */
     @PostMapping("/inquiries")
     @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
-    public InquiryResult inquire(@Valid @RequestBody InquiryRequest request,
-                                 @AuthenticationPrincipal Jwt principal) {
-        return exchange.inquire(request, actorId(principal));
+    public InquiryResult inquire(@Valid @RequestBody InquiryRequest request) {
+        return exchange.inquire(request, actorId());
     }
 
     /** Records declared by the calling operator. */
@@ -50,27 +51,22 @@ public class TixController {
 
     @PostMapping("/debt-records/{id}/settle")
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
-    public ResponseEntity<DebtRecordResponse> settle(@PathVariable UUID id,
-                                                     @AuthenticationPrincipal Jwt principal) {
-        return ResponseEntity.ok(DebtRecordResponse.from(debtRecords.settle(id, actorId(principal))));
+    public ResponseEntity<DebtRecordResponse> settle(@PathVariable UUID id) {
+        return ResponseEntity.ok(DebtRecordResponse.from(debtRecords.settle(id, actorId())));
     }
 
     @PostMapping("/debt-records/{id}/dispute")
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
-    public ResponseEntity<DebtRecordResponse> dispute(@PathVariable UUID id,
-                                                      @AuthenticationPrincipal Jwt principal) {
-        return ResponseEntity.ok(DebtRecordResponse.from(debtRecords.dispute(id, actorId(principal))));
+    public ResponseEntity<DebtRecordResponse> dispute(@PathVariable UUID id) {
+        return ResponseEntity.ok(DebtRecordResponse.from(debtRecords.dispute(id, actorId())));
     }
 
-    private UUID actorId(Jwt principal) {
-        if (principal == null || principal.getSubject() == null) {
-            return null;
-        }
-        try {
-            return UUID.fromString(principal.getSubject());
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
+    /**
+     * The local user id, so audit entries point at a record that can be joined to a person
+     * rather than at an opaque token subject.
+     */
+    private UUID actorId() {
+        return currentUser.currentUserIdOrNull();
     }
 
     /** Response projection — the entity is never serialised directly. */
