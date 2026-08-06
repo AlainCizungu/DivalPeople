@@ -20,7 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Raises a notification when an employment contract is approaching its end date.
+ * Raises notifications for things that are about to expire: employment contracts, and documents
+ * such as work permits, visas and professional certifications.
  *
  * <p>Runs across every tenant, one at a time. A scheduled job has no request and therefore no
  * tenant, so each tenant is bound explicitly before its work begins — and because connections are
@@ -30,26 +31,29 @@ import org.springframework.transaction.support.TransactionTemplate;
  * to ignore the feed, which costs more than the alert is worth.
  */
 @Component
-public class ContractExpiryScanner {
+public class HrExpiryScanner {
 
-    private static final Logger log = LoggerFactory.getLogger(ContractExpiryScanner.class);
+    private static final Logger log = LoggerFactory.getLogger(HrExpiryScanner.class);
 
     /** Roles that should hear about an expiring contract. */
     private static final List<String> NOTIFIED_ROLES = List.of("HR_ADMIN", "TENANT_ADMIN");
 
     private final TenantService tenants;
     private final EmploymentContractRepository contracts;
+    private final EmployeeDocumentRepository documents;
     private final UserAccountService users;
     private final NotificationService notifications;
     private final TransactionTemplate transactionTemplate;
     private final int noticeDays;
 
-    public ContractExpiryScanner(TenantService tenants, EmploymentContractRepository contracts,
-                                 UserAccountService users, NotificationService notifications,
-                                 TransactionTemplate transactionTemplate,
-                                 @Value("${dip.hr.contract-expiry-notice-days:30}") int noticeDays) {
+    public HrExpiryScanner(TenantService tenants, EmploymentContractRepository contracts,
+                           EmployeeDocumentRepository documents,
+                           UserAccountService users, NotificationService notifications,
+                           TransactionTemplate transactionTemplate,
+                           @Value("${dip.hr.contract-expiry-notice-days:30}") int noticeDays) {
         this.tenants = tenants;
         this.contracts = contracts;
+        this.documents = documents;
         this.users = users;
         this.notifications = notifications;
         this.transactionTemplate = transactionTemplate;
@@ -67,19 +71,20 @@ public class ContractExpiryScanner {
                 continue;
             }
             try {
-                raised += scanTenant(tenant.getId(), cutoff);
+                raised += scanContracts(tenant.getId(), cutoff);
+                raised += scanDocuments(tenant.getId(), cutoff);
             } catch (RuntimeException ex) {
                 // One tenant's bad data must not stop every other tenant's alerts.
-                log.error("Contract expiry scan failed for tenant {}", tenant.getId(), ex);
+                log.error("Expiry scan failed for tenant {}", tenant.getId(), ex);
             }
         }
 
         if (raised > 0) {
-            log.info("Contract expiry scan raised {} notifications", raised);
+            log.info("Expiry scan raised {} notifications", raised);
         }
     }
 
-    private int scanTenant(UUID tenantId, LocalDate cutoff) {
+    private int scanContracts(UUID tenantId, LocalDate cutoff) {
         return TenantContext.runAsResult(tenantId, () ->
                 transactionTemplate.execute(status -> {
                     List<EmploymentContract> expiring =
@@ -108,6 +113,46 @@ public class ContractExpiryScanner {
                                 "EmploymentContract",
                                 contract.getId().toString());
                         contract.markExpiryNotified();
+                    }
+                    return expiring.size();
+                }));
+    }
+
+    /**
+     * Documents nearing expiry. A lapsed work permit is a compliance problem rather than an
+     * administrative one, so it earns the same warning as a contract.
+     */
+    private int scanDocuments(UUID tenantId, LocalDate cutoff) {
+        return TenantContext.runAsResult(tenantId, () ->
+                transactionTemplate.execute(status -> {
+                    List<EmployeeDocument> expiring =
+                            documents.findExpiringWithoutAlert(tenantId, cutoff);
+                    if (expiring.isEmpty()) {
+                        return 0;
+                    }
+
+                    List<UUID> recipients = recipientsFor(tenantId);
+                    if (recipients.isEmpty()) {
+                        log.warn("Tenant {} has {} expiring documents but no HR or tenant admin",
+                                tenantId, expiring.size());
+                        return 0;
+                    }
+
+                    for (EmployeeDocument document : expiring) {
+                        notifications.notifyAll(
+                                recipients,
+                                "documentExpiring",
+                                Map.of(
+                                        "employee", document.getEmployee().displayName(),
+                                        "document", document.getTitle(),
+                                        "days", String.valueOf(daysUntil(document.getExpiresOn()))),
+                                // Losing the right to employ somebody outranks a contract renewal.
+                                document.getDocumentType().expiryMatters()
+                                        ? Notification.Severity.CRITICAL
+                                        : Notification.Severity.WARNING,
+                                "EmployeeDocument",
+                                document.getId().toString());
+                        document.markExpiryNotified();
                     }
                     return expiring.size();
                 }));

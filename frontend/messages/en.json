@@ -412,7 +412,8 @@
       "debtDeclared": "A debt of {amount} was declared against {subject}",
       "debtDisputed": "{subject} has disputed a declared debt",
       "orgUnitCreated": "{name} was added to the organization structure",
-      "welcome": "Welcome to {tenant}"
+      "welcome": "Welcome to {tenant}",
+      "documentExpiring": "{employee}'s {document} expires in {days} days"
     }
   },
   "employees": {

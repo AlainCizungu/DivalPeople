@@ -13,8 +13,8 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
 | 1 — Platform | **Complete** | Tenants, authentication, roles, organization structure, users, audit, EN/FR, notifications and file storage all in. |
-| 2 — Core HR | **In progress** | Employees, reporting lines, employment contracts and contract-expiry alerts are in. Dependents, emergency contacts and employee documents are not. |
-| 3 — Recruitment & onboarding | Not started | |
+| 2 — Core HR | **Complete** | Employees, reporting lines, contracts, dependents, emergency contacts, documents, and expiry alerts for both contracts and documents. |
+| 3 — Recruitment & onboarding | **Next** | Requisitions, candidates, interviews, offers, onboarding checklists. |
 | 4 — Time, performance, learning | Not started | |
 | 5 — Payroll preparation | Not started | |
 | 6 — Employee self-service | Not started | |
@@ -25,8 +25,9 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ### What exists today
 
-- **Backend** — 11 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
-  `tix_subject_identifier`, `tix_debt_record`, `org_unit`, `notification`, `stored_file`, `employee`, `employment_contract`), 7 modules (`tenants`, `users`, `organizations`, `notifications`, `files`,
+- **Backend** — 14 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
+  `tix_subject_identifier`, `tix_debt_record`, `org_unit`, `notification`, `stored_file`, `employee`, `employment_contract`, `employee_dependent`,
+  `employee_emergency_contact`, `employee_document`), 7 modules (`tenants`, `users`, `organizations`, `notifications`, `files`,
   `employees`, `tix`), 39 endpoints,
   59 passing tests, including cross-tenant isolation and row-level security proven
   over raw JDBC as the unprivileged application role.

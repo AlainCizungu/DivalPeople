@@ -412,7 +412,8 @@
       "debtDeclared": "Un impayé de {amount} a été déclaré à l'encontre de {subject}",
       "debtDisputed": "{subject} conteste un impayé déclaré",
       "orgUnitCreated": "{name} a été ajouté à la structure organisationnelle",
-      "welcome": "Bienvenue chez {tenant}"
+      "welcome": "Bienvenue chez {tenant}",
+      "documentExpiring": "Le document « {document} » de {employee} expire dans {days} jours"
     }
   },
   "employees": {
