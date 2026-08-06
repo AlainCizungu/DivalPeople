@@ -4,17 +4,21 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID> {
 
+    @EntityGraph(attributePaths = {"employee", "leaveType", "approver"})
     Optional<LeaveRequest> findByIdAndTenantId(UUID id, UUID tenantId);
 
+    @EntityGraph(attributePaths = {"employee", "leaveType", "approver"})
     List<LeaveRequest> findByTenantIdAndEmployeeIdOrderByStartDateDesc(
             UUID tenantId, UUID employeeId);
 
+    @EntityGraph(attributePaths = {"employee", "leaveType", "approver"})
     List<LeaveRequest> findByTenantIdAndStatusOrderByStartDateAsc(
             UUID tenantId, LeaveRequestStatus status);
 
@@ -40,6 +44,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
                                            @Param("end") LocalDate end);
 
     /** Who is off, across the whole tenant. Drives the team calendar and cover planning. */
+    @EntityGraph(attributePaths = {"employee", "leaveType", "approver"})
     @Query("""
             select r from LeaveRequest r
             where r.tenantId = :tenantId

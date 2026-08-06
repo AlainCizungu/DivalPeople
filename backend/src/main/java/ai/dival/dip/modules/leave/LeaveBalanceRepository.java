@@ -4,6 +4,7 @@ import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -11,8 +12,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface LeaveBalanceRepository extends JpaRepository<LeaveBalance, UUID> {
 
+    @EntityGraph(attributePaths = {"employee", "leaveType"})
     Optional<LeaveBalance> findByIdAndTenantId(UUID id, UUID tenantId);
 
+    @EntityGraph(attributePaths = {"employee", "leaveType"})
     List<LeaveBalance> findByTenantIdAndEmployeeIdAndLeaveYear(
             UUID tenantId, UUID employeeId, int leaveYear);
 

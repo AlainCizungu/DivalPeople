@@ -5,15 +5,18 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TimeEntryRepository extends JpaRepository<TimeEntry, UUID> {
 
+    @EntityGraph(attributePaths = {"employee", "supersedes"})
     Optional<TimeEntry> findByIdAndTenantId(UUID id, UUID tenantId);
 
     /** Live entries for a period. Superseded rows are history, not hours. */
+    @EntityGraph(attributePaths = {"employee", "supersedes"})
     @Query("""
             select e from TimeEntry e
             where e.tenantId = :tenantId
@@ -28,6 +31,7 @@ public interface TimeEntryRepository extends JpaRepository<TimeEntry, UUID> {
                                     @Param("to") LocalDate to);
 
     /** Everything on a day, superseded rows included, so an amendment trail can be read. */
+    @EntityGraph(attributePaths = {"employee", "supersedes"})
     List<TimeEntry> findByTenantIdAndEmployeeIdAndWorkDateOrderByStartedAtAsc(
             UUID tenantId, UUID employeeId, LocalDate workDate);
 

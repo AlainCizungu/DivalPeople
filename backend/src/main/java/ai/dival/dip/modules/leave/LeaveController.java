@@ -95,15 +95,19 @@ public class LeaveController {
     @PostMapping("/balances/adjust")
     @PreAuthorize(HR_WRITE)
     public BalanceResponse adjust(@Valid @RequestBody AdjustRequest request) {
-        return BalanceResponse.from(balances.adjust(request.employeeId(), request.leaveTypeId(),
-                request.leaveYear(), request.days(), request.reason(), actorId()));
+        LeaveBalance adjusted = balances.adjust(request.employeeId(), request.leaveTypeId(),
+                request.leaveYear(), request.days(), request.reason(), actorId());
+        // Re-read rather than map the locked row: the write path takes a pessimistic lock, and a
+        // fetch graph under FOR UPDATE is an outer join Postgres refuses to lock.
+        return BalanceResponse.from(balances.balance(adjusted.getId()));
     }
 
     @PostMapping("/balances/carry-over")
     @PreAuthorize(HR_WRITE)
     public BalanceResponse carryOver(@Valid @RequestBody CarryOverRequest request) {
-        return BalanceResponse.from(balances.carryOver(request.employeeId(),
-                request.leaveTypeId(), request.fromYear(), actorId()));
+        LeaveBalance opened = balances.carryOver(request.employeeId(),
+                request.leaveTypeId(), request.fromYear(), actorId());
+        return BalanceResponse.from(balances.balance(opened.getId()));
     }
 
     // --- requests ----------------------------------------------------------

@@ -3,14 +3,17 @@ package ai.dival.dip.modules.employees;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
+    @EntityGraph(attributePaths = {"orgUnit", "manager"})
     List<Employee> findByTenantIdOrderByLastNameAscFirstNameAsc(UUID tenantId);
 
+    @EntityGraph(attributePaths = {"orgUnit", "manager", "workPattern"})
     Optional<Employee> findByIdAndTenantId(UUID id, UUID tenantId);
 
     Optional<Employee> findByTenantIdAndEmployeeNumber(UUID tenantId, String employeeNumber);

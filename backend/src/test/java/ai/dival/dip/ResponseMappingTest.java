@@ -1,0 +1,239 @@
+package ai.dival.dip;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+
+import ai.dival.dip.common.tenancy.TenantContext;
+import ai.dival.dip.modules.attendance.AttendanceController;
+import ai.dival.dip.modules.attendance.AttendanceService;
+import ai.dival.dip.modules.attendance.TimeEntrySource;
+import ai.dival.dip.modules.attendance.TimesheetService;
+import ai.dival.dip.modules.employees.ContractType;
+import ai.dival.dip.modules.employees.Employee;
+import ai.dival.dip.modules.employees.EmployeeController;
+import ai.dival.dip.modules.employees.EmployeeService;
+import ai.dival.dip.modules.employees.EmploymentContractService;
+import ai.dival.dip.modules.leave.AccrualMethod;
+import ai.dival.dip.modules.leave.LeaveBalanceService;
+import ai.dival.dip.modules.leave.LeaveController;
+import ai.dival.dip.modules.leave.LeaveRequestService;
+import ai.dival.dip.modules.leave.LeaveType;
+import ai.dival.dip.modules.leave.LedgerEntryType;
+import ai.dival.dip.modules.lifecycle.ChecklistType;
+import ai.dival.dip.modules.lifecycle.ItemCategory;
+import ai.dival.dip.modules.lifecycle.LifecycleController;
+import ai.dival.dip.modules.lifecycle.LifecycleService;
+import ai.dival.dip.modules.organizations.OrgUnitService;
+import ai.dival.dip.modules.organizations.OrgUnitType;
+import ai.dival.dip.modules.recruitment.RecruitmentController;
+import ai.dival.dip.modules.recruitment.RecruitmentService;
+import ai.dival.dip.modules.tenants.Tenant;
+import ai.dival.dip.modules.tenants.TenantRepository;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+/**
+ * Builds every list response the way a real request does: outside a transaction.
+ *
+ * <p>This exists because of a bug that reached the browser. Every other test in this project
+ * calls a service from inside a test transaction and asserts on the entity, so a response record
+ * touching a lazy association was never exercised — and with {@code open-in-view: false}, that is
+ * a {@code LazyInitializationException} and a 500 on every screen.
+ *
+ * <p>Deliberately <strong>not</strong> {@code @Transactional}. That is the entire point: the
+ * mapping has to survive the transaction ending, which is the condition a controller runs under.
+ * A future response record that reaches for an unfetched association fails here rather than in
+ * somebody's browser.
+ */
+@RequiresDocker
+class ResponseMappingTest extends AbstractIntegrationTest {
+
+    @Autowired
+    private TenantRepository tenants;
+    @Autowired
+    private EmployeeService employees;
+    @Autowired
+    private EmploymentContractService contracts;
+    @Autowired
+    private OrgUnitService orgUnits;
+    @Autowired
+    private RecruitmentService recruitment;
+    @Autowired
+    private LifecycleService lifecycle;
+    @Autowired
+    private LeaveBalanceService balances;
+    @Autowired
+    private LeaveRequestService leave;
+    @Autowired
+    private AttendanceService attendance;
+    @Autowired
+    private TimesheetService timesheets;
+
+    private UUID tenantId;
+    private Employee employee;
+    private Employee manager;
+
+    @BeforeEach
+    void setUp() {
+        tenantId = tenants.save(new Tenant("RM", "rm-" + UUID.randomUUID(),
+                Tenant.Edition.ENTERPRISE, "en")).getId();
+        TenantContext.set(tenantId);
+
+        UUID unit = orgUnits.create(null, OrgUnitType.LEGAL_ENTITY, "RM-HQ", "Head office", null)
+                .getId();
+
+        manager = employees.hire("EMP-001", "Sylvie", "Mbala", LocalDate.of(2019, 1, 7),
+                unit, null);
+        employee = employees.hire("EMP-002", "Didier", "Lokwa", LocalDate.of(2024, 2, 5),
+                unit, null);
+        employees.setManager(employee.getId(), manager.getId(), null);
+        contracts.draft(employee.getId(), ContractType.PERMANENT, "Field Engineer",
+                LocalDate.of(2024, 2, 5), null, unit, null, null);
+    }
+
+    @AfterEach
+    void tearDown() {
+        TenantContext.clear();
+    }
+
+    @Test
+    @DisplayName("the employee directory maps outside a transaction")
+    void employeeResponsesMap() {
+        assertThatCode(() -> {
+            var summaries = employees.list().stream()
+                    .map(EmployeeController.EmployeeSummary::from).toList();
+            assertThat(summaries).isNotEmpty();
+            // The name, not just the id: reading an id off a proxy never touches the database,
+            // which is exactly why this class of bug hides.
+            assertThat(summaries.get(0).orgUnitName()).isNotNull();
+
+            EmployeeController.EmployeeDetail.from(employees.get(employee.getId()));
+            contracts.forEmployee(employee.getId()).stream()
+                    .map(EmployeeController.ContractResponse::from).toList();
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("the recruitment pipeline maps outside a transaction")
+    void recruitmentResponsesMap() {
+        var requisition = recruitment.createRequisition("REQ-1", "Field Engineer",
+                ContractType.PERMANENT, 1, null, null, null, LocalDate.now().plusMonths(1), null);
+        recruitment.submitRequisition(requisition.getId(), null);
+        recruitment.approveRequisition(requisition.getId(), manager.getId(), null);
+        recruitment.openRequisition(requisition.getId(), null);
+
+        var candidate = recruitment.registerCandidate("Marie", "Ilunga", "marie@example.cd",
+                null, null);
+        var application = recruitment.apply(requisition.getId(), candidate.getId(),
+                LocalDate.now(), null);
+        recruitment.scheduleInterview(application.getId(), null, null,
+                Instant.now().plus(2, ChronoUnit.DAYS), manager.getId(), null);
+
+        assertThatCode(() -> {
+            assertThat(recruitment.listRequisitions().stream()
+                    .map(RecruitmentController.RequisitionResponse::from).toList()).isNotEmpty();
+            assertThat(recruitment.applicationsFor(requisition.getId()).stream()
+                    .map(RecruitmentController.ApplicationResponse::from).toList()).isNotEmpty();
+            assertThat(recruitment.interviewsFor(application.getId()).stream()
+                    .map(RecruitmentController.InterviewResponse::from).toList()).isNotEmpty();
+            recruitment.listCandidates().stream()
+                    .map(RecruitmentController.CandidateResponse::from).toList();
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("checklists map outside a transaction")
+    void lifecycleResponsesMap() {
+        var template = lifecycle.createTemplate("ONB", "Standard onboarding",
+                ChecklistType.ONBOARDING, null);
+        lifecycle.addTemplateItem(template.getId(), "Send the contract", null,
+                ItemCategory.PAPERWORK, "HR_ADMIN", -5, true, null);
+        var checklist = lifecycle.raise(employee.getId(), template.getId(), LocalDate.now(),
+                manager.getId(), null);
+
+        assertThatCode(() -> {
+            var open = lifecycle.openChecklists().stream()
+                    .map(LifecycleController.ChecklistSummary::from).toList();
+            assertThat(open).isNotEmpty();
+            assertThat(open.get(0).employeeName()).isNotBlank();
+
+            var detail = LifecycleController.ChecklistDetail.from(
+                    lifecycle.checklist(checklist.getId()));
+            assertThat(detail.items()).isNotEmpty();
+            assertThat(detail.items().get(0).assigneeName()).isNotBlank();
+
+            lifecycle.listTemplates().stream()
+                    .map(LifecycleController.TemplateResponse::from).toList();
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("leave balances and requests map outside a transaction")
+    void leaveResponsesMap() {
+        LeaveType annual = balances.createType("ANNUAL", "Annual leave", new BigDecimal("20"),
+                AccrualMethod.ANNUAL_GRANT, null);
+        int year = LocalDate.now().plusWeeks(3).getYear();
+        balances.grant(employee.getId(), annual.getId(), year, new BigDecimal("20"),
+                LedgerEntryType.GRANT, "entitlement", null);
+
+        LocalDate from = LocalDate.now().plusWeeks(3).with(java.time.DayOfWeek.MONDAY);
+        var request = leave.submit(employee.getId(), annual.getId(), from, from.plusDays(2),
+                false, false, "Family visit", null, null);
+        leave.approve(request.getId(), manager.getId(), null, null);
+
+        assertThatCode(() -> {
+            var forYear = balances.balancesFor(employee.getId(), year).stream()
+                    .map(LeaveController.BalanceResponse::from).toList();
+            assertThat(forYear).isNotEmpty();
+            assertThat(forYear.get(0).leaveTypeName()).isNotBlank();
+
+            var history = leave.forEmployee(employee.getId()).stream()
+                    .map(LeaveController.RequestResponse::from).toList();
+            assertThat(history).isNotEmpty();
+            assertThat(history.get(0).employeeName()).isNotBlank();
+            assertThat(history.get(0).approverName()).isNotBlank();
+
+            leave.approvedBetween(from, from.plusDays(6)).stream()
+                    .map(LeaveController.RequestResponse::from).toList();
+            balances.ledgerFor(forYear.get(0).id()).stream()
+                    .map(LeaveController.LedgerResponse::from).toList();
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("attendance entries and timesheets map outside a transaction")
+    void attendanceResponsesMap() {
+        LocalDate monday = LocalDate.now().minusWeeks(1).with(java.time.DayOfWeek.MONDAY);
+        attendance.record(employee.getId(), monday,
+                monday.atTime(8, 0).atZone(attendance.getZone()).toInstant(),
+                monday.atTime(17, 0).atZone(attendance.getZone()).toInstant(),
+                60, TimeEntrySource.BIOMETRIC, null, null);
+        var sheet = timesheets.buildWeek(employee.getId(), monday, null);
+        timesheets.submit(sheet.getId(), null);
+
+        assertThatCode(() -> {
+            var entries = attendance.between(employee.getId(), monday, monday.plusDays(6)).stream()
+                    .map(AttendanceController.EntryResponse::from).toList();
+            assertThat(entries).isNotEmpty();
+            assertThat(entries.get(0).employeeName()).isNotBlank();
+
+            var sheets = timesheets.forEmployee(employee.getId()).stream()
+                    .map(AttendanceController.TimesheetResponse::from).toList();
+            assertThat(sheets).isNotEmpty();
+            assertThat(sheets.get(0).employeeName()).isNotBlank();
+
+            timesheets.awaitingDecision().stream()
+                    .map(AttendanceController.TimesheetResponse::from).toList();
+            attendance.historyFor(employee.getId(), monday).stream()
+                    .map(AttendanceController.EntryResponse::from).toList();
+        }).doesNotThrowAnyException();
+    }
+}

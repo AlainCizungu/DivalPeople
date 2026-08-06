@@ -231,6 +231,7 @@ TIX can now be built on a real foundation:
 | Spring integration tests connect as the schema owner | Low — deliberate, and RLS is covered separately | `AbstractIntegrationTest`, ADR 0002 |
 | ~~Tokens held in browser session storage~~ | **Closed.** Moved behind a backend-for-frontend; see ADR 0003. | `frontend/src/server/` |
 | Cookie-borne session invites CSRF | Low — `SameSite=Lax` plus an explicit `Origin` check at the proxy | ADR 0003, `api/proxy` |
+| Integration tests are `@Transactional`, so lazy loading always succeeds in them | Medium — this hid a 500 on five screens until somebody opened a browser | `ResponseMappingTest` covers the read paths; new response records need adding to it |
 | No staging or production environment, no CD | Medium | Phase 0 remainder |
 | `AGENTS.md` rules unenforced by CI | Medium — rules decay silently | Section 3 |
 | TIX has no declaration API | Medium | Section 4 |
