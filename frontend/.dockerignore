@@ -1,0 +1,18 @@
+# See backend/.dockerignore: this is a security boundary as much as a speed one.
+
+.env
+.env.*
+!.env.example
+**/*.pem
+**/*.key
+
+node_modules/
+.next/
+out/
+coverage/
+
+.git/
+.github/
+.idea/
+
+**/*.md

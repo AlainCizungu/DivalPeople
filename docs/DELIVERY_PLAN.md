@@ -9,6 +9,27 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ## 1. Current status
 
+### Hardening — packaging and deployment
+
+| Item | State |
+|---|---|
+| Container images | **Done.** Multi-stage builds for both applications: no JDK, Gradle or `node_modules` in the runtime layer, non-root users, pinned base image tags, health checks. Tests deliberately do not run inside the image build — they need Docker, and a build that silently skips its tests is worse than one that never had them. |
+| Configuration without a rebuild | **Done.** `application-prod.yml` declares every value from the environment with **no defaults**, so a missing variable stops the boot. `ProductionSafety` then catches the harder case — a variable that is present and wrong. The frontend does the same in `server/env.ts`. |
+| Refusing a shared database account | **Done, and it is the check that matters most.** The migration user owns the schema and therefore *bypasses* row-level security. If the application ran as it, every isolation test in this project would still pass while every tenant saw every other. The backend will not start if the two accounts match. |
+| Publishing images | **Done.** `release.yml` triggers on CI completion rather than on push, so it cannot publish from a red build. Images are tagged by full commit SHA, built once, scanned with Trivy, then pushed. The scan reports rather than blocks: a base-image CVE with no fix would otherwise stop the deployment carrying a security fix of our own. |
+| A deployable stack | **Done.** `infra/docker-compose.deploy.yml`: nothing but Caddy publishes a port, Redis has a password, Keycloak has its own database and role, and every secret is required. |
+| The runbook | **Done.** `docs/DEPLOYMENT.md` covers first deploy, realm setup, upgrades, backups, rotating each secret including the one Flyway will not rotate for you, and a symptom table for when it breaks. It ends with what the deployment does **not** do. |
+
+Still open, and named rather than implied:
+
+- **No host.** Everything above is ready to run; nothing is running.
+- **No automated backups.** The commands are in the runbook and nothing executes them. This is
+  the first thing to fix once there is real data.
+- **Deployment is a person typing.** CI publishes; a human pulls. No continuous deployment, no
+  automated rollback, and migrations have no tested down path.
+- **No log aggregation, no alerting.** If it breaks at night, you find out in the morning.
+- **Pre-signed download URLs** for file attachments are still not built.
+
 ### Hardening — partly done, deliberately paused
 
 **Closed:** browser-held tokens, the oldest open gap in the project. Moved behind a
@@ -348,7 +369,7 @@ TIX can now be built on a real foundation:
 | Self-service has no profile editing: people can read their record but not correct it | Low — a change of address is an HR conversation for now | Section 8 |
 | Payroll has no proration, no corrections and no payslip document | Medium — stated in `PAYROLL_SCOPE.md` and on the screen, not hidden | Section 7 |
 | Pay component rates are unverified by anyone qualified | **High before production.** The platform holds no rates of its own; whatever a tenant configures is what people are paid. | `docs/PAYROLL_SCOPE.md` |
-| No staging or production environment, no CD | Medium | Phase 0 remainder |
+| ~~No staging or production environment, no CD~~ | **Partly closed.** Both applications are packaged, CI publishes images to GHCR from green builds only, and there is a deployable stack with a runbook — see `docs/DEPLOYMENT.md`. What remains is a host to run it on, automated backups, and deployment that does not involve a person typing. | `infra/docker-compose.deploy.yml` |
 | `AGENTS.md` rules unenforced by CI | Medium — rules decay silently | Section 3 |
 | TIX has no declaration API | Medium | Section 4 |
 | Keycloak realm is a development fixture | Low until deployment | `infra/keycloak/realm-dip.json` |

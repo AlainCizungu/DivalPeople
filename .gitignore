@@ -18,6 +18,13 @@ node_modules/
 # Example files carry no secrets and must be committed.
 !.env.example
 !.env*.example
+
+# The deployment secrets file. It is NOT called .env, so none of the patterns above catch it,
+# and a file holding every production credential is the worst possible thing to find out about
+# after the fact.
+deploy.env
+*.deploy.env
+!deploy.env.example
 *.pem
 *.key
 secrets/

@@ -1,0 +1,103 @@
+# Production profile.
+#
+# Every value here comes from the environment and NONE of them has a default. That is the whole
+# point of the file. The base application.yml carries development defaults so that `bootRun`
+# works without ceremony, and those defaults are precisely what must not survive a deployment:
+# a server that starts happily as dip_app/dip_app against a localhost issuer is a server nobody
+# looks at again, because it works.
+#
+# Spring fails to resolve a placeholder with no default and refuses to start. ProductionSafety
+# then checks the values that are present but wrong, which is the case a missing-variable error
+# cannot catch.
+
+spring:
+  datasource:
+    url: ${DIP_DB_URL}
+    username: ${DIP_APP_DB_USER}
+    password: ${DIP_APP_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DIP_DB_POOL_SIZE:20}
+      # A connection that cannot be obtained in ten seconds is a failure worth reporting, not one
+      # worth waiting out while requests queue behind it.
+      connection-timeout: 10000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        # No SQL in production logs. Statements carry parameter values, and the parameters here
+        # are salaries, national identifiers and debt records.
+        format_sql: false
+
+  flyway:
+    enabled: true
+    # The owner, which is deliberately not the role the application runs as. If these are the
+    # same account then row-level security is decoration, because the owner bypasses it.
+    url: ${DIP_DB_URL}
+    user: ${DIP_DB_USER}
+    password: ${DIP_DB_PASSWORD}
+    placeholders:
+      dip_app_password: ${DIP_APP_DB_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${DIP_OIDC_ISSUER_URI}
+
+dip:
+  cors:
+    # Empty since ADR 0003 and it should stay empty. The browser talks only to the Next.js
+    # application, which calls this API server-to-server. An allowed origin here would open a
+    # door that nothing walks through.
+    allowed-origins: []
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+  # Behind a reverse proxy, so the scheme and client address come from the forwarded headers.
+  # Without this every audit record says the proxy did it.
+  forward-headers-strategy: framework
+  # A slow-loris style client should not hold a thread indefinitely.
+  tomcat:
+    connection-timeout: 20s
+    max-http-form-post-size: 2MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Health only. `info` leaks the build and version to anyone who can reach the port, and
+        # there is no reason for that to be free.
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+    ai.dival.dip: INFO
+    # Both of these print request-scoped detail that is useful locally and is a disclosure risk
+    # in aggregate. They are explicitly turned down rather than left to inherit.
+    org.hibernate.SQL: WARN
+    org.springframework.security: WARN

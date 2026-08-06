@@ -1,0 +1,164 @@
+# A deployable stack.
+#
+# This is not the development compose file with different passwords. The differences are the
+# point:
+#
+#   - No published ports except the reverse proxy. Postgres, Redis, Keycloak and both
+#     applications are reachable only on the internal network. A database exposed to the internet
+#     is found by a scanner within hours, and "it has a strong password" is not a plan.
+#   - Secrets come from a .env file that is never committed, and every one of them is required.
+#     There is not a single default in this file, deliberately.
+#   - Two database roles. dip_owner owns the schema and runs migrations; dip_app runs the
+#     application and is subject to row-level security. The backend refuses to start if these
+#     are the same account — see ProductionSafety.
+#   - Images are pulled by digest-bearing tag from the registry, not built here. A server that
+#     builds its own images is a server that can drift from what CI tested.
+#
+# Usage is documented in docs/DEPLOYMENT.md. Read it before running this.
+
+name: dip
+
+services:
+  postgres:
+    image: postgres:16.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_OWNER_USER:?set POSTGRES_OWNER_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_OWNER_PASSWORD:?set POSTGRES_OWNER_PASSWORD}
+      # Deterministic collation, so an index built on one host behaves identically on another.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Runs once, on an empty data directory only. Keycloak needs its own database and the
+      # image creates just POSTGRES_DB.
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    # Sessions live here. Without a password anything that reaches the network can read every
+    # session token in the system.
+    # The password is read from the environment inside the container rather than interpolated
+    # by compose, so it appears once in this file instead of twice. Anyone who can run
+    # `docker inspect` on the host sees it either way — that is a host access problem, not one
+    # this file can solve.
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    networks: [internal]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    restart: unless-stopped
+    # `start`, not `start-dev`. The development mode disables HTTPS requirements and caching and
+    # is not something to discover in production.
+    command: ["start", "--optimized", "--http-port=8081", "--proxy-headers=xforwarded"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB:?set KEYCLOAK_DB}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:?set KEYCLOAK_DB_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set KEYCLOAK_DB_PASSWORD}
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:?set KEYCLOAK_HOSTNAME}
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:?set KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY:?set GITHUB_REPOSITORY}/backend:${IMAGE_TAG:?set IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+      DIP_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      # The owner. Runs migrations, and nothing else.
+      DIP_DB_USER: ${POSTGRES_OWNER_USER}
+      DIP_DB_PASSWORD: ${POSTGRES_OWNER_PASSWORD}
+      # The application role. Subject to row-level security; this is the boundary between one
+      # telecom's debt records and another's.
+      #
+      # Not configurable, and it would be dishonest to make it look as though it were: V1 creates
+      # the role by this exact name and V4 gives it a password. Changing it means changing the
+      # migrations.
+      DIP_APP_DB_USER: dip_app
+      DIP_APP_DB_PASSWORD: ${POSTGRES_APP_PASSWORD:?set POSTGRES_APP_PASSWORD}
+
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      DIP_OIDC_ISSUER_URI: ${OIDC_ISSUER:?set OIDC_ISSUER}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [internal]
+
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY}/frontend:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      SITE_URL: ${SITE_URL:?set SITE_URL}
+      # Server-to-server over the internal network. The browser never uses this address, and the
+      # backend is not reachable from outside at all.
+      API_BASE_URL: http://backend:8080
+      OIDC_ISSUER: ${OIDC_ISSUER}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?set OIDC_CLIENT_ID}
+      # Confidential client. The frontend refuses to start in production without this.
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?set OIDC_CLIENT_SECRET}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-43200}
+    depends_on:
+      - backend
+      - redis
+    networks: [internal]
+
+  # The only service with a published port. Terminates TLS, obtains and renews certificates, and
+  # is the single place the outside world touches.
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_HOSTNAME: ${SITE_HOSTNAME:?set SITE_HOSTNAME}
+      KEYCLOAK_HOSTNAME: ${KEYCLOAK_HOSTNAME}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - keycloak
+    networks: [internal]
+
+volumes:
+  postgres-data:
+  redis-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  internal:
+    driver: bridge

@@ -1,0 +1,2 @@
+# Next.js serves this directory at the site root.
+# Kept in git so the container build has it even while it is empty.

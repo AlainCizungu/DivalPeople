@@ -1,0 +1,25 @@
+# Everything the build does not need, and everything it must never see.
+#
+# The build context is uploaded to the daemon and every file in it can end up in a layer, so
+# this list is a security boundary and not only a speed one.
+
+.env
+.env.*
+!.env.example
+**/*.pem
+**/*.key
+**/*.p12
+**/*.jks
+
+build/
+.gradle/
+out/
+bin/
+
+.git/
+.github/
+.idea/
+*.iml
+
+**/*.md
+!README.md

@@ -1,0 +1,36 @@
+# TLS termination and the only door into the stack.
+#
+# Caddy obtains and renews certificates automatically, which removes the most common cause of a
+# self-hosted deployment going down: somebody forgot to renew.
+
+{$SITE_HOSTNAME} {
+	encode zstd gzip
+
+	# HSTS. Set here rather than in the application, because it has to be sent by whatever
+	# terminates TLS — an application behind a proxy cannot know the request was HTTPS unless
+	# the proxy says so, and a browser will not honour it over plain HTTP anyway.
+	#
+	# Six months, subdomains included. Do not add `preload` until you are certain no subdomain
+	# will ever need plain HTTP: preload lists are slow to leave.
+	header Strict-Transport-Security "max-age=15768000; includeSubDomains"
+
+	# The application already sets X-Frame-Options, nosniff and a referrer policy. They are not
+	# repeated here; two places setting the same header is how they end up disagreeing.
+
+	reverse_proxy frontend:3000
+}
+
+# Keycloak on its own hostname rather than a path under the application. A path prefix means the
+# identity provider shares an origin with the application it protects, and an XSS anywhere in the
+# application becomes an attack on the login page.
+{$KEYCLOAK_HOSTNAME} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=15768000; includeSubDomains"
+
+	# The admin console is not exposed. Reach it over an SSH tunnel when it is needed, which is
+	# rarely, and never from the public internet.
+	@admin path /admin* /realms/master*
+	respond @admin 404
+
+	reverse_proxy keycloak:8081
+}
