@@ -49,6 +49,17 @@
       "OUTSTANDING_DEBT": "Impayé signalé",
       "REVIEW_REQUIRED": "Revue manuelle requise"
     },
-    "advisoryNotice": "Il s'agit d'un indicateur nécessitant une revue, et non d'un constat de faute."
+    "advisoryNotice": "Il s'agit d'un indicateur nécessitant une revue, et non d'un constat de faute.",
+    "purposeHint": "Enregistré dans la piste d'audit avec votre nom et l'heure de la consultation.",
+    "fraudSignals": "Indicateurs de fraude",
+    "inquiryFailed": "La vérification n'a pas pu aboutir",
+    "forbidden": "Votre compte n'est pas autorisé à effectuer des vérifications.",
+    "networkError": "Le service de vérification est injoignable."
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signInPrompt": "Connectez-vous pour accéder à votre espace de travail.",
+    "errorTitle": "Échec de la connexion",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
   }
 }

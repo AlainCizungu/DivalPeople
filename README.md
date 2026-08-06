@@ -39,7 +39,7 @@ cd backend && ./bootstrap.sh && cd ..
 cd backend && ./gradlew bootRun
 
 # 4. Run the frontend — http://localhost:3000
-cd frontend && npm install && npm run dev
+cd frontend && cp .env.local.example .env.local && npm install && npm run dev
 
 # 5. Verify the whole chain
 ./infra/dev.sh check
@@ -61,6 +61,11 @@ tenants whose IDs match the `tenant_id` attributes of the Keycloak users.
 | `no-roles` | `password` | `1111…1111` | EMPLOYEE only — used to prove authorization denies |
 
 Keycloak admin console: http://localhost:8081 (`admin` / `admin`). These are local-only fixtures.
+
+Signing into the frontend as `operator-a` and running a verification on the **Telecom Exchange**
+page exercises the whole chain: authorization code + PKCE against Keycloak, a bearer token on the
+API call, server-side role and tenant enforcement, and an audited lookup. Signing in as
+`no-roles` should produce a permission message rather than a result — that denial is the point.
 
 ```bash
 ./infra/dev.sh token operator-b          # print a token

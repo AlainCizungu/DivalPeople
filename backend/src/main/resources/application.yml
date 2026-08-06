@@ -35,6 +35,12 @@ spring:
         jwt:
           issuer-uri: ${DIP_OIDC_ISSUER_URI:http://localhost:8081/realms/dip}
 
+dip:
+  cors:
+    # Empty by default: an unconfigured environment refuses cross-origin requests rather than
+    # accepting every origin. Set explicitly per environment.
+    allowed-origins: ${DIP_CORS_ALLOWED_ORIGINS:}
+
 server:
   port: 8080
   error:

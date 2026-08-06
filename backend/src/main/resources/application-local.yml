@@ -29,6 +29,10 @@ spring:
           issuer-uri: http://localhost:8081/realms/dip
 
 dip:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+
   local:
     # Seeds two telecom tenants whose IDs match the tenant_id attributes of the
     # operator-a and operator-b users in infra/keycloak/realm-dip.json.

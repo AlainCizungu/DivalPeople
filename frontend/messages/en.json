@@ -49,6 +49,17 @@
       "OUTSTANDING_DEBT": "Outstanding debt reported",
       "REVIEW_REQUIRED": "Manual review required"
     },
-    "advisoryNotice": "This is an indicator requiring review, not a finding of misconduct."
+    "advisoryNotice": "This is an indicator requiring review, not a finding of misconduct.",
+    "purposeHint": "Recorded on the audit trail with your name and the time of the lookup.",
+    "fraudSignals": "Fraud indicators",
+    "inquiryFailed": "Verification could not be completed",
+    "forbidden": "Your account does not have permission to run verifications.",
+    "networkError": "Could not reach the verification service."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signInPrompt": "Sign in to continue to your workspace.",
+    "errorTitle": "Sign-in failed",
+    "sessionExpired": "Your session has expired. Please sign in again."
   }
 }

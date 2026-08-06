@@ -15,7 +15,9 @@ node_modules/
 # Environment and secrets — never commit
 .env
 .env.*
+# Example files carry no secrets and must be committed.
 !.env.example
+!.env*.example
 *.pem
 *.key
 secrets/

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "react-oidc-context";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { BrandMark } from "./BrandMark";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -13,6 +14,15 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const messages = useMessages();
   const pathname = usePathname();
+  const auth = useAuth();
+
+  const profile = auth.user?.profile;
+  const displayName =
+    profile?.name ?? profile?.preferred_username ?? profile?.email ?? "";
+  // Claim carried by the access token and enforced server-side; shown so it is obvious which
+  // operator the current session is acting as.
+  const tenantId =
+    typeof profile?.tenant_id === "string" ? profile.tenant_id : undefined;
 
   const navigation = [
     { href: "/", label: messages.nav.home },
@@ -68,13 +78,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <p className="hidden text-sm text-muted md:block">
-            {messages.common.tenant}: <span className="font-semibold text-ink">Vodacom RDC</span>
+            {messages.common.tenant}:{" "}
+            <span className="font-semibold text-ink">{displayName}</span>
+            {tenantId && (
+              <span className="ml-2 rounded bg-soft px-2 py-0.5 font-mono text-xs">
+                {tenantId.slice(0, 8)}
+              </span>
+            )}
           </p>
 
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <button
               type="button"
+              onClick={() => void auth.signoutRedirect()}
               className="rounded px-3 py-1.5 text-sm font-semibold text-ink transition hover:text-blue"
             >
               {messages.common.signOut}
