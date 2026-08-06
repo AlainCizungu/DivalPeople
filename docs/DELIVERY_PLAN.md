@@ -31,7 +31,7 @@ test could catch.
 | 1 — Platform | **Complete** | Tenants, authentication, roles, organization structure, users, audit, EN/FR, notifications and file storage all in. |
 | 2 — Core HR | **Complete** | Employees, reporting lines, contracts, dependents, emergency contacts, documents, expiry alerts, probation decisions and work patterns. |
 | 3 — Recruitment & onboarding | **Complete** | Requisitions, candidates, applications, interviews, offers, the hire handover into Core HR, and onboarding/offboarding checklists. |
-| 4 — Time, performance, learning | **In progress** | Time is built: leave with a ledger, accrual, carryover, part-time work patterns, and attendance with timesheets and overtime. Shift planning, performance and learning are not started. |
+| 4 — Time, performance, learning | **In progress** | Time and performance are built. Learning and shift planning are not. |
 | 5 — Payroll preparation | Not started | |
 | 6 — Employee self-service | Not started | |
 | 7 — Financial services | Not started | |

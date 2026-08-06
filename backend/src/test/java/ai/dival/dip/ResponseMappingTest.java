@@ -24,6 +24,11 @@ import ai.dival.dip.modules.lifecycle.ItemCategory;
 import ai.dival.dip.modules.lifecycle.LifecycleController;
 import ai.dival.dip.modules.lifecycle.LifecycleService;
 import ai.dival.dip.modules.organizations.OrgUnitService;
+import ai.dival.dip.modules.performance.FeedbackRelationship;
+import ai.dival.dip.modules.performance.PerformanceController;
+import ai.dival.dip.modules.performance.PerformanceService;
+import ai.dival.dip.modules.performance.Rating;
+import ai.dival.dip.modules.performance.ReviewCycle;
 import ai.dival.dip.modules.organizations.OrgUnitType;
 import ai.dival.dip.modules.recruitment.CandidateSource;
 import ai.dival.dip.modules.recruitment.InterviewMode;
@@ -96,6 +101,10 @@ class ResponseMappingTest extends AbstractIntegrationTest {
     private LeaveController leaveController;
     @Autowired
     private AttendanceController attendanceController;
+    @Autowired
+    private PerformanceService performance;
+    @Autowired
+    private PerformanceController performanceController;
 
     private UUID tenantId;
     private Employee employee;
@@ -249,6 +258,48 @@ class ResponseMappingTest extends AbstractIntegrationTest {
 
             attendanceController.pending();
             attendanceController.dayHistory(employee.getId(), monday);
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("performance responses map outside a transaction")
+    void performanceResponsesMap() {
+        ReviewCycle cycle = performance.createCycle("2026 annual", LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31), null, null);
+        performance.openCycle(cycle.getId(), null);
+
+        var goal = performance.createGoal(employee.getId(), "Cut mean repair time", null,
+                "From 6 hours to 4", null, LocalDate.of(2026, 6, 30), cycle.getId(), null, null);
+        performance.activateGoal(goal.getId(), null);
+
+        var review = performance.openReview(cycle.getId(), employee.getId(), manager.getId(),
+                null);
+        performance.saveSelfAssessment(review.getId(), "My year", null);
+        performance.submitSelfAssessment(review.getId(), null);
+        performance.saveReviewerAssessment(review.getId(), "Their year", Rating.MEETS, null);
+        performance.submitReviewerAssessment(review.getId(), null);
+        performance.addFeedback(review.getId(), manager.getId(), FeedbackRelationship.MANAGER,
+                "Dependable", false, null);
+
+        assertThatCode(() -> {
+            assertThat(performanceController.cycles()).isNotEmpty();
+
+            var employeeGoals = performanceController.goals(employee.getId());
+            assertThat(employeeGoals).isNotEmpty();
+            // The names, not just the ids: reading an id off a proxy never touches the database.
+            assertThat(employeeGoals.get(0).employeeName()).isNotBlank();
+            assertThat(employeeGoals.get(0).cycleName()).isNotBlank();
+
+            var inCycle = performanceController.reviewsInCycle(cycle.getId());
+            assertThat(inCycle).isNotEmpty();
+            assertThat(inCycle.get(0).employeeName()).isNotBlank();
+            assertThat(inCycle.get(0).reviewerName()).isNotBlank();
+            assertThat(inCycle.get(0).cycleName()).isNotBlank();
+
+            performanceController.reviewsFor(employee.getId(), true);
+            performanceController.reviewsToWrite(manager.getId());
+            performanceController.review(review.getId(), false);
+            assertThat(performanceController.feedback(review.getId(), false)).isNotEmpty();
         }).doesNotThrowAnyException();
     }
 }
