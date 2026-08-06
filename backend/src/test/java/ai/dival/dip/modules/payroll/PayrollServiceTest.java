@@ -20,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 /**
  * The arithmetic a payslip rests on, and the controls around signing it off.
@@ -296,6 +297,14 @@ class PayrollServiceTest extends AbstractIntegrationTest {
 
         assertThat(result.payslipsProduced()).isEqualTo(1);
         assertThat(result.skippedForNoSalary()).containsExactly(financeOfficer.displayName());
+
+        // The assertion this test was missing. Skipping somebody used to leave the transaction
+        // marked rollback-only, so calculate() returned this tidy result and the commit failed
+        // afterwards with nothing pointing at why. A rolled-back test never commits, so the
+        // suite could not see it — ResponseMappingTest, which does commit, found it instead.
+        assertThat(TransactionAspectSupport.currentTransactionStatus().isRollbackOnly())
+                .as("a skipped employee must not poison the run")
+                .isFalse();
     }
 
     @Test

@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Turns a person, a period and their configuration into a payslip.
@@ -52,7 +51,10 @@ public class PayrollCalculator {
      * period; proration is not implemented and that limitation is recorded in the scope document
      * rather than approximated here.
      */
-    @Transactional
+    // Deliberately not transactional. This is only ever called from inside
+    // PayrollService.calculate's transaction, and a REQUIRED boundary here does nothing useful
+    // while turning any exception it throws into setRollbackOnly on the caller's transaction —
+    // even one the caller expects and handles. That cost a whole payroll run once already.
     public Payslip calculate(PayrollPeriod period, Employee employee, PayFrequency frequency) {
         UUID tenantId = TenantContext.require();
         LocalDate on = period.getPeriodEnd();

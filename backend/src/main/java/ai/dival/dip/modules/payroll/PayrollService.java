@@ -81,14 +81,23 @@ public class PayrollService {
         UUID tenantId = TenantContext.require();
         Employee employee = employees.get(employeeId);
 
-        compensation.findCurrent(tenantId, employeeId).ifPresent(current -> {
+        boolean closedOne = compensation.findCurrent(tenantId, employeeId).map(current -> {
             if (!effectiveFrom.isAfter(current.getEffectiveFrom())) {
                 throw new ConflictException(
                         "A new salary must start after the one it replaces, which began "
                                 + current.getEffectiveFrom());
             }
             current.closeOn(effectiveFrom.minusDays(1));
-        });
+            return true;
+        }).orElse(false);
+
+        if (closedOne) {
+            // Flushed deliberately. Hibernate orders inserts before updates at flush, so without
+            // this the new open-ended row is written while the old one is still open and
+            // uq_compensation_current rejects it. The index is doing its job; the write order
+            // was wrong. A deferrable constraint would hide the ordering instead of fixing it.
+            compensation.flush();
+        }
 
         Compensation saved = compensation.save(new Compensation(
                 employee, effectiveFrom, amount, currency, frequency, reason));
@@ -266,17 +275,23 @@ public class PayrollService {
             if (!employee.getStatus().isEmployed()) {
                 continue;
             }
-            try {
-                payslips.save(calculator.calculate(period, employee,
-                        frequency == null ? PayFrequency.MONTHLY : frequency));
-                produced++;
-            } catch (PayrollCalculator.NoCompensationException absent) {
-                // Reported, not guessed at. A run that silently omits somebody is worse than one
-                // that says who it could not pay.
+            // Asked before calling, not caught afterwards. The calculator refuses to invent a
+            // salary, and that refusal is correct — but it used to reach here as an exception
+            // thrown across a transactional boundary, which marks the whole run rollback-only.
+            // The catch then swallowed it, so calculate() returned a tidy result and the commit
+            // failed afterwards with nothing to explain why. One person without a salary took
+            // the entire payroll down. Reported, not guessed at, and not thrown either.
+            if (compensation.findEffectiveOn(tenantId, employee.getId(), period.getPeriodEnd())
+                    .isEmpty()) {
                 skipped.add(employee.displayName());
-                log.warn("Skipped {} in payroll {}: {}", employee.displayName(),
-                        period.getName(), absent.getMessage());
+                log.warn("Skipped {} in payroll {}: no salary on record as at {}",
+                        employee.displayName(), period.getName(), period.getPeriodEnd());
+                continue;
             }
+
+            payslips.save(calculator.calculate(period, employee,
+                    frequency == null ? PayFrequency.MONTHLY : frequency));
+            produced++;
         }
 
         period.markCalculated();

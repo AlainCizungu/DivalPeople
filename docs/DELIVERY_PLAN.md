@@ -288,7 +288,7 @@ TIX can now be built on a real foundation:
 | Spring integration tests connect as the schema owner | Low — deliberate, and RLS is covered separately | `AbstractIntegrationTest`, ADR 0002 |
 | ~~Tokens held in browser session storage~~ | **Closed.** Moved behind a backend-for-frontend; see ADR 0003. | `frontend/src/server/` |
 | Cookie-borne session invites CSRF | Low — `SameSite=Lax` plus an explicit `Origin` check at the proxy | ADR 0003, `api/proxy` |
-| Integration tests are `@Transactional`, so lazy loading always succeeds in them | Medium — this hid a 500 on five screens until somebody opened a browser | `ResponseMappingTest` covers the read paths; new response records need adding to it |
+| Integration tests are `@Transactional`, so anything that only fails at commit succeeds in them | Medium — it hid a 500 on five screens, then hid a payroll run that reported success and failed on commit | `ResponseMappingTest` commits and has now caught two distinct defect classes; new response records need adding to it |
 | Payroll has no proration, no corrections and no payslip document | Medium — stated in `PAYROLL_SCOPE.md` and on the screen, not hidden | Section 7 |
 | Pay component rates are unverified by anyone qualified | **High before production.** The platform holds no rates of its own; whatever a tenant configures is what people are paid. | `docs/PAYROLL_SCOPE.md` |
 | No staging or production environment, no CD | Medium | Phase 0 remainder |
