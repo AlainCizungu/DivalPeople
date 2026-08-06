@@ -19,8 +19,9 @@ CREATE TABLE stored_file (
     size_bytes        BIGINT        NOT NULL,
 
     -- SHA-256 of the stored bytes: detects corruption and identifies duplicates without
-    -- re-reading the object.
-    checksum_sha256   CHAR(64)      NOT NULL,
+    -- re-reading the object. VARCHAR, not CHAR: CHAR is a distinct JDBC type code and fails
+    -- Hibernate's schema validation against a plain String field.
+    checksum_sha256   VARCHAR(64)   NOT NULL,
 
     -- What the file is for, so retention and access rules can differ by purpose.
     category          VARCHAR(60)   NOT NULL,

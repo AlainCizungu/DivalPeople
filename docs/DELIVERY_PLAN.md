@@ -28,10 +28,10 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 - **Backend** — 9 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
   `tix_subject_identifier`, `tix_debt_record`, `org_unit`, `notification`, `stored_file`), 6 modules (`tenants`, `users`, `organizations`, `notifications`, `files`, `tix`),
   30 endpoints,
-  34 passing tests, including cross-tenant isolation and row-level security proven
+  59 passing tests, including cross-tenant isolation and row-level security proven
   over raw JDBC as the unprivileged application role.
-- **Frontend** — public landing page, authenticated product shell, organization structure and
-  TIX verification screens,
+- **Frontend** — public landing page, authenticated product shell, organization structure,
+  notifications and TIX verification screens,
   bilingual throughout with parity enforced in CI.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
   three fixture users across two tenants, and a scripted end-to-end check.
@@ -121,7 +121,7 @@ for a debt held by operator B — the exchange read going *through* the policy, 
 | ~~Organization structure~~ | **Done.** Typed self-referencing tree (`org_unit`) with cycle prevention, cascading deactivation, per-tenant codes and a read-only screen. Reporting lines wait for employees. |
 | ~~Notifications~~ | **Done.** Stored as message key plus parameters so a notification renders in the reader's language, not the raiser's. In-app channel; email and SMS become adapters over the same records. |
 | ~~File storage~~ | **Done.** Content-type allowlist, size limit, SHA-256 checksum, randomised keys, audited reads, filesystem implementation behind a `FileStorage` interface so S3 drops in without a caller changing. |
-| ~~Architecture guardrails in CI~~ | **Done.** `scripts/check_architecture.py` enforces three rules and runs in CI. It caught two real violations the day it was written. |
+| ~~Architecture guardrails in CI~~ | **Done.** `scripts/check_architecture.py` enforces four rules and runs in CI: no `common`→`modules` imports, no cross-module repository access, RLS on every tenant-owned table, no `CHAR(n)` columns. It has caught three real defects so far. |
 
 **Phase 1 exit criteria** (from `ROADMAP.md`): two isolated tenants, no cross-tenant access,
 bilingual UI, security tests passing. **All four hold** — isolation is enforced by the database as

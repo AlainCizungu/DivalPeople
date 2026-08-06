@@ -154,10 +154,43 @@ def check_tenant_owned_tables_have_policies() -> None:
             + "\n".join(problems))
 
 
+# ---------------------------------------------------------------------------
+# Rule 4 — no fixed-width CHAR columns.
+#
+# PostgreSQL reports CHAR(n) as a different JDBC type code than VARCHAR, so Hibernate's schema
+# validation rejects it against a plain String field and the whole application context fails to
+# start. This has cost two full test runs; it costs nothing to check.
+#
+# CHAR also pads values with trailing spaces on read, which surprises equality comparisons.
+# ---------------------------------------------------------------------------
+CHAR_COLUMN = re.compile(r"^\s*(\w+)\s+CHAR\s*\(", re.IGNORECASE)
+
+
+def check_no_char_columns() -> None:
+    violations = []
+    for path in sorted(MIGRATIONS.glob("*.sql")):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            if line.strip().startswith("--"):
+                continue
+            # VARCHAR contains "CHAR", so anchor on the column-definition shape instead.
+            if CHAR_COLUMN.match(line) and "VARCHAR" not in line.upper():
+                violations.append((path, number, line.strip()))
+
+    if violations:
+        report = "\n".join(
+            f"    {p.relative_to(REPO)}:{n}  {line}" for p, n, line in violations)
+        raise Failure(
+            "Use VARCHAR(n), not CHAR(n).\n"
+            "CHAR is a distinct JDBC type code and fails Hibernate schema validation against a\n"
+            "String field, and it pads values with trailing spaces.\n"
+            f"{report}")
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
     ("no cross-module repository access", check_no_cross_module_persistence),
     ("tenant-owned tables have RLS policies", check_tenant_owned_tables_have_policies),
+    ("no fixed-width CHAR columns", check_no_char_columns),
 ]
 
 

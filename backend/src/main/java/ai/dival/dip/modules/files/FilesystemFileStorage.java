@@ -7,18 +7,22 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
  * Filesystem-backed storage for local development and tests.
  *
- * <p>Backs off if another {@link FileStorage} bean is present, so adding an S3 implementation is
- * a matter of defining it — no configuration switch, no code change here.
+ * <p>Selected by {@code dip.files.storage}, defaulting to this one. An S3 implementation declares
+ * {@code havingValue = "s3"} and the two never collide.
+ *
+ * <p>Chosen by property rather than by {@code @ConditionalOnMissingBean}: that annotation is only
+ * dependable on auto-configuration classes, where Spring controls the ordering. On a scanned
+ * component the evaluation order is undefined, and the bean can silently fail to register.
  */
 @Component
-@ConditionalOnMissingBean(FileStorage.class)
+@ConditionalOnProperty(name = "dip.files.storage", havingValue = "filesystem", matchIfMissing = true)
 public class FilesystemFileStorage implements FileStorage {
 
     private static final Logger log = LoggerFactory.getLogger(FilesystemFileStorage.class);
