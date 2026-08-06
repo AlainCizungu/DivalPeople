@@ -2,6 +2,8 @@ package ai.dival.dip.dev;
 
 import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.employees.ContractType;
+import ai.dival.dip.modules.employees.Employee;
+import ai.dival.dip.modules.employees.EmployeeRepository;
 import ai.dival.dip.modules.organizations.OrgUnit;
 import ai.dival.dip.modules.organizations.OrgUnitRepository;
 import ai.dival.dip.modules.recruitment.ApplicationStatus;
@@ -51,16 +53,19 @@ public class LocalRecruitmentSeeder implements ApplicationRunner {
     private final RecruitmentService recruitment;
     private final OfferService offers;
     private final JobRequisitionRepository requisitions;
+    private final EmployeeRepository employees;
     private final OrgUnitRepository orgUnits;
     private final TransactionTemplate transactionTemplate;
 
     public LocalRecruitmentSeeder(RecruitmentService recruitment, OfferService offers,
                                   JobRequisitionRepository requisitions,
+                                  EmployeeRepository employees,
                                   OrgUnitRepository orgUnits,
                                   TransactionTemplate transactionTemplate) {
         this.recruitment = recruitment;
         this.offers = offers;
         this.requisitions = requisitions;
+        this.employees = employees;
         this.orgUnits = orgUnits;
         this.transactionTemplate = transactionTemplate;
     }
@@ -81,13 +86,18 @@ public class LocalRecruitmentSeeder implements ApplicationRunner {
                     .findFirst()
                     .orElse(null);
 
+            // Approvers and interviewers are foreign keys to employee, so they have to be
+            // people who exist. Null when the employee seeder is switched off.
+            UUID director = employeeId(tenantId, "EMP-001");
+            UUID engineer = employeeId(tenantId, "EMP-002");
+
             JobRequisition req = recruitment.createRequisition(
                     "REQ-2026-014", "Field Network Engineer", ContractType.PERMANENT, 2,
-                    operations, null,
+                    operations, director,
                     "Two engineers for the Kinshasa tower maintenance rotation.",
                     LocalDate.now().plusMonths(2), null);
             recruitment.submitRequisition(req.getId(), null);
-            recruitment.approveRequisition(req.getId(), UUID.randomUUID(), null);
+            recruitment.approveRequisition(req.getId(), director, null);
             recruitment.openRequisition(req.getId(), null);
 
             apply(req, "Espérance", "Nsimba", "esperance.nsimba@example.cd",
@@ -99,10 +109,10 @@ public class LocalRecruitmentSeeder implements ApplicationRunner {
             recruitment.submitInterviewFeedback(
                     recruitment.scheduleInterview(interviewing.getId(), InterviewStage.SCREENING,
                             InterviewMode.PHONE, Instant.now().minus(6, ChronoUnit.DAYS),
-                            null, null).getId(),
+                            engineer, null).getId(),
                     InterviewRecommendation.YES, 4, "Solid on RF fundamentals.", null);
             recruitment.scheduleInterview(interviewing.getId(), InterviewStage.TECHNICAL,
-                    InterviewMode.ON_SITE, Instant.now().plus(2, ChronoUnit.DAYS), null, null);
+                    InterviewMode.ON_SITE, Instant.now().plus(2, ChronoUnit.DAYS), engineer, null);
 
             JobApplication offered = apply(req, "Grâce", "Tshibangu",
                     "grace.tshibangu@example.cd", CandidateSource.DIRECT,
@@ -120,6 +130,12 @@ public class LocalRecruitmentSeeder implements ApplicationRunner {
 
             log.info("Seeded 1 open requisition and 4 candidates for operator A");
         }));
+    }
+
+    private UUID employeeId(UUID tenantId, String number) {
+        return employees.findByTenantIdAndEmployeeNumber(tenantId, number)
+                .map(Employee::getId)
+                .orElse(null);
     }
 
     private JobApplication apply(JobRequisition requisition, String firstName, String lastName,

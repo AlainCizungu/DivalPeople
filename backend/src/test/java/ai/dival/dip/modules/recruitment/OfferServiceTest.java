@@ -10,6 +10,7 @@ import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.employees.ContractStatus;
 import ai.dival.dip.modules.employees.ContractType;
 import ai.dival.dip.modules.employees.Employee;
+import ai.dival.dip.modules.employees.EmployeeService;
 import ai.dival.dip.modules.employees.EmployeeStatus;
 import ai.dival.dip.modules.employees.EmploymentContract;
 import ai.dival.dip.modules.employees.EmploymentContractService;
@@ -40,14 +41,20 @@ class OfferServiceTest extends AbstractIntegrationTest {
     private OfferService offers;
     @Autowired
     private EmploymentContractService contracts;
+    @Autowired
+    private EmployeeService employees;
 
     private int sequence;
+    /** The approver is a foreign key to employee, so it has to be somebody real. */
+    private UUID approver;
 
     @BeforeEach
     void setUp() {
         UUID tenantId = tenants.save(new Tenant("O A", "o-a-" + UUID.randomUUID(),
                 Tenant.Edition.ENTERPRISE, "en")).getId();
         TenantContext.set(tenantId);
+        approver = employees.hire("EMP-100", "Sylvie", "Mbala",
+                LocalDate.of(2020, 1, 6), null, null).getId();
     }
 
     @AfterEach
@@ -61,7 +68,7 @@ class OfferServiceTest extends AbstractIntegrationTest {
         JobRequisition req = recruitment.createRequisition("REQ" + suffix, "Field Engineer",
                 ContractType.PERMANENT, headcount, null, null, null, START, null);
         recruitment.submitRequisition(req.getId(), null);
-        recruitment.approveRequisition(req.getId(), UUID.randomUUID(), null);
+        recruitment.approveRequisition(req.getId(), approver, null);
         recruitment.openRequisition(req.getId(), null);
 
         Candidate person = recruitment.registerCandidate("Marie", "Ilunga",

@@ -8,6 +8,7 @@ import ai.dival.dip.RequiresDocker;
 import ai.dival.dip.common.error.ConflictException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.employees.ContractType;
+import ai.dival.dip.modules.employees.EmployeeService;
 import ai.dival.dip.modules.tenants.Tenant;
 import ai.dival.dip.modules.tenants.TenantRepository;
 import java.time.Instant;
@@ -29,14 +30,20 @@ class RecruitmentServiceTest extends AbstractIntegrationTest {
     private TenantRepository tenants;
     @Autowired
     private RecruitmentService recruitment;
+    @Autowired
+    private EmployeeService employees;
 
     private UUID tenantA;
+    /** Approvers and interviewers are foreign keys to employee, not free-form ids. */
+    private UUID approver;
 
     @BeforeEach
     void setUp() {
         tenantA = tenants.save(new Tenant("R A", "r-a-" + UUID.randomUUID(),
                 Tenant.Edition.ENTERPRISE, "en")).getId();
         TenantContext.set(tenantA);
+        approver = employees.hire("EMP-100", "Sylvie", "Mbala",
+                LocalDate.of(2020, 1, 6), null, null).getId();
     }
 
     @AfterEach
@@ -52,7 +59,7 @@ class RecruitmentServiceTest extends AbstractIntegrationTest {
     private JobRequisition openRequisition(String number, int headcount) {
         JobRequisition req = requisition(number, headcount);
         recruitment.submitRequisition(req.getId(), null);
-        recruitment.approveRequisition(req.getId(), UUID.randomUUID(), null);
+        recruitment.approveRequisition(req.getId(), approver, null);
         return recruitment.openRequisition(req.getId(), null);
     }
 
@@ -95,7 +102,6 @@ class RecruitmentServiceTest extends AbstractIntegrationTest {
     @DisplayName("the approver is recorded, not inferred from the actor")
     void recordsApprover() {
         JobRequisition req = requisition("REQ-003", 1);
-        UUID approver = UUID.randomUUID();
 
         recruitment.submitRequisition(req.getId(), null);
         JobRequisition approved =
@@ -203,7 +209,7 @@ class RecruitmentServiceTest extends AbstractIntegrationTest {
         JobApplication application = application("REQ-009", "f@example.cd");
         Interview interview = recruitment.scheduleInterview(application.getId(),
                 InterviewStage.TECHNICAL, InterviewMode.VIDEO,
-                Instant.now().plus(2, ChronoUnit.DAYS), UUID.randomUUID(), null);
+                Instant.now().plus(2, ChronoUnit.DAYS), approver, null);
 
         assertThat(interview.getStatus()).isEqualTo(InterviewStatus.SCHEDULED);
 
