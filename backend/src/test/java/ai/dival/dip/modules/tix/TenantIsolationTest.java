@@ -1,0 +1,127 @@
+package ai.dival.dip.modules.tix;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
+
+import ai.dival.dip.AbstractIntegrationTest;
+import ai.dival.dip.RequiresDocker;
+import ai.dival.dip.common.tenancy.TenantContext;
+import ai.dival.dip.modules.tenants.Tenant;
+import ai.dival.dip.modules.tenants.TenantRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Mandatory cross-tenant isolation test.
+ *
+ * <p>Per AGENTS.md a module is not done until it proves tenant A cannot reach tenant B's rows.
+ * These tests are the executable form of that rule for TIX.
+ */
+@Transactional
+@RequiresDocker
+class TenantIsolationTest extends AbstractIntegrationTest {
+
+    @Autowired
+    private TenantRepository tenants;
+    @Autowired
+    private SubjectRepository subjects;
+    @Autowired
+    private DebtRecordRepository debtRecords;
+    @Autowired
+    private DebtRecordService debtRecordService;
+
+    private UUID operatorA;
+    private UUID operatorB;
+    private Subject sharedSubject;
+
+    @BeforeEach
+    void setUp() {
+        operatorA = tenants.save(new Tenant("Operator A", "operator-a-" + UUID.randomUUID(),
+                Tenant.Edition.TELECOM, "fr")).getId();
+        operatorB = tenants.save(new Tenant("Operator B", "operator-b-" + UUID.randomUUID(),
+                Tenant.Edition.TELECOM, "fr")).getId();
+
+        Subject subject = new Subject(Subject.SubjectType.INDIVIDUAL, "Jean Kabila",
+                LocalDate.of(1990, 5, 12), "CD");
+        subject.addIdentifier(new SubjectIdentifier(IdentifierType.NATIONAL_ID, "CD-1234-5678"));
+        sharedSubject = subjects.save(subject);
+    }
+
+    @Test
+    @DisplayName("an operator sees only its own debt records")
+    void operatorSeesOnlyOwnRecords() {
+        TenantContext.runAs(operatorA, () ->
+                debtRecordService.declare(newRecord(sharedSubject), UUID.randomUUID()));
+        TenantContext.runAs(operatorB, () ->
+                debtRecordService.declare(newRecord(sharedSubject), UUID.randomUUID()));
+
+        List<DebtRecord> ownedByA = debtRecords.findByTenantId(operatorA);
+        List<DebtRecord> ownedByB = debtRecords.findByTenantId(operatorB);
+
+        assertThat(ownedByA).hasSize(1);
+        assertThat(ownedByB).hasSize(1);
+        assertThat(ownedByA.get(0).getId()).isNotEqualTo(ownedByB.get(0).getId());
+        assertThat(ownedByA.get(0).getTenantId()).isEqualTo(operatorA);
+    }
+
+    @Test
+    @DisplayName("an operator cannot settle another operator's record")
+    void cannotSettleForeignRecord() {
+        UUID recordOfA = TenantContext.runAsResult(operatorA,
+                () -> debtRecordService.declare(newRecord(sharedSubject), UUID.randomUUID()).getId());
+
+        assertThatThrownBy(() ->
+                TenantContext.runAs(operatorB, () -> debtRecordService.settle(recordOfA, UUID.randomUUID())))
+                .isInstanceOf(DebtRecordService.DebtRecordNotFoundException.class);
+
+        // And the record is untouched.
+        assertThat(debtRecords.findByIdAndTenantId(recordOfA, operatorA))
+                .get()
+                .extracting(DebtRecord::getStatus)
+                .isEqualTo(DebtStatus.OUTSTANDING);
+    }
+
+    @Test
+    @DisplayName("a tenant-scoped lookup by id refuses to cross tenants")
+    void lookupByIdIsTenantScoped() {
+        UUID recordOfA = TenantContext.runAsResult(operatorA,
+                () -> debtRecordService.declare(newRecord(sharedSubject), UUID.randomUUID()).getId());
+
+        assertThat(debtRecords.findByIdAndTenantId(recordOfA, operatorB)).isEmpty();
+        assertThat(debtRecords.findByIdAndTenantId(recordOfA, operatorA)).isPresent();
+    }
+
+    @Test
+    @DisplayName("a tenant-owned entity cannot be persisted without a tenant context")
+    void refusesToPersistWithoutTenant() {
+        TenantContext.clear();
+
+        Throwable thrown = catchThrowable(() -> debtRecords.saveAndFlush(newRecord(sharedSubject)));
+
+        // The JPA provider is free to wrap an exception thrown from @PrePersist, so assert on the
+        // root cause rather than on whatever wrapper happens to surface.
+        assertThat(thrown).isNotNull();
+        assertThat(rootCauseOf(thrown)).isInstanceOf(TenantContext.TenantContextMissingException.class);
+    }
+
+    private static Throwable rootCauseOf(Throwable thrown) {
+        Throwable current = thrown;
+        while (current.getCause() != null && current.getCause() != current) {
+            current = current.getCause();
+        }
+        return current;
+    }
+
+    private DebtRecord newRecord(Subject subject) {
+        return new DebtRecord(subject, new BigDecimal("150.00"), "USD", "POSTPAID",
+                LocalDate.now().minusDays(60), true);
+    }
+}

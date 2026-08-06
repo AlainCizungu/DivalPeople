@@ -1,0 +1,54 @@
+{
+  "app": {
+    "name": "Dival People",
+    "platform": "Dival Intelligence Platform"
+  },
+  "nav": {
+    "home": "Accueil",
+    "people": "Personnel",
+    "recruitment": "Recrutement",
+    "onboarding": "Intégration",
+    "timeAndLeave": "Temps & congés",
+    "performance": "Performance",
+    "learning": "Formation",
+    "payroll": "Paie",
+    "financialServices": "Services financiers",
+    "fraudIntelligence": "Prévention de la fraude",
+    "tix": "Échange télécoms",
+    "reports": "Rapports",
+    "administration": "Administration"
+  },
+  "common": {
+    "search": "Rechercher",
+    "signOut": "Se déconnecter",
+    "language": "Langue",
+    "tenant": "Organisation",
+    "loading": "Chargement…",
+    "noResults": "Aucun résultat"
+  },
+  "dashboard": {
+    "title": "Intelligence du personnel",
+    "subtitle": "Vue d'ensemble",
+    "totalEmployees": "Effectif total",
+    "payrollAccuracy": "Exactitude de la paie",
+    "openAlerts": "Alertes ouvertes"
+  },
+  "tix": {
+    "title": "Échange d'informations télécoms",
+    "subtitle": "Vérifiez l'identité du client et le statut des impayés avant activation",
+    "inquiry": "Nouvelle interrogation",
+    "identifier": "Identifiant",
+    "identifierType": "Type d'identifiant",
+    "fullName": "Nom complet",
+    "purpose": "Motif de la consultation",
+    "submit": "Lancer la vérification",
+    "confidence": "Niveau de confiance",
+    "outcome": {
+      "NO_MATCH": "Aucune correspondance",
+      "CLEAR": "Aucun antécédent défavorable",
+      "OUTSTANDING_DEBT": "Impayé signalé",
+      "REVIEW_REQUIRED": "Revue manuelle requise"
+    },
+    "advisoryNotice": "Il s'agit d'un indicateur nécessitant une revue, et non d'un constat de faute."
+  }
+}

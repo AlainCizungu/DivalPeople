@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/* DIP design system — see docs/UI_DESIGN_SYSTEM.md.
+   Tokens are declared once here and consumed as Tailwind utilities (bg-blue, text-ink, …). */
+@theme {
+  --color-blue: #0067b8;
+  --color-blue-dark: #004578;
+  --color-navy: #0b1f3a;
+
+  --color-teal: #008c95;
+  --color-green: #107c10;
+  --color-purple: #5c2d91;
+  --color-orange: #d83b01;
+
+  --color-ink: #111827;
+  --color-muted: #5f6368;
+  --color-line: #e5e7eb;
+  --color-soft: #f5f7fa;
+
+  --color-success: #107c10;
+  --color-warning: #ffb900;
+  --color-error: #c50f1f;
+  --color-info: #0067b8;
+
+  --font-sans: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+}
+
+html,
+body {
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* WCAG 2.2 AA: focus must always be visible. */
+:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

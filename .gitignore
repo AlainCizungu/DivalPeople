@@ -1,0 +1,34 @@
+# Build output
+build/
+out/
+target/
+dist/
+.next/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Dependencies
+node_modules/
+.gradle/
+
+# Environment and secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs and temp
+*.log
+npm-debug.log*
+coverage/
+.tmp/
+*.tsbuildinfo

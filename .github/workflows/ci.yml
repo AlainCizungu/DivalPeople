@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      # Integration tests use Testcontainers; the runner provides Docker.
+      - name: Build and test
+        working-directory: backend
+        run: ./gradlew --no-daemon build
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/build/reports/tests/test
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  translations:
+    name: Translation parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # A key present in one language and missing in the other is a bug, not a warning.
+      - name: Compare message keys
+        run: |
+          python3 - <<'PY'
+          import json, sys
+
+          def keys(obj, prefix=""):
+              out = set()
+              for key, value in obj.items():
+                  path = f"{prefix}{key}"
+                  if isinstance(value, dict):
+                      out |= keys(value, path + ".")
+                  else:
+                      out.add(path)
+              return out
+
+          with open("frontend/messages/en.json", encoding="utf-8") as handle:
+              en = keys(json.load(handle))
+          with open("frontend/messages/fr.json", encoding="utf-8") as handle:
+              fr = keys(json.load(handle))
+
+          missing_fr = sorted(en - fr)
+          missing_en = sorted(fr - en)
+
+          if missing_fr or missing_en:
+              for key in missing_fr:
+                  print(f"missing in fr.json: {key}")
+              for key in missing_en:
+                  print(f"missing in en.json: {key}")
+              sys.exit(1)
+
+          print(f"OK — {len(en)} keys present in both languages")
+          PY

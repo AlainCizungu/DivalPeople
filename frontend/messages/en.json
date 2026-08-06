@@ -1,0 +1,54 @@
+{
+  "app": {
+    "name": "Dival People",
+    "platform": "Dival Intelligence Platform"
+  },
+  "nav": {
+    "home": "Home",
+    "people": "People",
+    "recruitment": "Recruitment",
+    "onboarding": "Onboarding",
+    "timeAndLeave": "Time & Leave",
+    "performance": "Performance",
+    "learning": "Learning",
+    "payroll": "Payroll",
+    "financialServices": "Financial Services",
+    "fraudIntelligence": "Fraud Intelligence",
+    "tix": "Telecom Exchange",
+    "reports": "Reports",
+    "administration": "Administration"
+  },
+  "common": {
+    "search": "Search",
+    "signOut": "Sign out",
+    "language": "Language",
+    "tenant": "Organization",
+    "loading": "Loading…",
+    "noResults": "No results"
+  },
+  "dashboard": {
+    "title": "Workforce Intelligence",
+    "subtitle": "Executive overview",
+    "totalEmployees": "Total employees",
+    "payrollAccuracy": "Payroll accuracy",
+    "openAlerts": "Open alerts"
+  },
+  "tix": {
+    "title": "Telecom Information Exchange",
+    "subtitle": "Verify customer identity and shared debt status before activation",
+    "inquiry": "New inquiry",
+    "identifier": "Identifier",
+    "identifierType": "Identifier type",
+    "fullName": "Full name",
+    "purpose": "Reason for lookup",
+    "submit": "Run verification",
+    "confidence": "Match confidence",
+    "outcome": {
+      "NO_MATCH": "No match found",
+      "CLEAR": "No adverse record",
+      "OUTSTANDING_DEBT": "Outstanding debt reported",
+      "REVIEW_REQUIRED": "Manual review required"
+    },
+    "advisoryNotice": "This is an indicator requiring review, not a finding of misconduct."
+  }
+}

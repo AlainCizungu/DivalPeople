@@ -1,0 +1,25 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  data:
+    redis:
+      # Redis is not required by the tests in this module.
+      repositories:
+        enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Tests authenticate with mock JWTs; no issuer is contacted.
+          issuer-uri: http://localhost/unused
+
+logging:
+  level:
+    org.hibernate.SQL: WARN

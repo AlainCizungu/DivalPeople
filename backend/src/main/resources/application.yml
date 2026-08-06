@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: dip-backend
+
+  datasource:
+    url: ${DIP_DB_URL:jdbc:postgresql://localhost:5432/dip}
+    username: ${DIP_DB_USER:dip}
+    password: ${DIP_DB_PASSWORD:dip}
+    hikari:
+      maximum-pool-size: 10
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Schema is owned by Flyway. Hibernate never alters it.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${DIP_OIDC_ISSUER_URI:http://localhost:8081/realms/dip}
+
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+    ai.dival.dip: DEBUG
