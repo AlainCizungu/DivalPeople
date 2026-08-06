@@ -138,12 +138,39 @@ Deferred deliberately, each with a reason rather than an oversight:
 
 ---
 
-## 4. Then — Phase 2 and TIX depth
+## 4. Phase 2 — complete
 
-Phase 2 (employees, contracts, documents, history, expiry alerts) is now unblocked: an employee
-needs a person to reference and a unit to belong to, and both exist.
+| Item | Why it matters |
+|---|---|
+| ~~Employees and contracts~~ | **Done.** `employee` and `employment_contract`, with a loop check on reporting lines, one active contract per person enforced by a partial unique index, and termination that closes the running contract in the same step. |
+| ~~Employee records~~ | **Done.** Dependents, emergency contacts and documents, the last built on the Phase 1 file storage rather than a second upload path. |
+| ~~Expiry alerts~~ | **Done.** A scheduled scan raises notifications for contracts and documents approaching expiry, once per record via `expiry_notified_at`, and leaves the alert unsent when there is nobody to send it to rather than silently marking it handled. |
 
-TIX depth can then be built on a real foundation:
+---
+
+## 5. Phase 3 — recruitment
+
+| Item | State |
+|---|---|
+| Requisitions | **Done.** Draft → pending approval → approved → open, with the approver recorded separately from the actor: an approval whose authoriser is inferred from an audit log is not an approval. Headcount is decremented on hire and the requisition closes itself when it is met. |
+| Candidates | **Done.** A person, not an application — registration is idempotent on email, so three applications from the same address are one candidate and "have we spoken to them before" is answerable. |
+| Applications | **Done.** Legal transitions encoded in `ApplicationStatus.canFollow`; a rejection must carry a reason, because a pipeline that cannot say why people were turned down cannot be reviewed for bias. |
+| Interviews | **Done.** One row per interviewer rather than one shared verdict, so a dissenting voice survives. Feedback is what completes an interview; one marked done with nothing written down is indistinguishable later from one that never happened. |
+| Offers and the hire | **Done.** `OfferService` sits apart from `RecruitmentService` because acceptance crosses into Core HR. One transaction covers the offer, the application, the requisition headcount, the employee and their first contract — a hire that half-happens leaves somebody starting on Monday with no contract. The contract is drafted, not activated: it takes effect on the agreed start date. |
+
+Still open in Phase 3:
+
+- onboarding and offboarding checklists
+- probation tracking and confirmation
+- candidate retention rules per country — **required before production.** Candidates are the only
+  people in the platform with no relationship to the employer, most will be rejected, and their
+  data should not linger indefinitely.
+
+---
+
+## 6. Then — TIX depth
+
+TIX can now be built on a real foundation:
 
 - declaration endpoint — currently records can be settled and disputed but not created via API
 - dispute workflow with the suppression rules described in `TIX_MODULE.md`

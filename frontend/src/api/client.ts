@@ -128,6 +128,71 @@ export const employeesApi = {
   },
 };
 
+export type RequisitionStatus =
+  | "DRAFT"
+  | "PENDING_APPROVAL"
+  | "APPROVED"
+  | "OPEN"
+  | "ON_HOLD"
+  | "FILLED"
+  | "CANCELLED";
+
+export type ApplicationStatus =
+  | "APPLIED"
+  | "SCREENING"
+  | "INTERVIEWING"
+  | "OFFER"
+  | "HIRED"
+  | "REJECTED"
+  | "WITHDRAWN";
+
+export type ContractType =
+  | "PERMANENT"
+  | "FIXED_TERM"
+  | "PART_TIME"
+  | "INTERNSHIP"
+  | "CONSULTANT";
+
+export type Requisition = {
+  id: string;
+  requisitionNumber: string;
+  title: string;
+  contractType: ContractType;
+  headcount: number;
+  filledCount: number;
+  status: RequisitionStatus;
+  orgUnitId: string | null;
+  orgUnitName: string | null;
+  requestedBy: string | null;
+  approvedBy: string | null;
+  description: string | null;
+  targetStartDate: string | null;
+};
+
+export type Application = {
+  id: string;
+  requisitionId: string;
+  requisitionTitle: string;
+  candidateId: string;
+  candidateName: string;
+  status: ApplicationStatus;
+  appliedOn: string;
+  outcomeReason: string | null;
+};
+
+export const recruitmentApi = {
+  listRequisitions(accessToken: string): Promise<Requisition[]> {
+    return request<Requisition[]>("/api/v1/recruitment/requisitions", accessToken);
+  },
+
+  applications(requisitionId: string, accessToken: string): Promise<Application[]> {
+    return request<Application[]>(
+      `/api/v1/recruitment/requisitions/${requisitionId}/applications`,
+      accessToken,
+    );
+  },
+};
+
 export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
 
 export type AppNotification = {

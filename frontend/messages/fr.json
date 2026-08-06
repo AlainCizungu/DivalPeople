@@ -433,5 +433,47 @@
       "SUSPENDED": "Suspendu",
       "TERMINATED": "Parti"
     }
+  },
+  "recruitment": {
+    "title": "Recrutement",
+    "subtitle": "Postes ouverts et candidats en cours de processus",
+    "empty": "Aucune demande de recrutement enregistrée.",
+    "emptyPipeline": "Aucune candidature pour le moment.",
+    "loadFailed": "Impossible de charger le processus de recrutement.",
+    "openRoles": "postes ouverts",
+    "headcount": "Effectif",
+    "filled": "{filled} sur {headcount} pourvu(s)",
+    "targetStart": "Début souhaité",
+    "pipeline": "Candidatures",
+    "candidate": "Candidat",
+    "applied": "Candidature",
+    "stage": "Étape",
+    "outcome": "Motif",
+    "noReason": "—",
+    "requisitionStatus": {
+      "DRAFT": "Brouillon",
+      "PENDING_APPROVAL": "En attente d'approbation",
+      "APPROVED": "Approuvée",
+      "OPEN": "Ouverte",
+      "ON_HOLD": "Suspendue",
+      "FILLED": "Pourvue",
+      "CANCELLED": "Annulée"
+    },
+    "applicationStatus": {
+      "APPLIED": "Candidature reçue",
+      "SCREENING": "Présélection",
+      "INTERVIEWING": "Entretiens",
+      "OFFER": "Offre",
+      "HIRED": "Recruté",
+      "REJECTED": "Refusée",
+      "WITHDRAWN": "Retirée"
+    },
+    "contractType": {
+      "PERMANENT": "CDI",
+      "FIXED_TERM": "CDD",
+      "PART_TIME": "Temps partiel",
+      "INTERNSHIP": "Stage",
+      "CONSULTANT": "Consultant"
+    }
   }
 }

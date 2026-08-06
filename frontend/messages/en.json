@@ -433,5 +433,47 @@
       "SUSPENDED": "Suspended",
       "TERMINATED": "Left"
     }
+  },
+  "recruitment": {
+    "title": "Recruitment",
+    "subtitle": "Open roles and the people moving through them",
+    "empty": "No requisitions raised yet.",
+    "emptyPipeline": "No applications yet.",
+    "loadFailed": "Could not load the hiring pipeline.",
+    "openRoles": "open roles",
+    "headcount": "Headcount",
+    "filled": "{filled} of {headcount} filled",
+    "targetStart": "Target start",
+    "pipeline": "Pipeline",
+    "candidate": "Candidate",
+    "applied": "Applied",
+    "stage": "Stage",
+    "outcome": "Reason",
+    "noReason": "—",
+    "requisitionStatus": {
+      "DRAFT": "Draft",
+      "PENDING_APPROVAL": "Awaiting approval",
+      "APPROVED": "Approved",
+      "OPEN": "Open",
+      "ON_HOLD": "On hold",
+      "FILLED": "Filled",
+      "CANCELLED": "Cancelled"
+    },
+    "applicationStatus": {
+      "APPLIED": "Applied",
+      "SCREENING": "Screening",
+      "INTERVIEWING": "Interviewing",
+      "OFFER": "Offer",
+      "HIRED": "Hired",
+      "REJECTED": "Rejected",
+      "WITHDRAWN": "Withdrawn"
+    },
+    "contractType": {
+      "PERMANENT": "Permanent",
+      "FIXED_TERM": "Fixed term",
+      "PART_TIME": "Part time",
+      "INTERNSHIP": "Internship",
+      "CONSULTANT": "Consultant"
+    }
   }
 }
