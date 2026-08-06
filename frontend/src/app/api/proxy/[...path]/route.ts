@@ -68,18 +68,34 @@ async function handle(request: NextRequest, path: string[]) {
       ? undefined
       : await request.arrayBuffer();
 
-  const upstream = await fetch(target, {
-    method: request.method,
-    headers: {
-      // Only what the API needs. The cookie is deliberately not forwarded: the API authenticates
-      // on the bearer token and has no business seeing this application's session credential.
-      Authorization: `Bearer ${session.accessToken}`,
-      "Content-Type": request.headers.get("content-type") ?? "application/json",
-      "Accept-Language": request.headers.get("accept-language") ?? "en",
-    },
-    body,
-    cache: "no-store",
-  });
+  let upstream: Response;
+  try {
+    upstream = await fetch(target, {
+      method: request.method,
+      headers: {
+        // Only what the API needs. The cookie is deliberately not forwarded: the API
+        // authenticates on the bearer token and has no business seeing this application's
+        // session credential.
+        Authorization: `Bearer ${session.accessToken}`,
+        "Content-Type": request.headers.get("content-type") ?? "application/json",
+        "Accept-Language": request.headers.get("accept-language") ?? "en",
+      },
+      body,
+      cache: "no-store",
+    });
+  } catch (cause) {
+    // The API is down, unreachable, or still starting. Without this the rejection escapes the
+    // route handler and Next returns an HTML error page, which the client cannot parse — so
+    // every screen reports "could not load" and nothing says why.
+    console.error(`[proxy] ${request.method} ${target.pathname} failed`, cause);
+    return NextResponse.json(
+      {
+        code: "UPSTREAM_UNAVAILABLE",
+        message: `Cannot reach the API at ${serverEnv.apiBaseUrl}. Is the backend running?`,
+      },
+      { status: 502 },
+    );
+  }
 
   const payload = await upstream.arrayBuffer();
   return new NextResponse(payload, {
