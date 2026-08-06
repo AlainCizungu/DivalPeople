@@ -9,6 +9,22 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ## 1. Current status
 
+### Hardening — partly done, deliberately paused
+
+**Closed:** browser-held tokens, the oldest open gap in the project. Moved behind a
+backend-for-frontend; see ADR 0003. Also closed a defect it exposed — response records
+dereferencing lazy associations outside the transaction, which was a 500 on five screens that no
+test could catch.
+
+**Still open, to return to:**
+
+- Pre-signed URLs for file downloads. Bytes are served through the API so authorization and the
+  audit entry stay on one request; signed URLs need their own expiry and audit design and are
+  only meaningful once storage is S3-compatible.
+- No staging or production environment, and no CD pipeline. This is the largest remaining gap in
+  Phase 0 and it grows more expensive with every module.
+
+
 | Phase | Status | Notes |
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
