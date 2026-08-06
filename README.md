@@ -23,7 +23,7 @@ DIP/
 ## Prerequisites
 
 - **JDK 21+** (`java -version`)
-- **Node.js 20+** (`node -v`)
+- **Node.js 20.9+** (`node -v`) — the repo pins a version in `.nvmrc`, so `nvm use` picks it up
 - **Docker** with Compose
 
 ## Getting started
