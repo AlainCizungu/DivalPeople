@@ -106,6 +106,28 @@ export const organizationApi = {
   },
 };
 
+export type EmployeeStatus = "ACTIVE" | "ON_LEAVE" | "SUSPENDED" | "TERMINATED";
+
+/**
+ * Directory view of an employee. Deliberately carries no personal data beyond a name — the
+ * server returns dates of birth and identifiers only from the single-employee endpoint.
+ */
+export type EmployeeSummary = {
+  id: string;
+  employeeNumber: string;
+  displayName: string;
+  status: EmployeeStatus;
+  orgUnitId: string | null;
+  orgUnitName: string | null;
+  managerId: string | null;
+};
+
+export const employeesApi = {
+  list(accessToken: string): Promise<EmployeeSummary[]> {
+    return request<EmployeeSummary[]>("/api/v1/employees", accessToken);
+  },
+};
+
 export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
 
 export type AppNotification = {

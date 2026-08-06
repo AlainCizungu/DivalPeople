@@ -56,6 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // makes it impossible to tell a missing feature from a bug; entries are added as they ship.
   const navigation = [
     { href: "/app", label: messages.nav.home, badge: 0 },
+    { href: "/app/people", label: messages.nav.people, badge: 0 },
     { href: "/app/organization", label: messages.nav.organization, badge: 0 },
     { href: "/app/notifications", label: messages.nav.notifications, badge: unreadCount },
     { href: "/app/tix", label: messages.nav.tix, badge: 0 },

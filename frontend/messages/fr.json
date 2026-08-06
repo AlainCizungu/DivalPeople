@@ -414,5 +414,23 @@
       "orgUnitCreated": "{name} a été ajouté à la structure organisationnelle",
       "welcome": "Bienvenue chez {tenant}"
     }
+  },
+  "employees": {
+    "title": "Personnel",
+    "subtitle": "L'ensemble des personnes employées par votre organisation",
+    "empty": "Aucun employé enregistré pour le moment.",
+    "loadFailed": "Impossible de charger l'annuaire du personnel.",
+    "count": "personnes",
+    "number": "Matricule",
+    "unit": "Unité",
+    "manager": "Responsable",
+    "noUnit": "Non affecté",
+    "noManager": "—",
+    "status": {
+      "ACTIVE": "Actif",
+      "ON_LEAVE": "En congé",
+      "SUSPENDED": "Suspendu",
+      "TERMINATED": "Parti"
+    }
   }
 }

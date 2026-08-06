@@ -414,5 +414,23 @@
       "orgUnitCreated": "{name} was added to the organization structure",
       "welcome": "Welcome to {tenant}"
     }
+  },
+  "employees": {
+    "title": "People",
+    "subtitle": "Everyone employed by your organization",
+    "empty": "No employees recorded yet.",
+    "loadFailed": "Could not load the employee directory.",
+    "count": "people",
+    "number": "Number",
+    "unit": "Unit",
+    "manager": "Manager",
+    "noUnit": "Unassigned",
+    "noManager": "—",
+    "status": {
+      "ACTIVE": "Active",
+      "ON_LEAVE": "On leave",
+      "SUSPENDED": "Suspended",
+      "TERMINATED": "Left"
+    }
   }
 }

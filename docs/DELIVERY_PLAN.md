@@ -13,7 +13,7 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 |---|---|---|
 | 0 — Foundation | **Largely complete** | Docs, repo, local environment, CI, design system, security baseline, ADRs 0001–0002. Missing: staging/production environments, CD pipeline. |
 | 1 — Platform | **Complete** | Tenants, authentication, roles, organization structure, users, audit, EN/FR, notifications and file storage all in. |
-| 2 — Core HR | **Next** | Unblocked: employees have a person to reference, a unit to belong to, documents to attach and a channel for contract alerts. |
+| 2 — Core HR | **In progress** | Employees, reporting lines, employment contracts and contract-expiry alerts are in. Dependents, emergency contacts and employee documents are not. |
 | 3 — Recruitment & onboarding | Not started | |
 | 4 — Time, performance, learning | Not started | |
 | 5 — Payroll preparation | Not started | |
@@ -25,13 +25,13 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ### What exists today
 
-- **Backend** — 9 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
-  `tix_subject_identifier`, `tix_debt_record`, `org_unit`, `notification`, `stored_file`), 6 modules (`tenants`, `users`, `organizations`, `notifications`, `files`, `tix`),
-  30 endpoints,
+- **Backend** — 11 tables (`tenant`, `audit_event`, `user_account`, `tix_subject`,
+  `tix_subject_identifier`, `tix_debt_record`, `org_unit`, `notification`, `stored_file`, `employee`, `employment_contract`), 7 modules (`tenants`, `users`, `organizations`, `notifications`, `files`,
+  `employees`, `tix`), 39 endpoints,
   59 passing tests, including cross-tenant isolation and row-level security proven
   over raw JDBC as the unprivileged application role.
-- **Frontend** — public landing page, authenticated product shell, organization structure,
-  notifications and TIX verification screens,
+- **Frontend** — public landing page, authenticated product shell, people directory,
+  organization structure, notifications and TIX verification screens,
   bilingual throughout with parity enforced in CI.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
   three fixture users across two tenants, and a scripted end-to-end check.

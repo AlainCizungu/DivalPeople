@@ -21,4 +21,13 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, UUID> 
     Optional<UserAccount> findByIdAndTenantId(UUID id, UUID tenantId);
 
     long countByTenantId(UUID tenantId);
+
+    /**
+     * Members whose stored role snapshot contains a role.
+     *
+     * <p>For routing only — deciding who should be told about something. The snapshot is not
+     * authoritative for permissions, which are always read from the access token; using it to
+     * pick notification recipients is a display concern, not an authorization one.
+     */
+    List<UserAccount> findByTenantIdAndRolesContainingAndActiveTrue(UUID tenantId, String role);
 }

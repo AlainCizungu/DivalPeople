@@ -44,6 +44,12 @@ spring:
           issuer-uri: ${DIP_OIDC_ISSUER_URI:http://localhost:8081/realms/dip}
 
 dip:
+  hr:
+    # How much warning to give before a contract ends.
+    contract-expiry-notice-days: ${DIP_CONTRACT_EXPIRY_NOTICE_DAYS:30}
+    # Early morning, so alerts are waiting at the start of the day rather than interrupting it.
+    contract-expiry-cron: ${DIP_CONTRACT_EXPIRY_CRON:0 0 6 * * *}
+
   files:
     # 20 MB. Uploads are read into memory to checksum them, so this also bounds heap per request.
     max-size-bytes: ${DIP_FILES_MAX_SIZE_BYTES:20971520}

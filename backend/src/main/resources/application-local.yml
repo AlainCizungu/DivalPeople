@@ -49,6 +49,10 @@ dip:
     # Seeds a small organisation tree per tenant so the structure screen has something to show.
     seed-organization: true
 
+    # Seeds a small team, including a contract ending inside the notice window so the expiry
+    # scan has something real to find.
+    seed-employees: true
+
     # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
     # actually crosses the tenant boundary and exercises exchange mode.
     seed-tix: true
