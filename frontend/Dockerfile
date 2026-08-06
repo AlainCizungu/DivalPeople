@@ -28,8 +28,13 @@ RUN npm run build
 # --- runtime -----------------------------------------------------------------
 FROM node:22.13.1-bookworm-slim AS runtime
 
-RUN groupadd --system --gid 10001 dip \
-    && useradd --system --uid 10001 --gid dip --no-create-home --shell /usr/sbin/nologin dip
+# An unprivileged, named account. Running as root inside a container means a container escape
+# starts as root, and there is no reason for this process to own anything.
+#
+# NOT called `dip`: that is a standard Debian and Ubuntu system group (dial-out networking, GID
+# 30) and exists in both base images, so groupadd refuses and the build fails.
+RUN groupadd --system --gid 10001 dipsvc \
+    && useradd --system --uid 10001 --gid dipsvc --no-create-home --shell /usr/sbin/nologin dipsvc
 
 WORKDIR /app
 
@@ -40,11 +45,11 @@ ENV HOSTNAME=0.0.0.0
 
 # The standalone output already contains the server and the modules it reaches. Static assets and
 # anything under public/ are not included in it and have to be copied alongside.
-COPY --from=build --chown=dip:dip /src/.next/standalone ./
-COPY --from=build --chown=dip:dip /src/.next/static ./.next/static
-COPY --from=build --chown=dip:dip /src/public ./public
+COPY --from=build --chown=dipsvc:dipsvc /src/.next/standalone ./
+COPY --from=build --chown=dipsvc:dipsvc /src/.next/static ./.next/static
+COPY --from=build --chown=dipsvc:dipsvc /src/public ./public
 
-USER dip:dip
+USER dipsvc:dipsvc
 
 EXPOSE 3000
 

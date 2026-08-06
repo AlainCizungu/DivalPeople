@@ -33,19 +33,22 @@ RUN java -Djarmode=tools -jar build/libs/*.jar extract --layers --destination ex
 # --- runtime -----------------------------------------------------------------
 FROM eclipse-temurin:21.0.6_7-jre-jammy AS runtime
 
-# A named, unprivileged user. Running as root inside a container means a container escape starts
-# as root, and there is no reason for this process to own anything.
-RUN groupadd --system --gid 10001 dip \
-    && useradd --system --uid 10001 --gid dip --no-create-home --shell /usr/sbin/nologin dip
+# An unprivileged, named account. Running as root inside a container means a container escape
+# starts as root, and there is no reason for this process to own anything.
+#
+# NOT called `dip`: that is a standard Debian and Ubuntu system group (dial-out networking, GID
+# 30) and exists in both base images, so groupadd refuses and the build fails.
+RUN groupadd --system --gid 10001 dipsvc \
+    && useradd --system --uid 10001 --gid dipsvc --no-create-home --shell /usr/sbin/nologin dipsvc
 
 WORKDIR /app
 
-COPY --from=build --chown=dip:dip /src/extracted/dependencies/ ./
-COPY --from=build --chown=dip:dip /src/extracted/spring-boot-loader/ ./
-COPY --from=build --chown=dip:dip /src/extracted/snapshot-dependencies/ ./
-COPY --from=build --chown=dip:dip /src/extracted/application/ ./
+COPY --from=build --chown=dipsvc:dipsvc /src/extracted/dependencies/ ./
+COPY --from=build --chown=dipsvc:dipsvc /src/extracted/spring-boot-loader/ ./
+COPY --from=build --chown=dipsvc:dipsvc /src/extracted/snapshot-dependencies/ ./
+COPY --from=build --chown=dipsvc:dipsvc /src/extracted/application/ ./
 
-USER dip:dip
+USER dipsvc:dipsvc
 
 EXPOSE 8080
 
