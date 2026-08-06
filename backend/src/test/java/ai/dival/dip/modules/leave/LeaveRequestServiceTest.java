@@ -23,14 +23,34 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-/** June 2026 again: the 1st is a Monday, so the week arithmetic reads cleanly. */
+/**
+ * Anchored on a Monday a month out rather than on fixed dates.
+ *
+ * <p>Leave that has already begun cannot be cancelled, so a hard-coded week silently becomes a
+ * past week as the calendar moves and the cancellation tests start failing for a reason that has
+ * nothing to do with the code. Anchoring forward keeps the arithmetic readable and the meaning
+ * stable.
+ */
 @Transactional
 @RequiresDocker
 class LeaveRequestServiceTest extends AbstractIntegrationTest {
 
-    private static final LocalDate MONDAY = LocalDate.of(2026, 6, 1);
-    private static final LocalDate FRIDAY = LocalDate.of(2026, 6, 5);
-    private static final int YEAR = 2026;
+    private static final LocalDate MONDAY = anchorMonday();
+    private static final LocalDate FRIDAY = MONDAY.plusDays(4);
+    private static final int YEAR = MONDAY.getYear();
+
+    /**
+     * A Monday far enough ahead that leave booked on it has not started, and early enough in the
+     * year that five consecutive weeks fit inside one leave year — a request may not straddle
+     * New Year, and one of these tests books five weeks in a row.
+     */
+    private static LocalDate anchorMonday() {
+        LocalDate monday = LocalDate.now().plusWeeks(4).with(DayOfWeek.MONDAY);
+        if (monday.plusWeeks(4).plusDays(4).getYear() != monday.getYear()) {
+            return LocalDate.of(monday.getYear() + 1, 1, 8).with(DayOfWeek.MONDAY);
+        }
+        return monday;
+    }
 
     @Autowired
     private TenantRepository tenants;
@@ -60,7 +80,7 @@ class LeaveRequestServiceTest extends AbstractIntegrationTest {
         annual = balances.createType("ANNUAL", "Annual leave", new BigDecimal("20"),
                 AccrualMethod.ANNUAL_GRANT, null);
         balances.grant(employee.getId(), annual.getId(), YEAR, new BigDecimal("20"),
-                LedgerEntryType.GRANT, "2026 entitlement", null);
+                LedgerEntryType.GRANT, YEAR + " entitlement", null);
     }
 
     @AfterEach
@@ -97,17 +117,17 @@ class LeaveRequestServiceTest extends AbstractIntegrationTest {
         // 20 days of entitlement, then three weeks requested one after another.
         requests.submit(employee.getId(), annual.getId(), MONDAY, FRIDAY, false, false,
                 null, null, null);
-        requests.submit(employee.getId(), annual.getId(), LocalDate.of(2026, 6, 8),
-                LocalDate.of(2026, 6, 19), false, false, null, null, null);
+        requests.submit(employee.getId(), annual.getId(), MONDAY.plusWeeks(1),
+                MONDAY.plusWeeks(2).plusDays(4), false, false, null, null, null);
 
         assertThat(balance().available()).isEqualByComparingTo("5");
 
         // A fourth week would be 5 more days against 5 remaining, which fits; a fifth would not.
-        requests.submit(employee.getId(), annual.getId(), LocalDate.of(2026, 6, 22),
-                LocalDate.of(2026, 6, 26), false, false, null, null, null);
+        requests.submit(employee.getId(), annual.getId(), MONDAY.plusWeeks(3),
+                MONDAY.plusWeeks(3).plusDays(4), false, false, null, null, null);
 
         assertThatThrownBy(() -> requests.submit(employee.getId(), annual.getId(),
-                LocalDate.of(2026, 6, 29), LocalDate.of(2026, 7, 3), false, false,
+                MONDAY.plusWeeks(4), MONDAY.plusWeeks(4).plusDays(4), false, false,
                 null, null, null))
                 .isInstanceOf(LeaveBalance.InsufficientLeaveException.class);
     }
@@ -118,7 +138,7 @@ class LeaveRequestServiceTest extends AbstractIntegrationTest {
         submitWeek();
 
         assertThatThrownBy(() -> requests.submit(employee.getId(), annual.getId(),
-                LocalDate.of(2026, 6, 3), LocalDate.of(2026, 6, 10), false, false,
+                MONDAY.plusDays(2), MONDAY.plusDays(9), false, false,
                 null, null, null))
                 .isInstanceOf(ConflictException.class);
     }
@@ -127,7 +147,7 @@ class LeaveRequestServiceTest extends AbstractIntegrationTest {
     @DisplayName("a range of only weekends is refused rather than recorded as zero days")
     void refusesRangeWithNoWorkingDays() {
         assertThatThrownBy(() -> requests.submit(employee.getId(), annual.getId(),
-                LocalDate.of(2026, 6, 6), LocalDate.of(2026, 6, 7), false, false,
+                MONDAY.plusDays(5), MONDAY.plusDays(6), false, false,
                 null, null, null))
                 .isInstanceOf(ConflictException.class);
     }
@@ -136,7 +156,7 @@ class LeaveRequestServiceTest extends AbstractIntegrationTest {
     @DisplayName("a request crossing the year end is refused, not silently split")
     void refusesRequestAcrossYearEnd() {
         assertThatThrownBy(() -> requests.submit(employee.getId(), annual.getId(),
-                LocalDate.of(2026, 12, 28), LocalDate.of(2027, 1, 8), false, false,
+                LocalDate.of(YEAR, 12, 28), LocalDate.of(YEAR + 1, 1, 8), false, false,
                 null, null, null))
                 .isInstanceOf(ConflictException.class);
     }
@@ -262,6 +282,12 @@ class LeaveRequestServiceTest extends AbstractIntegrationTest {
     @DisplayName("leave that has already begun cannot be cancelled away")
     void refusesCancelAfterLeaveBegan() {
         LocalDate started = LocalDate.now().minusWeeks(2).with(DayOfWeek.MONDAY);
+        // The anchor may sit in next year, in which case the past week draws on a different
+        // balance and needs its own entitlement.
+        if (started.getYear() != YEAR) {
+            balances.grant(employee.getId(), annual.getId(), started.getYear(),
+                    new BigDecimal("20"), LedgerEntryType.GRANT, "entitlement", null);
+        }
         LeaveRequest request = requests.submit(employee.getId(), annual.getId(),
                 started, started.plusDays(1), false, false, null, null, null);
         requests.approve(request.getId(), manager.getId(), null, null);
