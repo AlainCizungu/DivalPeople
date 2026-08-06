@@ -43,7 +43,7 @@ test could catch.
 ### What exists today
 
 - **Backend** — 43 tables across 17 migrations, 14 modules (`attendance`, `employees`, `files`, `learning`, `leave`, `lifecycle`, `notifications`, `organizations`, `payroll`, `performance`, `recruitment`, `tenants`, `tix`, `users`),
-  ~165 endpoints. Test count is whatever the last run reported. Cross-tenant isolation and row-level security are
+  ~165 endpoints, 310 passing tests. Cross-tenant isolation and row-level security are
   proven over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, and screens for the people
   directory, recruitment pipeline, onboarding and offboarding, leave balances, weekly
