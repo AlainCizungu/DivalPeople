@@ -1,6 +1,8 @@
 # AGENTS.md
 
 AI coding agents must read all files in `/docs` before making architectural or feature changes.
+Start with [`docs/DELIVERY_PLAN.md`](docs/DELIVERY_PLAN.md) for current status, what is prioritized
+next, and which gaps are knowingly open.
 
 ## Mandatory rules
 - Preserve tenant isolation.

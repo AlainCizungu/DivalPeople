@@ -111,5 +111,6 @@ These are enforced in review and in CI. Full detail lives in [`AGENTS.md`](AGENT
 | [TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md) | Test approach |
 | [DEVELOPMENT_RULES.md](docs/DEVELOPMENT_RULES.md) | Engineering rules |
 | [ROADMAP.md](docs/ROADMAP.md) | Delivery phases |
+| [DELIVERY_PLAN.md](docs/DELIVERY_PLAN.md) | Current status, prioritized next tasks, known gaps |
 
 © Dival AI — Confidential.
