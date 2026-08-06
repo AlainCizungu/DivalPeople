@@ -15,7 +15,7 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 | 1 — Platform | **Complete** | Tenants, authentication, roles, organization structure, users, audit, EN/FR, notifications and file storage all in. |
 | 2 — Core HR | **Complete** | Employees, reporting lines, contracts, dependents, emergency contacts, documents, expiry alerts, probation decisions and work patterns. |
 | 3 — Recruitment & onboarding | **Complete** | Requisitions, candidates, applications, interviews, offers, the hire handover into Core HR, and onboarding/offboarding checklists. |
-| 4 — Time, performance, learning | **In progress** | Leave is built: entitlements, balances with a ledger, requests, approvals, accrual, carryover and part-time work patterns. Attendance, shifts and overtime are not. Performance and learning are not started. |
+| 4 — Time, performance, learning | **In progress** | Time is built: leave with a ledger, accrual, carryover, part-time work patterns, and attendance with timesheets and overtime. Shift planning, performance and learning are not started. |
 | 5 — Payroll preparation | Not started | |
 | 6 — Employee self-service | Not started | |
 | 7 — Financial services | Not started | |
@@ -25,14 +25,15 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 
 ### What exists today
 
-- **Backend** — 29 tables across 13 migrations, 10 modules (`tenants`, `users`, `organizations`,
-  `notifications`, `files`, `employees`, `recruitment`, `lifecycle`, `leave`, `tix`),
-  98 endpoints. 185 tests passing at the last verified run; the part-time suite added since has
-  not yet been run. Cross-tenant isolation and row-level security are proven over raw JDBC as the
-  unprivileged application role.
+- **Backend** — 31 tables across 14 migrations, 11 modules (`tenants`, `users`, `organizations`,
+  `notifications`, `files`, `employees`, `recruitment`, `lifecycle`, `leave`, `attendance`,
+  `tix`), 112 endpoints. 197 tests passing at the last verified run; the attendance suites
+  added since have not yet been run. Cross-tenant isolation and row-level security are proven
+  over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, and screens for the people
-  directory, recruitment pipeline, onboarding and offboarding, leave balances, organization
-  structure, notifications and TIX verification. Bilingual throughout, with parity enforced in CI.
+  directory, recruitment pipeline, onboarding and offboarding, leave balances, weekly
+  attendance, organization structure, notifications and TIX verification. Bilingual
+  throughout, with parity enforced in CI.
 - **Scheduled work** — contract and document expiry alerts, probation reminders, overdue
   checklist chasing, and monthly leave accrual.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
@@ -191,9 +192,19 @@ balances, and because it is the feature HR staff touch every day.
 
 Known limits, recorded rather than hidden:
 
+| Attendance | **Done.** Clock in and out, shifts recorded after the fact, and corrections that supersede rather than overwrite — attendance is what people are paid from and disciplined against, so "what did it say before?" has to be answerable. Overlaps are refused in the service and by a partial unique index: two entries covering one hour is the most expensive mistake this table can hold. |
+| Timesheets and overtime | **Done.** A period totalled against the employee's own pattern, with approved leave and public holidays counted as owed but not as absence — a sheet that read approved leave as absence would turn every holiday into a disciplinary conversation. Figures are frozen at submission so a payslip and the screen justifying it cannot drift. Overtime is stated in minutes and deliberately **not priced**: what an hour is worth is a payroll decision, and a multiplier here would mean two systems disagreeing the first time a rate changed. |
+
+Known limits, recorded rather than hidden:
+
 - A leave year is a calendar year. A tenant whose year starts in April cannot be served yet;
   requests crossing 31 December are refused rather than silently split.
-- Attendance, shifts and overtime are not built. Only leave is.
+- Timesheet periods are weekly, Monday to Sunday. Fortnightly and monthly are the same arithmetic
+  on a different anchor, left until somebody needs them rather than guessed at.
+- Shift planning — rosters, who is meant to be on which shift — is not built. Attendance records
+  what happened, not what was scheduled.
+- Overtime is one number. Jurisdictions that distinguish night, weekend and public-holiday rates
+  need those split out, and that is a payroll conversation.
 - Work patterns have no history. Changing somebody's pattern changes future requests and future
   accrual but leaves past requests at the days they were charged — correct, but it means a
   mid-year change to a part-time contract does not pro-rate the year they are in. That needs

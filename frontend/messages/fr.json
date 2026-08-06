@@ -18,7 +18,8 @@
     "reports": "Rapports",
     "administration": "Administration",
     "organization": "Organisation",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "attendance": "Présence"
   },
   "common": {
     "search": "Rechercher",
@@ -561,6 +562,43 @@
       "RETURNED": "Restitué",
       "ADJUSTMENT": "Régularisation",
       "LAPSED": "Expiré"
+    }
+  },
+  "attendance": {
+    "title": "Présence",
+    "subtitle": "Heures enregistrées et feuilles de temps qui en découlent",
+    "loadFailed": "Impossible de charger les présences.",
+    "week": "Semaine",
+    "previousWeek": "Semaine précédente",
+    "nextWeek": "Semaine suivante",
+    "entries": "Temps enregistré",
+    "noEntries": "Rien d'enregistré cette semaine.",
+    "day": "Jour",
+    "from": "De",
+    "until": "À",
+    "break": "Pause",
+    "worked": "Travaillé",
+    "expected": "Attendu",
+    "overtime": "Heures supplémentaires",
+    "absent": "Non justifié",
+    "onLeave": "En congé",
+    "holiday": "Bureau fermé",
+    "stillClockedIn": "Toujours pointé",
+    "corrected": "Corrigé",
+    "source": "Origine",
+    "summary": "Cette semaine",
+    "timesheetStatus": {
+      "DRAFT": "Brouillon",
+      "SUBMITTED": "En attente de décision",
+      "APPROVED": "Approuvée",
+      "REJECTED": "Refusée"
+    },
+    "entrySource": {
+      "WEB": "Web",
+      "MOBILE": "Mobile",
+      "BIOMETRIC": "Biométrique",
+      "IMPORT": "Importé",
+      "MANUAL": "Saisi manuellement"
     }
   }
 }

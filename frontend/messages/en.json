@@ -18,7 +18,8 @@
     "reports": "Reports",
     "administration": "Administration",
     "organization": "Organization",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "attendance": "Attendance"
   },
   "common": {
     "search": "Search",
@@ -561,6 +562,43 @@
       "RETURNED": "Returned",
       "ADJUSTMENT": "Adjustment",
       "LAPSED": "Lapsed"
+    }
+  },
+  "attendance": {
+    "title": "Attendance",
+    "subtitle": "Hours recorded, and the timesheets built from them",
+    "loadFailed": "Could not load attendance.",
+    "week": "Week",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "entries": "Time recorded",
+    "noEntries": "Nothing recorded this week.",
+    "day": "Day",
+    "from": "From",
+    "until": "Until",
+    "break": "Break",
+    "worked": "Worked",
+    "expected": "Expected",
+    "overtime": "Overtime",
+    "absent": "Unexplained",
+    "onLeave": "On leave",
+    "holiday": "Office closed",
+    "stillClockedIn": "Still clocked in",
+    "corrected": "Corrected",
+    "source": "Source",
+    "summary": "This week",
+    "timesheetStatus": {
+      "DRAFT": "Draft",
+      "SUBMITTED": "Awaiting a decision",
+      "APPROVED": "Approved",
+      "REJECTED": "Refused"
+    },
+    "entrySource": {
+      "WEB": "Web",
+      "MOBILE": "Mobile",
+      "BIOMETRIC": "Biometric",
+      "IMPORT": "Imported",
+      "MANUAL": "Entered by hand"
     }
   }
 }

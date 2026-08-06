@@ -354,6 +354,93 @@ export const leaveApi = {
   },
 };
 
+export type TimeEntrySource = "WEB" | "MOBILE" | "BIOMETRIC" | "IMPORT" | "MANUAL";
+
+export type TimesheetStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
+
+export type TimeEntry = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  workDate: string;
+  startedAt: string;
+  endedAt: string | null;
+  breakMinutes: number;
+  workedMinutes: number;
+  source: TimeEntrySource;
+  notes: string | null;
+  supersedesId: string | null;
+  superseded: boolean;
+  amendReason: string | null;
+};
+
+/** Minutes throughout. What an hour is worth is a payroll question, not this one. */
+export type TimesheetTotals = {
+  worked: number;
+  expected: number;
+  leave: number;
+  holiday: number;
+  overtime: number;
+  absent: number;
+};
+
+export type Timesheet = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  periodStart: string;
+  periodEnd: string;
+  workedMinutes: number;
+  expectedMinutes: number;
+  leaveMinutes: number;
+  holidayMinutes: number;
+  overtimeMinutes: number;
+  absentMinutes: number;
+  status: TimesheetStatus;
+  submittedAt: string | null;
+  approverId: string | null;
+  approverName: string | null;
+  decidedAt: string | null;
+  decisionNotes: string | null;
+};
+
+export const attendanceApi = {
+  entries(
+    employeeId: string,
+    from: string,
+    to: string,
+    accessToken: string,
+  ): Promise<TimeEntry[]> {
+    return request<TimeEntry[]>(
+      `/api/v1/attendance/employees/${employeeId}/entries?from=${from}&to=${to}`,
+      accessToken,
+    );
+  },
+
+  preview(
+    employeeId: string,
+    from: string,
+    to: string,
+    accessToken: string,
+  ): Promise<TimesheetTotals> {
+    return request<TimesheetTotals>(
+      `/api/v1/attendance/employees/${employeeId}/preview?from=${from}&to=${to}`,
+      accessToken,
+    );
+  },
+
+  timesheets(employeeId: string, accessToken: string): Promise<Timesheet[]> {
+    return request<Timesheet[]>(
+      `/api/v1/attendance/employees/${employeeId}/timesheets`,
+      accessToken,
+    );
+  },
+
+  pending(accessToken: string): Promise<Timesheet[]> {
+    return request<Timesheet[]>("/api/v1/attendance/timesheets/pending", accessToken);
+  },
+};
+
 export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
 
 export type AppNotification = {

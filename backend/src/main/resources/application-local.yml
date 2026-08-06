@@ -65,6 +65,10 @@ dip:
     # awaiting a decision, so the approval queue is not empty.
     seed-leave: true
 
+    # Seeds two weeks of attendance, deliberately imperfect - one late evening, one
+    # correction, and a part-timer whose week is expected to be shorter.
+    seed-attendance: true
+
     # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
     # actually crosses the tenant boundary and exercises exchange mode.
     seed-tix: true

@@ -50,6 +50,29 @@ dip:
     # Early morning, so alerts are waiting at the start of the day rather than interrupting it.
     contract-expiry-cron: ${DIP_CONTRACT_EXPIRY_CRON:0 0 6 * * *}
 
+    # Shorter than the contract window on purpose: a probation decision has to land before the
+    # period ends, because after it the answer has already been given by silence.
+    probation-notice-days: ${DIP_PROBATION_NOTICE_DAYS:14}
+    checklist-overdue-cron: ${DIP_CHECKLIST_OVERDUE_CRON:0 15 6 * * *}
+
+    # The working week for anybody with no pattern of their own. Employees on a part-time
+    # contract carry a work_pattern, which overrides this.
+    working-days: ${DIP_WORKING_DAYS:MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY}
+
+    # A full working day, in minutes, scaled by each employee's pattern.
+    standard-day-minutes: ${DIP_STANDARD_DAY_MINUTES:480}
+
+    # 45 hours. Beyond this a week counts as overtime whatever the daily pattern says, which is
+    # the statutory ceiling in the DRC and several neighbouring jurisdictions. Attendance states
+    # the minutes; what they are worth is a payroll decision.
+    weekly-overtime-threshold-minutes: ${DIP_WEEKLY_OVERTIME_THRESHOLD_MINUTES:2700}
+
+    # Clock times are recorded as instants; this is the zone that decides which day a shift
+    # belongs to. A night shift starting at 22:00 counts against the day it started.
+    timezone: ${DIP_TIMEZONE:Africa/Kinshasa}
+
+    leave-accrual-cron: ${DIP_LEAVE_ACCRUAL_CRON:0 30 5 1 * *}
+
   files:
     # 20 MB. Uploads are read into memory to checksum them, so this also bounds heap per request.
     max-size-bytes: ${DIP_FILES_MAX_SIZE_BYTES:20971520}
