@@ -21,7 +21,8 @@
     "notifications": "Notifications",
     "attendance": "Présence",
     "performanceNav": "Performance",
-    "learningNav": "Formation"
+    "learningNav": "Formation",
+    "payrollNav": "Paie"
   },
   "common": {
     "search": "Rechercher",
@@ -297,12 +298,7 @@
       "columns": [
         {
           "title": "Dival People",
-          "links": [
-            "Présentation",
-            "RH essentielles",
-            "Paie",
-            "Libre-service"
-          ]
+          "links": ["Présentation", "RH essentielles", "Paie", "Libre-service"]
         },
         {
           "title": "Intelligence",
@@ -315,12 +311,7 @@
         },
         {
           "title": "Secteurs",
-          "links": [
-            "Services financiers",
-            "ONG",
-            "Télécom",
-            "Secteur public"
-          ]
+          "links": ["Services financiers", "ONG", "Télécom", "Secteur public"]
         },
         {
           "title": "Entreprise",
@@ -333,12 +324,7 @@
         },
         {
           "title": "Langue",
-          "links": [
-            "English",
-            "Français",
-            "Confidentialité",
-            "Sécurité"
-          ]
+          "links": ["English", "Français", "Confidentialité", "Sécurité"]
         }
       ],
       "copyright": "© 2026 Dival AI. Concept prototype.",
@@ -695,6 +681,52 @@
       "FAILED": "Non réussi",
       "WITHDRAWN": "Retiré",
       "EXPIRED": "Expiré"
+    }
+  },
+  "payrollModule": {
+    "title": "Paie",
+    "subtitle": "Cycles de paie, bulletins et les rubriques qui les composent.",
+    "loadFailed": "Impossible de charger la paie.",
+    "noPeriods": "Aucun cycle de paie n'a encore été créé.",
+    "noPayslips": "Ce cycle n'a pas encore été calculé, il n'a donc aucun bulletin.",
+    "scopeNotice": "Ce module applique les rubriques de paie configurées pour votre organisation. Il ne contient aucun barème fiscal ni taux légal, et les rubriques doivent être validées par un praticien de la paie qualifié avant toute paie réelle.",
+    "period": "Cycle de paie",
+    "periodDates": "du {start} au {end}",
+    "paymentDate": "Date de paiement",
+    "approvedBy": "Approuvé par {name}",
+    "employee": "Employé",
+    "basic": "Salaire de base",
+    "gross": "Brut",
+    "deductions": "Retenues",
+    "net": "Net à payer",
+    "employerCost": "Coût employeur",
+    "totals": "Total",
+    "breakdown": "Détail",
+    "hideBreakdown": "Masquer le détail",
+    "basis": "Mode de calcul",
+    "amount": "Montant",
+    "components": "Rubriques de paie",
+    "noComponents": "Aucune rubrique de paie n'a été configurée.",
+    "retired": "Retirée",
+    "unpaidLeave": "{days} jours de congé sans solde",
+    "overtime": "{hours} h supplémentaires",
+    "status": {
+      "DRAFT": "Brouillon",
+      "CALCULATED": "Calculé",
+      "APPROVED": "Approuvé",
+      "PAID": "Payé"
+    },
+    "componentType": {
+      "EARNING": "Gain",
+      "DEDUCTION": "Retenue",
+      "EMPLOYER_CONTRIBUTION": "Cotisation patronale"
+    },
+    "calculation": {
+      "FIXED": "Montant fixe",
+      "PERCENT_OF_BASE": "Pourcentage du salaire de base",
+      "PERCENT_OF_GROSS": "Pourcentage du brut",
+      "PER_HOUR": "Par heure",
+      "MANUAL": "Saisi manuellement"
     }
   }
 }

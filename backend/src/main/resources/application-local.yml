@@ -79,6 +79,10 @@ dip:
     # ticket, one lapsed, one never sat.
     seed-learning: true
 
+    # Seeds salaries with a raise in history, pay components and one calculated but
+    # unapproved run. The percentages are INVENTED placeholders, not statutory rates.
+    seed-payroll: true
+
     # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
     # actually crosses the tenant boundary and exercises exchange mode.
     seed-tix: true

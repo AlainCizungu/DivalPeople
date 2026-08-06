@@ -31,6 +31,7 @@ test could catch.
 | 1 — Platform | **Complete** | Tenants, authentication, roles, organization structure, users, audit, EN/FR, notifications and file storage all in. |
 | 2 — Core HR | **Complete** | Employees, reporting lines, contracts, dependents, emergency contacts, documents, expiry alerts, probation decisions and work patterns. |
 | 3 — Recruitment & onboarding | **Complete** | Requisitions, candidates, applications, interviews, offers, the hire handover into Core HR, and onboarding/offboarding checklists. |
+| 5 — Payroll | **Complete**, within a stated boundary | Effective-dated salaries, configurable pay components, payslips that reconcile by construction, and a sign-off path. **No statutory tax rates anywhere** — see `docs/PAYROLL_SCOPE.md`. |
 | 4 — Time, performance, learning | **Complete** | Leave, attendance, work patterns, performance and learning are all in. Shift planning is deliberately out of scope and recorded below. |
 | 5 — Payroll preparation | Not started | |
 | 6 — Employee self-service | Not started | |
@@ -41,13 +42,13 @@ test could catch.
 
 ### What exists today
 
-- **Backend** — 37 tables across 16 migrations, 13 modules (`attendance`, `employees`, `files`, `learning`, `leave`, `lifecycle`, `notifications`, `organizations`, `performance`, `recruitment`, `tenants`, `tix`, `users`),
-  148 endpoints, 286 passing tests. Cross-tenant isolation and row-level security are
+- **Backend** — 43 tables across 17 migrations, 14 modules (`attendance`, `employees`, `files`, `learning`, `leave`, `lifecycle`, `notifications`, `organizations`, `payroll`, `performance`, `recruitment`, `tenants`, `tix`, `users`),
+  ~165 endpoints. Test count is whatever the last run reported. Cross-tenant isolation and row-level security are
   proven over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, and screens for the people
   directory, recruitment pipeline, onboarding and offboarding, leave balances, weekly
-  attendance, performance, learning and compliance, organization structure, notifications
-  and TIX verification. Bilingual throughout, with parity enforced in CI.
+  attendance, performance, learning and compliance, payroll runs and payslips, organization
+  structure, notifications and TIX verification. Bilingual throughout, with parity enforced in CI.
 - **Scheduled work** — contract, document and certification expiry alerts, probation
   reminders, overdue checklist chasing, and monthly leave accrual.
 - **Local environment** — one command brings up PostgreSQL, Redis and Keycloak with a realm,
@@ -227,7 +228,48 @@ Known limits, recorded rather than hidden:
 
 ---
 
-## 7. Then — TIX depth
+## 7. Phase 5 — payroll
+
+Built on leave and attendance, which is why Phase 4 came first: a payslip that cannot see unpaid
+leave or overtime is a payslip somebody has to correct by hand.
+
+| Item | State |
+|---|---|
+| Effective-dated salaries | **Done.** A raise is a new row, not an edit, and a partial unique index allows only one open-ended row per person. Two rows with no end date is how somebody gets paid twice, or paid whichever figure the query happened to reach first. The salary used is the one in force on the **last day** of the period. |
+| Pay components | **Done.** Fixed amounts, percentage of basic, percentage of gross, per hour, and manual. Configured per tenant and assigned per person with an optional override, both effective-dated. Components are retired, never deleted — a payslip must still explain itself years later. |
+| Payslips that reconcile | **Done.** `addLine` is the only route an amount takes onto a payslip and it re-totals from the lines every time, so the document reconciles by construction rather than by discipline. The database enforces the same rule: `CHECK (net_pay = gross_earnings - total_deductions)`. Every line records *how* its figure was reached, in words, because a payslip nobody can check is a payslip nobody should trust. |
+| Order of application | **Done.** Earnings, then employer contributions, then deductions. A percentage-of-gross deduction therefore sees every earning and no other deduction, which makes the result independent of the order rows happened to be inserted. |
+| Rounding | **Done.** Half-up at each line, once. Rounding only the total would produce a document whose lines do not sum to it. |
+| Sign-off | **Done.** Calculate, approve, reopen, mark paid. Nobody approves their own run. Reopening clears the approval rather than keeping a stale one. An approved period is frozen — the entity refuses edits, not just the service. |
+| Missing salary | **Done.** Reported by name, never guessed. `calculate` returns the payslips it produced *and* the people it skipped, so an incomplete run is visible instead of quietly short. |
+
+### The line we drew, deliberately
+
+`docs/PAYROLL_SCOPE.md` states it where people will read it, and it is worth repeating here:
+
+> There is no income tax table, no social security schedule and no set of thresholds anywhere in
+> this module. That is a deliberate refusal, not an unfinished feature.
+
+The platform applies whatever components an accountant configures. It does not decide what the
+DRC's rates are, and it must not be the place somebody looks one up. **Before a real pay run in
+any jurisdiction, the component configuration must be signed off by a qualified payroll
+practitioner for that jurisdiction.** The screen says so too, not only the documentation.
+
+Also deliberately absent, and recorded rather than hidden:
+
+- **No payment disbursement.** Nothing moves money. Bank files and mobile-money integration are a
+  separate decision with separate consequences.
+- **No proration.** A mid-period joiner or leaver is paid the full period. That is wrong for them
+  and is left visibly unimplemented rather than approximated.
+- **No retrospective corrections.** A mistake found after payment is fixed by an adjustment in the
+  next period. There is no mechanism to reissue a past payslip.
+- **Overtime is priced only where a per-hour component exists.** Night, weekend and public-holiday
+  differentials are not modelled.
+- **Payslip documents are not generated.** The figures are there; a PDF a person can be handed is not.
+
+---
+
+## 8. Then — TIX depth
 
 TIX can now be built on a real foundation:
 
@@ -239,7 +281,7 @@ TIX can now be built on a real foundation:
 
 ---
 
-## 5. Known open gaps
+## 9. Known open gaps
 
 | Gap | Severity | Where |
 |---|---|---|
@@ -247,6 +289,8 @@ TIX can now be built on a real foundation:
 | ~~Tokens held in browser session storage~~ | **Closed.** Moved behind a backend-for-frontend; see ADR 0003. | `frontend/src/server/` |
 | Cookie-borne session invites CSRF | Low — `SameSite=Lax` plus an explicit `Origin` check at the proxy | ADR 0003, `api/proxy` |
 | Integration tests are `@Transactional`, so lazy loading always succeeds in them | Medium — this hid a 500 on five screens until somebody opened a browser | `ResponseMappingTest` covers the read paths; new response records need adding to it |
+| Payroll has no proration, no corrections and no payslip document | Medium — stated in `PAYROLL_SCOPE.md` and on the screen, not hidden | Section 7 |
+| Pay component rates are unverified by anyone qualified | **High before production.** The platform holds no rates of its own; whatever a tenant configures is what people are paid. | `docs/PAYROLL_SCOPE.md` |
 | No staging or production environment, no CD | Medium | Phase 0 remainder |
 | `AGENTS.md` rules unenforced by CI | Medium — rules decay silently | Section 3 |
 | TIX has no declaration API | Medium | Section 4 |
@@ -254,7 +298,7 @@ TIX can now be built on a real foundation:
 
 ---
 
-## 6. Working agreement
+## 10. Working agreement
 
 - Every tenant-owned table adds its RLS policy in the same migration that creates it.
 - A module is not done until a cross-tenant isolation test proves the boundary holds.

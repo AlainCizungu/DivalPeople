@@ -21,7 +21,8 @@
     "notifications": "Notifications",
     "attendance": "Attendance",
     "performanceNav": "Performance",
-    "learningNav": "Learning"
+    "learningNav": "Learning",
+    "payrollNav": "Payroll"
   },
   "common": {
     "search": "Search",
@@ -297,12 +298,7 @@
       "columns": [
         {
           "title": "Dival People",
-          "links": [
-            "Overview",
-            "Core HR",
-            "Payroll",
-            "Self-Service"
-          ]
+          "links": ["Overview", "Core HR", "Payroll", "Self-Service"]
         },
         {
           "title": "Intelligence",
@@ -315,30 +311,15 @@
         },
         {
           "title": "Industries",
-          "links": [
-            "Financial Services",
-            "NGOs",
-            "Telecom",
-            "Government"
-          ]
+          "links": ["Financial Services", "NGOs", "Telecom", "Government"]
         },
         {
           "title": "Company",
-          "links": [
-            "About Dival AI",
-            "Insights",
-            "Partners",
-            "Contact"
-          ]
+          "links": ["About Dival AI", "Insights", "Partners", "Contact"]
         },
         {
           "title": "Language",
-          "links": [
-            "English",
-            "Français",
-            "Privacy",
-            "Security"
-          ]
+          "links": ["English", "Français", "Privacy", "Security"]
         }
       ],
       "copyright": "© 2026 Dival AI. Prototype concept.",
@@ -695,6 +676,52 @@
       "FAILED": "Not passed",
       "WITHDRAWN": "Withdrawn",
       "EXPIRED": "Lapsed"
+    }
+  },
+  "payrollModule": {
+    "title": "Payroll",
+    "subtitle": "Pay runs, payslips and the components they are built from.",
+    "loadFailed": "Could not load payroll.",
+    "noPeriods": "No pay run has been created yet.",
+    "noPayslips": "This run has not been calculated yet, so it has no payslips.",
+    "scopeNotice": "This module applies the pay components configured for your organisation. It contains no tax tables and no statutory rates, and the components must be signed off by a qualified payroll practitioner before a real pay run.",
+    "period": "Pay run",
+    "periodDates": "{start} to {end}",
+    "paymentDate": "Payment date",
+    "approvedBy": "Approved by {name}",
+    "employee": "Employee",
+    "basic": "Basic",
+    "gross": "Gross",
+    "deductions": "Deductions",
+    "net": "Net pay",
+    "employerCost": "Employer cost",
+    "totals": "Total",
+    "breakdown": "Breakdown",
+    "hideBreakdown": "Hide breakdown",
+    "basis": "How it was worked out",
+    "amount": "Amount",
+    "components": "Pay components",
+    "noComponents": "No pay components have been configured.",
+    "retired": "Retired",
+    "unpaidLeave": "{days} days unpaid leave",
+    "overtime": "{hours} h overtime",
+    "status": {
+      "DRAFT": "Draft",
+      "CALCULATED": "Calculated",
+      "APPROVED": "Approved",
+      "PAID": "Paid"
+    },
+    "componentType": {
+      "EARNING": "Earning",
+      "DEDUCTION": "Deduction",
+      "EMPLOYER_CONTRIBUTION": "Employer contribution"
+    },
+    "calculation": {
+      "FIXED": "Fixed amount",
+      "PERCENT_OF_BASE": "Percentage of basic pay",
+      "PERCENT_OF_GROSS": "Percentage of gross",
+      "PER_HOUR": "Per hour",
+      "MANUAL": "Entered by hand"
     }
   }
 }

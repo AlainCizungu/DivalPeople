@@ -1,4 +1,3 @@
-
 /** Shapes mirroring the backend DTOs in ai.dival.dip.modules.tix. */
 export type IdentifierType =
   | "MSISDN"
@@ -10,17 +9,10 @@ export type IdentifierType =
   | "TAX_NUMBER";
 
 export type DebtStatus =
-  | "OUTSTANDING"
-  | "SETTLED"
-  | "DISPUTED"
-  | "UNDER_INVESTIGATION"
-  | "CLEARED";
+  "OUTSTANDING" | "SETTLED" | "DISPUTED" | "UNDER_INVESTIGATION" | "CLEARED";
 
 export type InquiryOutcome =
-  | "NO_MATCH"
-  | "CLEAR"
-  | "OUTSTANDING_DEBT"
-  | "REVIEW_REQUIRED";
+  "NO_MATCH" | "CLEAR" | "OUTSTANDING_DEBT" | "REVIEW_REQUIRED";
 
 export type InquiryRequest = {
   identifiers: { type: IdentifierType; value: string }[];
@@ -73,7 +65,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     let code = "UNKNOWN";
     let message = response.statusText;
     try {
-      const body = (await response.json()) as { code?: string; message?: string };
+      const body = (await response.json()) as {
+        code?: string;
+        message?: string;
+      };
       code = body.code ?? code;
       message = body.message ?? message;
     } catch {
@@ -89,11 +84,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export type OrgUnitType =
-  | "LEGAL_ENTITY"
-  | "BRANCH"
-  | "DEPARTMENT"
-  | "COST_CENTER"
-  | "LOCATION";
+  "LEGAL_ENTITY" | "BRANCH" | "DEPARTMENT" | "COST_CENTER" | "LOCATION";
 
 export type OrgUnit = {
   id: string;
@@ -152,11 +143,7 @@ export type ApplicationStatus =
   | "WITHDRAWN";
 
 export type ContractType =
-  | "PERMANENT"
-  | "FIXED_TERM"
-  | "PART_TIME"
-  | "INTERNSHIP"
-  | "CONSULTANT";
+  "PERMANENT" | "FIXED_TERM" | "PART_TIME" | "INTERNSHIP" | "CONSULTANT";
 
 export type Requisition = {
   id: string;
@@ -266,7 +253,11 @@ export const lifecycleApi = {
 
   settle(
     id: string,
-    body: { status: ItemStatus; notes?: string; completedByEmployeeId?: string },
+    body: {
+      status: ItemStatus;
+      notes?: string;
+      completedByEmployeeId?: string;
+    },
   ): Promise<ChecklistItem> {
     return request<ChecklistItem>(`/api/v1/lifecycle/items/${id}/status`, {
       method: "POST",
@@ -275,7 +266,8 @@ export const lifecycleApi = {
   },
 };
 
-export type LeaveRequestStatus = "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELLED";
+export type LeaveRequestStatus =
+  "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELLED";
 
 export type LedgerEntryType =
   | "OPENING"
@@ -354,7 +346,8 @@ export const leaveApi = {
   },
 };
 
-export type TimeEntrySource = "WEB" | "MOBILE" | "BIOMETRIC" | "IMPORT" | "MANUAL";
+export type TimeEntrySource =
+  "WEB" | "MOBILE" | "BIOMETRIC" | "IMPORT" | "MANUAL";
 
 export type TimesheetStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
 
@@ -405,17 +398,17 @@ export type Timesheet = {
 };
 
 export const attendanceApi = {
-  entries(employeeId: string,
-    from: string,
-    to: string): Promise<TimeEntry[]> {
+  entries(employeeId: string, from: string, to: string): Promise<TimeEntry[]> {
     return request<TimeEntry[]>(
       `/api/v1/attendance/employees/${employeeId}/entries?from=${from}&to=${to}`,
     );
   },
 
-  preview(employeeId: string,
+  preview(
+    employeeId: string,
     from: string,
-    to: string): Promise<TimesheetTotals> {
+    to: string,
+  ): Promise<TimesheetTotals> {
     return request<TimesheetTotals>(
       `/api/v1/attendance/employees/${employeeId}/preview?from=${from}&to=${to}`,
     );
@@ -435,19 +428,10 @@ export const attendanceApi = {
 export type CycleStatus = "DRAFT" | "OPEN" | "CLOSED" | "CANCELLED";
 
 export type GoalStatus =
-  | "DRAFT"
-  | "ACTIVE"
-  | "ACHIEVED"
-  | "PARTIALLY_MET"
-  | "MISSED"
-  | "CANCELLED";
+  "DRAFT" | "ACTIVE" | "ACHIEVED" | "PARTIALLY_MET" | "MISSED" | "CANCELLED";
 
 export type Rating =
-  | "UNSATISFACTORY"
-  | "DEVELOPING"
-  | "MEETS"
-  | "EXCEEDS"
-  | "OUTSTANDING";
+  "UNSATISFACTORY" | "DEVELOPING" | "MEETS" | "EXCEEDS" | "OUTSTANDING";
 
 export type ReviewStatus =
   | "PENDING"
@@ -531,12 +515,7 @@ export const performanceApi = {
 export type DeliveryMode = "ONLINE" | "CLASSROOM" | "ON_THE_JOB" | "EXTERNAL";
 
 export type EnrolmentStatus =
-  | "ENROLLED"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "FAILED"
-  | "WITHDRAWN"
-  | "EXPIRED";
+  "ENROLLED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "WITHDRAWN" | "EXPIRED";
 
 export type Course = {
   id: string;
@@ -574,7 +553,11 @@ export type ComplianceGap = {
   courseId: string;
   courseTitle: string;
   missingCount: number;
-  missing: { employeeId: string; employeeNumber: string; displayName: string }[];
+  missing: {
+    employeeId: string;
+    employeeNumber: string;
+    displayName: string;
+  }[];
 };
 
 export const learningApi = {
@@ -590,6 +573,102 @@ export const learningApi = {
 
   compliance(): Promise<ComplianceGap[]> {
     return request<ComplianceGap[]>("/api/v1/learning/compliance");
+  },
+};
+
+export type PeriodStatus = "DRAFT" | "CALCULATED" | "APPROVED" | "PAID";
+export type ComponentType = "EARNING" | "DEDUCTION" | "EMPLOYER_CONTRIBUTION";
+export type CalculationMethod =
+  "FIXED" | "PERCENT_OF_BASE" | "PERCENT_OF_GROSS" | "PER_HOUR" | "MANUAL";
+
+export type PayrollPeriod = {
+  id: string;
+  name: string;
+  periodStart: string;
+  periodEnd: string;
+  paymentDate: string | null;
+  status: PeriodStatus;
+  calculatedAt: string | null;
+  approverId: string | null;
+  approverName: string | null;
+  approvedAt: string | null;
+  paidAt: string | null;
+  notes: string | null;
+};
+
+/** {@code basis} is the line's own account of how it reached its figure, in the server's words. */
+export type PayslipLine = {
+  id: string;
+  componentCode: string;
+  componentName: string;
+  componentType: ComponentType;
+  basis: string | null;
+  quantity: string | null;
+  rate: string | null;
+  amount: string;
+};
+
+export type Payslip = {
+  id: string;
+  periodId: string;
+  employeeId: string;
+  employeeNumber: string;
+  employeeName: string;
+  baseAmount: string;
+  currency: string;
+  grossEarnings: string;
+  totalDeductions: string;
+  employerCost: string;
+  netPay: string;
+  unpaidLeaveDays: string;
+  absentMinutes: number;
+  overtimeMinutes: number;
+  lines: PayslipLine[];
+};
+
+export type Compensation = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  baseAmount: string;
+  currency: string;
+  payFrequency: "MONTHLY" | "WEEKLY" | "DAILY" | "HOURLY";
+  reason: string | null;
+  current: boolean;
+};
+
+export type PayComponent = {
+  id: string;
+  code: string;
+  name: string;
+  componentType: ComponentType;
+  calculation: CalculationMethod;
+  defaultAmount: string | null;
+  percentage: string | null;
+  taxable: boolean;
+  sortOrder: number;
+  active: boolean;
+};
+
+export const payrollApi = {
+  periods(): Promise<PayrollPeriod[]> {
+    return request<PayrollPeriod[]>("/api/v1/payroll/periods");
+  },
+
+  payslipsIn(periodId: string): Promise<Payslip[]> {
+    return request<Payslip[]>(`/api/v1/payroll/periods/${periodId}/payslips`);
+  },
+
+  components(): Promise<PayComponent[]> {
+    return request<PayComponent[]>("/api/v1/payroll/components");
+  },
+
+  compensation(employeeId: string): Promise<Compensation[]> {
+    return request<Compensation[]>(
+      `/api/v1/payroll/employees/${employeeId}/compensation`,
+    );
   },
 };
 

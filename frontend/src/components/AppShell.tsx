@@ -61,8 +61,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/app/attendance", label: messages.nav.attendance, badge: 0 },
     { href: "/app/performance", label: messages.nav.performanceNav, badge: 0 },
     { href: "/app/learning", label: messages.nav.learningNav, badge: 0 },
+    { href: "/app/payroll", label: messages.nav.payrollNav, badge: 0 },
     { href: "/app/organization", label: messages.nav.organization, badge: 0 },
-    { href: "/app/notifications", label: messages.nav.notifications, badge: unreadCount },
+    {
+      href: "/app/notifications",
+      label: messages.nav.notifications,
+      badge: unreadCount,
+    },
     { href: "/app/tix", label: messages.nav.tix, badge: 0 },
   ];
 
@@ -72,9 +77,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         aria-label={messages.app.name}
         className="hidden w-64 shrink-0 flex-col border-r border-line bg-white md:flex"
       >
-        <Link href="/" className="flex items-center gap-2 border-b border-line px-5 py-4">
+        <Link
+          href="/"
+          className="flex items-center gap-2 border-b border-line px-5 py-4"
+        >
           <BrandMark size={26} />
-          <span className="text-lg font-bold text-navy">{messages.app.name}</span>
+          <span className="text-lg font-bold text-navy">
+            {messages.app.name}
+          </span>
         </Link>
 
         <ul className="flex-1 space-y-0.5 p-3">
@@ -103,7 +113,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </ul>
 
-        <p className="border-t border-line px-5 py-3 text-xs text-muted">{messages.app.platform}</p>
+        <p className="border-t border-line px-5 py-3 text-xs text-muted">
+          {messages.app.platform}
+        </p>
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">

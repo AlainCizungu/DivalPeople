@@ -29,6 +29,10 @@ import ai.dival.dip.modules.learning.DeliveryMode;
 import ai.dival.dip.modules.learning.LearningController;
 import ai.dival.dip.modules.learning.LearningService;
 import ai.dival.dip.modules.organizations.OrgUnitService;
+import ai.dival.dip.modules.payroll.PayFrequency;
+import ai.dival.dip.modules.payroll.PayrollController;
+import ai.dival.dip.modules.payroll.PayrollPeriod;
+import ai.dival.dip.modules.payroll.PayrollService;
 import ai.dival.dip.modules.performance.FeedbackRelationship;
 import ai.dival.dip.modules.performance.PerformanceController;
 import ai.dival.dip.modules.performance.PerformanceService;
@@ -114,6 +118,10 @@ class ResponseMappingTest extends AbstractIntegrationTest {
     private LearningService learning;
     @Autowired
     private LearningController learningController;
+    @Autowired
+    private PayrollService payrollService;
+    @Autowired
+    private PayrollController payrollController;
 
     private UUID tenantId;
     private Employee employee;
@@ -336,6 +344,45 @@ class ResponseMappingTest extends AbstractIntegrationTest {
             // The compliance report reaches across every employee, so it is the one most likely
             // to touch an unfetched association.
             learningController.compliance(LocalDate.now());
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("payroll responses map outside a transaction")
+    void payrollResponsesMap() {
+        payrollService.setCompensation(employee.getId(), LocalDate.of(2024, 2, 5),
+                new java.math.BigDecimal("1000"), "USD", PayFrequency.MONTHLY, "Test", null);
+
+        var pension = payrollService.createComponent("PENSION", "Pension",
+                ai.dival.dip.modules.payroll.ComponentType.DEDUCTION,
+                ai.dival.dip.modules.payroll.CalculationMethod.PERCENT_OF_BASE, null,
+                new java.math.BigDecimal("5"), false, 200, null);
+        payrollService.assign(employee.getId(), pension.getId(), LocalDate.of(2024, 2, 5),
+                null, null, null, null);
+
+        LocalDate start = LocalDate.of(2026, 6, 1);
+        PayrollPeriod period = payrollService.createPeriod("June 2026", start,
+                LocalDate.of(2026, 6, 30), LocalDate.of(2026, 7, 5), null);
+        payrollService.calculate(period.getId(), PayFrequency.MONTHLY, null);
+
+        assertThatCode(() -> {
+            assertThat(payrollController.periods()).isNotEmpty();
+            assertThat(payrollController.components()).isNotEmpty();
+
+            var history = payrollController.compensation(employee.getId());
+            assertThat(history).isNotEmpty();
+            // The name, not just the id.
+            assertThat(history.get(0).employeeName()).isNotBlank();
+
+            assertThat(payrollController.assignments(employee.getId())).isNotEmpty();
+
+            var slips = payrollController.payslipsIn(period.getId());
+            assertThat(slips).isNotEmpty();
+            // The lines are a lazy collection, so this is the one most likely to break.
+            assertThat(slips.get(0).lines()).isNotEmpty();
+
+            payrollController.payslipsFor(employee.getId());
+            payrollController.payslip(slips.get(0).id());
         }).doesNotThrowAnyException();
     }
 }
