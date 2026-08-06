@@ -207,6 +207,45 @@ Then read `audit_event` for the period in question. That table exists for this.
 
 ---
 
+## Verifying an image before you trust it
+
+Both images can be proved to refuse a bad configuration, without a database and without
+deploying anything. Do this after any change to the Dockerfiles or to the configuration checks.
+
+```bash
+# Deliberately wrong in five ways at once: one database account for both roles, passwords from
+# this repository, a plain-HTTP issuer, and a database on localhost.
+docker run --rm \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -e DIP_DB_URL=jdbc:postgresql://localhost:5432/dip \
+  -e DIP_DB_USER=dip -e DIP_DB_PASSWORD=dip \
+  -e DIP_APP_DB_USER=dip -e DIP_APP_DB_PASSWORD=dip \
+  -e REDIS_HOST=redis -e REDIS_PORT=6379 \
+  -e DIP_OIDC_ISSUER_URI=http://localhost:8081/realms/dip \
+  dip-backend:test
+```
+
+It must exit non-zero. What it must **not** do is start.
+
+```bash
+# Same idea: no client secret, plain HTTP, localhost.
+docker run --rm \
+  -e NODE_ENV=production \
+  -e SITE_URL=http://localhost:3000 \
+  -e OIDC_ISSUER=http://localhost:8081/realms/dip \
+  -e OIDC_CLIENT_ID=dip-web \
+  -e API_BASE_URL=http://backend:8080 \
+  -e REDIS_URL=redis://redis:6379 \
+  dip-frontend:test
+```
+
+It must exit before it listens, not on the first request. That is what `src/instrumentation.ts`
+is for: a container that exits immediately is caught by whoever deployed it, while they are still
+watching. One that starts healthy and fails on the first real request is caught by a user, and
+looks like an outage rather than a typo.
+
+---
+
 ## When something is wrong
 
 **Start here, in this order.** Most of what goes wrong is configuration, and the errors say so.
