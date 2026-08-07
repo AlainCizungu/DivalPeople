@@ -1,11 +1,16 @@
 package ai.dival.dip.common.audit;
 
 import ai.dival.dip.common.tenancy.TenantContext;
+import ai.dival.dip.common.web.RequestIdFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * Writes audit events.
@@ -13,6 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Events are written in their own transaction so that an audit entry survives the rollback of
  * the operation that produced it. A denied or failed attempt is exactly the thing an auditor
  * most wants to see.
+ *
+ * <p>The caller's address and request id are filled in here rather than passed by every call site.
+ * They used to be hardcoded {@code null} in both methods, despite the columns existing since the
+ * first migration and {@code application-prod.yml} carrying a comment explaining why the forwarded
+ * headers matter. Forty-odd call sites would each have had to remember; this way none of them can
+ * forget.
  */
 @Service
 public class AuditService {
@@ -28,7 +39,22 @@ public class AuditService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void record(String action, String resourceType, String resourceId, String outcome, UUID actorId) {
+    public void record(String action, String resourceType, String resourceId, String outcome,
+                       UUID actorId) {
+        record(action, resourceType, resourceId, outcome, actorId, null);
+    }
+
+    /**
+     * Records an event along with why it was done.
+     *
+     * @param detail the actor's stated reason, where the API asks for one. Free text, stored and
+     *               never parsed. This exists because a TIX inquiry validates a {@code purpose}
+     *               and then threw it away, which left the exchange's only accountability control
+     *               as a row saying somebody looked at somebody.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void record(String action, String resourceType, String resourceId, String outcome,
+                       UUID actorId, String detail) {
         repository.save(new AuditEvent(
                 TenantContext.find().orElse(null),
                 actorId,
@@ -36,13 +62,65 @@ public class AuditService {
                 resourceType,
                 resourceId,
                 outcome,
-                null,
-                null,
+                currentRequestId(),
+                currentIpAddress(),
+                truncate(detail),
                 Instant.now()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordSuccess(String action, String resourceType, String resourceId, UUID actorId) {
         record(action, resourceType, resourceId, OUTCOME_SUCCESS, actorId);
+    }
+
+    /** Null outside a request — scheduled work and seeders audit legitimately, with no caller. */
+    private String currentRequestId() {
+        HttpServletRequest request = currentRequest();
+        if (request == null) {
+            return null;
+        }
+        Object id = request.getAttribute(RequestIdFilter.ATTRIBUTE);
+        return id == null ? null : id.toString();
+    }
+
+    /**
+     * The client's address as the proxy reports it.
+     *
+     * <p>{@code forward-headers-strategy: framework} makes Spring rewrite the request from the
+     * forwarded headers before anything reads it, so this is the real client rather than Caddy.
+     * Behind a proxy that does <em>not</em> set those headers this records the proxy, which is
+     * wrong but not misleading — every row would say the same thing.
+     */
+    private String currentIpAddress() {
+        HttpServletRequest request = currentRequest();
+        if (request == null) {
+            return null;
+        }
+        String address = request.getRemoteAddr();
+        // The column is 45 characters, which is the longest an IPv6 address with an embedded IPv4
+        // suffix can be. Anything longer is not an address.
+        return address != null && address.length() <= 45 ? address : null;
+    }
+
+    private HttpServletRequest currentRequest() {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        return attributes instanceof ServletRequestAttributes servlet
+                ? servlet.getRequest()
+                : null;
+    }
+
+    /**
+     * Bounded, so a caller cannot use the audit log as storage.
+     *
+     * <p>Truncated rather than rejected: refusing to write the event because its reason was too
+     * long would lose the event, and losing an audit row to protect a column width is the wrong
+     * trade in every direction.
+     */
+    private String truncate(String detail) {
+        if (detail == null || detail.isBlank()) {
+            return null;
+        }
+        String trimmed = detail.strip();
+        return trimmed.length() <= 500 ? trimmed : trimmed.substring(0, 497) + "...";
     }
 }

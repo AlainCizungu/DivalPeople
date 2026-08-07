@@ -71,7 +71,11 @@ public class ExchangeService {
 
         Optional<Match> match = resolveSubject(request);
         if (match.isEmpty()) {
-            audit.record("TIX_INQUIRY", "Subject", null, AuditService.OUTCOME_SUCCESS, actorId);
+            // The purpose is recorded even when nothing matched. A sweep looking for which
+            // identifiers exist is exactly the pattern an auditor needs to see, and it produces
+            // nothing but no-matches.
+            audit.record("TIX_INQUIRY", "Subject", null, AuditService.OUTCOME_SUCCESS, actorId,
+                    request.purpose());
             return InquiryResult.noMatch();
         }
 
@@ -80,7 +84,8 @@ public class ExchangeService {
         // identifier *submitted* let a caller add an invented passport number to a real phone
         // number and have a weak match treated as a strong one.
         double confidence = matcher.confidence(subject, request, match.get().identifier());
-        audit.record("TIX_INQUIRY", "Subject", subject.getId().toString(), AuditService.OUTCOME_SUCCESS, actorId);
+        audit.record("TIX_INQUIRY", "Subject", subject.getId().toString(),
+                AuditService.OUTCOME_SUCCESS, actorId, request.purpose());
 
         if (confidence < AUTOMATIC_MATCH_THRESHOLD) {
             // The score stays on this side of the wire, and so does the subject id.

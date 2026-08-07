@@ -46,6 +46,16 @@ public class AuditEvent {
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
+    /**
+     * Why, in the actor's own words, where the API asks for one.
+     *
+     * <p>Free text and never parsed. A TIX inquiry requires a purpose and it belongs here — a
+     * credit-bureau lookup that cannot answer "why did you look this person up" has no
+     * accountability at all.
+     */
+    @Column(name = "detail", length = 500)
+    private String detail;
+
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt;
 
@@ -54,7 +64,8 @@ public class AuditEvent {
     }
 
     AuditEvent(UUID tenantId, UUID actorId, String action, String resourceType, String resourceId,
-               String outcome, String requestId, String ipAddress, Instant occurredAt) {
+               String outcome, String requestId, String ipAddress, String detail,
+               Instant occurredAt) {
         this.tenantId = tenantId;
         this.actorId = actorId;
         this.action = action;
@@ -63,7 +74,12 @@ public class AuditEvent {
         this.outcome = outcome;
         this.requestId = requestId;
         this.ipAddress = ipAddress;
+        this.detail = detail;
         this.occurredAt = occurredAt;
+    }
+
+    public String getDetail() {
+        return detail;
     }
 
     public UUID getId() {
