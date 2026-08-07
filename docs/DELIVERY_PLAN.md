@@ -69,7 +69,7 @@ test could catch.
 ### What exists today
 
 - **Backend** — 43 tables across 17 migrations, 15 modules (`attendance`, `employees`, `files`, `learning`, `leave`, `lifecycle`, `notifications`, `organizations`, `payroll`, `performance`, `recruitment`, `selfservice`, `tenants`, `tix`, `users`),
-  ~180 endpoints, 332 passing tests. Cross-tenant isolation and row-level security are
+  ~180 endpoints, 358 passing tests. Cross-tenant isolation and row-level security are
   proven over raw JDBC as the unprivileged application role.
 - **Frontend** — public landing page, authenticated product shell, and screens for the people
   directory, recruitment pipeline, onboarding and offboarding, leave balances, weekly
@@ -351,7 +351,38 @@ seeder says so.
 
 ---
 
-## 9. Then — TIX depth
+## 9. Security
+
+A three-part adversarial review in August 2026 found that any signed-in employee could read and
+rewrite a colleague's performance review — including the reviewer's unshared assessment, which is
+more than the subject is allowed to see — download every document in the tenant including sick
+notes and identity scans, and book or cancel other people's leave. Cross-tenant isolation held
+throughout; the failure was entirely horizontal, inside a tenant.
+
+The root cause was one line: `SecurityConfig` authenticates every request and authorizes none, so
+an endpoint without `@PreAuthorize` was reachable by everybody. **That is now a build failure**
+(`check_architecture.py` rule 5), and `AuthorizationBoundaryTest` proves the refusals bite rather
+than merely existing.
+
+`docs/SECURITY_REVIEW.md` has every finding with its current status.
+
+**Every Critical and High finding is closed, and each fix has a test that fails without it.** So
+are most Mediums, including all four TIX findings — the confidence score that leaked a
+competitor's subject's name one token at a time, the weak-identifier bypass, the missing rate
+limit, and an audit trail that validated a `purpose` and then discarded it.
+
+Seven remain, all Medium or Low: JWT audience validation (not reachable in the shipped topology,
+where the backend publishes no port), upload limits, the `IllegalArgumentException` message
+handler, and four defence-in-depth items.
+
+**"No known Critical or High findings" is not the same as "secure".** Three reviewers went over
+code written by one author and found what they found; a fourth pass would find more. What makes
+the next round smaller is structural rather than any single fix in that list: omission fails the
+build, something asks every question from the wrong side, and the audit trail records why.
+
+---
+
+## 10. Then — TIX depth
 
 TIX can now be built on a real foundation:
 
@@ -363,7 +394,7 @@ TIX can now be built on a real foundation:
 
 ---
 
-## 10. Known open gaps
+## 11. Known open gaps
 
 | Gap | Severity | Where |
 |---|---|---|
@@ -381,7 +412,7 @@ TIX can now be built on a real foundation:
 
 ---
 
-## 11. Working agreement
+## 12. Working agreement
 
 - Every tenant-owned table adds its RLS policy in the same migration that creates it.
 - A module is not done until a cross-tenant isolation test proves the boundary holds.
