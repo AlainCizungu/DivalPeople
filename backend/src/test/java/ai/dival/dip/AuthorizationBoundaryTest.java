@@ -226,7 +226,7 @@ class AuthorizationBoundaryTest extends AbstractIntegrationTest {
     void cannotReachTrainingRecords() {
         assertThatThrownBy(() -> learningController.enrolmentsFor(colleague.getId()))
                 .isInstanceOf(AccessDeniedException.class);
-        assertThatThrownBy(() -> learningController.compliance())
+        assertThatThrownBy(() -> learningController.compliance(LocalDate.now()))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -250,7 +250,7 @@ class AuthorizationBoundaryTest extends AbstractIntegrationTest {
             employeeController.list();
             leaveController.pending();
             lifecycleController.open();
-            learningController.compliance();
+            learningController.compliance(LocalDate.now());
             fileController.listByCategory("EMPLOYEE_DOCUMENT");
             performanceController.reviewsFor(colleague.getId());
             performanceController.review(colleagueReview);
