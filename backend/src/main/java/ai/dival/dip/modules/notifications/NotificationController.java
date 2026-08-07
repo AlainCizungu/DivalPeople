@@ -21,15 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/v1/notifications")
-@PreAuthorize(AUTHENTICATED)
+@PreAuthorize("isAuthenticated()")
 public class NotificationController {
 
-    /**
-     * Every method here is already scoped to the signed-in user's own id, so any authenticated
-     * caller is correct. Stated rather than omitted: omission is what made nine other modules
-     * readable by the whole tenant.
-     */
-    private static final String AUTHENTICATED = "isAuthenticated()";
 
 
     private final NotificationService notifications;

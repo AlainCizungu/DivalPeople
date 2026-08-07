@@ -31,17 +31,10 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @RestController
 @RequestMapping("/api/v1/files")
-@PreAuthorize(HR_WRITE)
+@PreAuthorize("hasAnyRole('" + Roles.HR_ADMIN + "', '" + Roles.HR_MANAGER
+        + "', '" + Roles.TENANT_ADMIN + "')")
 public class FileController {
 
-    /**
-     * Documents are contracts, identity scans, sick notes and certification attachments. Until
-     * `stored_file` carries an owner, "which of these is yours" cannot be answered, so the only
-     * defensible answer is HR — see SECURITY_REVIEW.md H1.
-     */
-    private static final String HR_WRITE =
-            "hasAnyRole('" + Roles.HR_ADMIN + "', '" + Roles.HR_MANAGER + "', '"
-                    + Roles.TENANT_ADMIN + "')";
 
 
     private final FileService files;

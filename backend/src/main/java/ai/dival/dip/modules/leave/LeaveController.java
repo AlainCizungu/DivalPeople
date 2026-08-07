@@ -120,7 +120,6 @@ public class LeaveController {
 
     @GetMapping("/requests/pending")
     @PreAuthorize(DECIDE)
-    @PreAuthorize(DECIDE)
     public List<RequestResponse> pending() {
         return requests.awaitingDecision().stream().map(RequestResponse::from).toList();
     }
