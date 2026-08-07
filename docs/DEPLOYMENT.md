@@ -142,29 +142,87 @@ irreversible, not the image.
 
 ## Backups
 
-Nothing here is backed up automatically. That is the largest gap in this document and you should
-close it before there is anything in the database you would mind losing.
+The stack takes one automatically, encrypted, on the schedule you set in `BACKUP_CRON`. Two
+things about it are worth understanding before you rely on it.
+
+**The archive is encrypted to a public key, and the private key must not be on the server.**
+Generate the pair somewhere else:
 
 ```bash
-# Both databases, compressed, timestamped.
-docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml \
-  exec -T postgres pg_dumpall -U "$POSTGRES_OWNER_USER" \
-  | gzip > "dip-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+age-keygen -o dip-backup.key      # keep this file; it is the only way to read a backup
 ```
 
-Put that on a schedule, and **send the file off the host**. A backup on the same disk as the
-database protects you against exactly one failure mode, and not the common one.
+Put the `age1…` public line in `BACKUP_AGE_PUBLIC_KEY`. Keep `dip-backup.key` in a password
+manager or anywhere that is not the machine being backed up. A backup is a complete copy of every
+salary, national identifier and debt record in the system; if the key that opens it sits next to
+it, encrypting it protected you from nothing.
 
-Restore, on an empty stack:
+**Losing the private key means losing every backup.** There is no recovery path. Store a second
+copy somewhere independent.
+
+**Nothing copies the archives off the host.** `BACKUP_HOST_DIR` is a bind mount so you can point
+it at attached storage or at a directory something else syncs, but that something else is yours to
+set up. A backup on the same disk as the database defends against the database breaking and
+against nothing else — not fire, not theft, not a failed disk, not a mistaken `rm`. For example:
 
 ```bash
-gunzip -c dip-20260806T090000Z.sql.gz \
-  | docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml \
-    exec -T postgres psql -U "$POSTGRES_OWNER_USER" -d postgres
+# On the host, after configuring an rclone remote.
+rclone sync /var/backups/dip remote:dip-backups --immutable
 ```
 
-**A backup you have never restored is not a backup.** Restore one into a scratch stack before you
-need to do it under pressure.
+Set `BACKUP_OFFSITE_CONFIRMED=true` once that is real, to stop the reminder in the log. Setting it
+without doing it only silences the message.
+
+### Watching it work
+
+```bash
+C="docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml"
+
+$C logs backup            # one runs at start-up, so problems surface immediately
+ls -lh /var/backups/dip
+```
+
+A failed backup does not restart the container and does not stop anything else. It says
+`FAILED` in the log, and nothing else will tell you. Until there is alerting, read this
+occasionally.
+
+### The restore drill
+
+**A backup nobody has restored is not a backup**, and a procedure written in a document is not a
+drill. There is a script:
+
+```bash
+sh infra/backup/restore-drill.sh /path/to/dip-20260806T023000Z.sql.gz.age ~/dip-backup.key
+```
+
+Run it **on your machine, not the server** — the private key lives with you, which is what makes
+the encryption worth anything. It starts a throwaway PostgreSQL, restores into it, then checks
+that the migrations, the tenants, the tables, the `dip_app` role and the row-level security
+policies all came back, and destroys it. It touches nothing that is running.
+
+The role and policy checks matter as much as the row counts. A dump restored without `dip_app`
+leaves an application that cannot connect and security policies that refer to an account which
+does not exist — and "the tables are all there" would not have told you.
+
+Do this after the first deploy, and again whenever the schema changes shape. Not on the day you
+need it.
+
+### Restoring for real
+
+Onto an empty stack, with the applications stopped:
+
+```bash
+C="docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml"
+
+$C stop backend frontend keycloak
+age -d -i dip-backup.key dip-20260806T023000Z.sql.gz.age \
+  | gzip -d \
+  | $C exec -T postgres psql -v ON_ERROR_STOP=1 -U "$POSTGRES_OWNER_USER" -d postgres
+$C start keycloak backend frontend
+```
+
+`ON_ERROR_STOP=1` is not optional. Without it psql continues past errors and leaves you with a
+partially restored database that looks like it worked.
 
 ---
 

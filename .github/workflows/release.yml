@@ -55,6 +55,10 @@ jobs:
             context: backend
           - component: frontend
             context: frontend
+          # The backup image is published like the others rather than built on the server. The
+          # thing guarding your data should not be a script somebody edited over SSH.
+          - component: backup
+            context: infra/backup
 
     steps:
       - uses: actions/checkout@v4

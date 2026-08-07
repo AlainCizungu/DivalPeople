@@ -153,6 +153,38 @@ services:
       - keycloak
     networks: [internal]
 
+  # Takes an encrypted dump on a schedule. Built and published by CI like everything else, so the
+  # thing guarding your data is not a script somebody edited on the server.
+  backup:
+    image: ghcr.io/${GITHUB_REPOSITORY}/backup:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      # The owner, because pg_dumpall reads every database and the role definitions. dip_app can
+      # see almost nothing by design, which is the whole point of it.
+      PGUSER: ${POSTGRES_OWNER_USER}
+      PGPASSWORD: ${POSTGRES_OWNER_PASSWORD}
+
+      BACKUP_DIR: /backups
+      BACKUP_CRON: ${BACKUP_CRON:?set BACKUP_CRON}
+      BACKUP_KEEP: ${BACKUP_KEEP:?set BACKUP_KEEP}
+
+      # The PUBLIC half of an age key pair. The private half must not be on this machine — that is
+      # what makes a stolen host not also a stolen copy of every salary in the system.
+      BACKUP_AGE_PUBLIC_KEY: ${BACKUP_AGE_PUBLIC_KEY:-}
+      BACKUP_ENCRYPTION_DISABLED: ${BACKUP_ENCRYPTION_DISABLED:-false}
+      BACKUP_OFFSITE_CONFIRMED: ${BACKUP_OFFSITE_CONFIRMED:-false}
+    volumes:
+      # A bind mount rather than a named volume, so it can point at attached storage or at a
+      # directory something else syncs off the host. A named volume would live on the same disk as
+      # the database, which protects against the database breaking and nothing else.
+      - ${BACKUP_HOST_DIR:?set BACKUP_HOST_DIR}:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
 volumes:
   postgres-data:
   redis-data:

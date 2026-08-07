@@ -19,13 +19,16 @@ Update it when a phase changes status or a gap is closed. Last reviewed: August 
 | Publishing images | **Done.** `release.yml` triggers on CI completion rather than on push, so it cannot publish from a red build. Images are tagged by full commit SHA, built once, scanned with Trivy, then pushed. The scan reports rather than blocks: a base-image CVE with no fix would otherwise stop the deployment carrying a security fix of our own. |
 | A deployable stack | **Done.** `infra/docker-compose.deploy.yml`: nothing but Caddy publishes a port, Redis has a password, Keycloak has its own database and role, and every secret is required. |
 | Images actually verified | **Done.** Both images build, and both refuse a deliberately bad configuration. Three defects were found this way and none of them were findable statically: `dip` is a Debian system group so the service account could not be created; Boot 3.3 replaced the layertools jarmode so the entrypoint named a launcher class that no longer exists; and the configuration guard was a bean, so Flyway's connection failed first and hid every other fault. |
+| Automated backups | **Done.** `pg_dumpall` of both databases *and the roles*, encrypted to a public key so the host cannot read its own backups, pruned by count, on a cron. Eleven tests cover it by stubbing `pg_dumpall` — the failure paths are the ones that matter and the ones nobody exercises by hand, and they run in CI without a database. |
+| The restore drill | **Done.** A script that restores the latest archive into a throwaway container and checks the migrations, tenants, tables, the `dip_app` role and the row-level security policies all came back. Roles and policies are checked because "the tables are there" is a different claim from "the security is there". |
 | The runbook | **Done.** `docs/DEPLOYMENT.md` covers first deploy, realm setup, upgrades, backups, rotating each secret including the one Flyway will not rotate for you, and a symptom table for when it breaks. It ends with what the deployment does **not** do. |
 
 Still open, and named rather than implied:
 
 - **No host.** Everything above is ready to run; nothing is running.
-- **No automated backups.** The commands are in the runbook and nothing executes them. This is
-  the first thing to fix once there is real data.
+- ~~**No automated backups.**~~ **Closed.** An encrypted dump on a schedule, pruned by retention,
+  with a restore drill that is a script rather than a paragraph. What remains is yours: pointing
+  `BACKUP_HOST_DIR` at storage that is not the same disk, and copying the archives off the host.
 - **Deployment is a person typing.** CI publishes; a human pulls. No continuous deployment, no
   automated rollback, and migrations have no tested down path.
 - **No log aggregation, no alerting.** If it breaks at night, you find out in the morning.

@@ -69,6 +69,17 @@ jobs:
       - name: Check module boundaries and tenant isolation policies
         run: python3 scripts/check_architecture.py
 
+  backup:
+    name: Backup script
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The failure paths are the ones that matter and the ones nobody exercises by hand. These
+      # stub pg_dumpall, so they need no database and run in about ten seconds.
+      - name: Prove the backup script fails when the dump fails
+        run: sh infra/backup/backup.test.sh
+
   translations:
     name: Translation parity
     runs-on: ubuntu-latest
