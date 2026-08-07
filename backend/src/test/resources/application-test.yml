@@ -9,13 +9,21 @@ spring:
       dip_app_password: dip_app
   data:
     redis:
-      # Redis is not required by the tests in this module.
+      # Redis repositories stay off — nothing here is a Redis repository.
       repositories:
         enabled: false
   autoconfigure:
     exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      # RedisAutoConfiguration is NO LONGER excluded. It was, with a comment saying Redis was not
+      # required by these tests — true until the TIX rate limiter made a StringRedisTemplate a
+      # hard dependency of ExchangeService, at which point every context test failed at once.
+      #
+      # The template is auto-configured but never contacted: Lettuce connects lazily, and
+      # TestRequestCounter supplies a @Primary in-memory counter so nothing reaches a socket.
+      # Keeping the production counter unconditional is deliberate — making it conditional on
+      # Redis being present would mean a deployment that lost Redis silently lost its rate limit,
+      # which is the same "omission removes the control" shape as the authorization findings.
   security:
     oauth2:
       resourceserver:

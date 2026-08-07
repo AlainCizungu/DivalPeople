@@ -1,6 +1,7 @@
 package ai.dival.dip;
 
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -16,6 +17,10 @@ import org.springframework.test.context.DynamicPropertySource;
  * {@link PostgresTestContainer} so that it starts only when a property is actually resolved,
  * which is to say only when a test that was not skipped is really building its context.
  *
+ * <p>{@link TestRequestCounter} supplies an in-memory rate-limit counter so no test needs Redis.
+ * The production counter stays unconditional: a limiter that quietly disappears when Redis is
+ * absent is the same shape of defect as an endpoint that is reachable because nobody annotated it.
+ *
  * <p><strong>These tests connect as the schema owner, which bypasses row-level security.</strong>
  * That is intentional: they exercise the application-level tenant scoping, and several of them
  * legitimately act as two tenants inside a single transaction, which a tenant-pinned connection
@@ -23,6 +28,7 @@ import org.springframework.test.context.DynamicPropertySource;
  * connects as the unprivileged {@code dip_app} role the application really uses.
  */
 @SpringBootTest
+@Import(TestRequestCounter.class)
 @ActiveProfiles("test")
 @RequiresDocker
 public abstract class AbstractIntegrationTest {
