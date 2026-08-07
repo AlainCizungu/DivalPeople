@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/users")
 public class UserController {
 
+    private static final String AUTHENTICATED = "isAuthenticated()";
+
+
     private final CurrentUserService currentUser;
 
     public UserController(CurrentUserService currentUser) {
@@ -27,6 +30,7 @@ public class UserController {
 
     /** The signed-in user. Provisions the local record if this is their first request. */
     @GetMapping("/me")
+    @PreAuthorize(AUTHENTICATED)
     public UserResponse me() {
         return UserResponse.from(currentUser.requireCurrentUser());
     }

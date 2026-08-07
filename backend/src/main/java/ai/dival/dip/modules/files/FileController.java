@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.files;
 
+import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.users.CurrentUserService;
 import java.io.IOException;
 import java.time.Instant;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +31,18 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @RestController
 @RequestMapping("/api/v1/files")
+@PreAuthorize(HR_WRITE)
 public class FileController {
+
+    /**
+     * Documents are contracts, identity scans, sick notes and certification attachments. Until
+     * `stored_file` carries an owner, "which of these is yours" cannot be answered, so the only
+     * defensible answer is HR — see SECURITY_REVIEW.md H1.
+     */
+    private static final String HR_WRITE =
+            "hasAnyRole('" + Roles.HR_ADMIN + "', '" + Roles.HR_MANAGER + "', '"
+                    + Roles.TENANT_ADMIN + "')";
+
 
     private final FileService files;
     private final CurrentUserService currentUser;

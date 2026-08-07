@@ -33,6 +33,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/learning")
 public class LearningController {
 
+    private static final String AUTHENTICATED = "isAuthenticated()";
+
+
     private static final String HR_WRITE =
             "hasAnyRole('" + Roles.HR_ADMIN + "', '" + Roles.HR_MANAGER + "', '"
                     + Roles.TENANT_ADMIN + "')";
@@ -52,6 +55,7 @@ public class LearningController {
     // --- courses -----------------------------------------------------------
 
     @GetMapping("/courses")
+    @PreAuthorize(AUTHENTICATED)
     public List<CourseResponse> courses(
             @RequestParam(defaultValue = "true") boolean activeOnly) {
         return (activeOnly ? learning.activeCourses() : learning.listCourses())
@@ -59,6 +63,7 @@ public class LearningController {
     }
 
     @GetMapping("/courses/{id}")
+    @PreAuthorize(AUTHENTICATED)
     public CourseResponse course(@PathVariable UUID id) {
         return CourseResponse.from(learning.course(id));
     }
@@ -82,6 +87,7 @@ public class LearningController {
     // --- enrolments --------------------------------------------------------
 
     @GetMapping("/employees/{employeeId}/enrolments")
+    @PreAuthorize(HR_WRITE)
     public List<EnrolmentResponse> enrolmentsFor(@PathVariable UUID employeeId) {
         return learning.enrolmentsFor(employeeId).stream().map(EnrolmentResponse::from).toList();
     }
@@ -102,6 +108,7 @@ public class LearningController {
 
     /** Starting is the learner's own act, so it sits behind no administrative role. */
     @PostMapping("/enrolments/{id}/start")
+    @PreAuthorize(HR_WRITE)
     public EnrolmentResponse start(@PathVariable UUID id) {
         return EnrolmentResponse.from(learning.start(id, actorId()));
     }

@@ -85,16 +85,19 @@ public class LifecycleController {
     // --- checklists --------------------------------------------------------
 
     @GetMapping("/checklists")
+    @PreAuthorize(HR_WRITE)
     public List<ChecklistSummary> open() {
         return lifecycle.openChecklists().stream().map(ChecklistSummary::from).toList();
     }
 
     @GetMapping("/checklists/{id}")
+    @PreAuthorize(HR_WRITE)
     public ChecklistDetail checklist(@PathVariable UUID id) {
         return ChecklistDetail.from(lifecycle.checklist(id));
     }
 
     @GetMapping("/employees/{employeeId}/checklists")
+    @PreAuthorize(HR_WRITE)
     public List<ChecklistSummary> forEmployee(@PathVariable UUID employeeId) {
         return lifecycle.checklistsFor(employeeId).stream().map(ChecklistSummary::from).toList();
     }
@@ -124,6 +127,7 @@ public class LifecycleController {
 
     /** Open to any member: the person who owns a step is the one who should tick it off. */
     @PostMapping("/items/{id}/status")
+    @PreAuthorize(HR_WRITE)
     public ItemResponse settle(@PathVariable UUID id, @Valid @RequestBody SettleRequest request) {
         return ItemResponse.from(lifecycle.settle(id, request.status(), request.notes(),
                 request.completedByEmployeeId(), actorId()));

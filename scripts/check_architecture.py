@@ -186,11 +186,82 @@ def check_no_char_columns() -> None:
             f"{report}")
 
 
+# ---------------------------------------------------------------------------
+# Rule 5 — every endpoint states who may call it.
+#
+# SecurityConfig ends with `.anyRequest().authenticated()`. That makes omission *permissive*: an
+# endpoint with no @PreAuthorize is reachable by every signed-in user in the tenant. The August
+# 2026 security review found nine modules in that state, including one where any employee could
+# read and rewrite a colleague's performance review.
+#
+# So the annotation is not optional and forgetting it is not a style problem. A method is covered
+# by its own @PreAuthorize, by one on its class, or — for the deliberate case where any
+# authenticated caller is correct — by an explicit @PreAuthorize("isAuthenticated()"). There is no
+# way to say nothing.
+# ---------------------------------------------------------------------------
+MAPPING = re.compile(r"^\s*@(Get|Post|Put|Patch|Delete|Request)Mapping\b")
+AUTHORIZATION = re.compile(r"^\s*@(PreAuthorize|PostAuthorize|Secured|RolesAllowed|DenyAll)\b")
+METHOD_SIGNATURE = re.compile(r"^\s*(public|protected|private)\s")
+
+
+def check_every_endpoint_declares_authorization() -> None:
+    violations = []
+
+    for path in java_sources():
+        text = path.read_text(encoding="utf-8")
+        if "@RestController" not in text and "@Controller" not in text:
+            continue
+
+        lines = text.splitlines()
+
+        # A class-level annotation covers everything in the file. Found by looking for an
+        # authorization annotation before the type declaration.
+        class_line = next((i for i, line in enumerate(lines)
+                           if re.match(r"^(public\s+)?(final\s+)?class\s", line)), len(lines))
+        if any(AUTHORIZATION.match(line) for line in lines[:class_line]):
+            continue
+
+        # Otherwise every mapped method needs its own. Annotations may appear in any order and
+        # with arguments spanning lines, so the scan collects the annotation block that precedes
+        # each method signature rather than looking only at the line above the mapping.
+        block: list[str] = []
+        for number, line in enumerate(lines, start=1):
+            stripped = line.strip()
+            if stripped.startswith("@"):
+                block.append(line)
+                continue
+            if not stripped or stripped.startswith("//") or stripped.startswith("*") \
+                    or stripped.startswith("/*"):
+                continue
+
+            # A class declaration also starts with a visibility modifier and is preceded by the
+            # class-level @RequestMapping. It is not an endpoint.
+            is_type_declaration = re.search(r"\b(class|interface|enum|record)\s+\w", line)
+
+            if METHOD_SIGNATURE.match(line) and not is_type_declaration \
+                    and any(MAPPING.match(b) for b in block):
+                if not any(AUTHORIZATION.match(b) for b in block):
+                    mapping = next(b.strip() for b in block if MAPPING.match(b))
+                    violations.append((path, number, f"{mapping}  {stripped[:70]}"))
+            block = []
+
+    if violations:
+        report = "\n".join(
+            f"    {p.relative_to(REPO)}:{n}\n        {line}" for p, n, line in violations)
+        raise Failure(
+            "Every endpoint must say who may call it.\n"
+            "SecurityConfig authenticates every request but authorizes none, so a method with no\n"
+            "@PreAuthorize is reachable by every signed-in user in the tenant. If that is genuinely\n"
+            "what you want, write @PreAuthorize(\"isAuthenticated()\") and mean it.\n"
+            f"{report}")
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
     ("no cross-module repository access", check_no_cross_module_persistence),
     ("tenant-owned tables have RLS policies", check_tenant_owned_tables_have_policies),
     ("no fixed-width CHAR columns", check_no_char_columns),
+    ("every endpoint declares authorization", check_every_endpoint_declares_authorization),
 ]
 
 

@@ -26,7 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/v1/organization/units")
+@PreAuthorize(AUTHENTICATED)
 public class OrgUnitController {
+
+    /** The org chart is not a secret inside a tenant, but it is not public either. */
+    private static final String AUTHENTICATED = "isAuthenticated()";
+
 
     private final OrgUnitService units;
     private final CurrentUserService currentUser;

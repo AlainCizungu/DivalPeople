@@ -33,6 +33,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/leave")
 public class LeaveController {
 
+    private static final String AUTHENTICATED = "isAuthenticated()";
+
+
     private static final String HR_WRITE =
             "hasAnyRole('" + Roles.HR_ADMIN + "', '" + Roles.HR_MANAGER + "', '"
                     + Roles.TENANT_ADMIN + "')";
@@ -57,6 +60,7 @@ public class LeaveController {
     // --- types -------------------------------------------------------------
 
     @GetMapping("/types")
+    @PreAuthorize(AUTHENTICATED)
     public List<LeaveTypeResponse> types() {
         return balances.activeTypes().stream().map(LeaveTypeResponse::from).toList();
     }
@@ -79,6 +83,7 @@ public class LeaveController {
     // --- balances ----------------------------------------------------------
 
     @GetMapping("/employees/{employeeId}/balances")
+    @PreAuthorize(DECIDE)
     public List<BalanceResponse> balances(@PathVariable UUID employeeId,
                                           @RequestParam(required = false) Integer year) {
         int leaveYear = year == null ? LocalDate.now().getYear() : year;
@@ -88,6 +93,7 @@ public class LeaveController {
 
     /** The ledger behind a balance: why it says what it says. */
     @GetMapping("/balances/{id}/ledger")
+    @PreAuthorize(DECIDE)
     public List<LedgerResponse> ledger(@PathVariable UUID id) {
         return balances.ledgerFor(id).stream().map(LedgerResponse::from).toList();
     }
@@ -114,17 +120,26 @@ public class LeaveController {
 
     @GetMapping("/requests/pending")
     @PreAuthorize(DECIDE)
+    @PreAuthorize(DECIDE)
     public List<RequestResponse> pending() {
         return requests.awaitingDecision().stream().map(RequestResponse::from).toList();
     }
 
     @GetMapping("/employees/{employeeId}/requests")
+    @PreAuthorize(DECIDE)
     public List<RequestResponse> forEmployee(@PathVariable UUID employeeId) {
         return requests.forEmployee(employeeId).stream().map(RequestResponse::from).toList();
     }
 
-    /** Who is off. Open to members: cover planning is everybody's problem. */
+    /**
+     * Who is off. Open to any member: cover planning is everybody's problem.
+     *
+     * <p>Deliberately the one leave endpoint the whole tenant can read, and the response carries
+     * dates and names only — {@code RequestResponse} also exposes the reason and the supporting
+     * document id, which is why every other read here is behind DECIDE.
+     */
     @GetMapping("/calendar")
+    @PreAuthorize(AUTHENTICATED)
     public List<RequestResponse> calendar(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -132,6 +147,7 @@ public class LeaveController {
     }
 
     @PostMapping("/requests")
+    @PreAuthorize(HR_WRITE)
     public ResponseEntity<RequestResponse> submit(@Valid @RequestBody SubmitRequest request) {
         LeaveRequest submitted = requests.submit(
                 request.employeeId(), request.leaveTypeId(), request.startDate(),
@@ -158,6 +174,7 @@ public class LeaveController {
 
     /** Withdrawing is the employee's own action, so it is not held behind a manager role. */
     @PostMapping("/requests/{id}/cancel")
+    @PreAuthorize(DECIDE)
     public RequestResponse cancel(@PathVariable UUID id) {
         return RequestResponse.from(requests.cancel(id, actorId()));
     }
@@ -165,6 +182,7 @@ public class LeaveController {
     // --- holidays ----------------------------------------------------------
 
     @GetMapping("/holidays")
+    @PreAuthorize(AUTHENTICATED)
     public List<HolidayResponse> holidays() {
         return holidays.list().stream().map(HolidayResponse::from).toList();
     }

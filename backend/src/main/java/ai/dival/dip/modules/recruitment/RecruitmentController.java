@@ -32,6 +32,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/recruitment")
 public class RecruitmentController {
 
+    /** Interviewers are ordinary employees; ownership is checked below, not by role. */
+    private static final String AUTHENTICATED = "isAuthenticated()";
+
+
     private static final String RECRUIT =
             "hasAnyRole('" + Roles.RECRUITER + "', '" + Roles.HR_ADMIN + "', '"
                     + Roles.HR_MANAGER + "', '" + Roles.TENANT_ADMIN + "')";
@@ -190,6 +194,7 @@ public class RecruitmentController {
      * feedback stops being the interviewer's words.
      */
     @PostMapping("/interviews/{id}/feedback")
+    @PreAuthorize(AUTHENTICATED)
     public InterviewResponse submitFeedback(@PathVariable UUID id,
                                             @Valid @RequestBody FeedbackRequest request) {
         return InterviewResponse.from(recruitment.submitInterviewFeedback(

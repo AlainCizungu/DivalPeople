@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.performance;
 
+import ai.dival.dip.common.error.AccessRefusedException;
 import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.employees.CurrentEmployee;
 import ai.dival.dip.modules.users.CurrentUserService;
@@ -10,10 +11,14 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,6 +50,16 @@ public class PerformanceController {
             "hasAnyRole('" + Roles.MANAGER + "', '" + Roles.HR_ADMIN + "', '"
                     + Roles.HR_MANAGER + "', '" + Roles.TENANT_ADMIN + "')";
 
+    /**
+     * Any signed-in employee may reach these, because the subject and the reviewer are ordinary
+     * employees. <strong>The role is not the check.</strong> Ownership is enforced in
+     * {@link PerformanceService}, which compares the caller to the review's subject and reviewer.
+     *
+     * <p>Written out rather than left off, because leaving it off is how the August 2026 review
+     * found any employee reading and rewriting a colleague's appraisal.
+     */
+    private static final String SUBJECT_OR_REVIEWER = "isAuthenticated()";
+
     private final PerformanceService performance;
     private final CurrentUserService currentUser;
     private final CurrentEmployee currentEmployee;
@@ -57,9 +72,74 @@ public class PerformanceController {
         this.currentEmployee = currentEmployee;
     }
 
+
+    /**
+     * Refuses a caller who is neither the person the review is about, nor their reviewer, nor
+     * management.
+     *
+     * <p>This is the check that was missing. {@code @PreAuthorize} can express "an employee" but
+     * not "<em>this</em> employee", so the role annotation on these endpoints admits the whole
+     * tenant and this narrows it to the two people involved.
+     *
+     * <p>It lives in the controller rather than the service on purpose: a caller only exists at
+     * the HTTP boundary. Seeders and scheduled work call the service directly and legitimately
+     * act for nobody, and a service-layer check would either refuse them or need a "no
+     * authenticated user means allow" branch — which is the wrong default to write down anywhere.
+     *
+     * <p>The refusal does not say whether the review exists.
+     */
+    private PerformanceReview requireSubjectOrReviewer(UUID reviewId) {
+        PerformanceReview review = performance.review(reviewId);
+        UUID reviewerId = review.getReviewer() == null ? null : review.getReviewer().getId();
+
+        if (managesPeople()
+                || currentEmployee.isSelf(review.getEmployee().getId())
+                || currentEmployee.isSelf(reviewerId)) {
+            return review;
+        }
+        throw new PerformanceService.ReviewNotFoundException(reviewId);
+    }
+
+    /** As above, for endpoints that name an employee rather than a review. */
+    private void requireSelfOrManager(UUID employeeId) {
+        if (!managesPeople() && !currentEmployee.isSelf(employeeId)) {
+            throw new AccessRefusedException("Not the subject and not a manager");
+        }
+    }
+
+    private boolean managesPeople() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(MANAGEMENT_AUTHORITIES::contains);
+    }
+
+    private static final Set<String> MANAGEMENT_AUTHORITIES = Set.of(
+            "ROLE_" + Roles.MANAGER, "ROLE_" + Roles.HR_ADMIN,
+            "ROLE_" + Roles.HR_MANAGER, "ROLE_" + Roles.TENANT_ADMIN);
+
+
+    /**
+     * Refuses anyone but the person the review is about.
+     *
+     * <p>Narrower than {@link #requireSubjectOrReviewer} on purpose: a self-assessment is the
+     * employee's own account of their year, and a manager writing it for them — or a colleague
+     * filing a disagreement in their name — is precisely the abuse this exists to stop. Being
+     * senior does not make it your text.
+     */
+    private void requireSubject(UUID reviewId) {
+        if (!currentEmployee.isSelf(performance.review(reviewId).getEmployee().getId())) {
+            throw new AccessRefusedException("Only the subject may write their own assessment");
+        }
+    }
+
     // --- cycles ------------------------------------------------------------
 
     @GetMapping("/cycles")
+    @PreAuthorize(MANAGE)
     public List<CycleResponse> cycles() {
         return performance.listCycles().stream().map(CycleResponse::from).toList();
     }
@@ -87,11 +167,14 @@ public class PerformanceController {
     // --- goals -------------------------------------------------------------
 
     @GetMapping("/employees/{employeeId}/goals")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public List<GoalResponse> goals(@PathVariable UUID employeeId) {
+        requireSelfOrManager(employeeId);
         return performance.goalsFor(employeeId).stream().map(GoalResponse::from).toList();
     }
 
     @PostMapping("/goals")
+    @PreAuthorize(MANAGE)
     public ResponseEntity<GoalResponse> createGoal(@Valid @RequestBody CreateGoalRequest r) {
         Goal created = performance.createGoal(r.employeeId(), r.title(), r.description(),
                 r.measure(), r.weight(), r.targetDate(), r.cycleId(), r.supportsGoalId(),
@@ -100,23 +183,27 @@ public class PerformanceController {
     }
 
     @PostMapping("/goals/{id}/activate")
+    @PreAuthorize(MANAGE)
     public GoalResponse activateGoal(@PathVariable UUID id) {
         return GoalResponse.from(performance.activateGoal(id, actorId()));
     }
 
     @PostMapping("/goals/{id}/progress")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public GoalResponse recordProgress(@PathVariable UUID id,
                                        @Valid @RequestBody ProgressRequest r) {
         return GoalResponse.from(performance.recordProgress(id, r.progressPercent(), actorId()));
     }
 
     @PostMapping("/goals/{id}/close")
+    @PreAuthorize(MANAGE)
     public GoalResponse closeGoal(@PathVariable UUID id, @Valid @RequestBody CloseGoalRequest r) {
         return GoalResponse.from(performance.closeGoal(id, r.outcome(), r.notes(), actorId()));
     }
 
     /** A null parent detaches the goal from whatever it was supporting. */
     @PostMapping("/goals/{id}/supports")
+    @PreAuthorize(MANAGE)
     public GoalResponse supportGoal(@PathVariable UUID id, @RequestBody SupportsRequest r) {
         return GoalResponse.from(performance.supportGoal(id, r.supportsGoalId(), actorId()));
     }
@@ -131,7 +218,9 @@ public class PerformanceController {
     }
 
     @GetMapping("/employees/{employeeId}/reviews")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public List<ReviewResponse> reviewsFor(@PathVariable UUID employeeId) {
+        requireSelfOrManager(employeeId);
         boolean asSubject = currentEmployee.isSelf(employeeId);
         return performance.reviewsFor(employeeId).stream()
                 .map(review -> ReviewResponse.from(review, asSubject)).toList();
@@ -145,8 +234,9 @@ public class PerformanceController {
     }
 
     @GetMapping("/reviews/{id}")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public ReviewResponse review(@PathVariable UUID id) {
-        PerformanceReview found = performance.review(id);
+        PerformanceReview found = requireSubjectOrReviewer(id);
         return ReviewResponse.from(found, currentEmployee.isSelf(found.getEmployee().getId()));
     }
 
@@ -160,13 +250,17 @@ public class PerformanceController {
     }
 
     @PostMapping("/reviews/{id}/self")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public ReviewResponse saveSelf(@PathVariable UUID id, @RequestBody AssessmentRequest r) {
+        requireSubject(id);
         return ReviewResponse.from(
                 performance.saveSelfAssessment(id, r.text(), actorId()), true);
     }
 
     @PostMapping("/reviews/{id}/self/submit")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public ReviewResponse submitSelf(@PathVariable UUID id) {
+        requireSubject(id);
         return ReviewResponse.from(performance.submitSelfAssessment(id, actorId()), true);
     }
 
@@ -200,8 +294,10 @@ public class PerformanceController {
 
     /** The employee's own act, so it sits behind no management role. */
     @PostMapping("/reviews/{id}/acknowledge")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public ReviewResponse acknowledge(@PathVariable UUID id,
                                       @RequestBody AcknowledgeRequest r) {
+        requireSubject(id);
         return ReviewResponse.from(
                 performance.acknowledge(id, r.response(), r.disagrees(), actorId()), true);
     }
@@ -209,7 +305,9 @@ public class PerformanceController {
     // --- feedback ----------------------------------------------------------
 
     @GetMapping("/reviews/{id}/feedback")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public List<FeedbackResponse> feedback(@PathVariable UUID id) {
+        requireSubjectOrReviewer(id);
         // Anonymity is decided by who is reading, so it is read from the token like everything
         // else. A colleague who asked not to be named must not be named by a query string.
         boolean asSubject = currentEmployee.isSelf(performance.review(id).getEmployee().getId());
@@ -218,9 +316,13 @@ public class PerformanceController {
     }
 
     @PostMapping("/reviews/{id}/feedback")
+    @PreAuthorize(SUBJECT_OR_REVIEWER)
     public ResponseEntity<FeedbackResponse> addFeedback(
             @PathVariable UUID id, @Valid @RequestBody FeedbackRequest r) {
-        ReviewFeedback added = performance.addFeedback(id, r.authorEmployeeId(),
+        requireSubjectOrReviewer(id);
+        // The author is the caller, never a field in the request. Trusting the body here let
+        // anyone put words in a colleague's mouth, attributed and on the record.
+        ReviewFeedback added = performance.addFeedback(id, currentEmployee.requireId(),
                 r.relationship(), r.comments(), r.attributed(), actorId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(FeedbackResponse.from(added, false));
@@ -278,7 +380,6 @@ public class PerformanceController {
     }
 
     public record FeedbackRequest(
-            @NotNull UUID authorEmployeeId,
             @NotNull FeedbackRelationship relationship,
             @NotBlank String comments,
             boolean attributed) {

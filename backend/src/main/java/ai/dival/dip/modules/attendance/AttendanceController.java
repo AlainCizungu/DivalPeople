@@ -50,6 +50,7 @@ public class AttendanceController {
     // --- clocking ----------------------------------------------------------
 
     @GetMapping("/employees/{employeeId}/entries")
+    @PreAuthorize(SUPERVISE)
     public List<EntryResponse> entries(
             @PathVariable UUID employeeId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -69,6 +70,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/clock-in")
+    @PreAuthorize(SUPERVISE)
     public ResponseEntity<EntryResponse> clockIn(@Valid @RequestBody ClockInRequest request) {
         TimeEntry entry = attendance.clockIn(
                 request.employeeId(), request.at(), request.source(), actorId());
@@ -76,6 +78,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/clock-out")
+    @PreAuthorize(SUPERVISE)
     public EntryResponse clockOut(@Valid @RequestBody ClockOutRequest request) {
         return EntryResponse.from(attendance.clockOut(
                 request.employeeId(), request.at(), request.breakMinutes(), actorId()));
@@ -101,6 +104,7 @@ public class AttendanceController {
     // --- timesheets --------------------------------------------------------
 
     @GetMapping("/employees/{employeeId}/timesheets")
+    @PreAuthorize(SUPERVISE)
     public List<TimesheetResponse> timesheets(@PathVariable UUID employeeId) {
         return timesheets.forEmployee(employeeId).stream().map(TimesheetResponse::from).toList();
     }
@@ -113,6 +117,7 @@ public class AttendanceController {
 
     /** The figures for a period without persisting a sheet, so a screen can show them live. */
     @GetMapping("/employees/{employeeId}/preview")
+    @PreAuthorize(SUPERVISE)
     public TimesheetService.Totals preview(
             @PathVariable UUID employeeId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -121,6 +126,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/timesheets/week")
+    @PreAuthorize(SUPERVISE)
     public ResponseEntity<TimesheetResponse> buildWeek(
             @Valid @RequestBody BuildWeekRequest request) {
         Timesheet sheet = timesheets.buildWeek(
@@ -129,6 +135,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/timesheets/{id}/submit")
+    @PreAuthorize(SUPERVISE)
     public TimesheetResponse submit(@PathVariable UUID id) {
         return TimesheetResponse.from(timesheets.submit(id, actorId()));
     }

@@ -47,6 +47,7 @@ public class EmployeeController {
     }
 
     @GetMapping
+    @PreAuthorize(HR_WRITE)
     public List<EmployeeSummary> list() {
         return employees.list().stream().map(EmployeeSummary::from).toList();
     }
@@ -58,6 +59,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}/reports")
+    @PreAuthorize(HR_WRITE)
     public List<EmployeeSummary> directReports(@PathVariable UUID id) {
         return employees.directReports(id).stream().map(EmployeeSummary::from).toList();
     }

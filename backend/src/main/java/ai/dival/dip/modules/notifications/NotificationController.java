@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/v1/notifications")
+@PreAuthorize(AUTHENTICATED)
 public class NotificationController {
+
+    /**
+     * Every method here is already scoped to the signed-in user's own id, so any authenticated
+     * caller is correct. Stated rather than omitted: omission is what made nine other modules
+     * readable by the whole tenant.
+     */
+    private static final String AUTHENTICATED = "isAuthenticated()";
+
 
     private final NotificationService notifications;
     private final CurrentUserService currentUser;
