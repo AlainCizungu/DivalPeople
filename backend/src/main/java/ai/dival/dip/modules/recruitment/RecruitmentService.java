@@ -261,6 +261,13 @@ public class RecruitmentService {
         return interview;
     }
 
+    /** The interview itself, so a caller can be checked against it before writing to it. */
+    @Transactional(readOnly = true)
+    public Interview interview(UUID interviewId) {
+        return interviews.findByIdAndTenantId(interviewId, TenantContext.require())
+                .orElseThrow(() -> new InterviewNotFoundException(interviewId));
+    }
+
     @Transactional
     public Interview submitInterviewFeedback(UUID interviewId,
                                              InterviewRecommendation recommendation,

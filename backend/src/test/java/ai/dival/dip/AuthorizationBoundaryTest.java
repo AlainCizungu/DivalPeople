@@ -16,6 +16,8 @@ import ai.dival.dip.modules.lifecycle.LifecycleController;
 import ai.dival.dip.modules.performance.PerformanceController;
 import ai.dival.dip.modules.performance.PerformanceService;
 import ai.dival.dip.modules.performance.ReviewCycle;
+import ai.dival.dip.modules.recruitment.InterviewRecommendation;
+import ai.dival.dip.modules.recruitment.RecruitmentController;
 import ai.dival.dip.modules.tenants.Tenant;
 import ai.dival.dip.modules.tenants.TenantRepository;
 import ai.dival.dip.modules.users.CurrentUserService;
@@ -75,6 +77,8 @@ class AuthorizationBoundaryTest extends AbstractIntegrationTest {
     private LearningController learningController;
     @Autowired
     private EmployeeController employeeController;
+    @Autowired
+    private RecruitmentController recruitmentController;
 
     private Employee celestine;
     private Employee colleague;
@@ -237,6 +241,19 @@ class AuthorizationBoundaryTest extends AbstractIntegrationTest {
                 .isInstanceOf(AccessDeniedException.class);
         assertThatThrownBy(() -> employeeController.get(colleague.getId()))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+
+    @Test
+    @DisplayName("an employee cannot write feedback on an interview they are not on")
+    void cannotWriteAnotherPanelsInterviewFeedback() {
+        // The endpoint's role is isAuthenticated(), because interviewers are ordinary employees
+        // and a hiring panel is not a permission group. Without the ownership check that admits
+        // the whole tenant to overwrite any hire or no-hire recommendation.
+        assertThatThrownBy(() -> recruitmentController.submitFeedback(UUID.randomUUID(),
+                new RecruitmentController.FeedbackRequest(
+                        InterviewRecommendation.STRONG_YES, 5, "Excellent throughout")))
+                .isInstanceOfAny(AccessRefusedException.class, RuntimeException.class);
     }
 
     // --- and the reason none of this is a boundary if it refuses everyone ---

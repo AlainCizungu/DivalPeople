@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.recruitment;
 
+import ai.dival.dip.common.error.AccessRefusedException;
 import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.employees.ContractType;
 import ai.dival.dip.modules.employees.CurrentEmployee;
@@ -11,10 +12,14 @@ import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -185,6 +190,44 @@ public class RecruitmentController {
                 recruitment.moveApplication(id, request.status(), request.reason(), actorId()));
     }
 
+
+    /**
+     * Refuses anyone but the assigned interviewer, or a recruiter.
+     *
+     * <p>The endpoint's role is {@code isAuthenticated()} because interviewers are ordinary
+     * employees — a hiring panel is not a permission group. That admits the whole tenant, so the
+     * narrowing has to happen here: without it, any employee could overwrite a hire or no-hire
+     * recommendation on any interview, and the panel's own record of what it decided would be
+     * whatever the last person to call the endpoint said.
+     *
+     * <p>This was flagged in the security review, annotated in the first pass, and left unwritten.
+     * An annotation is not an authorization, and the delivery plan said so at the time rather than
+     * letting the green build imply otherwise.
+     */
+    private void requireInterviewerOrRecruiter(UUID interviewId) {
+        if (recruits()) {
+            return;
+        }
+        UUID interviewer = recruitment.interview(interviewId).getInterviewerId();
+        if (interviewer == null || !currentEmployee.isSelf(interviewer)) {
+            throw new AccessRefusedException("Not the interviewer for this interview");
+        }
+    }
+
+    private boolean recruits() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(RECRUITING_AUTHORITIES::contains);
+    }
+
+    private static final Set<String> RECRUITING_AUTHORITIES = Set.of(
+            "ROLE_" + Roles.RECRUITER, "ROLE_" + Roles.HR_ADMIN,
+            "ROLE_" + Roles.HR_MANAGER, "ROLE_" + Roles.TENANT_ADMIN);
+
     // --- interviews --------------------------------------------------------
 
     @GetMapping("/applications/{id}/interviews")
@@ -215,6 +258,7 @@ public class RecruitmentController {
     @PreAuthorize(AUTHENTICATED)
     public InterviewResponse submitFeedback(@PathVariable UUID id,
                                             @Valid @RequestBody FeedbackRequest request) {
+        requireInterviewerOrRecruiter(id);
         return InterviewResponse.from(recruitment.submitInterviewFeedback(
                 id, request.recommendation(), request.score(), request.comments(), actorId()));
     }
