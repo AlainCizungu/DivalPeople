@@ -3,9 +3,10 @@
 > **Status: partly fixed.** The root cause is closed — an endpoint without an authorization
 > annotation now fails the build (`check_architecture.py` rule 5), and `AuthorizationBoundaryTest`
 > signs in as an ordinary employee and proves the refusals actually refuse. The Critical finding
-> and every High are fixed, each with a test that fails without the fix. **The
-> approver-identity findings, the remaining Mediums and the whole frontend set are
-> untouched.** Read the status column, not this paragraph.
+> and every High are fixed, each with a test that fails without the fix, along with most
+> Mediums. **Still open: M7 (JWT audience), M9 (upload limits and 500s on ordinary client
+> errors), M10 (`IllegalArgumentException` messages), and all four Lows.** Read the status
+> column, not this paragraph.
 
 Three independent adversarial reviews of authentication, authorization and data exposure, run
 after Phase 6 and the hardening work. This document records what they found, unedited in
@@ -58,16 +59,16 @@ whole backend. The comment misled every subsequent review, including mine.
 |---|---|---|---|
 | M1 | Payroll and timesheet approver identity comes from the request body, so the self-approval control is keyed off a value the caller chooses, and the recorded approver can be somebody who did not approve. | `PayrollService` 309; `TimesheetService` 214, 222 | **FIXED** across payroll, timesheets, leave and recruitment — the approver is the caller |
 | M2 | Lifecycle: any employee can mark any checklist item done and attribute it to anyone — including "revoke system access" on an offboarding list. | `LifecycleController` 87, 92, 97, 126 | **FIXED** |
-| M3 | Recruitment: any employee can write or overwrite interview feedback and a hire recommendation on any interview. | `RecruitmentController` 192 | **STILL OPEN.** The endpoint now carries an annotation, which satisfies rule 5 and changes nothing: `isAuthenticated()` is still the whole tenant. The interviewer check is the actual fix and is not written. |
+| M3 | Recruitment: any employee can write or overwrite interview feedback and a hire recommendation on any interview. | `RecruitmentController` 192 | **FIXED** — the interviewer check is written, not annotated around |
 | M4 | Learning: any employee can read who has and has not completed mandatory compliance training — the exact list the guarded `/compliance` endpoint restricts. | `LearningController` 84, 104 | **FIXED** |
 | M5 | `audit_event` is UPDATE-able by `dip_app`. `GRANT SELECT, INSERT, UPDATE ON ALL TABLES` runs after the table is created and the later narrower grant adds nothing — a `GRANT` is not a reset. The "append-only by privilege" comments in V1 and V4 are both false in the built schema. | `V1__baseline.sql` 69–70 | **FIXED** in V18 |
-| M6 | Open redirect after sign-in. The `returnTo` guard blocks `//host` but not `/\host`, which the URL parser resolves to an absolute origin. Highest-credibility phishing position: a redirect off the real domain immediately after a real login. | `login/route.ts` 35; `callback/route.ts` 72, 86 | **OPEN** |
+| M6 | Open redirect after sign-in. The `returnTo` guard blocks `//host` but not `/\host`, which the URL parser resolves to an absolute origin. Highest-credibility phishing position: a redirect off the real domain immediately after a real login. | `login/route.ts` 35; `callback/route.ts` 72, 86 | **FIXED** — resolved through the URL parser, not string prefixes |
 | M7 | The resource server validates issuer and signature but **not audience**, so any token from any client in the realm is accepted with full roles. Not reachable in the shipped topology — the backend publishes no port — but it defeats the "only the BFF talks to the API" assumption. | `SecurityConfig` 44; `application.yml` 40 | **OPEN** |
-| M8 | Personal data in production logs: hired candidate names, and the names of people skipped by payroll for having no salary. Different retention and access path from the database RLS protects. | `OfferService` 157; `PayrollService` 287 | **OPEN** |
+| M8 | Personal data in production logs: hired candidate names, and the names of people skipped by payroll for having no salary. Different retention and access path from the database RLS protects. | `OfferService` 157; `PayrollService` 287 | **FIXED** — ids, not names |
 | M9 | The configured 20 MB upload limit is unreachable — Spring's 1 MB multipart default rejects first — and exceeding it is a 500 rather than a 413. Malformed JSON and missing params are also 500s. | `application.yml` 81; `GlobalExceptionHandler` | **OPEN** |
 | M10 | `IllegalArgumentException`'s message is returned to the client, making every library message on every path part of the public API. | `GlobalExceptionHandler` 80 | **OPEN** |
-| M11 | The proxy is not confined to `/api/v1`: decoded `..` segments escape the prefix with the user's bearer token attached. No prize today, but it is a real confinement break. | `proxy/[...path]/route.ts` 61 | **OPEN** |
-| M12 | The proxy strips `Content-Disposition`, removing the `attachment` header the backend sets specifically to stop uploaded bytes rendering inline on the app's origin. | `proxy/[...path]/route.ts` 100 | **OPEN** |
+| M11 | The proxy is not confined to `/api/v1`: decoded `..` segments escape the prefix with the user's bearer token attached. No prize today, but it is a real confinement break. | `proxy/[...path]/route.ts` 61 | **FIXED** — segments validated and the prefix asserted |
+| M12 | The proxy strips `Content-Disposition`, removing the `attachment` header the backend sets specifically to stop uploaded bytes rendering inline on the app's origin. | `proxy/[...path]/route.ts` 100 | **FIXED** — forwarded, defaulting to `attachment` |
 
 ## Low
 

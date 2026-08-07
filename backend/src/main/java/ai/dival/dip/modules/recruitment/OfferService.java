@@ -154,8 +154,11 @@ public class OfferService {
         candidate.linkEmployee(employee.getId());
 
         audit.recordSuccess("OFFER_ACCEPTED", "JobOffer", offerId.toString(), actorId);
+        // Ids, not names. A log stream has different retention, access control and export
+        // paths from the database that row-level security so carefully protects, and an id is
+        // joinable by anyone with legitimate access and meaningless to anyone without.
         log.info("Hired candidate {} as employee {}{}",
-                candidate.displayName(), employee.getEmployeeNumber(),
+                candidate.getId(), employee.getEmployeeNumber(),
                 nowFilled ? "; requisition now filled" : "");
 
         return employee;

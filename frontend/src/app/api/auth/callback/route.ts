@@ -69,11 +69,27 @@ export async function GET(request: NextRequest) {
     profile: profileFromClaims(claims),
   });
 
-  const returnTo = safePath(decodeURIComponent(encodedReturnTo ?? "/app"));
+  const returnTo = safePath(decodeReturnTo(encodedReturnTo));
   const response = NextResponse.redirect(new URL(returnTo, serverEnv.siteUrl));
-  response.cookies.set(SESSION_COOKIE, id, sessionCookieOptions(serverEnv.sessionTtlSeconds));
+  response.cookies.set(
+    SESSION_COOKIE,
+    id,
+    sessionCookieOptions(serverEnv.sessionTtlSeconds),
+  );
   response.cookies.delete(PKCE_COOKIE);
   return response;
+}
+
+/** A malformed escape sequence must not take the whole callback down with it. */
+function decodeReturnTo(encoded: string | undefined): string {
+  if (!encoded) {
+    return "/app";
+  }
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    return "/app";
+  }
 }
 
 function splitState(state: string): [string, string | undefined] {
@@ -83,8 +99,30 @@ function splitState(state: string): [string, string | undefined] {
     : [state.slice(0, separator), state.slice(separator + 1)];
 }
 
-function safePath(candidate: string): string {
-  return candidate.startsWith("/") && !candidate.startsWith("//") ? candidate : "/app";
+/**
+ * The only path a redirect may go to: one on this site.
+ *
+ * <p>Resolved through the URL parser rather than checked with string prefixes. The previous
+ * version rejected "//host" and accepted "/\\host" — and the WHATWG parser treats a backslash as
+ * a slash for http(s), so that resolves to an absolute origin somewhere else. A redirect off the
+ * real domain immediately after a real sign-in is the highest-credibility phishing position
+ * there is, and the guard was one character away from allowing it.
+ *
+ * <p>Anything that parses to a different origin, or does not parse at all, becomes "/app".
+ */
+function safePath(candidate: string | null | undefined): string {
+  if (!candidate) {
+    return "/app";
+  }
+  try {
+    const site = new URL(serverEnv.siteUrl);
+    const resolved = new URL(candidate, site);
+    return resolved.origin === site.origin
+      ? resolved.pathname + resolved.search + resolved.hash
+      : "/app";
+  } catch {
+    return "/app";
+  }
 }
 
 /** Back to the landing page with a reason code the UI can translate. */

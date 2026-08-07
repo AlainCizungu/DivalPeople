@@ -58,10 +58,31 @@ async function handle(request: NextRequest, path: string[]) {
   }
   session = renewed;
 
+  // Next decodes the catch-all segments before they reach here, and `new URL` then resolves dot
+  // segments — so a request whose segments decode to ".." escapes the /api/v1 prefix and reaches
+  // any path on the internal API, with this session's bearer token attached. Nothing valuable
+  // lives outside that prefix today, which is not a reason to leave the confinement broken.
+  if (
+    path.some(
+      (segment) =>
+        segment === "" ||
+        segment === "." ||
+        segment === ".." ||
+        /[/?#\\]/.test(segment),
+    )
+  ) {
+    return NextResponse.json({ code: "BAD_PATH" }, { status: 400 });
+  }
+
   const target = new URL(
     `/api/v1/${path.join("/")}${request.nextUrl.search}`,
     serverEnv.apiBaseUrl,
   );
+
+  // Belt and braces: whatever the segments were, the result must still be under the prefix.
+  if (!target.pathname.startsWith("/api/v1/")) {
+    return NextResponse.json({ code: "BAD_PATH" }, { status: 400 });
+  }
 
   const body =
     request.method === "GET" || request.method === "HEAD"
@@ -77,7 +98,8 @@ async function handle(request: NextRequest, path: string[]) {
         // authenticates on the bearer token and has no business seeing this application's
         // session credential.
         Authorization: `Bearer ${session.accessToken}`,
-        "Content-Type": request.headers.get("content-type") ?? "application/json",
+        "Content-Type":
+          request.headers.get("content-type") ?? "application/json",
         "Accept-Language": request.headers.get("accept-language") ?? "en",
       },
       body,
@@ -101,7 +123,14 @@ async function handle(request: NextRequest, path: string[]) {
   return new NextResponse(payload, {
     status: upstream.status,
     headers: {
-      "Content-Type": upstream.headers.get("content-type") ?? "application/json",
+      "Content-Type":
+        upstream.headers.get("content-type") ?? "application/json",
+      // Forwarded, not dropped. FileController sets `attachment` precisely so uploaded bytes
+      // cannot render inline on this origin, and copying only Content-Type silently removed the
+      // one control the backend author wrote for that. Defaulted to attachment when upstream says
+      // nothing, because inline is the dangerous direction to guess in.
+      "Content-Disposition":
+        upstream.headers.get("content-disposition") ?? "attachment",
       // Nothing from this proxy is cacheable: it is all per-session data.
       "Cache-Control": "no-store",
     },
@@ -114,7 +143,10 @@ async function handle(request: NextRequest, path: string[]) {
  * <p>Returns null when the session can no longer be renewed, which is the signal to sign the
  * user out rather than to keep retrying with a dead token.
  */
-async function ensureFresh(id: string, session: Session): Promise<Session | null> {
+async function ensureFresh(
+  id: string,
+  session: Session,
+): Promise<Session | null> {
   if (session.expiresAt - REFRESH_MARGIN_MS > Date.now()) {
     return session;
   }

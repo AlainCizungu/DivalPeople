@@ -284,8 +284,11 @@ public class PayrollService {
             if (compensation.findEffectiveOn(tenantId, employee.getId(), period.getPeriodEnd())
                     .isEmpty()) {
                 skipped.add(employee.displayName());
-                log.warn("Skipped {} in payroll {}: no salary on record as at {}",
-                        employee.displayName(), period.getName(), period.getPeriodEnd());
+                // The id, not the name. "Has no salary on record" is a fact about a named person
+                // that does not belong in an unstructured log; the skip list in the returned
+                // CalculationResult is where a human is meant to read it.
+                log.warn("Skipped employee {} in payroll {}: no salary on record as at {}",
+                        employee.getId(), period.getName(), period.getPeriodEnd());
                 continue;
             }
 
