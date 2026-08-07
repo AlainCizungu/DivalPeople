@@ -207,6 +207,49 @@ does not exist — and "the tables are all there" would not have told you.
 Do this after the first deploy, and again whenever the schema changes shape. Not on the day you
 need it.
 
+### Proving the whole loop locally, before you depend on it
+
+The backup and the restore can be exercised end to end against the **development** stack, with no
+server involved. Do this once before trusting any of it, and again after changing the schema.
+
+```bash
+brew install age                       # or your platform's equivalent
+docker compose -f infra/docker-compose.yml up -d
+cd backend && ./gradlew bootRun        # once, so there is seeded data to back up
+```
+
+Then, from the repository root:
+
+```bash
+docker build -t dip-backup:test infra/backup
+
+mkdir -p /tmp/dip-backups
+age-keygen -o /tmp/dip-backup.key
+PUB=$(grep 'public key:' /tmp/dip-backup.key | awk '{print $NF}')
+
+# One backup, against the local database, straight to the script rather than the cron entrypoint.
+docker run --rm \
+  -e PGHOST=host.docker.internal -e PGPORT=55432 \
+  -e PGUSER=dip -e PGPASSWORD=dip \
+  -e BACKUP_DIR=/backups -e BACKUP_KEEP=7 \
+  -e BACKUP_AGE_PUBLIC_KEY="$PUB" \
+  -v /tmp/dip-backups:/backups \
+  --entrypoint /usr/local/bin/backup.sh \
+  dip-backup:test
+
+sh infra/backup/restore-drill.sh "$(ls -t /tmp/dip-backups/*.age | head -1)" /tmp/dip-backup.key
+```
+
+The drill should report the migrations, tenants, tables, the `dip_app` role and the row-level
+security policies, and finish with `RESTORE DRILL PASSED`. If it does, the backup path and the
+restore path both work on real data rather than on a stub.
+
+Clean up afterwards — that key and those archives are only a test:
+
+```bash
+rm -rf /tmp/dip-backups /tmp/dip-backup.key
+```
+
 ### Restoring for real
 
 Onto an empty stack, with the applications stopped:
