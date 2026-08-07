@@ -11,7 +11,6 @@ import ai.dival.dip.modules.tix.ExchangeService;
 import ai.dival.dip.modules.tix.IdentifierType;
 import ai.dival.dip.modules.tix.InquiryRequest;
 import ai.dival.dip.modules.tix.InquiryResult;
-import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * The audit log's two promises, both of which were untrue until V18.
@@ -47,8 +47,18 @@ class AuditTrailTest extends AbstractIntegrationTest {
     private AuditEventRepository events;
     @Autowired
     private ExchangeService exchange;
+    /**
+     * JdbcTemplate rather than the EntityManager, and that is not a style choice.
+     *
+     * <p>This class is deliberately not {@code @Transactional} — audit rows are written with
+     * REQUIRES_NEW so they outlive the rollback of whatever produced them, and a rolled-back test
+     * would assert against a transaction that never committed. But {@code Query.executeUpdate()}
+     * <em>requires</em> an active transaction and throws without one. The reasoning about the rows
+     * was right and the API contradicted it. JdbcTemplate runs the statement on an autocommit
+     * connection, which is what a test outside a transaction actually needs.
+     */
     @Autowired
-    private EntityManager entityManager;
+    private JdbcTemplate jdbc;
 
     private UUID tenantId;
 
@@ -119,13 +129,10 @@ class AuditTrailTest extends AbstractIntegrationTest {
         // tests connect as the schema OWNER (ADR 0002) — which is the account a REVOKE cannot
         // stop. The DO INSTEAD NOTHING rules are what make the claim true for everybody, and this
         // is the only way to find out whether they do.
-        int reported = entityManager.createNativeQuery(
-                        "UPDATE audit_event SET outcome = 'SUCCESS', detail = 'nothing to see' "
-                                + "WHERE id = :id")
-                .setParameter("id", id)
-                .executeUpdate();
+        int reported = jdbc.update(
+                "UPDATE audit_event SET outcome = 'SUCCESS', detail = 'nothing to see' "
+                        + "WHERE id = ?", id);
 
-        entityManager.clear();
         AuditEvent after = events.findById(id).orElseThrow();
 
         assertThat(reported).as("the rule discards the statement").isZero();
@@ -139,10 +146,7 @@ class AuditTrailTest extends AbstractIntegrationTest {
         audit.record("TEST_ACTION", "Thing", null, AuditService.OUTCOME_SUCCESS, null, "keep me");
         UUID id = onlyEvent("Thing").getId();
 
-        entityManager.createNativeQuery("DELETE FROM audit_event WHERE id = :id")
-                .setParameter("id", id)
-                .executeUpdate();
-        entityManager.clear();
+        jdbc.update("DELETE FROM audit_event WHERE id = ?", id);
 
         // Covering the tracks is the first thing anybody does, so this matters more than the
         // update case.
