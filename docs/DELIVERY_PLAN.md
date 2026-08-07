@@ -388,3 +388,4 @@ TIX can now be built on a real foundation:
 - Message keys land in `en.json` and `fr.json` in the same change.
 - AI output stays advisory; alerts are indicators requiring review, never findings.
 - Claims about tests are only made when the tests were actually run.
+- Every endpoint states who may call it, and something asks from the wrong side.

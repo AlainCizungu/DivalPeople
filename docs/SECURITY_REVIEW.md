@@ -1,5 +1,11 @@
 # Security review — August 2026
 
+> **Status: partly fixed.** The root cause is closed — an endpoint without an authorization
+> annotation now fails the build (`check_architecture.py` rule 5), and `AuthorizationBoundaryTest`
+> signs in as an ordinary employee and proves the refusals actually refuse. The Critical finding
+> and four Highs are fixed. **The TIX findings, the approver-identity findings and the whole
+> frontend set are untouched.** Read the status column, not this paragraph.
+
 Three independent adversarial reviews of authentication, authorization and data exposure, run
 after Phase 6 and the hardening work. This document records what they found, unedited in
 substance. Findings are not fixed by being written down; the status column is the truth.
@@ -31,15 +37,15 @@ whole backend. The comment misled every subsequent review, including mine.
 
 | # | Finding | Where | Status |
 |---|---|---|---|
-| C1 | **Performance: no authorization on any endpoint.** Any employee reads any colleague's review — including the reviewer's *unshared* assessment, proposed and calibrated ratings and management-only calibration notes, i.e. strictly more than the subject is allowed to see. They can also overwrite the victim's self-assessment, submit it, file a disagreement in their name, and attribute fabricated peer feedback to a third party (the author id is taken from the request body). | `PerformanceController` lines 89–220; `PerformanceService` 202, 215, 266, 273, 317, 335, 348 | **OPEN** |
+| C1 | **Performance: no authorization on any endpoint.** Any employee reads any colleague's review — including the reviewer's *unshared* assessment, proposed and calibrated ratings and management-only calibration notes, i.e. strictly more than the subject is allowed to see. They can also overwrite the victim's self-assessment, submit it, file a disagreement in their name, and attribute fabricated peer feedback to a third party (the author id is taken from the request body). | `PerformanceController` lines 89–220; `PerformanceService` 202, 215, 266, 273, 317, 335, 348 | **FIXED**, and proved by `AuthorizationBoundaryTest` |
 
 ## High
 
 | # | Finding | Where | Status |
 |---|---|---|---|
-| H1 | **Files: no authorization of any kind.** `GET /api/v1/files?category=…` lists every document in the tenant with its original filename; `GET /files/{id}/content` returns the bytes. Sick notes, national-ID scans, contracts, certification attachments. There is no owner on `stored_file` at all. | `FileController` 42, 55, 60, 65 | **OPEN** |
-| H2 | **Attendance: clock-in, clock-out and timesheet submission take an employee id from the body with no check.** Clock a colleague out at 09:01, or submit a timesheet in their name. Timesheets feed payroll. | `AttendanceController` 52, 71, 78, 103, 115, 123, 131 | **OPEN** |
-| H3 | **Leave: any employee books leave for anyone and cancels anyone's approved leave**, silently rewriting their balance ledger. Reads expose sick-note document ids and reasons. | `LeaveController` 81, 90, 121, 134, 160; `LeaveRequestService.cancel` 190 | **OPEN** |
+| H1 | **Files: no authorization of any kind.** `GET /api/v1/files?category=…` lists every document in the tenant with its original filename; `GET /files/{id}/content` returns the bytes. Sick notes, national-ID scans, contracts, certification attachments. There is no owner on `stored_file` at all. | `FileController` 42, 55, 60, 65 | **FIXED** — HR-only until `stored_file` carries an owner |
+| H2 | **Attendance: clock-in, clock-out and timesheet submission take an employee id from the body with no check.** Clock a colleague out at 09:01, or submit a timesheet in their name. Timesheets feed payroll. | `AttendanceController` 52, 71, 78, 103, 115, 123, 131 | **FIXED** at role level; the `/me` routes remain the way a person clocks themselves |
+| H3 | **Leave: any employee books leave for anyone and cancels anyone's approved leave**, silently rewriting their balance ledger. Reads expose sick-note document ids and reasons. | `LeaveController` 81, 90, 121, 134, 160; `LeaveRequestService.cancel` 190 | **FIXED** at role level |
 | H4 | **TIX confidence score is a name-extraction oracle.** The returned score is a pure function of how the submitted name compares to the stored one (0.98 exact / 0.90 shares a token / 0.65 nothing), so a dictionary recovers a competitor's subject's legal name token by token. | `IdentityMatcher` 27–43 | **OPEN** |
 | H5 | **TIX weak-identifier guard is bypassable.** The base score is computed from the identifiers *submitted*, not the one that *matched*. Submit a real phone number plus a bogus passport: resolution falls through to the phone, the score is scored as strong, and it clears the automatic threshold. A competitor's debt status is readable from a mobile number alone. | `IdentityMatcher` 45–49 vs `ExchangeService` 113–126 | **OPEN** |
 | H6 | **No rate limiting anywhere.** With H4 and H5, the exchange can be swept in bulk through the intended API: enumerate identifiers, learn which are registered, extract names, read debt statuses. | whole backend | **OPEN** |
@@ -50,9 +56,9 @@ whole backend. The comment misled every subsequent review, including mine.
 | # | Finding | Where | Status |
 |---|---|---|---|
 | M1 | Payroll and timesheet approver identity comes from the request body, so the self-approval control is keyed off a value the caller chooses, and the recorded approver can be somebody who did not approve. | `PayrollService` 309; `TimesheetService` 214, 222 | **OPEN** |
-| M2 | Lifecycle: any employee can mark any checklist item done and attribute it to anyone — including "revoke system access" on an offboarding list. | `LifecycleController` 87, 92, 97, 126 | **OPEN** |
-| M3 | Recruitment: any employee can write or overwrite interview feedback and a hire recommendation on any interview. | `RecruitmentController` 192 | **OPEN** |
-| M4 | Learning: any employee can read who has and has not completed mandatory compliance training — the exact list the guarded `/compliance` endpoint restricts. | `LearningController` 84, 104 | **OPEN** |
+| M2 | Lifecycle: any employee can mark any checklist item done and attribute it to anyone — including "revoke system access" on an offboarding list. | `LifecycleController` 87, 92, 97, 126 | **FIXED** |
+| M3 | Recruitment: any employee can write or overwrite interview feedback and a hire recommendation on any interview. | `RecruitmentController` 192 | **STILL OPEN.** The endpoint now carries an annotation, which satisfies rule 5 and changes nothing: `isAuthenticated()` is still the whole tenant. The interviewer check is the actual fix and is not written. |
+| M4 | Learning: any employee can read who has and has not completed mandatory compliance training — the exact list the guarded `/compliance` endpoint restricts. | `LearningController` 84, 104 | **FIXED** |
 | M5 | `audit_event` is UPDATE-able by `dip_app`. `GRANT SELECT, INSERT, UPDATE ON ALL TABLES` runs after the table is created and the later narrower grant adds nothing — a `GRANT` is not a reset. The "append-only by privilege" comments in V1 and V4 are both false in the built schema. | `V1__baseline.sql` 69–70 | **OPEN** |
 | M6 | Open redirect after sign-in. The `returnTo` guard blocks `//host` but not `/\host`, which the URL parser resolves to an absolute origin. Highest-credibility phishing position: a redirect off the real domain immediately after a real login. | `login/route.ts` 35; `callback/route.ts` 72, 86 | **OPEN** |
 | M7 | The resource server validates issuer and signature but **not audience**, so any token from any client in the realm is accepted with full roles. Not reachable in the shipped topology — the backend publishes no port — but it defeats the "only the BFF talks to the API" assumption. | `SecurityConfig` 44; `application.yml` 40 | **OPEN** |
