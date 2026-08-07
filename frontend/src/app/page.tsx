@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthErrorNotice } from "@/components/landing/AuthErrorNotice";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Hero } from "@/components/landing/Hero";
 import {
@@ -20,6 +21,9 @@ import {
 export default function LandingPage() {
   return (
     <div className="bg-white">
+      {/* Above the header, because a failed sign-in is the most important thing on the page to
+          somebody who has just been silently returned to it. */}
+      <AuthErrorNotice />
       <LandingHeader />
 
       <main>

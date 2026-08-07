@@ -84,6 +84,17 @@
       "seePlatform": "See the platform",
       "exploreCapabilities": "Explore capabilities"
     },
+    "authError": {
+      "title": "Sign-in did not complete.",
+      "dismiss": "Dismiss",
+      "reasons": {
+        "provider": "The identity provider refused the request. Check the Keycloak client configuration for this application.",
+        "incomplete": "The provider came back without an authorization code. Start the sign-in again.",
+        "expired": "This sign-in took too long, or the tab was left open. Start it again.",
+        "state": "The response did not match the request that started it, so it was discarded.",
+        "exchange": "The authorization code could not be exchanged for a token. The client secret is the usual cause."
+      }
+    },
     "hero": {
       "eyebrow": "Dival Intelligence Platform",
       "title": "One platform for your people, intelligence, and growth.",
@@ -298,7 +309,12 @@
       "columns": [
         {
           "title": "Dival People",
-          "links": ["Overview", "Core HR", "Payroll", "Self-Service"]
+          "links": [
+            "Overview",
+            "Core HR",
+            "Payroll",
+            "Self-Service"
+          ]
         },
         {
           "title": "Intelligence",
@@ -311,15 +327,30 @@
         },
         {
           "title": "Industries",
-          "links": ["Financial Services", "NGOs", "Telecom", "Government"]
+          "links": [
+            "Financial Services",
+            "NGOs",
+            "Telecom",
+            "Government"
+          ]
         },
         {
           "title": "Company",
-          "links": ["About Dival AI", "Insights", "Partners", "Contact"]
+          "links": [
+            "About Dival AI",
+            "Insights",
+            "Partners",
+            "Contact"
+          ]
         },
         {
           "title": "Language",
-          "links": ["English", "Français", "Privacy", "Security"]
+          "links": [
+            "English",
+            "Français",
+            "Privacy",
+            "Security"
+          ]
         }
       ],
       "copyright": "© 2026 Dival AI. Prototype concept.",

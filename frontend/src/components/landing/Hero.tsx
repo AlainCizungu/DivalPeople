@@ -8,7 +8,7 @@ import { CheckList, Eyebrow } from "./primitives";
 /** Hero with the executive-overview panel from the prototype. */
 export function Hero() {
   const messages = useMessages();
-  const { status, signIn } = useSession();
+  const { status } = useSession();
   const { hero, board, actions } = messages.landing;
 
   return (

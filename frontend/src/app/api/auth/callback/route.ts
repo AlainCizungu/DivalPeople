@@ -127,6 +127,12 @@ function safePath(candidate: string | null | undefined): string {
 
 /** Back to the landing page with a reason code the UI can translate. */
 function failed(request: NextRequest, reason: string) {
+  // Logged as well as redirected. The reason travelled to a page that ignored it for months, so
+  // a sign-in that failed for any of five different causes was indistinguishable, from both the
+  // browser and the terminal, from a button that did nothing. The reason word only — never the
+  // authorization code, the state, or the provider's own message.
+  console.warn(`[auth] sign-in did not complete: ${reason}`);
+
   const url = new URL("/", serverEnv.siteUrl);
   url.searchParams.set("authError", reason);
   const response = NextResponse.redirect(url);
