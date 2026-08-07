@@ -6,7 +6,12 @@ dist/
 .next/
 *.class
 *.jar
-!gradle/wrapper/gradle-wrapper.jar
+# Leading ** on purpose. The wrapper lives at backend/gradle/wrapper/, and a negation containing
+# a slash is anchored to the directory holding the .gitignore — so "gradle/wrapper/..." only ever
+# un-ignored a path at the repository root, which does not exist. The jar was therefore silently
+# excluded, every clone was unbuildable, and nothing noticed until CI ran on a machine that had
+# not been building here all along.
+!**/gradle/wrapper/gradle-wrapper.jar
 
 # Dependencies
 node_modules/
