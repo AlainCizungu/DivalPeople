@@ -81,8 +81,9 @@ docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml up
 docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml logs -f backend
 ```
 
-The backend runs Flyway at start-up and then checks its own configuration. If it refuses to
-start, read the message: it names the variables that are wrong and never prints their values.
+The backend checks its own configuration **before** it opens any connection, then runs Flyway.
+If it refuses to start, read the message: it lists every fault at once, names the variables that
+are wrong, and never prints their values.
 
 ### Then create the realm
 

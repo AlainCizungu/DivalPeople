@@ -1,14 +1,10 @@
 package ai.dival.dip.common.config;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 /**
  * Refuses to start on a configuration inherited from development.
@@ -32,9 +28,14 @@ import org.springframework.stereotype.Component;
  *
  * <p>Failing at start-up is the point. An application that refuses to boot gets attention within
  * minutes; one that boots wrong can run for months.
+ *
+ * <p>Run from {@link ProductionSafetyEnvironmentPostProcessor}, before the application context
+ * exists. It used to be an ordinary bean with {@code @PostConstruct}, and that was wrong in a way
+ * only a real container showed: Flyway opened its connection first, so a deployment with a bad
+ * database address got a connection stack trace and none of the other faults. You fixed the
+ * address, restarted, and met the next one. Reporting every fault at once is worthless if
+ * something else fails before you get to report anything.
  */
-@Component
-@Profile("prod")
 public class ProductionSafety {
 
     private static final Logger log = LoggerFactory.getLogger(ProductionSafety.class);
@@ -51,13 +52,8 @@ public class ProductionSafety {
     private final String issuerUri;
     private final String datasourceUrl;
 
-    public ProductionSafety(
-            @Value("${spring.datasource.username}") String appUser,
-            @Value("${spring.datasource.password}") String appPassword,
-            @Value("${spring.flyway.user}") String ownerUser,
-            @Value("${spring.flyway.password}") String ownerPassword,
-            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri,
-            @Value("${spring.datasource.url}") String datasourceUrl) {
+    public ProductionSafety(String appUser, String appPassword, String ownerUser,
+                            String ownerPassword, String issuerUri, String datasourceUrl) {
         this.appUser = appUser;
         this.appPassword = appPassword;
         this.ownerUser = ownerUser;
@@ -66,8 +62,7 @@ public class ProductionSafety {
         this.datasourceUrl = datasourceUrl;
     }
 
-    @PostConstruct
-    void verify() {
+    public void verify() {
         List<String> faults = new ArrayList<>();
 
         // The most dangerous single misconfiguration this system has. The owner is not subject to

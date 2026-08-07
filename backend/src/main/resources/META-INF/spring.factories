@@ -1,0 +1,7 @@
+# EnvironmentPostProcessor is still registered through spring.factories in Boot 3.x. Only
+# auto-configuration moved to AutoConfiguration.imports, which is a different mechanism.
+#
+# This one refuses to start on an unsafe production configuration, before the application context
+# exists and therefore before Flyway or the datasource can fail first with something less useful.
+org.springframework.boot.env.EnvironmentPostProcessor=\
+ai.dival.dip.common.config.ProductionSafetyEnvironmentPostProcessor
