@@ -12,6 +12,16 @@ import org.springframework.stereotype.Component;
  * threshold logic in {@link ExchangeService} stays put.
  *
  * <p>Matching never merges subjects on its own. Below the threshold the caller is told to review.
+ *
+ * <p><strong>The score never leaves the server.</strong> It decides an outcome and is written to
+ * the audit trail; it is not in the response. It is a fine-grained function of how the submitted
+ * name compares to the stored one, so returning it answered "is this a token of their name" one
+ * request at a time, and a dictionary of common Congolese names recovered a competitor's subject's
+ * legal name token by token. See SECURITY_REVIEW.md H4.
+ *
+ * <p>A coarser oracle survives — the outcome itself still shifts when a submitted name disagrees —
+ * and that is inherent to any matcher that answers at all. Rate limiting and an audit trail that
+ * records the stated purpose are the controls for the residue, not this class.
  */
 @Component
 public class IdentityMatcher {
@@ -22,10 +32,13 @@ public class IdentityMatcher {
     private static final double NAME_CONFLICT_PENALTY = 0.25;
 
     /**
-     * @return confidence in the range 0.0–1.0
+     * @param matched the identifier that actually resolved the subject, which is not necessarily
+     *                one the caller would like it to be — see {@link #baseScore}
+     * @return confidence in the range 0.0–1.0, for the server's own use
      */
-    public double confidence(Subject subject, InquiryRequest request) {
-        double score = baseScore(request);
+    public double confidence(Subject subject, InquiryRequest request,
+                             InquiryRequest.SubmittedIdentifier matched) {
+        double score = baseScore(matched);
 
         if (request.fullName() != null && !request.fullName().isBlank()) {
             String submitted = Subject.normalizeName(request.fullName());
@@ -42,10 +55,17 @@ public class IdentityMatcher {
         return clamp(score);
     }
 
-    private double baseScore(InquiryRequest request) {
-        boolean strong = request.identifiers().stream()
-                .anyMatch(identifier -> identifier.type().isStrong());
-        return strong ? STRONG_IDENTIFIER_BASE : WEAK_IDENTIFIER_BASE;
+    /**
+     * Scores the identifier that <em>matched</em>, not the strongest one submitted.
+     *
+     * <p>This previously asked whether <em>any</em> submitted identifier had a strong type, which
+     * the caller controls completely. A real phone number alongside an invented passport number
+     * therefore scored as a strong match: resolution fell through to the phone, but the score said
+     * "passport". A mobile number is not proof of identity, which is the entire reason MSISDN is
+     * weak, and the guard could be switched off by adding a field that matched nothing.
+     */
+    private double baseScore(InquiryRequest.SubmittedIdentifier matched) {
+        return matched.type().isStrong() ? STRONG_IDENTIFIER_BASE : WEAK_IDENTIFIER_BASE;
     }
 
     private boolean sharesAnyToken(String left, String right) {

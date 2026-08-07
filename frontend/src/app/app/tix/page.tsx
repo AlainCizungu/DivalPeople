@@ -32,7 +32,8 @@ export default function TixPage() {
   const messages = useMessages();
   const { status } = useSession();
 
-  const [identifierType, setIdentifierType] = useState<IdentifierType>("NATIONAL_ID");
+  const [identifierType, setIdentifierType] =
+    useState<IdentifierType>("NATIONAL_ID");
   const [identifier, setIdentifier] = useState("");
   const [fullName, setFullName] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -55,13 +56,11 @@ export default function TixPage() {
     }
 
     try {
-      const response = await tixApi.inquire(
-        {
-          identifiers: [{ type: identifierType, value: identifier }],
-          fullName: fullName || undefined,
-          purpose,
-        },
-      );
+      const response = await tixApi.inquire({
+        identifiers: [{ type: identifierType, value: identifier }],
+        fullName: fullName || undefined,
+        purpose,
+      });
       setResult(response);
     } catch (caught) {
       if (caught instanceof ApiError) {
@@ -81,20 +80,30 @@ export default function TixPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-navy">{messages.tix.title}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-navy">
+          {messages.tix.title}
+        </h1>
         <p className="mt-1 text-muted">{messages.tix.subtitle}</p>
       </header>
 
-      <form onSubmit={onSubmit} className="space-y-4 rounded-lg border border-line bg-white p-6">
+      <form
+        onSubmit={onSubmit}
+        className="space-y-4 rounded-lg border border-line bg-white p-6"
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="identifierType" className="mb-1 block text-sm font-semibold text-ink">
+            <label
+              htmlFor="identifierType"
+              className="mb-1 block text-sm font-semibold text-ink"
+            >
               {messages.tix.identifierType}
             </label>
             <select
               id="identifierType"
               value={identifierType}
-              onChange={(event) => setIdentifierType(event.target.value as IdentifierType)}
+              onChange={(event) =>
+                setIdentifierType(event.target.value as IdentifierType)
+              }
               className="w-full rounded border border-line px-3 py-2 text-sm"
             >
               {IDENTIFIER_TYPES.map((type) => (
@@ -106,7 +115,10 @@ export default function TixPage() {
           </div>
 
           <div>
-            <label htmlFor="identifier" className="mb-1 block text-sm font-semibold text-ink">
+            <label
+              htmlFor="identifier"
+              className="mb-1 block text-sm font-semibold text-ink"
+            >
               {messages.tix.identifier} <span className="text-error">*</span>
             </label>
             <input
@@ -120,7 +132,10 @@ export default function TixPage() {
         </div>
 
         <div>
-          <label htmlFor="fullName" className="mb-1 block text-sm font-semibold text-ink">
+          <label
+            htmlFor="fullName"
+            className="mb-1 block text-sm font-semibold text-ink"
+          >
             {messages.tix.fullName}
           </label>
           <input
@@ -132,7 +147,10 @@ export default function TixPage() {
         </div>
 
         <div>
-          <label htmlFor="purpose" className="mb-1 block text-sm font-semibold text-ink">
+          <label
+            htmlFor="purpose"
+            className="mb-1 block text-sm font-semibold text-ink"
+          >
             {messages.tix.purpose} <span className="text-error">*</span>
           </label>
           <input
@@ -156,23 +174,27 @@ export default function TixPage() {
       </form>
 
       {error && (
-        <div role="alert" className="mt-5 rounded-lg border border-error/40 bg-error/10 p-5">
+        <div
+          role="alert"
+          className="mt-5 rounded-lg border border-error/40 bg-error/10 p-5"
+        >
           <p className="font-bold text-error">{messages.tix.inquiryFailed}</p>
           <p className="mt-1 text-sm text-ink">{error}</p>
         </div>
       )}
 
       {result && (
-        <div role="status" className={`mt-5 rounded-lg border p-5 ${OUTCOME_STYLES[result.outcome]}`}>
-          <div className="flex items-baseline justify-between gap-4">
-            <p className="text-lg font-bold text-navy">{messages.tix.outcome[result.outcome]}</p>
-            <p className="text-sm text-muted">
-              {messages.tix.confidence}:{" "}
-              <span className="font-semibold tabular-nums text-ink">
-                {Math.round(result.confidence * 100)}%
-              </span>
-            </p>
-          </div>
+        <div
+          role="status"
+          className={`mt-5 rounded-lg border p-5 ${OUTCOME_STYLES[result.outcome]}`}
+        >
+          {/* The outcome is the whole answer. There used to be a confidence percentage beside
+              it, and it was a fine-grained function of how the submitted name compared to the
+              stored one — a caller could guess one name at a time and read the answer off the
+              number. The exchange decides; it does not show its working. */}
+          <p className="text-lg font-bold text-navy">
+            {messages.tix.outcome[result.outcome]}
+          </p>
 
           {result.statuses.length > 0 && (
             <ul className="mt-3 flex flex-wrap gap-2">
@@ -189,7 +211,9 @@ export default function TixPage() {
 
           {result.fraudSignals.length > 0 && (
             <div className="mt-3">
-              <p className="text-sm font-semibold text-ink">{messages.tix.fraudSignals}</p>
+              <p className="text-sm font-semibold text-ink">
+                {messages.tix.fraudSignals}
+              </p>
               <ul className="mt-1 flex flex-wrap gap-2">
                 {result.fraudSignals.map((signal) => (
                   <li

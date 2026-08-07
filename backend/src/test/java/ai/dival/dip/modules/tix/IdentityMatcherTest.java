@@ -20,8 +20,7 @@ class IdentityMatcherTest {
     @Test
     @DisplayName("a strong identifier with an exact name clears the automatic threshold")
     void strongIdentifierWithExactName() {
-        double confidence = matcher.confidence(stored, request(
-                IdentifierType.NATIONAL_ID, "CD-1234-5678", "Jean Baptiste Kabila"));
+        double confidence = score(IdentifierType.NATIONAL_ID, "CD-1234-5678", "Jean Baptiste Kabila");
 
         assertThat(confidence).isGreaterThanOrEqualTo(ExchangeService.AUTOMATIC_MATCH_THRESHOLD);
     }
@@ -29,8 +28,7 @@ class IdentityMatcherTest {
     @Test
     @DisplayName("a phone number alone stays below the automatic threshold")
     void phoneNumberAloneRequiresReview() {
-        double confidence = matcher.confidence(stored, request(
-                IdentifierType.MSISDN, "+243900000000", null));
+        double confidence = score(IdentifierType.MSISDN, "+243900000000", null);
 
         assertThat(confidence).isLessThan(ExchangeService.AUTOMATIC_MATCH_THRESHOLD);
     }
@@ -38,8 +36,7 @@ class IdentityMatcherTest {
     @Test
     @DisplayName("a completely different name pulls confidence below the threshold")
     void conflictingNameLowersConfidence() {
-        double confidence = matcher.confidence(stored, request(
-                IdentifierType.NATIONAL_ID, "CD-1234-5678", "Marie Ilunga"));
+        double confidence = score(IdentifierType.NATIONAL_ID, "CD-1234-5678", "Marie Ilunga");
 
         assertThat(confidence).isLessThan(ExchangeService.AUTOMATIC_MATCH_THRESHOLD);
     }
@@ -62,11 +59,48 @@ class IdentityMatcherTest {
     @Test
     @DisplayName("confidence is always within 0.0 and 1.0")
     void confidenceIsBounded() {
-        double low = matcher.confidence(stored, request(IdentifierType.MSISDN, "+243900000000", "Totally Different"));
-        double high = matcher.confidence(stored, request(IdentifierType.PASSPORT, "X1", "Jean Baptiste Kabila"));
+        double low = score(IdentifierType.MSISDN, "+243900000000", "Totally Different");
+        double high = score(IdentifierType.PASSPORT, "X1", "Jean Baptiste Kabila");
 
         assertThat(low).isBetween(0.0, 1.0);
         assertThat(high).isBetween(0.0, 1.0);
+    }
+
+    @Test
+    @DisplayName("an invented strong identifier does not upgrade a phone-number match")
+    void bogusStrongIdentifierDoesNotUpgradeAWeakMatch() {
+        // The bypass. A caller who knows only a mobile number adds a passport number that matches
+        // nothing: resolution falls through to the phone, but the score used to read "passport"
+        // because it asked whether ANY submitted identifier had a strong type. A phone number is
+        // not proof of identity, which is the whole reason MSISDN is weak.
+        InquiryRequest request = new InquiryRequest(
+                List.of(new InquiryRequest.SubmittedIdentifier(IdentifierType.PASSPORT, "ZZZZZZZZ"),
+                        new InquiryRequest.SubmittedIdentifier(
+                                IdentifierType.MSISDN, "+243900000000")),
+                null, "ONBOARDING_CHECK");
+
+        InquiryRequest.SubmittedIdentifier whatActuallyMatched =
+                new InquiryRequest.SubmittedIdentifier(IdentifierType.MSISDN, "+243900000000");
+
+        assertThat(matcher.confidence(stored, request, whatActuallyMatched))
+                .isLessThan(ExchangeService.AUTOMATIC_MATCH_THRESHOLD);
+    }
+
+    @Test
+    @DisplayName("the score is not in the response at all")
+    void theScoreDoesNotLeave() {
+        // A caller could otherwise submit one guessed name at a time and read the answer off the
+        // number, recovering a competitor's subject's legal name token by token.
+        for (var component : InquiryResult.class.getRecordComponents()) {
+            assertThat(component.getType())
+                    .as("InquiryResult." + component.getName() + " must not be a raw score")
+                    .isNotEqualTo(double.class);
+        }
+    }
+
+    private double score(IdentifierType type, String value, String fullName) {
+        InquiryRequest request = request(type, value, fullName);
+        return matcher.confidence(stored, request, request.identifiers().get(0));
     }
 
     private InquiryRequest request(IdentifierType type, String value, String fullName) {

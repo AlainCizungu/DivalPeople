@@ -49,7 +49,6 @@
     "fullName": "Full name",
     "purpose": "Reason for lookup",
     "submit": "Run verification",
-    "confidence": "Match confidence",
     "outcome": {
       "NO_MATCH": "No match found",
       "CLEAR": "No adverse record",

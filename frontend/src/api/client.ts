@@ -22,7 +22,6 @@ export type InquiryRequest = {
 
 export type InquiryResult = {
   outcome: InquiryOutcome;
-  confidence: number;
   subjectId: string | null;
   statuses: DebtStatus[];
   fraudSignals: string[];

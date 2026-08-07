@@ -49,7 +49,6 @@
     "fullName": "Nom complet",
     "purpose": "Motif de la consultation",
     "submit": "Lancer la vérification",
-    "confidence": "Niveau de confiance",
     "outcome": {
       "NO_MATCH": "Aucune correspondance",
       "CLEAR": "Aucun antécédent défavorable",

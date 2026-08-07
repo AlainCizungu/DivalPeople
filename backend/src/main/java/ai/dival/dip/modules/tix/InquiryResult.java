@@ -1,24 +1,33 @@
 package ai.dival.dip.modules.tix;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The response an operator receives from a verification inquiry.
  *
- * <p>Note what is absent: no balance, no counterparty operator, no account detail. The exchange
- * answers "is there a confirmed problem, and how confident are we that this is the same person",
- * and nothing more.
+ * <p>Note what is absent: no balance, no counterparty operator, no account detail — and since the
+ * August 2026 security review, <strong>no confidence score and no subject id below the automatic
+ * threshold</strong>. The exchange answers "is there a confirmed problem", and nothing more.
  *
- * @param outcome      overall finding
- * @param confidence   0.0–1.0 confidence that the submitted identifiers resolve to one subject
- * @param subjectId    resolved subject, or {@code null} when nothing matched
+ * <p>The score used to be here as a number between 0 and 1. It is a fine-grained function of how
+ * the submitted name compares to the stored one, so a caller could submit one guessed name at a
+ * time and read the answer off the score — recovering a competitor's subject's legal name token by
+ * token. The exchange makes the decision; it does not hand over the evidence it decided on.
+ *
+ * <p>{@code subjectId} is withheld when the match needs review, for a related reason: it is a
+ * stable handle that correlates the same person across every future inquiry, and handing one out
+ * at the exact moment the system says it is <em>not</em> confident is the wrong trade. An operator
+ * who needs an answer should submit a stronger identifier.
+ *
+ * @param outcome      overall finding, which is the whole answer
+ * @param subjectId    resolved subject; {@code null} unless the match was confirmed
  * @param statuses     distinct statuses held against the subject by any participating operator
  * @param fraudSignals advisory indicators requiring human review, never findings of misconduct
  */
 public record InquiryResult(
         Outcome outcome,
-        double confidence,
-        java.util.UUID subjectId,
+        UUID subjectId,
         List<DebtStatus> statuses,
         List<String> fraudSignals) {
 
@@ -34,10 +43,14 @@ public record InquiryResult(
     }
 
     public static InquiryResult noMatch() {
-        return new InquiryResult(Outcome.NO_MATCH, 0.0, null, List.of(), List.of());
+        return new InquiryResult(Outcome.NO_MATCH, null, List.of(), List.of());
     }
 
-    public static InquiryResult reviewRequired(java.util.UUID subjectId, double confidence) {
-        return new InquiryResult(Outcome.REVIEW_REQUIRED, confidence, subjectId, List.of(), List.of());
+    /**
+     * Deliberately carries nothing beyond the verdict. A caller told to review has been told the
+     * exchange is not confident, and that is the entire content of the answer.
+     */
+    public static InquiryResult reviewRequired() {
+        return new InquiryResult(Outcome.REVIEW_REQUIRED, null, List.of(), List.of());
     }
 }

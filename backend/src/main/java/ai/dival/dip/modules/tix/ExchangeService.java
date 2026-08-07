@@ -69,18 +69,22 @@ public class ExchangeService {
     public InquiryResult inquire(InquiryRequest request, UUID actorId) {
         UUID tenantId = TenantContext.require();
 
-        Optional<Subject> match = resolveSubject(request);
+        Optional<Match> match = resolveSubject(request);
         if (match.isEmpty()) {
             audit.record("TIX_INQUIRY", "Subject", null, AuditService.OUTCOME_SUCCESS, actorId);
             return InquiryResult.noMatch();
         }
 
-        Subject subject = match.get();
-        double confidence = matcher.confidence(subject, request);
+        Subject subject = match.get().subject();
+        // Scored against the identifier that actually resolved the subject. Scoring the strongest
+        // identifier *submitted* let a caller add an invented passport number to a real phone
+        // number and have a weak match treated as a strong one.
+        double confidence = matcher.confidence(subject, request, match.get().identifier());
         audit.record("TIX_INQUIRY", "Subject", subject.getId().toString(), AuditService.OUTCOME_SUCCESS, actorId);
 
         if (confidence < AUTOMATIC_MATCH_THRESHOLD) {
-            return InquiryResult.reviewRequired(subject.getId(), confidence);
+            // The score stays on this side of the wire, and so does the subject id.
+            return InquiryResult.reviewRequired();
         }
 
         enterExchangeMode();
@@ -104,13 +108,16 @@ public class ExchangeService {
 
         return new InquiryResult(
                 outcome,
-                confidence,
                 subject.getId(),
                 List.copyOf(statuses),
                 detectFraudSignals(subject, tenantId));
     }
 
-    private Optional<Subject> resolveSubject(InquiryRequest request) {
+    /** A subject and the identifier that found it. The second half is what the score rests on. */
+    private record Match(Subject subject, InquiryRequest.SubmittedIdentifier identifier) {
+    }
+
+    private Optional<Match> resolveSubject(InquiryRequest request) {
         // Strong identifiers first: a national ID match is worth more than a name match.
         List<InquiryRequest.SubmittedIdentifier> ordered = new ArrayList<>(request.identifiers());
         ordered.sort((a, b) -> Boolean.compare(b.type().isStrong(), a.type().isStrong()));
@@ -119,7 +126,7 @@ public class ExchangeService {
             Optional<Subject> found = subjects.findByIdentifier(
                     submitted.type(), SubjectIdentifier.normalizeValue(submitted.value()));
             if (found.isPresent()) {
-                return found;
+                return Optional.of(new Match(found.get(), submitted));
             }
         }
         return Optional.empty();
