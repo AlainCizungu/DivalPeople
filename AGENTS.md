@@ -4,6 +4,24 @@ AI coding agents must read all files in `/docs` before making architectural or f
 Start with [`docs/DELIVERY_PLAN.md`](docs/DELIVERY_PLAN.md) for current status, what is prioritized
 next, and which gaps are knowingly open.
 
+## Scope: this repository is HR only
+
+As of August 2026 this repository builds **HR and workforce intelligence only**. Dival Telecom
+Intelligence (TIX) is a separate product in a separate project and is no longer developed here.
+
+The existing TIX code — `modules/tix`, `V2__tix.sql`, `LocalTixSeeder`, `/app/tix`,
+`docs/TIX_MODULE.md` — is **frozen, not deleted**. Do not extend it, and do not delete it either.
+Two things make deletion a deliberate piece of work rather than a tidy-up:
+
+- TIX is `V2`, the second migration ever applied. Flyway validates checksums against every
+  database that has already run it, so `V2` can never be removed — only a forward migration that
+  drops the tables would do, leaving `V2` in history permanently.
+- `AuditTrailTest` proves audit rows record their purpose and cannot be rewritten, and it does so
+  through a TIX inquiry. Removing TIX means rewriting one of the suite's most valuable tests
+  against a different audited action first.
+
+New work goes to HR modules. If a change would touch TIX, stop and ask.
+
 ## Mandatory rules
 - Preserve tenant isolation.
 - Enforce authorization server-side.
