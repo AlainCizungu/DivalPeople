@@ -2,6 +2,7 @@ package ai.dival.dip.common.web;
 
 import ai.dival.dip.common.error.AccessRefusedException;
 import ai.dival.dip.common.error.ConflictException;
+import ai.dival.dip.common.error.RateLimitExceededException;
 import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import java.time.Instant;
@@ -75,6 +76,17 @@ public class GlobalExceptionHandler {
         log.warn("Tenant-scoped operation reached without a bound tenant");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiError.of("TENANT_REQUIRED", "Authentication is required"));
+    }
+
+    /**
+     * Carries {@code Retry-After}, because a limit without one tells a client to guess, and
+     * clients guess badly — usually by retrying immediately and making the problem worse.
+     */
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiError> handleRateLimit(RateLimitExceededException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(ApiError.of("RATE_LIMITED", ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

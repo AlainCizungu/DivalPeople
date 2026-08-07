@@ -44,6 +44,13 @@ spring:
           issuer-uri: ${DIP_OIDC_ISSUER_URI:http://localhost:8081/realms/dip}
 
 dip:
+  tix:
+    # Inquiries one operator may make in an hour. The exchange holds competitors' debt records,
+    # and every request is individually legitimate — the aggregate is what turns a lookup service
+    # into a bulk export. This does not make a sweep impossible, it makes it slow enough that the
+    # audit trail has time to be read.
+    inquiries-per-hour: ${DIP_TIX_INQUIRIES_PER_HOUR:120}
+
   hr:
     # How much warning to give before a contract ends.
     contract-expiry-notice-days: ${DIP_CONTRACT_EXPIRY_NOTICE_DAYS:30}

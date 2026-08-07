@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.tix;
 
 import ai.dival.dip.common.audit.AuditService;
+import ai.dival.dip.common.error.RateLimitExceededException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
@@ -34,19 +35,22 @@ public class ExchangeService {
     private final IdentityMatcher matcher;
     private final AuditService audit;
     private final EntityManager entityManager;
+    private final InquiryRateLimiter rateLimiter;
 
     public ExchangeService(SubjectRepository subjects,
                            SubjectIdentifierRepository identifiers,
                            DebtRecordRepository debtRecords,
                            IdentityMatcher matcher,
                            AuditService audit,
-                           EntityManager entityManager) {
+                           EntityManager entityManager,
+                           InquiryRateLimiter rateLimiter) {
         this.subjects = subjects;
         this.identifiers = identifiers;
         this.debtRecords = debtRecords;
         this.matcher = matcher;
         this.audit = audit;
         this.entityManager = entityManager;
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -68,6 +72,17 @@ public class ExchangeService {
     @Transactional(readOnly = true)
     public InquiryResult inquire(InquiryRequest request, UUID actorId) {
         UUID tenantId = TenantContext.require();
+
+        // Charged first, and the refusal is audited. A throttled sweep that left no trace would
+        // simply be a slower invisible sweep; the point of the limit is to make the attempt
+        // legible, not merely slow.
+        try {
+            rateLimiter.charge(tenantId);
+        } catch (RateLimitExceededException refused) {
+            audit.record("TIX_INQUIRY", "Subject", null, AuditService.OUTCOME_DENIED, actorId,
+                    request.purpose());
+            throw refused;
+        }
 
         Optional<Match> match = resolveSubject(request);
         if (match.isEmpty()) {
