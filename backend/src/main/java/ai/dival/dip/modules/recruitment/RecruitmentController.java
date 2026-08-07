@@ -2,6 +2,7 @@ package ai.dival.dip.modules.recruitment;
 
 import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.employees.ContractType;
+import ai.dival.dip.modules.employees.CurrentEmployee;
 import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -40,13 +41,30 @@ public class RecruitmentController {
             "hasAnyRole('" + Roles.RECRUITER + "', '" + Roles.HR_ADMIN + "', '"
                     + Roles.HR_MANAGER + "', '" + Roles.TENANT_ADMIN + "')";
 
+    private final CurrentEmployee currentEmployee;
     private final RecruitmentService recruitment;
     private final CurrentUserService currentUser;
 
-    public RecruitmentController(RecruitmentService recruitment, CurrentUserService currentUser) {
+    public RecruitmentController(RecruitmentService recruitment, CurrentUserService currentUser,
+                                 CurrentEmployee currentEmployee) {
         this.recruitment = recruitment;
         this.currentUser = currentUser;
+        this.currentEmployee = currentEmployee;
     }
+
+    /**
+     * The approver is whoever is signed in.
+     *
+     * <p>It used to come from the request body, which made the "nobody approves their own" control
+     * decorative: the check compared the record against a value the caller chose, so anybody on
+     * the run could approve it by naming a colleague who was not — and the stored approver would
+     * then name somebody who never approved anything. A control keyed off the caller's own claim
+     * is not a control.
+     */
+    private UUID approverId() {
+        return currentEmployee.requireId();
+    }
+
 
     // --- requisitions ------------------------------------------------------
 
@@ -88,7 +106,7 @@ public class RecruitmentController {
     public RequisitionResponse approve(@PathVariable UUID id,
                                        @Valid @RequestBody ApproveRequest request) {
         return RequisitionResponse.from(
-                recruitment.approveRequisition(id, request.approverEmployeeId(), actorId()));
+                recruitment.approveRequisition(id, approverId(), actorId()));
     }
 
     @PostMapping("/requisitions/{id}/open")
@@ -224,7 +242,8 @@ public class RecruitmentController {
             LocalDate targetStartDate) {
     }
 
-    public record ApproveRequest(@NotNull UUID approverEmployeeId) {
+    /** Empty: the approver is the caller, and there is nothing else to say. */
+    public record ApproveRequest() {
     }
 
     public record RegisterCandidateRequest(

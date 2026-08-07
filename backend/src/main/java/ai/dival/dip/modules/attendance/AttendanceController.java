@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.attendance;
 
 import ai.dival.dip.common.security.Roles;
+import ai.dival.dip.modules.employees.CurrentEmployee;
 import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -36,16 +37,33 @@ public class AttendanceController {
             "hasAnyRole('" + Roles.MANAGER + "', '" + Roles.HR_ADMIN + "', '"
                     + Roles.HR_MANAGER + "', '" + Roles.TENANT_ADMIN + "')";
 
+    private final CurrentEmployee currentEmployee;
     private final AttendanceService attendance;
     private final TimesheetService timesheets;
     private final CurrentUserService currentUser;
 
     public AttendanceController(AttendanceService attendance, TimesheetService timesheets,
-                                CurrentUserService currentUser) {
+                                CurrentUserService currentUser,
+                                CurrentEmployee currentEmployee) {
         this.attendance = attendance;
         this.timesheets = timesheets;
         this.currentUser = currentUser;
+        this.currentEmployee = currentEmployee;
     }
+
+    /**
+     * The approver is whoever is signed in.
+     *
+     * <p>It used to come from the request body, which made the "nobody approves their own" control
+     * decorative: the check compared the record against a value the caller chose, so anybody on
+     * the run could approve it by naming a colleague who was not — and the stored approver would
+     * then name somebody who never approved anything. A control keyed off the caller's own claim
+     * is not a control.
+     */
+    private UUID approverId() {
+        return currentEmployee.requireId();
+    }
+
 
     // --- clocking ----------------------------------------------------------
 
@@ -145,7 +163,7 @@ public class AttendanceController {
     public TimesheetResponse approve(@PathVariable UUID id,
                                      @Valid @RequestBody DecisionRequest request) {
         return TimesheetResponse.from(timesheets.approve(
-                id, request.approverEmployeeId(), request.notes(), actorId()));
+                id, approverId(), request.notes(), actorId()));
     }
 
     @PostMapping("/timesheets/{id}/reject")
@@ -153,7 +171,7 @@ public class AttendanceController {
     public TimesheetResponse reject(@PathVariable UUID id,
                                     @Valid @RequestBody DecisionRequest request) {
         return TimesheetResponse.from(timesheets.reject(
-                id, request.approverEmployeeId(), request.notes(), actorId()));
+                id, approverId(), request.notes(), actorId()));
     }
 
     private UUID actorId() {
@@ -197,7 +215,6 @@ public class AttendanceController {
     }
 
     public record DecisionRequest(
-            @NotNull UUID approverEmployeeId,
             String notes) {
     }
 

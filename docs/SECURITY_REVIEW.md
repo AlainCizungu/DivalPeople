@@ -56,7 +56,7 @@ whole backend. The comment misled every subsequent review, including mine.
 
 | # | Finding | Where | Status |
 |---|---|---|---|
-| M1 | Payroll and timesheet approver identity comes from the request body, so the self-approval control is keyed off a value the caller chooses, and the recorded approver can be somebody who did not approve. | `PayrollService` 309; `TimesheetService` 214, 222 | **OPEN** |
+| M1 | Payroll and timesheet approver identity comes from the request body, so the self-approval control is keyed off a value the caller chooses, and the recorded approver can be somebody who did not approve. | `PayrollService` 309; `TimesheetService` 214, 222 | **FIXED** across payroll, timesheets, leave and recruitment — the approver is the caller |
 | M2 | Lifecycle: any employee can mark any checklist item done and attribute it to anyone — including "revoke system access" on an offboarding list. | `LifecycleController` 87, 92, 97, 126 | **FIXED** |
 | M3 | Recruitment: any employee can write or overwrite interview feedback and a hire recommendation on any interview. | `RecruitmentController` 192 | **STILL OPEN.** The endpoint now carries an annotation, which satisfies rule 5 and changes nothing: `isAuthenticated()` is still the whole tenant. The interviewer check is the actual fix and is not written. |
 | M4 | Learning: any employee can read who has and has not completed mandatory compliance training — the exact list the guarded `/compliance` endpoint restricts. | `LearningController` 84, 104 | **FIXED** |

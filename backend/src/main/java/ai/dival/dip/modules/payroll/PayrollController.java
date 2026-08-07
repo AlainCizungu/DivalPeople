@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.payroll;
 
 import ai.dival.dip.common.security.Roles;
+import ai.dival.dip.modules.employees.CurrentEmployee;
 import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -46,13 +47,30 @@ public class PayrollController {
     private static final String APPROVE =
             "hasAnyRole('" + Roles.FINANCE_OFFICER + "', '" + Roles.TENANT_ADMIN + "')";
 
+    private final CurrentEmployee currentEmployee;
     private final PayrollService payroll;
     private final CurrentUserService currentUser;
 
-    public PayrollController(PayrollService payroll, CurrentUserService currentUser) {
+    public PayrollController(PayrollService payroll, CurrentUserService currentUser,
+                             CurrentEmployee currentEmployee) {
         this.payroll = payroll;
         this.currentUser = currentUser;
+        this.currentEmployee = currentEmployee;
     }
+
+    /**
+     * The approver is whoever is signed in.
+     *
+     * <p>It used to come from the request body, which made the "nobody approves their own" control
+     * decorative: the check compared the record against a value the caller chose, so anybody on
+     * the run could approve it by naming a colleague who was not — and the stored approver would
+     * then name somebody who never approved anything. A control keyed off the caller's own claim
+     * is not a control.
+     */
+    private UUID approverId() {
+        return currentEmployee.requireId();
+    }
+
 
     // --- compensation ------------------------------------------------------
 
@@ -143,7 +161,7 @@ public class PayrollController {
     public PeriodResponse approve(@PathVariable UUID id,
                                   @Valid @RequestBody ApproveRequest r) {
         return PeriodResponse.from(
-                payroll.approve(id, r.approverEmployeeId(), r.notes(), actorId()));
+                payroll.approve(id, approverId(), r.notes(), actorId()));
     }
 
     @PostMapping("/periods/{id}/reopen")
@@ -216,7 +234,7 @@ public class PayrollController {
             @NotNull LocalDate paymentDate) {
     }
 
-    public record ApproveRequest(@NotNull UUID approverEmployeeId, String notes) {
+    public record ApproveRequest(String notes) {
     }
 
     // --- responses ---------------------------------------------------------

@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.leave;
 
 import ai.dival.dip.common.security.Roles;
+import ai.dival.dip.modules.employees.CurrentEmployee;
 import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -44,18 +45,35 @@ public class LeaveController {
             "hasAnyRole('" + Roles.MANAGER + "', '" + Roles.HR_ADMIN + "', '"
                     + Roles.HR_MANAGER + "', '" + Roles.TENANT_ADMIN + "')";
 
+    private final CurrentEmployee currentEmployee;
     private final LeaveBalanceService balances;
     private final LeaveRequestService requests;
     private final PublicHolidayService holidays;
     private final CurrentUserService currentUser;
 
     public LeaveController(LeaveBalanceService balances, LeaveRequestService requests,
-                           PublicHolidayService holidays, CurrentUserService currentUser) {
+                           PublicHolidayService holidays, CurrentUserService currentUser,
+                           CurrentEmployee currentEmployee) {
         this.balances = balances;
         this.requests = requests;
         this.holidays = holidays;
         this.currentUser = currentUser;
+        this.currentEmployee = currentEmployee;
     }
+
+    /**
+     * The approver is whoever is signed in.
+     *
+     * <p>It used to come from the request body, which made the "nobody approves their own" control
+     * decorative: the check compared the record against a value the caller chose, so anybody on
+     * the run could approve it by naming a colleague who was not — and the stored approver would
+     * then name somebody who never approved anything. A control keyed off the caller's own claim
+     * is not a control.
+     */
+    private UUID approverId() {
+        return currentEmployee.requireId();
+    }
+
 
     // --- types -------------------------------------------------------------
 
@@ -160,7 +178,7 @@ public class LeaveController {
     public RequestResponse approve(@PathVariable UUID id,
                                    @Valid @RequestBody DecisionRequest request) {
         return RequestResponse.from(requests.approve(
-                id, request.approverEmployeeId(), request.notes(), actorId()));
+                id, approverId(), request.notes(), actorId()));
     }
 
     @PostMapping("/requests/{id}/reject")
@@ -168,7 +186,7 @@ public class LeaveController {
     public RequestResponse reject(@PathVariable UUID id,
                                   @Valid @RequestBody DecisionRequest request) {
         return RequestResponse.from(requests.reject(
-                id, request.approverEmployeeId(), request.notes(), actorId()));
+                id, approverId(), request.notes(), actorId()));
     }
 
     /** Withdrawing is the employee's own action, so it is not held behind a manager role. */
@@ -219,7 +237,6 @@ public class LeaveController {
     }
 
     public record DecisionRequest(
-            @NotNull UUID approverEmployeeId,
             String notes) {
     }
 
