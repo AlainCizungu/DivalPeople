@@ -1,3 +1,9 @@
+> **Superseded, 8 August 2026.** Belongs to Dival People (HR), which is being withdrawn from
+> this repository. The payroll backend and migration V17 are still present and still tested;
+> the screens are gone. Kept because the constraint it records — that component configuration
+> must be signed off by a qualified payroll practitioner before any real pay run — remains
+> true for as long as the code exists.
+
 # Payroll — what this module does, and what it deliberately does not
 
 Read this before configuring a payroll run, and before extending the module.

@@ -1,113 +1,232 @@
-# Dival Intelligence Platform — Roadmap
+# DIP — Execution Roadmap
 
-**Rewritten 8 August 2026.** The previous version described an HR product called Dival People with
-a telecom exchange as an optional phase-9 integration. That is no longer what is being built, and
-a roadmap that contradicts the landing page is worse than no roadmap.
+## Strategy
+Build the smallest trustworthy intelligence exchange first, using real telecom data, then expand the network.
 
-DIP is a **national risk and identity intelligence platform** for the DRC: approved institutions
-contribute records, resolve identities, and consult risk intelligence about businesses and
-individuals, while retaining ownership of their operational data. TIX — the telecom exchange — is
-the first industry edition, not a bolt-on. HR (**Dival People**) becomes a separate product and is
-paused.
+## Where the code actually is, 8 August 2026
 
-Nothing below is a commitment to a date. It is an ordering, and an honest account of what exists.
+The phases below are the plan. This table is the present, and it is deliberately first: the plan
+reads as though it starts from nothing, and it does not. Some of Phase 1 is done, none of Phase 2
+is, and TIX exists in a form that predates this design.
 
----
+| Phase | Capability | State |
+|---|---|---|
+| 1 | Tenants, OIDC sign-in, RBAC, EN/FR, audit, PostgreSQL, files, notifications, CI/CD | **Built**, tenant isolation proved by tests |
+| 1 | MFA | Not built — Keycloak supports it, it is not turned on |
+| 1 | Object storage | Filesystem locally; no S3-compatible store |
+| 1 | Observability | Structured logs with request ids; no metrics, traces or alerting |
+| 2 | XLSX/CSV upload, import batches, validation, raw immutable storage | **Not built.** This is the largest gap |
+| 3 | Deterministic entity resolution | **Built** for the write path (`SubjectResolver`), exact match only, refuses ambiguity |
+| 3 | Fuzzy matching with confidence | **Built** for the read path (`IdentityMatcher`) |
+| 3 | Merge / unmerge, human review queue | Not built |
+| 3 | Universal search, business and individual profiles | Not built |
+| 4 | Cross-operator inquiry returning status, never another operator's data | **Built**, rate-limited, audited with a stated purpose |
+| 4 | Declaration by an operator, with a reporting threshold | **Built** |
+| 4 | Retention, expiry and real erasure | **Built** — the periods are unverified placeholders, see `TIX_RETENTION.md` |
+| 4 | Aging buckets, write-off/recovery indicators, operator dashboards, reports | Not built |
+| 5 | Risk rating with reason codes and a model version | **Not built.** The score on the landing page is invented |
+| 6+ | Pilot, multi-operator production, banking, AI | Not started |
 
-## What actually exists today
+### The gap that matters most
 
-This section matters more than the phases. Everything on the landing page reads as though it is
-built; almost none of it is. Anyone using this document to plan should start here.
+**TIX as built has no provenance.** `tix_debt_record` is the origin of truth: an operator declares
+a debt through the API and nothing records which file, batch, or row it came from. This design
+requires the opposite — source organization → import batch → immutable raw record → canonical
+entity → exposure, with every displayed figure traceable to a source row (`DATABASE_DESIGN.md`,
+and rules 4 and 5 in `AGENTS.md`).
 
-| Capability | State |
-|---|---|
-| Multi-tenant platform: tenants, auth, roles, audit, EN/FR, files, notifications | **Built**, with row-level security proved by tests |
-| Identity resolution — exact match on normalised identifiers | **Built** (`SubjectResolver`), write path only |
-| Identity matching with confidence — read path | **Built** (`IdentityMatcher`), scores the identifier that matched |
-| Debt declaration by an operator | **Built** — `POST /api/v1/tix/debt-records`, with a reporting threshold |
-| Cross-operator inquiry returning a status, never another operator's data | **Built**, rate-limited and audited |
-| Retention, expiry and erasure | **Built** — periods are placeholders, see `TIX_RETENTION.md` |
-| Audit trail, append-only by database rule | **Built** |
-| Subject rights: access, rectification, erasure on request | **Not built** — required by the TDR |
-| Dispute raised by the subject | **Wrong way round** — the endpoint currently requires an operator role |
-| Universal entity search across sources | **Not built** — the landing page shows a mock |
-| Risk score / rating with contributing factors | **Not built** — the score on the page is invented |
-| Fraud and anomaly detection | **Partly** — reused-identifier signals only |
-| Portfolio monitoring and dashboards | **Not built** |
-| File ingestion (Excel/CSV) and validation pipeline | **Not built** |
-| Public API for participating institutions | **Not built** |
-| AI assistant | **Not built** |
-| Bank, insurance, utilities, enterprise, public-sector editions | **Not built** — TIX only |
-| HR modules (employees, leave, payroll, performance, learning, recruitment) | **Built and paused** — kept green, not extended |
+That is not a defect to patch. Phase 2 makes raw records the origin and turns today's debt record
+into something derived. The declaration API survives as one input among several, not as the only
+door. Anyone planning Phase 2 should read `TIX_MODULE.md` for what exists before designing what
+replaces it.
 
----
+### Superseded
 
-## Phase A — The exchange works end to end (current)
-
-Make one industry edition genuinely usable before generalising. Everything here is TIX.
-
-- ~~Declaration API with a reporting threshold~~ — done
-- ~~Retention, expiry, and real erasure~~ — done
-- **Subject rights**: access, rectification, erasure on request, and moving dispute to the person
-  it belongs to. Includes the hard part: authenticating somebody who is not a user of any
-  participating operator's system.
-- **Legal basis and retention periods** checked against the Code du numérique
-  (Ordonnance-loi 23/010), recorded in `TIX_RETENTION.md` rather than assumed.
-- **Ingestion**: the Kinshasa spreadsheets, validated and reconciled, not hand-entered.
-- The CDF reporting threshold, which needs a rate somebody owns.
-
-**Exit:** an operator can load its real book, declare, inquire, settle, and answer a subject who
-asks what is held about them — and can show an auditor the trail for all of it.
-
-## Phase B — Search and evidence
-
-The capabilities the landing page leads with, in the order they become possible.
-
-- Universal entity search across participating sources
-- A transparent risk profile: the factors and their weights, published alongside any score
-- Business and individual profiles as distinct things, with distinct permissions
-- Fraud signals beyond identifier reuse
-
-**Exit:** a risk report a bank would accept as evidence, where every number can be traced to a
-contributed record.
-
-## Phase C — A network rather than a database
-
-- Real-time APIs for participating institutions
-- Provenance retained per record, so "who said this" is always answerable
-- Governance: joint controllership, the sharing agreement, competition-law safeguards
-- Portfolio monitoring and dashboards
-
-**Exit:** a second operator contributing through the API, and a governance document both have
-signed.
-
-## Phase D — Second industry
-
-Banking or utilities, whichever has a real counterparty first. The test of the architecture is
-whether the second edition costs materially less than the first.
-
-## Phase E — AI assistance
-
-Summarising evidence and navigating portfolios. Decisions stay with authorised people — this is
-already a hard rule in `AGENTS.md` and it does not soften because the feature is popular.
+An HR product (Dival People) was built through payroll and self-service and is being withdrawn
+from this repository. The screens are gone; the backend modules and migrations V5 and V8–V17 are
+still present and still green, and come out in their own change. `PAYROLL_SCOPE.md` belongs to it.
 
 ---
 
-## Dival People (HR)
+## Phase 0 — Legal, Data & Product Discovery (Weeks 1–4)
+Deliverables:
+- stakeholder map
+- data inventory
+- source ownership/permission review
+- sample-data profiling
+- DRC legal/regulatory counsel review
+- data-sharing principles
+- product scope
+- threat model
+- architecture decision record
+- pilot success metrics
 
-Built through payroll and self-service, tested, paused. Not deleted, not extended, kept green. It
-becomes its own product with its own roadmap when there is someone to sell it to; the Kinshasa
-team that asked for it is still waiting.
+Exit criteria:
+Dival AI and partners know exactly what data may be processed, for what purpose, and who can access it.
 
-## The honest risks
+## Phase 1 — Platform Foundation (Weeks 3–8)
+Build:
+- repository/CI/CD
+- environments
+- authentication + MFA
+- tenants/organizations
+- RBAC
+- bilingual framework
+- audit foundation
+- PostgreSQL schema
+- object storage
+- observability
+- base Microsoft-inspired UI shell
 
-- **The periods, thresholds and legal basis are unverified.** Plausible placeholders are the
-  dangerous kind — they get treated as decisions.
-- **Competition law.** A shared blacklist among competitors is antitrust exposure, and the TDR
-  flags it twice. Rate limiting and refusals that do not confirm existence are part of the answer;
-  a governance framework is the rest, and it is not written.
-- **The landing page is ahead of the product**, deliberately, as a prototype. Every invented
-  figure on it is labelled illustrative. That labelling is load-bearing and should not be removed
-  for looking untidy.
-- **No production deployment, no design partner, no signed agreement.** The TDR commissions a
-  feasibility study; it does not commission this.
+Exit:
+Users can securely sign in, switch EN/FR, and tenant/audit controls are operational.
+
+## Phase 2 — Telecom Data Foundation (Weeks 6–12)
+Build:
+- XLSX/CSV upload
+- source mappings
+- import batches
+- validation engine
+- raw immutable storage
+- normalization
+- aging/balance mapping
+- import preview
+- rejection report
+- data-quality dashboard
+
+Use the existing telecom spreadsheets to define real mappings instead of inventing a generic schema.
+
+Exit:
+A telecom spreadsheet can be imported repeatedly, validated, traced, and published safely.
+
+## Phase 3 — Entity Resolution & Universal Search (Weeks 10–16)
+Build:
+- canonical business entity
+- canonical individual entity
+- identifier registry
+- deterministic matching
+- fuzzy matching
+- match confidence
+- human review queue
+- merge/unmerge
+- universal search
+- business profile
+- individual profile
+
+Exit:
+Analysts can reliably find and consolidate records without losing source provenance.
+
+## Phase 4 — TIX MVP (Weeks 14–20)
+Build:
+- telecom exposure view
+- aging
+- source/operator view
+- active/inactive status
+- write-off/recovery indicators
+- cross-operator matches
+- repeat-default indicators
+- telecom portfolio dashboard
+- authorized reports
+- search-purpose capture
+
+Exit:
+TIX is demoable with real, governed telecom data and useful to collections/credit teams.
+
+## Phase 5 — Risk Intelligence v1 (Weeks 18–24)
+Build:
+- rule-based DIP risk rating
+- reason codes
+- identity confidence
+- data freshness
+- source count
+- risk history
+- configurable thresholds
+- model/version registry
+- analyst review
+
+Do not start with opaque ML. Establish a transparent baseline first.
+
+Exit:
+Every risk output is explainable and reproducible.
+
+## Phase 6 — Controlled Pilot (Weeks 22–30)
+Pilot with selected institutional users.
+Activities:
+- UAT
+- data-quality remediation
+- security test
+- performance test
+- user training
+- support process
+- incident response
+- feedback
+- pricing/usage measurement
+- governance review
+
+Exit:
+Pilot KPIs are met and critical issues resolved.
+
+## Phase 7 — Multi-Telecom Production (Months 8–12)
+- onboard additional telecom sources
+- automated/scheduled feeds
+- API integration
+- portfolio alerts
+- dispute/correction workflow
+- SLA/support model
+- production DR
+- independent penetration test
+- formal operating governance
+
+## Phase 8 — Banking & Cross-Industry Expansion (Year 2)
+Only after telecom foundation is trusted:
+- bank onboarding
+- business credit intelligence
+- individual risk workflows where legally permitted
+- financial exposure APIs
+- fraud signals
+- monitoring
+- additional institutional data
+
+## Phase 9 — AI & Predictive Intelligence (Year 2+)
+- grounded AI analyst
+- recovery probability
+- collection prioritization
+- anomaly models
+- network relationship analysis
+- explainable predictive risk
+- executive AI summaries
+
+## First 30 Days
+Week 1:
+- secure and inventory datasets
+- document every field
+- profile missingness/duplicates
+- identify source and refresh process
+- establish data-handling rules
+
+Week 2:
+- canonical data model
+- first telecom mapping
+- architecture skeleton
+- repo + environments
+- auth/tenant design
+
+Week 3:
+- import pipeline
+- validation
+- raw storage
+- bilingual application shell
+- audit logging
+
+Week 4:
+- normalized telecom records
+- first search endpoint
+- business profile prototype
+- data-quality dashboard
+- demo using anonymized/approved records
+
+## 90-Day Target
+A secure bilingual MVP capable of ingesting the existing telecom dataset, validating it, resolving entities, searching businesses, showing source-backed exposure/aging, and producing auditable reports.
+
+## 12-Month Target
+A production TIX network with multiple telecom participants, governed cross-source intelligence, APIs, risk intelligence, portfolio monitoring, operational support, and a credible path to bank participation.

@@ -1,128 +1,126 @@
-# Dival People — Database Design
+# DIP — Database Design
 
-## Principles
-PostgreSQL is the system of record. Every tenant-owned table has `tenant_id`, timestamps, and actor metadata where appropriate. Use migrations, foreign keys, indexes, encrypted sensitive fields, append-only audit logs, and immutable finalized payroll history.
+## Core Rule
+Never model the platform as one giant debtor table.
 
-## Core tables
+Maintain:
+1. Source organization
+2. Import batch
+3. Immutable source record
+4. Canonical entity
+5. Entity-source link
+6. Account/exposure
+7. Payment/recovery event
+8. Risk assessment
+9. Match candidate
+10. Audit event
 
-### Platform
-- `tenants`
-- `tenant_settings`
-- `users`
-- `roles`
-- `permissions`
-- `user_roles`
-- `role_permissions`
+## What is implemented today, and how it differs
 
-### Organization
-- `legal_entities`
-- `organizational_units`
-- `locations`
-- `cost_centers`
+This design is the target. The schema in the repository is not it yet, and the difference is
+structural rather than cosmetic — anybody reading this document as a description of the database
+will be wrong about the most important part.
 
-### Employees
-- `employees`
-- `employee_addresses`
-- `employee_dependents`
-- `emergency_contacts`
-- `employee_identifiers`
-- `employment_history`
+Implemented (migrations V1–V19):
 
-### Contracts and compensation
-- `employment_contracts`
-- `compensation_records`
-- `compensation_components`
+| This design calls for | The database has |
+|---|---|
+| `tenants` | `tenant` — participating institution |
+| `users` | `user_account`, provisioned from the OIDC token on first request |
+| `entities` (BUSINESS / INDIVIDUAL) | `tix_subject`, with a `subject_type` of INDIVIDUAL or BUSINESS |
+| `entity_identifiers` | `tix_subject_identifier`, typed and globally unique per (type, value) |
+| `exposures` | `tix_debt_record` — amount, currency, status, default date, retention date |
+| `audit_events` | `audit_event`, append-only by database rule as well as by privilege |
+| `data_sources`, `import_batches`, `raw_records` | **nothing** |
+| `entity_source_links` | **nothing** |
+| `business_profiles`, `individual_profiles` | **nothing** — one flat subject row |
+| `accounts`, `aging_snapshots`, `payments`, `recoveries` | **nothing** |
+| `disputes` | a status on the debt record, settable only by the operator |
+| `match_candidates` | **nothing** — ambiguity is refused at write time, never queued |
+| `risk_assessments`, `risk_signals` | **nothing** |
+| `searches` | inquiries land in `audit_event` with a stated purpose, not a table of their own |
+| `reports` | **nothing** |
 
-### Documents
-- `documents`
-- `document_versions`
+### The consequence
 
-### Recruitment
-- `job_requisitions`
-- `candidates`
-- `applications`
-- `interviews`
-- `candidate_evaluations`
-- `offers`
+`tix_debt_record` is currently the origin of truth. There is no import batch, no raw record, and
+no source link, so **the lineage this document requires cannot be produced** — a displayed figure
+traces back to an API call and stops there. Rules 4 and 5 in `AGENTS.md` are aspirations against
+the present schema, not descriptions of it.
 
-### Onboarding/offboarding
-- `workflow_templates`
-- `workflow_instances`
-- `workflow_tasks`
-- `equipment_assignments`
-- `policy_acknowledgments`
+Closing that gap means raw records become the origin and debt records become derived. It is the
+substance of Phase 2, and it is a migration of the core model rather than an addition to it. Do
+not add columns to `tix_debt_record` in the meantime expecting them to survive.
 
-### Leave and attendance
-- `leave_policies`
-- `employee_leave_balances`
-- `leave_requests`
-- `attendance_records`
-- `shifts`
-- `employee_shift_assignments`
+## Core Entities
+### tenants
+Institution participating in DIP.
 
-### Performance and learning
-- `performance_cycles`
-- `goals`
-- `performance_reviews`
-- `courses`
-- `training_assignments`
-- `certifications`
+### users
+Authorized user associated with tenant(s), role, language, status.
 
-### Payroll
-- `payroll_periods`
-- `payroll_entries`
-- `payroll_entry_components`
-- `payslips`
-- `payroll_exports`
+### data_sources
+Defines operator/bank/source system and dataset type.
 
-### Financial services
-- `financial_partners`
-- `financial_products`
-- `consent_records`
-- `financial_service_applications`
-- `repayment_instructions`
-- `partner_transactions`
+### import_batches
+File/API ingestion metadata: checksum, uploader, source, schema version, row counts, validation state.
 
-### Fraud and investigations
-- `fraud_alerts`
-- `risk_indicators`
-- `investigation_cases`
-- `investigation_notes`
+### raw_records
+Immutable normalized representation of each imported row plus original payload reference.
 
-### Audit and communication
-- `audit_events`
-- `notifications`
-- `notification_templates`
-- `webhook_deliveries`
+### entities
+Canonical subject:
+- BUSINESS
+- INDIVIDUAL
 
-## Required common columns
-For tenant-owned tables:
-- `id`
-- `tenant_id`
-- `created_at`
-- `updated_at`
-- `created_by`
-- `updated_by`
+### business_profiles
+Legal name, aliases, registration/tax identifiers where available, sector, address metadata.
 
-## Sensitive data
-Encrypt or tokenize national IDs, passports, bank accounts, insurance identifiers, health information, and sensitive financial data.
+### individual_profiles
+Personal attributes permitted by policy. Sensitive fields encrypted/masked.
 
-## Indexing
-Composite indexes should generally begin with `tenant_id`, for example:
-- `(tenant_id, employee_number)`
-- `(tenant_id, status)`
-- `(tenant_id, employee_id)`
-- `(tenant_id, expiration_date)`
-- `(tenant_id, created_at)`
+### entity_identifiers
+Typed identifiers with verification/source/confidence metadata.
 
-## Data classification
-- Public: public job postings
-- Internal: organization structure and general policies
-- Confidential: employee, recruitment, compensation, performance
-- Restricted: IDs, bank data, health data, fraud investigations, authentication records
+### entity_source_links
+Maps canonical entity to source records and matching confidence.
+
+### accounts
+Institution-specific customer/account relationship.
+
+### exposures
+Balance, currency, status, dates, aging, write-off state.
+
+### aging_snapshots
+Historical aging values by observation date.
+
+### payments / recoveries
+Optional payment and recovery events when supplied.
+
+### disputes
+Correction/dispute workflow.
+
+### match_candidates
+Potential duplicate/cross-source entity matches requiring review.
+
+### risk_assessments
+Score/rating, model version, factors, reason codes, generated time.
+
+### risk_signals
+Individual explainable signals.
+
+### searches
+Purpose, user, tenant, search terms hashed/redacted where appropriate, result count.
+
+### reports
+Generated intelligence reports and authorization metadata.
+
+### audit_events
+Append-only security/business audit trail.
+
+## Data Lineage
+Every displayed financial fact must be traceable:
+displayed value → canonical record → source record → import batch → source organization.
 
 ## Retention
-Retention is configurable by country, tenant, record type, and legal requirement. Final payroll and audit history must not be casually deleted.
-
-## Migrations
-Use Flyway. Released migrations are immutable. Test migrations against representative data. Destructive changes require explicit approval and rollback planning.
+Retention must be configurable by data category, source agreement, applicable law, and dispute status.

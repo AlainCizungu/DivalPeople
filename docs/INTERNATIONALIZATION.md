@@ -1,53 +1,29 @@
-# Dival People — Internationalization
+# DIP — Internationalization
 
-## Launch languages
-English and French. English is default; French must have complete feature parity.
+## Initial Languages
+- English (en)
+- French (fr)
+
+Both are first-class.
 
 ## Rules
-- All user-facing strings use translation keys.
-- No text is hard-coded in components.
-- Use locale-aware dates, times, numbers, currencies, percentages, names, and addresses.
-- Store timestamps in UTC; display in user or tenant timezone.
-- Store ISO currency code with every monetary amount.
+- No hard-coded user-facing strings.
+- Translation keys live in centralized locale resources.
+- Backend error codes are language-neutral; UI translates messages.
+- Store user locale.
+- AI assistant follows user locale.
+- Emails/reports use selected locale.
+- Dates/numbers/currency formatted by locale.
+- Canonical database values are not translated.
 
-## Suggested structure
-```text
-/locales
-  /en
-    common.json
-    employees.json
-    payroll.json
-  /fr
-    common.json
-    employees.json
-    payroll.json
-```
+## DRC Considerations
+The system must support local operational realities:
+- inconsistent identifiers;
+- organization-name variants;
+- multilingual names;
+- variable address quality;
+- phone-number normalization;
+- multiple currencies where required;
+- institution-specific customer identifiers.
 
-## User and tenant configuration
-Users choose preferred language. Tenants configure default and supported languages, timezone, currency, holiday calendars, required documents, contract types, and country rules.
-
-## Translation workflow
-English source, professional French translation, terminology review, UI testing, approval. Machine translation may assist but is not final authority for legal, payroll, employee-relations, insurance, or lending content.
-
-## Core glossary
-| English | French |
-|---|---|
-| Employee | Employé / Collaborateur |
-| Leave Request | Demande de congé |
-| Payroll | Paie |
-| Payslip | Bulletin de paie |
-| Department | Département |
-| Job Requisition | Demande de recrutement |
-| Performance Review | Évaluation de performance |
-| Salary Advance | Avance sur salaire |
-| Fraud Alert | Alerte de fraude |
-| Under Review | En cours d'examen |
-
-## Documents
-Contracts, offers, payslips, HR letters, acknowledgments, and financial disclosures may be generated in English, French, or bilingual format.
-
-## AI assistant
-Detect preferred language, answer consistently in that language, preserve approved terminology, cite policy sources when possible, and respect permissions.
-
-## Tests
-Missing keys, French text expansion, accents in search/sort, date/currency formats, emails, notifications, and generated documents.
+Identity confidence must never be represented as certainty when source data is incomplete.

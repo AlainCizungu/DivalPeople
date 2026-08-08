@@ -1,62 +1,80 @@
-# Dival People — Architecture
+# DIP — Technical Architecture
 
-## Goals
-Secure multi-tenant SaaS, English/French support, auditability, modular delivery, financial-partner integrations, AI assistance, fraud analytics, and optional dedicated/private deployment.
+## Architecture Principles
+- Modular monolith first; split services only when scale/ownership requires it.
+- API-first.
+- Multi-tenant from day one.
+- Source provenance is mandatory.
+- Raw source data is immutable.
+- Canonical entities are separated from source records.
+- Risk outputs are versioned and explainable.
+- AI cannot bypass authorization.
+- English/French localization is platform-level.
 
-## Initial architecture
-Use a **modular monolith**. Introduce microservices only when independent scaling, regulatory isolation, reliability boundaries, or team ownership clearly require them.
+## Recommended Initial Stack
+Frontend: Next.js/React + TypeScript
+Backend: Python FastAPI or Java Spring Boot (choose one primary backend for MVP)
+Database: PostgreSQL
+Cache: Redis
+Object storage: S3-compatible storage for imports/reports
+Search: PostgreSQL full-text initially; OpenSearch/Elasticsearch when scale requires
+Async jobs: queue/worker architecture
+Identity: OIDC/OAuth2 provider with MFA
+Infrastructure: containerized deployment, IaC, CI/CD
+Observability: logs, metrics, traces, security audit events
 
-## Recommended stack
-- Frontend: Next.js, React, TypeScript, Tailwind CSS
-- Backend: Java 21+, Spring Boot, Spring Security, Spring Data JPA
-- AI services: Python/FastAPI where appropriate
-- Database: PostgreSQL
-- Cache/jobs: Redis
-- Files: S3-compatible object storage
-- Identity: Keycloak, Auth0, Cognito, or Entra External ID
-- Migrations: Flyway
-- Observability: OpenTelemetry plus Datadog/Grafana
-- Deployment: Docker; managed containers first; Kubernetes later when justified
+## Decisions already taken
 
-## Core modules
-`authentication`, `authorization`, `tenants`, `organizations`, `users`, `employees`, `contracts`, `documents`, `recruitment`, `onboarding`, `leave`, `attendance`, `performance`, `learning`, `payroll`, `benefits`, `financial_services`, `fraud_intelligence`, `notifications`, `integrations`, `audit`, `analytics`, `localization`, `ai_assistant`.
+The stack section above offers choices. These were made and are in the code, so they are not open
+questions:
 
-## Multi-tenancy
-Initial model: shared database/shared schema with `tenant_id` on every tenant-owned row.
+- **Backend: Java 21 + Spring Boot 3.4**, not FastAPI. One primary backend, as the section asks.
+- **Migrations: Flyway.** Released migrations are immutable — V1–V19 have been applied, and a
+  released migration is never edited, only superseded.
+- **Identity: Keycloak** via OIDC. MFA is available and not yet enabled.
+- **Tenancy: shared schema with `tenant_id` and PostgreSQL row-level security**, with the
+  application connecting as an unprivileged role that cannot bypass the policies. See ADR 0002.
+- **The browser never holds a token.** A backend-for-frontend keeps sessions in Redis behind an
+  opaque cookie and attaches the bearer token server-side. See ADR 0003.
+- **Modular monolith**, module boundaries enforced in CI by `scripts/check_architecture.py`. See
+  ADR 0001.
+- **Tests: JUnit 5 with Testcontainers** against real PostgreSQL, never an in-memory substitute.
 
-Rules:
-- Tenant context comes from authenticated identity, never trusted request input.
-- Every query, cache key, job, file path, search index, and audit event is tenant-scoped.
-- Cross-tenant access is prohibited except through explicit platform-administration services.
-- Dedicated schema/database/environment may be offered to regulated customers.
+## Logical Architecture
+Users
+→ Web Application / API Clients
+→ API Gateway / Backend
+→ Authorization & Purpose Checks
+→ Domain Modules
+   - Organizations & Users
+   - Data Ingestion
+   - Entity Resolution
+   - Search
+   - Risk Intelligence
+   - TIX
+   - Portfolio Monitoring
+   - Reporting
+   - Audit
+   - AI Assistant
+→ Data Layer
+   - PostgreSQL canonical store
+   - Immutable import/object store
+   - Cache
+   - Search index
+→ Integration Layer
+   - File ingestion
+   - APIs
+   - Future bank/telecom connectors
 
-## Integration model
-Use adapters for banks, insurers, payroll, accounting, identity verification, email, SMS, mobile money, and government systems. Provider-specific logic must not enter core domain modules.
+## Environments
+- Local
+- Development
+- Staging/UAT
+- Production
 
-## API model
-REST/JSON, OpenAPI, versioned endpoints, webhooks, idempotency for financial operations, background jobs for long-running work.
+Production data must never be copied to lower environments without approved anonymization.
 
-## Domain events
-Examples: `EmployeeCreated`, `ContractExpiring`, `LeaveApproved`, `PayrollApproved`, `FinancialServiceApplicationSubmitted`, `FraudAlertCreated`, `TrainingOverdue`.
-
-Use a transactional outbox before introducing Kafka.
-
-## AI architecture
-AI is separated from authoritative rules. It may summarize, extract, match, explain, and recommend, but may not independently approve loans, reject candidates, establish fraud, modify payroll, or trigger discipline.
-
-## Deployment environments
-Local, development, test, staging, production. Optional dedicated or private deployments.
-
-## Reliability
-Target 99.9% monthly uptime initially, encrypted backups, tested restores, health checks, centralized monitoring, incident response, and defined RPO/RTO.
-
-## Scaling order
-1. Optimize SQL and indexes
-2. Cache
-3. Background jobs
-4. Horizontal application scaling
-5. Read replicas
-6. Split high-load modules
-7. Event streaming when justified
-
-Record major decisions in `/docs/adr/`.
+## Deployment Evolution
+Phase 1: single-region secure production.
+Phase 2: high availability and warm standby.
+Phase 3: multi-region / jurisdiction-specific deployments where required.

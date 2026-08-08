@@ -1,78 +1,75 @@
-# Dival People — Security Model
+# DIP — Security, Privacy & Trust Model
 
-## Objectives
-Protect employee PII, payroll, bank information, identity documents, health/insurance data, fraud investigations, credentials, and tenant data.
+## Security Objective
+DIP may hold commercially sensitive and personal financial-risk data. Security and governance are product features, not infrastructure afterthoughts.
 
-## Principles
-Zero trust, least privilege, defense in depth, secure defaults, privacy by design, complete auditability, strict tenant isolation, encryption, and human review for high-impact decisions.
+## Identity & Access
+- MFA for privileged and institutional users
+- OIDC/OAuth2
+- RBAC plus attribute/purpose-based controls
+- Least privilege
+- Tenant isolation
+- Session controls
+- Admin action re-authentication
+- Periodic access reviews
 
-## Authentication
-- OpenID Connect/OAuth 2.0
-- MFA for privileged users
-- Enterprise SSO option
-- Session expiration
-- Login monitoring and lockout controls
-- Audited password reset
+## Sensitive Data
+- TLS everywhere
+- Encryption at rest
+- Application/field-level encryption for sensitive identifiers
+- Mask identifiers in UI by default
+- Secrets manager; no secrets in source control
+- Key rotation
+- Export controls and watermarking where appropriate
 
-## Authorization
-RBAC with optional attributes. Roles may include Platform Admin, Tenant Admin, HR Admin, HR Manager, Payroll Officer, Finance Officer, Compliance Officer, Recruiter, Manager, Employee, and Auditor.
-
-Authorization is enforced server-side. Hiding a frontend control is not authorization.
-
-## Browser sessions
-Tokens never reach the browser. The Next.js application acts as a backend-for-frontend: it runs
-the authorization code flow server-side, keeps the access, refresh and id tokens in Redis, and
-gives the browser only an opaque session identifier in an `httpOnly`, `SameSite=Lax` cookie —
-`Secure` outside development. Every API call is proxied through `/api/proxy/*`, which attaches
-the bearer token on the server. Token refresh happens there too, invisibly.
-
-The consequence worth stating plainly: a cross-site scripting flaw can still act as the user
-while the page is open, because the browser attaches the cookie. What it can no longer do is
-steal a refresh token and keep the session alive afterwards.
-
-Because the credential is now a cookie, cross-site request forgery is possible in a way it was
-not with a bearer header. `SameSite=Lax` and an explicit `Origin` check at the proxy are both in
-place. See ADR 0003.
-
-## Tenant isolation
-- Authenticated context establishes tenant.
-- All queries, cache keys, files, jobs, and search indexes are tenant-scoped.
-- Cross-tenant tests are mandatory.
-- Platform administration is isolated and audited.
-
-## Encryption
-TLS 1.2+ in transit. Managed encryption for databases, files, backups, and sensitive fields. Keys are stored in a managed key service and rotated.
-
-## Secrets
-No secrets in code or Git. Use environment-specific managed secret storage and audit access.
+## Purpose-Based Access
+A user should not search a person merely because the user has an account.
+Search workflow should capture an authorized business purpose such as:
+- onboarding
+- credit review
+- collections
+- fraud investigation
+- compliance review
+- portfolio monitoring
 
 ## Audit
-Append-only logs include tenant, actor, action, resource, request ID, timestamp, IP, outcome, and before/after values when appropriate.
+Log:
+- login/authentication events
+- searches
+- profile views
+- exports
+- report generation
+- data changes
+- entity merges
+- risk-score generation
+- admin changes
+- API access
+- permission changes
 
-## Financial-service controls
-Explicit consent, partner authentication, signed messages, idempotency, reconciliation, data minimization, disclosures, and partner-status verification.
+Audit logs must be tamper-resistant.
 
-## Fraud safeguards
-Alerts are indicators, not findings. Show evidence and confidence, require human review, support false-positive resolution, restrict access, and prevent automatic discipline or termination.
+## Data Governance
+- Participating institutions retain ownership of contributed operational data.
+- DIP maintains processing, provenance, access, and derived-intelligence rules.
+- Cross-institution sharing is policy-controlled.
+- Data minimization applies to every view and API.
+- Correction/dispute mechanisms must exist.
+- Source agreements define permitted use.
 
-## AI safeguards
-- Permission-aware retrieval
-- Minimal sensitive data in prompts
-- Prompt-injection defenses
-- Uploaded files treated as untrusted
-- Advisory output labels
-- Audit model access and output
-- Approved AI providers only
-- No autonomous employment, fraud, credit, insurance, or payroll decisions
+## AI/Model Governance
+- Human-in-the-loop
+- No autonomous denial/approval in MVP
+- Model registry
+- Versioning
+- Reason codes
+- Evaluation before release
+- Drift monitoring
+- Bias/fairness review where relevant
+- Rollback
+- Prompt/data leakage controls
+- AI output logging appropriate to privacy requirements
 
-## Application controls
-Input validation, output encoding, CSRF controls where relevant, secure cookies, CSP, rate limiting, upload scanning, SQLi/XSS/SSRF prevention, dependency scanning, SAST, DAST, and container scanning.
-
-## File controls
-Allowlist types, size limits, malware scan, randomized keys, checksums, signed temporary URLs, and access auditing.
-
-## Privacy
-Consent, access, correction, export, retention, deletion where lawful, purpose limitation, and data minimization. Country-specific legal review is required before production.
-
-## Production readiness
-Threat model, penetration test, authorization test, tenant-isolation test, API security test, upload security test, backup restore test, and incident-response exercise.
+## Security Program Roadmap
+MVP: threat model, secure SDLC, MFA, encryption, audit, backups.
+Pilot: penetration test, incident response drill, privacy review.
+Scale: independent security audit, formal control framework, vendor risk, model governance committee, regulator-ready evidence.

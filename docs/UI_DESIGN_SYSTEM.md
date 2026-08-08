@@ -1,81 +1,45 @@
-# Dival People — UI Design System
+# DIP — UI Design System
 
-## Direction
-Professional, enterprise-ready, modern, calm, accessible, bilingual, and trustworthy. The visual language may take inspiration from clean Microsoft-style enterprise presentation without copying proprietary assets.
+## Visual Direction
+Enterprise, Microsoft-inspired, calm, credible, information-dense without looking technical or experimental.
 
-## Brand
-- Foundation: Dival Intelligence Platform (DIP)
-- Product: Dival People
-- Editions: Financial Services, NGO, Telecom, Government, Healthcare, Enterprise
+## Brand Characteristics
+- White/light neutral surfaces
+- Deep navy for trust/security areas
+- Blue primary actions
+- Restrained teal/green for verified/positive states
+- Amber for review
+- Red only for serious warnings
+- Strong whitespace
+- Clear typography
+- Avoid excessive gradients, neon AI styling, or decorative dashboards
 
-## Colors
-Primary:
-- Blue `#0067B8`
-- Dark blue `#004578`
-- Navy `#0B1F3A`
+## Primary Application Navigation
+- Executive Dashboard
+- Universal Search
+- Businesses
+- Individuals
+- TIX
+- Portfolio Intelligence
+- Risk & Fraud
+- Data Imports
+- Reports
+- AI Analyst
+- Governance / Audit
+- Administration
 
-Supporting:
-- Teal `#008C95`
-- Green `#107C10`
-- Purple `#5C2D91`
-- Orange `#D83B01`
+## Risk Presentation
+Never display only a score.
+Always pair score/rating with:
+- level
+- reason codes
+- data recency
+- source count
+- identity confidence
+- model/version
+- review action
 
-Neutral:
-- Ink `#111827`
-- Secondary text `#5F6368`
-- Border `#E5E7EB`
-- Soft background `#F5F7FA`
-- White `#FFFFFF`
-
-Semantic:
-- Success `#107C10`
-- Warning `#FFB900`
-- Error `#C50F1F`
-- Information `#0067B8`
-
-## Typography
-Segoe UI or Inter with system fallbacks. Use large clear page titles, restrained headings, readable body text, and strong numerical emphasis.
-
-## Layout
-Application shell:
-- Left navigation
-- Top utility bar
-- Tenant/organization context
-- Language switcher
-- User menu
-- Main content area
-
-Dashboard:
-- Metric summary
-- Tasks
-- Alerts
-- Trends
-- Quick actions
-- Recent activity
-
-## Navigation
-Home, People, Recruitment, Onboarding, Time & Leave, Performance, Learning, Payroll, Financial Services, Fraud Intelligence, Reports, Administration.
-
-## Components
-Buttons, inputs, selects, date controls, tables, tabs, dialogs, drawers, cards, metric cards, badges, alerts, breadcrumbs, stepper, uploader, timeline, empty/loading/error states, charts, filters, pagination.
-
-## Tables
-Search, filter, sort, paginate, choose columns, export, bulk actions, and responsive fallback.
-
-## Forms
-Visible labels, required indicators, inline validation, save draft, destructive confirmation, keyboard support, localized dates/currencies.
-
-## Fraud UI
-Show alert type, severity, confidence, evidence, detection date, reviewer, status, and resolution. Display: “This is an indicator requiring review, not a finding of misconduct.”
-
-## Accessibility
-Target WCAG 2.2 AA: keyboard navigation, visible focus, contrast, semantic HTML, screen-reader labels, error announcements, reduced motion.
-
-## Bilingual design
-All screens are tested in English and French. Plan for French text expansion. Never hard-code user-facing text.
-
-## Responsive design
-Employee self-service is mobile-first. Administrative workflows support desktop, tablet, and mobile web.
-
-## Tone
-Direct, respectful, professional, non-accusatory, easy to translate, and free of unnecessary jargon.
+## Bilingual UX
+Language toggle visible in header.
+Layout must tolerate French labels that are longer than English.
+Do not use images containing embedded UI text.

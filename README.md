@@ -1,11 +1,20 @@
 # Dival Intelligence Platform (DIP)
 
-Monorepo for the Dival Intelligence Platform and the products built on it.
+Monorepo for the Dival Intelligence Platform: a bilingual, multi-tenant risk and identity
+intelligence platform for the DRC. Approved institutions contribute records, resolve identities,
+and consult risk intelligence about businesses and individuals while retaining ownership of their
+operational data.
 
-| Product | Status | Description |
+| Component | Status | Description |
 |---|---|---|
-| **Dival People** | In development | Bilingual, AI-enabled HR, workforce intelligence, employee financial services, and fraud prevention. |
-| **TIX** — Telecom Information Exchange | Module of Dival People | Customer risk and identity exchange for telecommunications operators: shared verified debt information, identity matching, and fraud detection. Delivered as part of the Telecom edition. |
+| **DIP** — the platform | In development | Tenants, authentication, roles, audit, EN/FR, files, notifications. Built, with tenant isolation proved by tests. |
+| **TIX** — Telecom Intelligence Exchange | First industry module | Operators declare defaults above a reporting threshold and query each other before extending post-paid service. Declaration, cross-operator inquiry, identity matching, rate limiting, retention and erasure are built. |
+| Ingestion, universal search, risk scoring, portfolio monitoring | Not built | See `docs/ROADMAP.md`, which opens with what actually exists. |
+| **Dival People** (HR) | Withdrawn | Built through payroll and self-service, then withdrawn when the project returned to its original scope. The screens are gone; the backend modules and migrations V5 and V8–V17 remain and still pass their tests. Tagged `pre-hr-removal`. |
+
+**Read `docs/ROADMAP.md` before planning anything.** The documentation describes a platform
+considerably larger than the code, deliberately, and the roadmap is the one place that says which
+is which.
 
 ## Repository layout
 
