@@ -179,11 +179,17 @@ class RowLevelSecurityTest extends AbstractIntegrationTest {
 
     private void insertDebtRecord(Connection connection, UUID tenantId, String status)
             throws SQLException {
+        // retention_until is NOT NULL as of V19. This test writes raw SQL on purpose — it is
+        // checking the row-level security policy itself, not the application's behaviour, so it
+        // deliberately bypasses every Java guard and therefore has to satisfy the schema by hand.
+        // Far in the future, so a purge running concurrently could never erase the rows this test
+        // is asserting about.
         try (PreparedStatement statement = connection.prepareStatement("""
                 INSERT INTO tix_debt_record
                     (tenant_id, subject_id, status, amount, currency, service_category,
-                     default_date, dunning_evidence)
-                VALUES (?, ?, ?, 100.00, 'USD', 'POSTPAID', CURRENT_DATE, TRUE)
+                     default_date, dunning_evidence, retention_until)
+                VALUES (?, ?, ?, 100.00, 'USD', 'POSTPAID', CURRENT_DATE, TRUE,
+                        CURRENT_DATE + INTERVAL '10 years')
                 """)) {
             statement.setObject(1, tenantId);
             statement.setObject(2, subjectId);
