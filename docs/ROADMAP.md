@@ -15,7 +15,9 @@ is, and TIX exists in a form that predates this design.
 | 1 | MFA | Not built — Keycloak supports it, it is not turned on |
 | 1 | Object storage | Filesystem locally; no S3-compatible store |
 | 1 | Observability | Structured logs with request ids; no metrics, traces or alerting |
-| 2 | XLSX/CSV upload, import batches, validation, raw immutable storage | **Not built.** This is the largest gap |
+| 2 | CSV upload, import batches, raw immutable storage, provenance | **Built.** XLSX is not; the parser is CSV only |
+| 2 | Source mappings, validation engine, normalisation, aging/balance mapping | **Not built** — waiting on the Vodacom sample, deliberately |
+| 2 | Import preview, rejection report, data-quality dashboard | Preview built (rows as stored); quality reporting not |
 | 3 | Deterministic entity resolution | **Built** for the write path (`SubjectResolver`), exact match only, refuses ambiguity |
 | 3 | Fuzzy matching with confidence | **Built** for the read path (`IdentityMatcher`) |
 | 3 | Merge / unmerge, human review queue | Not built |
@@ -27,18 +29,25 @@ is, and TIX exists in a form that predates this design.
 | 5 | Risk rating with reason codes and a model version | **Not built.** The score on the landing page is invented |
 | 6+ | Pilot, multi-operator production, banking, AI | Not started |
 
-### The gap that matters most
+### The gap that mattered most, and what is left of it
 
-**TIX as built has no provenance.** `tix_debt_record` is the origin of truth: an operator declares
-a debt through the API and nothing records which file, batch, or row it came from. This design
-requires the opposite — source organization → import batch → immutable raw record → canonical
-entity → exposure, with every displayed figure traceable to a source row (`DATABASE_DESIGN.md`,
-and rules 4 and 5 in `AGENTS.md`).
+**TIX had no provenance until V20.** `tix_debt_record` was the origin of truth: an operator
+declared through the API and nothing recorded which file, batch or row a figure came from. Rules 4
+and 5 in `AGENTS.md` were aspirations against the schema rather than descriptions of it.
 
-That is not a defect to patch. Phase 2 makes raw records the origin and turns today's debt record
-into something derived. The declaration API survives as one input among several, not as the only
-door. Anyone planning Phase 2 should read `TIX_MODULE.md` for what exists before designing what
-replaces it.
+Closed, in part. There is now `data_source` → `import_batch` → `raw_record`, rows are immutable by
+database rule and erasable by retention, and every debt record carries an `origin` that a check
+constraint ties to a source row — an `IMPORT` must name one, an `API_DECLARATION` must not pretend
+to have one. A file can be uploaded, inspected exactly as stored, published or withdrawn.
+
+**What remains is the mapping.** Nothing is derived from a batch yet: publishing a delivery
+creates no exposures, so a raw row and a debt record are still two unconnected worlds. Closing
+that means deciding which column is a balance, which is an identifier, and what an aging bucket
+looks like — and the roadmap is explicit that those come from a real export rather than a guess.
+Until the Vodacom sample arrives, `origin` is `API_DECLARATION` on every row in the system.
+
+Anyone picking this up should read `TIX_MODULE.md` for what exists before designing what replaces
+it.
 
 ### Superseded
 
