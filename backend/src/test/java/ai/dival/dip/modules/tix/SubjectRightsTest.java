@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.tix;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ai.dival.dip.AbstractIntegrationTest;
@@ -37,6 +38,10 @@ class SubjectRightsTest extends AbstractIntegrationTest {
     private DebtRecordRepository records;
     @Autowired
     private SubjectRightsService rights;
+    @Autowired
+    private RetentionPurge purge;
+    @Autowired
+    private SubjectRepository subjects;
 
     private UUID operatorA;
     private UUID operatorB;
@@ -278,6 +283,28 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         TenantContext.runAs(operatorB, () ->
                 assertThatThrownBy(() -> rights.verifyIdentity(ofA.getId(), "seen", STAFF))
                         .isInstanceOf(SubjectRightsService.RequestNotFoundException.class));
+    }
+
+    @Test
+    @DisplayName("erasing the last record erases the person, and their case with them")
+    void erasingSomebodyTakesTheirCaseToo() {
+        // The bug this test exists for was found by accident: SubjectRightsTest commits, so the
+        // subjects it erased were still present when RetentionPurgeTest ran, and five unrelated
+        // tests failed on a foreign key. In production the same fault is a nightly purge that
+        // fails for any tenant with a person who has both been erased and asked a question —
+        // which is to say, exactly the people the rights process exists for.
+        declareAs(operatorA, "500.00");
+        UUID recordId = recordsOf(operatorA).get(0).getId();
+        UUID subjectId = recordsOf(operatorA).get(0).getSubject().getId();
+        TenantContext.runAs(operatorA, () -> debtRecords.settle(recordId, null));
+
+        rights.decideErasure(verified(SubjectRequestType.ERASURE).getId(), STAFF);
+
+        assertThat(recordsOf(operatorA)).isEmpty();
+        assertThatCode(() -> purge.purgeAsOf(LocalDate.now()))
+                .as("a case on file must not make somebody impossible to erase")
+                .doesNotThrowAnyException();
+        assertThat(subjects.findById(subjectId)).isEmpty();
     }
 
     private List<DebtRecord> recordsOf(UUID operator) {
