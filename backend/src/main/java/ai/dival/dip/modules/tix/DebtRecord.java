@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.tix;
 
 import ai.dival.dip.common.tenancy.TenantOwnedEntity;
+import ai.dival.dip.modules.ingest.RecordOrigin;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +13,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * An obligation declared by one operator against a subject.
@@ -60,6 +62,30 @@ public class DebtRecord extends TenantOwnedEntity {
     @Column(name = "retention_until", nullable = false)
     private LocalDate retentionUntil;
 
+    /**
+     * How this record entered the platform.
+     *
+     * <p>NOT NULL, and V20's check constraint ties it to {@link #rawRecordId}: an IMPORT must name
+     * the row it came from and an API_DECLARATION must not pretend to have one. Modelling this as
+     * an origin rather than as a nullable foreign key is what stops "imported, source unknown"
+     * from existing as a silent third state — which is the state rule 5 exists to prevent.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin", nullable = false, updatable = false, length = 20)
+    private RecordOrigin origin;
+
+    /**
+     * The raw row this was derived from, when there is one.
+     *
+     * <p>A plain UUID rather than a {@code @ManyToOne} to the ingest module's entity. The foreign
+     * key is real and enforced by the database; what is avoided is a compile-time dependency from
+     * tix on ingest's persistence, which would make every schema change in one a change in the
+     * other. The architecture check forbids importing another module's repository, and the same
+     * reasoning applies a level down.
+     */
+    @Column(name = "raw_record_id", updatable = false)
+    private UUID rawRecordId;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
@@ -77,6 +103,25 @@ public class DebtRecord extends TenantOwnedEntity {
         this.dunningEvidence = dunningEvidence;
         this.status = DebtStatus.OUTSTANDING;
         this.updatedAt = Instant.now();
+        // Declared through the API unless something says otherwise. The alternative — leaving it
+        // null and setting it at the call site — would put a NOT NULL column one forgotten line
+        // away from a constraint violation at flush time.
+        this.origin = RecordOrigin.API_DECLARATION;
+    }
+
+    /**
+     * Marks this record as derived from an imported row.
+     *
+     * <p>Package-private and one-way: a record can be told where it came from while it is being
+     * built, and nothing can later claim an API declaration came from a file. Provenance that can
+     * be rewritten is not provenance.
+     */
+    void derivedFrom(UUID rawRecordId) {
+        if (rawRecordId == null) {
+            throw new IllegalArgumentException("An imported record must name the row it came from");
+        }
+        this.origin = RecordOrigin.IMPORT;
+        this.rawRecordId = rawRecordId;
     }
 
     /**
@@ -162,6 +207,14 @@ public class DebtRecord extends TenantOwnedEntity {
 
     public LocalDate getRetentionUntil() {
         return retentionUntil;
+    }
+
+    public RecordOrigin getOrigin() {
+        return origin;
+    }
+
+    public UUID getRawRecordId() {
+        return rawRecordId;
     }
 
     public Instant getUpdatedAt() {

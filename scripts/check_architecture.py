@@ -109,17 +109,38 @@ def check_no_cross_module_persistence() -> None:
 TABLE_ANNOTATION = re.compile(r'@Table\s*\(\s*name\s*=\s*"([^"]+)"')
 
 
+TENANT_COLUMN = re.compile(r'@Column\s*\(\s*name\s*=\s*"tenant_id"')
+
+
 def tenant_owned_tables() -> dict[str, Path]:
-    """Table names of entities extending TenantOwnedEntity."""
+    """
+    Table names of entities that belong to a tenant.
+
+    Two ways to qualify, and the second was added in August 2026 after three tenant-owned tables
+    were written that this rule did not cover. Extending TenantOwnedEntity was the only signal it
+    looked for, so an entity that declared its own tenant_id column — because it had no version
+    column, or used received_at rather than created_at — was invisible to the check that exists
+    precisely to catch a missing policy. The rule now asks what the entity *is* rather than what
+    it inherits from.
+    """
     tables: dict[str, Path] = {}
     for path in java_sources():
         source = path.read_text(encoding="utf-8")
-        if "extends TenantOwnedEntity" not in source:
+        # A @MappedSuperclass has no table of its own — TenantOwnedEntity declares the tenant_id
+        # column that every subclass inherits, and asking for its policy is asking about a table
+        # that does not exist.
+        if "@MappedSuperclass" in source:
+            continue
+        inherits = "extends TenantOwnedEntity" in source
+        declares = bool(TENANT_COLUMN.search(source))
+        if not (inherits or declares):
             continue
         match = TABLE_ANNOTATION.search(source)
         if not match:
+            reason = ("extends TenantOwnedEntity" if inherits
+                      else 'declares a "tenant_id" column')
             raise Failure(
-                f"{path.relative_to(REPO)} extends TenantOwnedEntity but declares no "
+                f"{path.relative_to(REPO)} {reason} but declares no "
                 '@Table(name = "..."), so its policy cannot be verified.')
         tables[match.group(1)] = path
     return tables
