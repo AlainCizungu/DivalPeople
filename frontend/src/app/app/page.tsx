@@ -115,6 +115,7 @@ export default function DashboardPage() {
               { href: "/app/tix/declare", label: t.actionDeclare },
               { href: "/app/tix", label: t.actionInquire },
               { href: "/app/tix/records", label: t.actionRecords },
+              { href: "/app/tix/portfolio", label: t.actionPortfolio },
             ].map((action) => (
               <Link
                 key={action.href}

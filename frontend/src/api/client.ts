@@ -186,6 +186,57 @@ export type DeclarationResult = {
   identifiersLearned: number;
 };
 
+/**
+ * Aging bands, mirroring the columns of the real telecom export.
+ *
+ * <p>Ordered as the server returns them. Do not sort this list in a component — the order is the
+ * age order, and alphabetising it would put DAYS_120 before DAYS_30.
+ */
+export type AgingBand =
+  | "NOT_DUE"
+  | "DAYS_30"
+  | "DAYS_60"
+  | "DAYS_90"
+  | "DAYS_120"
+  | "DAYS_150"
+  | "DAYS_180"
+  | "DAYS_270"
+  | "OVER_270";
+
+/**
+ * Money, per currency, always.
+ *
+ * <p>Amounts are strings because they are decimal totals: parsing them into a JavaScript number
+ * to add them up would reintroduce exactly the rounding the backend uses BigDecimal to avoid.
+ * Formatting for display is fine; arithmetic is not, and there is none in these screens.
+ */
+export type CurrencyExposure = {
+  currency: string;
+  outstanding: string;
+  outstandingCount: number;
+  contested: string;
+  contestedCount: number;
+  settled: string;
+  settledCount: number;
+};
+
+export type PortfolioBand = {
+  band: AgingBand;
+  count: number;
+  amounts: { currency: string; amount: string }[];
+};
+
+export type Portfolio = {
+  asOf: string;
+  recordCount: number;
+  importedRecords: number;
+  awaitingErasure: number;
+  exposure: CurrencyExposure[];
+  aging: PortfolioBand[];
+  byStatus: { status: DebtStatus; count: number }[];
+  byService: { label: string; count: number }[];
+};
+
 export type Edition =
   | "BANKING"
   | "NGO"
@@ -350,6 +401,11 @@ export const tixApi = {
 
   listDebtRecords(): Promise<DebtRecord[]> {
     return request<DebtRecord[]>("/api/v1/tix/debt-records");
+  },
+
+  /** The calling operator's own exposure. Aggregated server-side; there is no tenant parameter. */
+  portfolio(): Promise<Portfolio> {
+    return request<Portfolio>("/api/v1/tix/portfolio");
   },
 
   settle(id: string): Promise<DebtRecord> {

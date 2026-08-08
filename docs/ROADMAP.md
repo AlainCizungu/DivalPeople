@@ -25,7 +25,8 @@ is, and TIX exists in a form that predates this design.
 | 4 | Cross-operator inquiry returning status, never another operator's data | **Built**, rate-limited, audited with a stated purpose |
 | 4 | Declaration by an operator, with a reporting threshold | **Built** |
 | 4 | Retention, expiry and real erasure | **Built** — the periods are unverified placeholders, see `TIX_RETENTION.md` |
-| 4 | Aging buckets, write-off/recovery indicators, operator dashboards, reports | Not built |
+| 4 | Aging buckets and an operator exposure view | **Built.** Aged from the default date, per currency, own records only |
+| 4 | Write-off indicator, authorised reports, portfolio alerts | Not built — write-off is decision 2 in `TIX_SOURCE_PROFILE.md` |
 | 5 | Risk rating with reason codes and a model version | **Not built.** The score on the landing page is invented |
 | 6+ | Pilot, multi-operator production, banking, AI | Not started |
 
@@ -44,7 +45,13 @@ to have one. A file can be uploaded, inspected exactly as stored, published or w
 creates no exposures, so a raw row and a debt record are still two unconnected worlds. Closing
 that means deciding which column is a balance, which is an identifier, and what an aging bucket
 looks like — and the roadmap is explicit that those come from a real export rather than a guess.
-Until the Vodacom sample arrives, `origin` is `API_DECLARATION` on every row in the system.
+Until it is built, `origin` is `API_DECLARATION` on every row in the system.
+
+The aging vocabulary is now the one thing that crosses the gap in advance. `AgingBand` takes its
+edges from the columns of the profiled Vodacom export rather than from a generic 30/60/90, so a
+declared record and an imported one will land in the same bands when the mapping arrives. The
+exposure screen states the gap out loud — it shows how many of its records came from a file, and
+that figure is zero.
 
 Anyone picking this up should read `TIX_MODULE.md` for what exists before designing what replaces
 it.

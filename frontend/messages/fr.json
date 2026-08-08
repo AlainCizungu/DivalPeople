@@ -8,6 +8,7 @@
     "inquiries": "Interrogations",
     "declare": "Déclarer",
     "records": "Mes enregistrements",
+    "portfolio": "Encours",
     "tix": "TIX",
     "organization": "Organisation",
     "notifications": "Notifications",
@@ -40,7 +41,8 @@
     "actionsDescription": "Tout ce que l’échange permet aujourd’hui.",
     "actionDeclare": "Déclarer un défaut",
     "actionInquire": "Vérifier un client potentiel",
-    "actionRecords": "Consulter vos enregistrements"
+    "actionRecords": "Consulter vos enregistrements",
+    "actionPortfolio": "Voir vos encours par ancienneté"
   },
   "tix": {
     "title": "Vérifier une entreprise",
@@ -696,5 +698,44 @@
       "HEALTHCARE": "Santé",
       "ENTERPRISE": "Entreprise"
     }
+  },
+  "portfolio": {
+    "title": "Encours",
+    "subtitle": "Ce que votre organisation doit recouvrer, classé par ancienneté à partir de la date d’exigibilité. Calculé uniquement sur vos propres enregistrements — jamais sur ceux d’un autre opérateur.",
+    "asOf": "Au",
+    "records": "Enregistrements actifs",
+    "recordsNote": "Hors enregistrements ayant dépassé leur durée de conservation",
+    "awaitingErasure": "En attente d’effacement",
+    "awaitingErasureNote": "Durée de conservation dépassée, pas encore purgés. Ce chiffre devrait revenir à zéro chaque matin.",
+    "exposureTitle": "Encours par devise",
+    "exposureDescription": "Jamais additionnés en un total unique. Ajouter 500 USD à 500 CDF produit un nombre qui ne représente rien, et qui paraît parfaitement normal sur un tableau de bord.",
+    "colCurrency": "Devise",
+    "colOutstanding": "En souffrance",
+    "colContested": "Contesté",
+    "colSettled": "Recouvré",
+    "agingTitle": "Ancienneté",
+    "agingDescription": "Mesurée à partir de la date d’exigibilité, non de la date de déclaration. Les créances réglées n’y figurent pas — sinon un portefeuille paraîtrait d’autant plus ancien qu’il aurait été recouvré.",
+    "agingFootnote": "Les tranches reprennent les colonnes des exports télécoms que nous recevons. La limite au-delà de 270 jours est la nôtre : les fichiers source intitulent leur dernière colonne « 360 + » sans rien entre les deux, et personne n’a confirmé auprès de l’opérateur où se range une créance de 300 jours.",
+    "bands": {
+      "NOT_DUE": "Pas encore échu",
+      "DAYS_30": "0–30 jours",
+      "DAYS_60": "31–60 jours",
+      "DAYS_90": "61–90 jours",
+      "DAYS_120": "91–120 jours",
+      "DAYS_150": "121–150 jours",
+      "DAYS_180": "151–180 jours",
+      "DAYS_270": "181–270 jours",
+      "OVER_270": "Plus de 270 jours"
+    },
+    "statusTitle": "Par statut",
+    "statusDescription": "Les enregistrements contestés ou sous enquête sont retirés des interrogations des autres opérateurs, mais ils restent des sommes qui vous sont dues.",
+    "serviceTitle": "Par service",
+    "serviceDescription": "Tel que soumis par l’opérateur déclarant.",
+    "provenanceTitle": "Origine de ces enregistrements",
+    "provenanceDeclared": "Déclarés via l’API ou cette application",
+    "provenanceImported": "Issus d’un fichier importé",
+    "provenanceNote": "Publier un lot d’import ne crée pas encore d’enregistrements. Tant que la correspondance des colonnes n’est pas construite, un fichier déposé est conservé et traçable mais ne compte pas dans les chiffres ci-dessus.",
+    "empty": "Votre organisation n’a encore rien déclaré : il n’y a donc rien à classer.",
+    "noAccess": "Votre compte peut interroger l’échange mais pas déclarer d’enregistrements ; il n’y a donc pas d’encours à afficher."
   }
 }

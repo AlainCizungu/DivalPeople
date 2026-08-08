@@ -8,6 +8,7 @@
     "inquiries": "Inquiries",
     "declare": "Declare",
     "records": "My records",
+    "portfolio": "Exposure",
     "tix": "TIX",
     "organization": "Organization",
     "notifications": "Notifications",
@@ -40,7 +41,8 @@
     "actionsDescription": "Everything the exchange currently supports.",
     "actionDeclare": "Declare a default",
     "actionInquire": "Check a prospective customer",
-    "actionRecords": "Review your records"
+    "actionRecords": "Review your records",
+    "actionPortfolio": "See what you are owed, aged"
   },
   "tix": {
     "title": "Check a business",
@@ -696,5 +698,44 @@
       "HEALTHCARE": "Healthcare",
       "ENTERPRISE": "Enterprise"
     }
+  },
+  "portfolio": {
+    "title": "Exposure",
+    "subtitle": "What your organisation is owed, aged from the date each obligation fell due. Counted from your own records only — never another operator's.",
+    "asOf": "As at",
+    "records": "Live records",
+    "recordsNote": "Excludes anything past its retention date",
+    "awaitingErasure": "Awaiting erasure",
+    "awaitingErasureNote": "Past retention and not yet purged. This should be back to zero every morning.",
+    "exposureTitle": "Exposure by currency",
+    "exposureDescription": "Never combined into one total. Adding 500 USD to 500 CDF gives a number that is not of anything, and it looks entirely normal on a dashboard.",
+    "colCurrency": "Currency",
+    "colOutstanding": "Outstanding",
+    "colContested": "Contested",
+    "colSettled": "Recovered",
+    "agingTitle": "Aging",
+    "agingDescription": "Measured from the date the obligation fell due, not the date it was reported. Settled debts are not aged — otherwise a portfolio would look older the more of it you had recovered.",
+    "agingFootnote": "The bands match the columns of the telecom exports we receive. The boundary above 270 days is ours: the source files label their last column “360 +” with nothing between, so where a 300-day debt belongs has not been confirmed with the operator.",
+    "bands": {
+      "NOT_DUE": "Not yet due",
+      "DAYS_30": "0–30 days",
+      "DAYS_60": "31–60 days",
+      "DAYS_90": "61–90 days",
+      "DAYS_120": "91–120 days",
+      "DAYS_150": "121–150 days",
+      "DAYS_180": "151–180 days",
+      "DAYS_270": "181–270 days",
+      "OVER_270": "Over 270 days"
+    },
+    "statusTitle": "By status",
+    "statusDescription": "Disputed and investigated records are withheld from other operators, but they are still money you are owed.",
+    "serviceTitle": "By service",
+    "serviceDescription": "As submitted by whoever declared the record.",
+    "provenanceTitle": "Where these records came from",
+    "provenanceDeclared": "Declared through the API or this application",
+    "provenanceImported": "Derived from an imported file",
+    "provenanceNote": "Publishing an import batch does not create records yet. Until the column mapping is built, an uploaded file is stored and traceable but contributes nothing to the figures above.",
+    "empty": "Your organisation has not declared anything yet, so there is nothing to age.",
+    "noAccess": "Your account can make inquiries but not declare records, so there is no portfolio to show."
   }
 }

@@ -3,6 +3,7 @@ package ai.dival.dip.modules.tix;
 import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -26,13 +27,16 @@ public class TixController {
 
     private final ExchangeService exchange;
     private final DebtRecordService debtRecords;
+    private final PortfolioService portfolio;
     private final SubjectRightsService rights;
     private final CurrentUserService currentUser;
 
     public TixController(ExchangeService exchange, DebtRecordService debtRecords,
-                         SubjectRightsService rights, CurrentUserService currentUser) {
+                         PortfolioService portfolio, SubjectRightsService rights,
+                         CurrentUserService currentUser) {
         this.exchange = exchange;
         this.debtRecords = debtRecords;
+        this.portfolio = portfolio;
         this.rights = rights;
         this.currentUser = currentUser;
     }
@@ -70,6 +74,23 @@ public class TixController {
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
     public List<DebtRecordResponse> listOwnDebtRecords() {
         return debtRecords.listOwn().stream().map(DebtRecordResponse::from).toList();
+    }
+
+    /**
+     * The calling operator's own exposure, aged.
+     *
+     * <p>Guarded by the declarant role rather than the inquirer role, and the distinction is the
+     * point: this is an operator reading its own books, not a question about somebody else. An
+     * account that may only make inquiries has no portfolio to see.
+     *
+     * <p>Today's date is taken here and passed down, so that one request produces one consistent
+     * picture. A service reading the clock per record could put two debts declared the same day
+     * into different aging bands if the request happened to span midnight.
+     */
+    @GetMapping("/portfolio")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public PortfolioService.Summary portfolio() {
+        return portfolio.summarise(LocalDate.now());
     }
 
     @PostMapping("/debt-records/{id}/settle")

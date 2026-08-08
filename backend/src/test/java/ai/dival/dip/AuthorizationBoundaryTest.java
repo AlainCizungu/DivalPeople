@@ -20,6 +20,7 @@ import ai.dival.dip.modules.recruitment.InterviewRecommendation;
 import ai.dival.dip.modules.recruitment.RecruitmentController;
 import ai.dival.dip.modules.tenants.Tenant;
 import ai.dival.dip.modules.tenants.TenantRepository;
+import ai.dival.dip.modules.tix.TixController;
 import ai.dival.dip.modules.users.CurrentUserService;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -79,6 +80,8 @@ class AuthorizationBoundaryTest extends AbstractIntegrationTest {
     private EmployeeController employeeController;
     @Autowired
     private RecruitmentController recruitmentController;
+    @Autowired
+    private TixController tixController;
 
     private Employee celestine;
     private Employee colleague;
@@ -254,6 +257,30 @@ class AuthorizationBoundaryTest extends AbstractIntegrationTest {
                 new RecruitmentController.FeedbackRequest(
                         InterviewRecommendation.STRONG_YES, 5, "Excellent throughout")))
                 .isInstanceOfAny(AccessRefusedException.class, RuntimeException.class);
+    }
+
+    // --- the exchange ------------------------------------------------------
+
+    @Test
+    @DisplayName("an account that may only enquire cannot read an operator's whole book")
+    void inquirerCannotReadThePortfolio() {
+        // The portfolio is the largest single disclosure in TIX: one operator's total exposure,
+        // aged, by currency. Everything else the exchange returns is a status about one subject.
+        // An inquirer role that reached it would turn a lookup service into a balance sheet.
+        signInAs("inquirer-" + UUID.randomUUID(), "Joseph Mbala", "TIX_INQUIRER");
+        assertThatThrownBy(() -> tixController.portfolio())
+                .isInstanceOf(AccessDeniedException.class);
+
+        // Nor the operator's own record list, for the same reason.
+        assertThatThrownBy(() -> tixController.listOwnDebtRecords())
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("a declarant can read its own book, or the guard refuses everybody")
+    void declarantCanReadThePortfolio() {
+        signInAs("declarant-" + UUID.randomUUID(), "Grâce Ilunga", "TIX_DECLARANT");
+        assertThatCode(() -> tixController.portfolio()).doesNotThrowAnyException();
     }
 
     // --- and the reason none of this is a boundary if it refuses everyone ---

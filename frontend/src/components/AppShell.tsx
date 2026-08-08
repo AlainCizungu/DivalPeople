@@ -57,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/app/tix", label: messages.nav.inquiries, badge: 0 },
     { href: "/app/tix/declare", label: messages.nav.declare, badge: 0 },
     { href: "/app/tix/records", label: messages.nav.records, badge: 0 },
+    { href: "/app/tix/portfolio", label: messages.nav.portfolio, badge: 0 },
     { href: "/app/imports", label: messages.nav.imports, badge: 0 },
     // Platform administration. Hidden rather than shown-and-refused, because a menu item
     // that always 403s teaches people to ignore refusals.
