@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Dival People",
+    "name": "Dival Intelligence",
     "platform": "Dival Intelligence Platform"
   },
   "nav": {
@@ -558,7 +558,7 @@
           "title": "Dival AI",
           "links": [
             "Company",
-            "Dival People",
+            "Careers",
             "Insights",
             "Contact"
           ]

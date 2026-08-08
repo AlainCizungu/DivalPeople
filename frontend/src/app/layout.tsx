@@ -3,9 +3,10 @@ import { Providers } from "@/app/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dival People",
+  title: "Dival Intelligence",
   description:
-    "Bilingual HR, workforce intelligence, and fraud prevention on the Dival Intelligence Platform.",
+    "Bilingual risk and identity intelligence for the DRC. Dival Intelligence Platform (DIP) "
+    + "and the Telecom Intelligence Exchange (TIX).",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
