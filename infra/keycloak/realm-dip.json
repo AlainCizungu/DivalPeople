@@ -107,7 +107,8 @@
         "TIX_INQUIRER",
         "TIX_DECLARANT",
         "TENANT_ADMIN",
-        "EMPLOYEE"
+        "EMPLOYEE",
+        "COMPLIANCE_OFFICER"
       ]
     },
     {

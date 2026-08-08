@@ -86,6 +86,15 @@ public class DebtRecord extends TenantOwnedEntity {
     @Column(name = "raw_record_id", updatable = false)
     private UUID rawRecordId;
 
+    /**
+     * The rights case currently suppressing this record, if any.
+     *
+     * <p>Recorded so that closing a case lifts the suppression it caused and nothing else, and so
+     * that an auditor asking "why is this record invisible" gets an answer rather than a status.
+     */
+    @Column(name = "suppressed_by_request_id")
+    private UUID suppressedByRequestId;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
@@ -163,6 +172,33 @@ public class DebtRecord extends TenantOwnedEntity {
         this.updatedAt = Instant.now();
     }
 
+    /**
+     * Suppresses this record because the person it describes is contesting it.
+     *
+     * <p>Deliberately available while a case is merely open, before it has been decided. Somebody
+     * who says "that is not my debt" should stop being reported to other operators while the
+     * claim is examined, not after — the harm of being wrongly listed accrues daily, and the
+     * alternative is a person losing a contract during the weeks their case is considered.
+     */
+    void suppressFor(UUID requestId) {
+        this.suppressedByRequestId = requestId;
+        this.status = DebtStatus.DISPUTED;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
+     * Restores a record once the case that suppressed it closes.
+     *
+     * <p>Returns to SETTLED if it was settled and OUTSTANDING otherwise, derived from
+     * {@code settledAt} rather than remembered — a "previous status" column would be one more
+     * thing that can disagree with the facts.
+     */
+    void liftSuppression() {
+        this.suppressedByRequestId = null;
+        this.status = settledAt == null ? DebtStatus.OUTSTANDING : DebtStatus.SETTLED;
+        this.updatedAt = Instant.now();
+    }
+
     public void flagForInvestigation() {
         this.status = DebtStatus.UNDER_INVESTIGATION;
         this.updatedAt = Instant.now();
@@ -215,6 +251,10 @@ public class DebtRecord extends TenantOwnedEntity {
 
     public UUID getRawRecordId() {
         return rawRecordId;
+    }
+
+    public UUID getSuppressedByRequestId() {
+        return suppressedByRequestId;
     }
 
     public Instant getUpdatedAt() {

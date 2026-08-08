@@ -102,6 +102,21 @@ public class SubjectResolver {
     }
 
     /**
+     * Finds an existing subject without creating one.
+     *
+     * <p>Separate from {@link #resolve} because the difference matters: resolving is what a
+     * declaration does, and creating a person who was not in the registry is a legitimate part of
+     * that. Looking somebody up because they have come forward to ask about themselves must never
+     * put them in the registry as a side effect of asking.
+     */
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    public Optional<Subject> locate(IdentifierType type, String value) {
+        return identifiers
+                .findByIdentifierTypeAndNormalizedValue(type, SubjectIdentifier.normalizeValue(value))
+                .map(SubjectIdentifier::getSubject);
+    }
+
+    /**
      * @param subject            the person the declaration is about
      * @param created            true when the exchange had never seen them before
      * @param identifiersLearned how many documents were new to the exchange

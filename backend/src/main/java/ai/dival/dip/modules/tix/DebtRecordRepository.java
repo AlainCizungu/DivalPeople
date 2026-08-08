@@ -20,6 +20,12 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
 
     Optional<DebtRecord> findByIdAndTenantId(UUID id, UUID tenantId);
 
+    /** This operator's records about one subject, whatever their status. */
+    List<DebtRecord> findByTenantIdAndSubjectIdOrderByDefaultDateDesc(UUID tenantId, UUID subjectId);
+
+    /** Records this operator suppressed for a given rights case, so closing it lifts exactly those. */
+    List<DebtRecord> findByTenantIdAndSuppressedByRequestId(UUID tenantId, UUID requestId);
+
     /**
      * Exchange query: records held by <em>any</em> operator for a subject.
      *

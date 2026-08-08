@@ -49,9 +49,18 @@ for exactly this analysis under *faisabilité juridique et réglementaire*.
 3. **The lawful basis.** The TDR asks for identification of the legal basis and the mechanism
    (inter-operator contracts, a sharing agreement). The retention periods follow from the basis;
    choosing periods first is backwards, and this codebase has done it in that order.
-4. **What a subject can demand.** Access, rectification and erasure are required by the TDR and are
-   **not built** — see the module's open work. Retention answers "how long by default"; it does not
-   answer "what if the person asks tomorrow".
+4. **What a subject can demand.** Built in V21, as a case: somebody comes forward, a member of
+   staff records how their identity was checked, and a decision is made with written grounds.
+   Access returns their whole file across every operator. Dispute and rectification suppress the
+   affected records immediately, before the case is decided, because the harm of being wrongly
+   listed accrues daily.
+
+   **Erasure is granted for settled records and refused for outstanding ones**, and that rule is a
+   decision rather than a reading of the law. An unconditional erasure right would let anybody
+   delete their own debts, so no operator would contribute and the right would defeat the registry
+   it attaches to. Once a debt is regularised the operator has no remaining interest in reporting
+   it. Whether the Code du numérique permits this balance is exactly the question in item 1, and it
+   is still unanswered.
 5. **The CDF threshold**, which is a related gap: the reporting threshold is configured for USD
    only and a currency with no configured floor is refused. Setting CDF means owning a USD/CDF
    rate. See `TixProperties`.
