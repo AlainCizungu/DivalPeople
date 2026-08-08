@@ -4,6 +4,7 @@ import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.common.web.RequestIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -71,6 +72,29 @@ public class AuditService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordSuccess(String action, String resourceType, String resourceId, UUID actorId) {
         record(action, resourceType, resourceId, OUTCOME_SUCCESS, actorId);
+    }
+
+    /**
+     * Who, in the current tenant, was successfully served this resource since a moment.
+     *
+     * <p>The audit trail's first read path, and it exists because of an obligation rather than a
+     * feature request: article 214 of the Code du numérique requires that a rectification or an
+     * erasure be communicated to the parties the incorrect data was communicated to, and nothing
+     * else in the platform remembers who those were.
+     *
+     * <p>That makes the trail load-bearing in a new way. Until now it was evidence — written, kept,
+     * and read only when somebody asked a question. From here a gap in it is a person who does not
+     * get told that the record they refused credit on was wrong.
+     *
+     * <p><strong>Not {@code REQUIRES_NEW}</strong>, unlike every write above. Those suspend the
+     * caller's transaction so that a rolled-back operation still leaves its audit row; a read has
+     * no such need and joins the caller instead, so it sees the tenant the caller has bound.
+     */
+    @Transactional(readOnly = true)
+    public List<UUID> actorsServed(String action, String resourceType, String resourceId,
+                                   Instant since) {
+        return repository.findDistinctActors(TenantContext.require(), action, resourceType,
+                resourceId, OUTCOME_SUCCESS, since);
     }
 
     /** Null outside a request — scheduled work and seeders audit legitimately, with no caller. */

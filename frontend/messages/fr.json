@@ -688,7 +688,8 @@
       "reviewBothSubmitted": "Les deux évaluations sont soumises pour {employee} ({cycle})",
       "reviewShared": "Votre évaluation {cycle} vous a été partagée",
       "reviewDisputed": "{employee} conteste son évaluation {cycle}",
-      "certificationExpiring": "{course} de {employee} expire dans {days} jour(s)"
+      "certificationExpiring": "{course} de {employee} expire dans {days} jour(s)",
+      "tixInquiryResultSuperseded": "Un enregistrement qui vous a été communiqué a été corrigé ou retiré. Vérifiez à nouveau le sujet {subject} avant de vous fier à la réponse précédente."
     }
   },
   "imports": {

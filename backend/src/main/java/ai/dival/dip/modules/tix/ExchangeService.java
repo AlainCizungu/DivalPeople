@@ -75,6 +75,17 @@ public class ExchangeService {
      * Resolves the submitted identifiers to a subject and reports the statuses held against it.
      */
     @Transactional(readOnly = true)
+    /**
+     * The audit action every inquiry is recorded under.
+     *
+     * <p>A constant rather than a literal because it is now a join key. Article 214 of the Code du
+     * numérique requires that a correction reach whoever was told the incorrect thing, and
+     * {@link SubjectRightsService} finds those people by looking for audit rows carrying this
+     * action. Two spellings of the same string in two files would not fail a build, would not fail
+     * a test that only checks writing, and would silently mean nobody is ever notified.
+     */
+    static final String INQUIRY_ACTION = "TIX_INQUIRY";
+
     public InquiryResult inquire(InquiryRequest request, UUID actorId) {
         UUID tenantId = TenantContext.require();
 
@@ -84,7 +95,7 @@ public class ExchangeService {
         try {
             rateLimiter.charge(tenantId);
         } catch (RateLimitExceededException refused) {
-            audit.record("TIX_INQUIRY", "Subject", null, AuditService.OUTCOME_DENIED, actorId,
+            audit.record(INQUIRY_ACTION, "Subject", null, AuditService.OUTCOME_DENIED, actorId,
                     request.purpose());
             throw refused;
         }
@@ -94,7 +105,7 @@ public class ExchangeService {
             // The purpose is recorded even when nothing matched. A sweep looking for which
             // identifiers exist is exactly the pattern an auditor needs to see, and it produces
             // nothing but no-matches.
-            audit.record("TIX_INQUIRY", "Subject", null, AuditService.OUTCOME_SUCCESS, actorId,
+            audit.record(INQUIRY_ACTION, "Subject", null, AuditService.OUTCOME_SUCCESS, actorId,
                     request.purpose());
             return InquiryResult.noMatch();
         }
@@ -104,7 +115,7 @@ public class ExchangeService {
         // identifier *submitted* let a caller add an invented passport number to a real phone
         // number and have a weak match treated as a strong one.
         double confidence = matcher.confidence(subject, request, match.get().identifier());
-        audit.record("TIX_INQUIRY", "Subject", subject.getId().toString(),
+        audit.record(INQUIRY_ACTION, "Subject", subject.getId().toString(),
                 AuditService.OUTCOME_SUCCESS, actorId, request.purpose());
 
         if (confidence < AUTOMATIC_MATCH_THRESHOLD) {

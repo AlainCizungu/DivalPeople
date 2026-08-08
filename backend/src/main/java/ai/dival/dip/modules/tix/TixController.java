@@ -245,6 +245,8 @@ public class TixController {
             SubjectRequestStatus status,
             String detail,
             java.time.Instant raisedAt,
+            java.time.Instant dueAt,
+            boolean overdue,
             java.time.Instant identityVerifiedAt,
             java.time.Instant decidedAt,
             String decisionReason) {
@@ -256,6 +258,12 @@ public class TixController {
                     request.getStatus(),
                     request.getDetail(),
                     request.getRaisedAt(),
+                    request.getDueAt(),
+                    // Computed here rather than left to the client. Whether a case has run out of
+                    // time is a fact about a statutory deadline, and two clients disagreeing about
+                    // it because one of them is in a different timezone is not a rendering
+                    // difference.
+                    request.isOverdueAsOf(java.time.Instant.now()),
                     request.getIdentityVerifiedAt(),
                     request.getDecidedAt(),
                     request.getDecisionReason());

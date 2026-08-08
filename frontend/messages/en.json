@@ -688,7 +688,8 @@
       "reviewBothSubmitted": "Both assessments are in for {employee} in {cycle}",
       "reviewShared": "Your {cycle} review has been shared with you",
       "reviewDisputed": "{employee} has disputed their {cycle} review",
-      "certificationExpiring": "{employee}'s {course} expires in {days} day(s)"
+      "certificationExpiring": "{employee}'s {course} expires in {days} day(s)",
+      "tixInquiryResultSuperseded": "A record you were told about has been corrected or withdrawn. Check subject {subject} again before relying on the earlier answer."
     }
   },
   "imports": {

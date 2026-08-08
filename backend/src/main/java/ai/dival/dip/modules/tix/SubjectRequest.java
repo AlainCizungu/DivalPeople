@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /**
@@ -59,6 +60,17 @@ public class SubjectRequest {
     @Column(name = "raised_at", nullable = false, updatable = false)
     private Instant raisedAt;
 
+    /**
+     * When the answer is due, from {@link SubjectRequestType#answerWithinDays()}.
+     *
+     * <p>{@code updatable = false}, and V23 checks it is after {@code raised_at}. A deadline that
+     * could be moved would not be one — and the period stored is the period that applied when the
+     * case was opened, so a later change to the law cannot reach back and quietly re-date cases
+     * already in the queue.
+     */
+    @Column(name = "due_at", nullable = false, updatable = false)
+    private Instant dueAt;
+
     @Column(name = "identity_verified_by")
     private UUID identityVerifiedBy;
 
@@ -94,6 +106,22 @@ public class SubjectRequest {
         this.raisedBy = raisedBy;
         this.status = SubjectRequestStatus.RECEIVED;
         this.raisedAt = Instant.now();
+        this.dueAt = this.raisedAt.plus(requestType.answerWithinDays(), ChronoUnit.DAYS);
+    }
+
+    /**
+     * Whether the statutory period has run out with the case still open.
+     *
+     * <p>A decided case is never overdue, however late the decision was — the obligation is to
+     * answer, and it has been answered. Whether it was answered *on time* is a question for the
+     * audit trail, which records when the decision was taken.
+     *
+     * <p>The instant is passed in rather than read from a clock, for the same reason
+     * {@code DebtRecord.isExpiredAsOf} takes one: a test can then ask what the queue looks like in
+     * ninety days without waiting or mocking statics.
+     */
+    public boolean isOverdueAsOf(Instant now) {
+        return isOpen() && now.isAfter(dueAt);
     }
 
     /**
@@ -208,6 +236,10 @@ public class SubjectRequest {
 
     public Instant getRaisedAt() {
         return raisedAt;
+    }
+
+    public Instant getDueAt() {
+        return dueAt;
     }
 
     public UUID getIdentityVerifiedBy() {
