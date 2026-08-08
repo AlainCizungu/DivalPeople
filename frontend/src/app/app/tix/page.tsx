@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import {
   ApiError,
@@ -10,32 +9,48 @@ import {
   type InquiryOutcome,
   type InquiryResult,
 } from "@/api/client";
+import {
+  Button,
+  Card,
+  ErrorNotice,
+  Field,
+  PageHeader,
+  Pill,
+  inputClass,
+  type Tone,
+} from "@/components/ui";
 
-const IDENTIFIER_TYPES: IdentifierType[] = [
-  "NATIONAL_ID",
-  "MSISDN",
-  "PASSPORT",
-  "DRIVER_LICENSE",
-  "VOTER_CARD",
-  "RCCM",
-  "TAX_NUMBER",
-];
+/**
+ * Check a business before extending credit.
+ *
+ * <p>Business-shaped, which the first version was not: it led with a national ID, and the real
+ * data is keyed on a business register number or an operator account reference. A credit officer
+ * assessing a company has the RCCM in front of them, not the director's identity card.
+ *
+ * <p><strong>The illustrative panel is a mock and says so, loudly.</strong> Nothing behind it is
+ * computed — there is no risk model in this system, and DIP has no score to give. It is here
+ * because a screen has to be shown to banks and regulators before the scoring exists, and
+ * showing a real outcome next to a clearly-marked sketch of the intended one is more honest than
+ * a slide deck. It is separated by a heavy border and a warning, not a subtle tag, because the
+ * failure mode is somebody screenshotting a plausible number and circulating it as output.
+ */
 
-const OUTCOME_STYLES: Record<InquiryOutcome, string> = {
-  NO_MATCH: "border-line bg-soft",
-  CLEAR: "border-green/40 bg-green/10",
-  OUTSTANDING_DEBT: "border-error/40 bg-error/10",
-  REVIEW_REQUIRED: "border-warning/50 bg-warning/10",
+const BUSINESS_IDENTIFIERS: IdentifierType[] = ["RCCM", "TAX_NUMBER", "NATIONAL_ID", "MSISDN"];
+
+const OUTCOME_TONE: Record<InquiryOutcome, Tone> = {
+  NO_MATCH: "neutral",
+  CLEAR: "positive",
+  OUTSTANDING_DEBT: "serious",
+  REVIEW_REQUIRED: "review",
 };
 
-export default function TixPage() {
+export default function CreditCheckPage() {
   const messages = useMessages();
-  const { status } = useSession();
+  const t = messages.tix;
 
-  const [identifierType, setIdentifierType] =
-    useState<IdentifierType>("NATIONAL_ID");
+  const [identifierType, setIdentifierType] = useState<IdentifierType>("RCCM");
   const [identifier, setIdentifier] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [legalName, setLegalName] = useState("");
   const [purpose, setPurpose] = useState("");
 
   const [result, setResult] = useState<InquiryResult | null>(null);
@@ -47,189 +62,189 @@ export default function TixPage() {
     setSubmitting(true);
     setError(null);
     setResult(null);
-
-    const ready = status === "authenticated";
-    if (!ready) {
-      setError(messages.auth.sessionExpired);
-      setSubmitting(false);
-      return;
-    }
-
     try {
-      const response = await tixApi.inquire({
-        identifiers: [{ type: identifierType, value: identifier }],
-        fullName: fullName || undefined,
-        purpose,
-      });
-      setResult(response);
+      setResult(
+        await tixApi.inquire({
+          identifiers: [{ type: identifierType, value: identifier.trim() }],
+          fullName: legalName.trim() || undefined,
+          purpose: purpose.trim(),
+        }),
+      );
     } catch (caught) {
-      if (caught instanceof ApiError) {
-        // A 403 here means the signed-in user lacks TIX_INQUIRER, which is a different
-        // problem from a malformed request and deserves a different message.
-        setError(
-          caught.status === 403 ? messages.tix.forbidden : caught.message,
-        );
-      } else {
-        setError(messages.tix.networkError);
-      }
+      // A 403 means the account lacks TIX_INQUIRER, which is a different problem from a bad
+      // request and deserves its own sentence.
+      setError(
+        caught instanceof ApiError
+          ? caught.status === 403
+            ? t.forbidden
+            : caught.message
+          : t.networkError,
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-navy">
-          {messages.tix.title}
-        </h1>
-        <p className="mt-1 text-muted">{messages.tix.subtitle}</p>
-      </header>
+    <div className="mx-auto max-w-4xl">
+      <PageHeader title={t.title} subtitle={t.subtitle} />
 
-      <form
-        onSubmit={onSubmit}
-        className="space-y-4 rounded-lg border border-line bg-white p-6"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="identifierType"
-              className="mb-1 block text-sm font-semibold text-ink"
-            >
-              {messages.tix.identifierType}
-            </label>
-            <select
-              id="identifierType"
-              value={identifierType}
-              onChange={(event) =>
-                setIdentifierType(event.target.value as IdentifierType)
-              }
-              className="w-full rounded border border-line px-3 py-2 text-sm"
-            >
-              {IDENTIFIER_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
+      <Card title={t.checkTitle} description={t.checkDescription}>
+        <form onSubmit={onSubmit} className="flex flex-col gap-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label={t.identifierType} htmlFor="identifierType" hint={t.identifierTypeHint}>
+              <select
+                id="identifierType"
+                className={inputClass}
+                value={identifierType}
+                onChange={(e) => setIdentifierType(e.target.value as IdentifierType)}
+              >
+                {BUSINESS_IDENTIFIERS.map((type) => (
+                  <option key={type} value={type}>
+                    {t.identifierTypes[type]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label={t.identifier} htmlFor="identifier">
+              <input
+                id="identifier"
+                className={inputClass}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+              />
+            </Field>
+
+            <Field label={t.legalName} htmlFor="legalName" hint={t.legalNameHint}>
+              <input
+                id="legalName"
+                className={inputClass}
+                value={legalName}
+                onChange={(e) => setLegalName(e.target.value)}
+              />
+            </Field>
+
+            <Field label={t.purpose} htmlFor="purpose" hint={t.purposeHint}>
+              <input
+                id="purpose"
+                className={inputClass}
+                value={purpose}
+                onChange={(e) => setPurpose(e.target.value)}
+                required
+              />
+            </Field>
           </div>
 
+          {error && <ErrorNotice>{error}</ErrorNotice>}
+
           <div>
-            <label
-              htmlFor="identifier"
-              className="mb-1 block text-sm font-semibold text-ink"
-            >
-              {messages.tix.identifier} <span className="text-error">*</span>
-            </label>
-            <input
-              id="identifier"
-              required
-              value={identifier}
-              onChange={(event) => setIdentifier(event.target.value)}
-              className="w-full rounded border border-line px-3 py-2 text-sm"
-            />
+            <Button type="submit" disabled={submitting || purpose.trim() === ""}>
+              {submitting ? messages.common.loading : t.submit}
+            </Button>
           </div>
-        </div>
-
-        <div>
-          <label
-            htmlFor="fullName"
-            className="mb-1 block text-sm font-semibold text-ink"
-          >
-            {messages.tix.fullName}
-          </label>
-          <input
-            id="fullName"
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
-            className="w-full rounded border border-line px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="purpose"
-            className="mb-1 block text-sm font-semibold text-ink"
-          >
-            {messages.tix.purpose} <span className="text-error">*</span>
-          </label>
-          <input
-            id="purpose"
-            required
-            value={purpose}
-            onChange={(event) => setPurpose(event.target.value)}
-            placeholder="ONBOARDING_CHECK"
-            className="w-full rounded border border-line px-3 py-2 text-sm"
-          />
-          <p className="mt-1 text-xs text-muted">{messages.tix.purposeHint}</p>
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded bg-blue px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-dark disabled:opacity-50"
-        >
-          {submitting ? messages.common.loading : messages.tix.submit}
-        </button>
-      </form>
-
-      {error && (
-        <div
-          role="alert"
-          className="mt-5 rounded-lg border border-error/40 bg-error/10 p-5"
-        >
-          <p className="font-bold text-error">{messages.tix.inquiryFailed}</p>
-          <p className="mt-1 text-sm text-ink">{error}</p>
-        </div>
-      )}
+        </form>
+      </Card>
 
       {result && (
-        <div
-          role="status"
-          className={`mt-5 rounded-lg border p-5 ${OUTCOME_STYLES[result.outcome]}`}
-        >
-          {/* The outcome is the whole answer. There used to be a confidence percentage beside
-              it, and it was a fine-grained function of how the submitted name compared to the
-              stored one — a caller could guess one name at a time and read the answer off the
-              number. The exchange decides; it does not show its working. */}
-          <p className="text-lg font-bold text-navy">
-            {messages.tix.outcome[result.outcome]}
-          </p>
+        <div className="mt-6 flex flex-col gap-6">
+          <Card title={t.resultTitle}>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <Pill tone={OUTCOME_TONE[result.outcome]}>{t.outcomes[result.outcome]}</Pill>
+                <span className="text-sm text-muted">{t.outcomeExplained[result.outcome]}</span>
+              </div>
 
-          {result.statuses.length > 0 && (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {result.statuses.map((status) => (
-                <li
-                  key={status}
-                  className="rounded border border-line bg-white px-2 py-1 text-xs font-semibold text-ink"
-                >
-                  {status}
-                </li>
-              ))}
-            </ul>
-          )}
+              <dl className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <dt className="text-xs text-muted">{t.reportedBy}</dt>
+                  <dd className="mt-0.5 text-2xl font-bold tabular-nums text-navy">
+                    {result.statuses.length}
+                  </dd>
+                  <dd className="text-xs text-muted">{t.reportedByNote}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">{t.statusesHeld}</dt>
+                  <dd className="mt-1 flex flex-wrap gap-1.5">
+                    {result.statuses.length === 0 ? (
+                      <span className="text-sm text-muted">—</span>
+                    ) : (
+                      result.statuses.map((status) => (
+                        <Pill key={status}>{t.statuses[status]}</Pill>
+                      ))
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">{t.signals}</dt>
+                  <dd className="mt-1 flex flex-wrap gap-1.5">
+                    {result.fraudSignals.length === 0 ? (
+                      <span className="text-sm text-muted">{t.noSignals}</span>
+                    ) : (
+                      result.fraudSignals.map((signal) => (
+                        <Pill key={signal} tone="review">
+                          {signal}
+                        </Pill>
+                      ))
+                    )}
+                  </dd>
+                </div>
+              </dl>
 
-          {result.fraudSignals.length > 0 && (
-            <div className="mt-3">
-              <p className="text-sm font-semibold text-ink">
-                {messages.tix.fraudSignals}
+              <p className="rounded border border-line bg-soft px-4 py-3 text-sm text-muted">
+                {t.whatIsNotShown}
               </p>
-              <ul className="mt-1 flex flex-wrap gap-2">
-                {result.fraudSignals.map((signal) => (
-                  <li
-                    key={signal}
-                    className="rounded border border-orange/40 bg-white px-2 py-1 font-mono text-xs text-orange"
-                  >
-                    {signal}
-                  </li>
-                ))}
-              </ul>
             </div>
-          )}
+          </Card>
 
-          <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
-            {messages.tix.advisoryNotice}
-          </p>
+          {/* Deliberately hard to mistake for the panel above: its own heavy amber border, a
+              warning as the first thing inside it, and every figure marked. */}
+          <section className="rounded-lg border-4 border-dashed border-warning bg-warning/5 p-5">
+            <p className="mb-4 rounded bg-warning/20 px-4 py-3 text-sm font-bold text-[#7c4a03]">
+              {t.mockWarning}
+            </p>
+
+            <h2 className="mb-1 font-bold text-navy">{t.mockTitle}</h2>
+            <p className="mb-5 text-sm text-muted">{t.mockDescription}</p>
+
+            <dl className="mb-5 grid gap-4 sm:grid-cols-3">
+              {[
+                [t.mockScore, "72 / 100"],
+                [t.mockExposure, "$184K"],
+                [t.mockConfidence, "96%"],
+              ].map(([label, figure]) => (
+                <div key={label} className="rounded-lg border border-warning/40 bg-white p-3">
+                  <dt className="text-xs text-muted">{label}</dt>
+                  <dd className="mt-1 text-xl font-bold tabular-nums text-[#b45309]">{figure}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="flex flex-col gap-3">
+              {[
+                [t.mockFactorPayment, 58],
+                [t.mockFactorAging, 79],
+                [t.mockFactorIdentity, 96],
+                [t.mockFactorFraud, 18],
+              ].map(([label, value]) => (
+                <div key={label as string}>
+                  <div className="mb-1.5 flex justify-between text-sm">
+                    <span className="text-ink">{label}</span>
+                    <span className="font-bold tabular-nums text-[#b45309]">{value}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-white">
+                    <div
+                      className="h-full rounded-full bg-warning"
+                      style={{ width: `${value as number}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-5 text-xs text-muted">{t.mockFootnote}</p>
+          </section>
         </div>
       )}
     </div>

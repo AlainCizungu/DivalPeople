@@ -11,7 +11,8 @@
     "tix": "TIX",
     "organization": "Organization",
     "notifications": "Notifications",
-    "imports": "Data imports"
+    "imports": "Data imports",
+    "participants": "Participants"
   },
   "common": {
     "search": "Search",
@@ -42,8 +43,8 @@
     "actionRecords": "Review your records"
   },
   "tix": {
-    "title": "Telecom Information Exchange",
-    "subtitle": "Verify customer identity and shared debt status before activation",
+    "title": "Check a business",
+    "subtitle": "Before extending credit, a contract, equipment or postpaid service — find out what other participating institutions have reported.",
     "inquiry": "New inquiry",
     "identifier": "Identifier",
     "identifierType": "Identifier type",
@@ -57,7 +58,7 @@
       "REVIEW_REQUIRED": "Manual review required"
     },
     "advisoryNotice": "This is an indicator requiring review, not a finding of misconduct.",
-    "purposeHint": "Recorded on the audit trail with your name and the time of the lookup.",
+    "purposeHint": "Recorded on the audit trail. Every search has to be able to answer 'why did you look this up'.",
     "fraudSignals": "Fraud indicators",
     "inquiryFailed": "Verification could not be completed",
     "forbidden": "Your account does not have permission to run verifications.",
@@ -124,7 +125,42 @@
       "daysRemaining": "{days} days left",
       "awaitingErasure": "past its period",
       "settleNote": "Marking a record settled brings its erasure date forward and stops it counting against the subject. Marking it disputed suspends it from inquiry results while the dispute is open."
-    }
+    },
+    "checkTitle": "Who are you checking?",
+    "checkDescription": "Identify the company by its register number where you can. Names are unreliable: operator exports truncate them, and different companies share them.",
+    "identifierTypeHint": "RCCM or tax number identifies a company far more reliably than a name.",
+    "legalName": "Legal name (optional)",
+    "legalNameHint": "Improves the match. Never returned to you about anybody else.",
+    "resultTitle": "What the exchange holds",
+    "reportedBy": "Reported by",
+    "reportedByNote": "Participating institutions holding a record",
+    "statusesHeld": "Statuses held",
+    "signals": "Signals",
+    "noSignals": "None",
+    "whatIsNotShown": "The exchange never tells you the amount, the service, or which institution reported it. You are told that an obligation exists and its status — the rest is the other operator's commercial information, and the same rule protects yours.",
+    "outcomes": {
+      "NO_MATCH": "Not in the registry",
+      "CLEAR": "Clear",
+      "OUTSTANDING_DEBT": "Outstanding obligation",
+      "REVIEW_REQUIRED": "Needs review"
+    },
+    "outcomeExplained": {
+      "NO_MATCH": "No participating institution has reported this identifier.",
+      "CLEAR": "Known to the exchange, with nothing outstanding against them.",
+      "OUTSTANDING_DEBT": "At least one institution reports an unpaid obligation.",
+      "REVIEW_REQUIRED": "The identifier matched, but not confidently enough to act on. Check by hand."
+    },
+    "mockWarning": "⚠ ILLUSTRATION ONLY — none of the figures below are real",
+    "mockTitle": "Risk assessment (not yet built)",
+    "mockDescription": "This is what a scored assessment is intended to look like. DIP has no risk model, and these numbers are fixed sketches rather than calculations. Nothing here is derived from the business you just searched.",
+    "mockScore": "DIP risk score",
+    "mockExposure": "Total exposure",
+    "mockConfidence": "Identity confidence",
+    "mockFactorPayment": "Payment history",
+    "mockFactorAging": "Debt aging",
+    "mockFactorIdentity": "Identity",
+    "mockFactorFraud": "Fraud signals",
+    "mockFootnote": "When this is built, every score will carry its reason codes, the data it used, how recent that data is, and the model version — per UI_DESIGN_SYSTEM.md, a score is never shown on its own."
   },
   "auth": {
     "signIn": "Sign in",
@@ -623,6 +659,42 @@
       "PUBLISHED": "Published",
       "REJECTED": "Rejected",
       "REVERTED": "Withdrawn"
+    }
+  },
+  "participants": {
+    "title": "Participating organisations",
+    "subtitle": "Every institution on the exchange, what kind it is, and whether it is currently contributing and consulting.",
+    "total": "Organisations",
+    "active": "Active",
+    "activeNote": "May declare and inquire",
+    "sectors": "Sectors represented",
+    "listTitle": "The network",
+    "listDescription": "An exchange is only worth what its participants contribute. This is who they are.",
+    "empty": "No organisations yet.",
+    "organisation": "Organisation",
+    "sector": "Sector",
+    "status": "Status",
+    "statusActive": "Active",
+    "statusSuspended": "Suspended",
+    "suspend": "Suspend",
+    "reinstate": "Reinstate",
+    "suspendNote": "Suspending an organisation stops it declaring and inquiring. Its existing records stay, and stay visible — withdrawing a participant is not a reason to rewrite what other operators already relied on.",
+    "addTitle": "Onboard an organisation",
+    "addDescription": "Creates the tenant. Signing the data-sharing agreement happens outside this screen.",
+    "name": "Legal name",
+    "slug": "Short code",
+    "slugHint": "Lower case, hyphenated. Appears in URLs and cannot be changed afterwards.",
+    "sectorHint": "Decides which industry edition the organisation sees.",
+    "add": "Onboard",
+    "onboardingNote": "Per DATA_GOVERNANCE.md, a source is not accepted until the sharing agreement, permitted-use definition, retention rules and a pilot import are all in place. This screen creates the account, not the permission.",
+    "needPlatformAdmin": "This view belongs to whoever runs the network. Sign in as a platform administrator to see it.",
+    "editions": {
+      "TELECOM": "Telecom operator",
+      "BANKING": "Bank or lender",
+      "GOVERNMENT": "Public institution",
+      "NGO": "NGO",
+      "HEALTHCARE": "Healthcare",
+      "ENTERPRISE": "Enterprise"
     }
   }
 }

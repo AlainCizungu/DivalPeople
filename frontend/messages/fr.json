@@ -11,7 +11,8 @@
     "tix": "TIX",
     "organization": "Organisation",
     "notifications": "Notifications",
-    "imports": "Imports de données"
+    "imports": "Imports de données",
+    "participants": "Participants"
   },
   "common": {
     "search": "Rechercher",
@@ -42,8 +43,8 @@
     "actionRecords": "Consulter vos enregistrements"
   },
   "tix": {
-    "title": "Échange d'informations télécoms",
-    "subtitle": "Vérifiez l'identité du client et le statut des impayés avant activation",
+    "title": "Vérifier une entreprise",
+    "subtitle": "Avant d’accorder un crédit, un contrat, des équipements ou un service postpayé — découvrez ce que les autres institutions participantes ont signalé.",
     "inquiry": "Nouvelle interrogation",
     "identifier": "Identifiant",
     "identifierType": "Type d'identifiant",
@@ -57,7 +58,7 @@
       "REVIEW_REQUIRED": "Revue manuelle requise"
     },
     "advisoryNotice": "Il s'agit d'un indicateur nécessitant une revue, et non d'un constat de faute.",
-    "purposeHint": "Enregistré dans la piste d'audit avec votre nom et l'heure de la consultation.",
+    "purposeHint": "Consignée dans la piste d’audit. Toute recherche doit pouvoir répondre à « pourquoi ».",
     "fraudSignals": "Indicateurs de fraude",
     "inquiryFailed": "La vérification n'a pas pu aboutir",
     "forbidden": "Votre compte n'est pas autorisé à effectuer des vérifications.",
@@ -124,7 +125,42 @@
       "daysRemaining": "{days} jours restants",
       "awaitingErasure": "période dépassée",
       "settleNote": "Marquer un enregistrement comme régularisé avance sa date d’effacement et cesse de le compter contre le sujet. Le marquer contesté le retire des résultats d’interrogation tant que la contestation est ouverte."
-    }
+    },
+    "checkTitle": "Qui vérifiez-vous ?",
+    "checkDescription": "Identifiez l’entreprise par son numéro de registre lorsque c’est possible. Les noms sont peu fiables : les exports opérateurs les tronquent, et des sociétés différentes les partagent.",
+    "identifierTypeHint": "Le RCCM ou le numéro d’impôt identifie une entreprise bien plus sûrement qu’un nom.",
+    "legalName": "Raison sociale (facultatif)",
+    "legalNameHint": "Améliore le rapprochement. Jamais communiquée à propos de quelqu’un d’autre.",
+    "resultTitle": "Ce que détient l’échange",
+    "reportedBy": "Signalé par",
+    "reportedByNote": "Institutions participantes détenant un enregistrement",
+    "statusesHeld": "Statuts détenus",
+    "signals": "Signaux",
+    "noSignals": "Aucun",
+    "whatIsNotShown": "L’échange ne vous communique jamais le montant, le service, ni l’institution qui a signalé. Vous apprenez qu’une obligation existe et son statut — le reste relève des informations commerciales de l’autre opérateur, et la même règle protège les vôtres.",
+    "outcomes": {
+      "NO_MATCH": "Absent du registre",
+      "CLEAR": "Sain",
+      "OUTSTANDING_DEBT": "Obligation impayée",
+      "REVIEW_REQUIRED": "À examiner"
+    },
+    "outcomeExplained": {
+      "NO_MATCH": "Aucune institution participante n’a signalé cet identifiant.",
+      "CLEAR": "Connu de l’échange, sans impayé à son encontre.",
+      "OUTSTANDING_DEBT": "Au moins une institution signale une obligation impayée.",
+      "REVIEW_REQUIRED": "L’identifiant correspond, mais pas assez sûrement pour agir. Vérifiez manuellement."
+    },
+    "mockWarning": "⚠ ILLUSTRATION UNIQUEMENT — aucun des chiffres ci-dessous n’est réel",
+    "mockTitle": "Évaluation du risque (pas encore développée)",
+    "mockDescription": "Voici à quoi une évaluation notée est destinée à ressembler. DIP ne dispose d’aucun modèle de risque ; ces nombres sont des esquisses fixes, non des calculs. Rien ici ne provient de l’entreprise que vous venez de rechercher.",
+    "mockScore": "Score de risque DIP",
+    "mockExposure": "Exposition totale",
+    "mockConfidence": "Confiance dans l’identité",
+    "mockFactorPayment": "Historique de paiement",
+    "mockFactorAging": "Ancienneté de la dette",
+    "mockFactorIdentity": "Identité",
+    "mockFactorFraud": "Signaux de fraude",
+    "mockFootnote": "Une fois développé, chaque score s’accompagnera de ses codes de motif, des données utilisées, de leur fraîcheur et de la version du modèle — conformément à UI_DESIGN_SYSTEM.md, un score n’est jamais affiché seul."
   },
   "auth": {
     "signIn": "Se connecter",
@@ -623,6 +659,42 @@
       "PUBLISHED": "Publié",
       "REJECTED": "Rejeté",
       "REVERTED": "Retiré"
+    }
+  },
+  "participants": {
+    "title": "Organisations participantes",
+    "subtitle": "Chaque institution de l’échange, sa nature, et si elle contribue et interroge actuellement.",
+    "total": "Organisations",
+    "active": "Actives",
+    "activeNote": "Peuvent déclarer et interroger",
+    "sectors": "Secteurs représentés",
+    "listTitle": "Le réseau",
+    "listDescription": "Un échange ne vaut que ce que ses participants y apportent. Voici qui ils sont.",
+    "empty": "Aucune organisation pour l’instant.",
+    "organisation": "Organisation",
+    "sector": "Secteur",
+    "status": "Statut",
+    "statusActive": "Active",
+    "statusSuspended": "Suspendue",
+    "suspend": "Suspendre",
+    "reinstate": "Réactiver",
+    "suspendNote": "Suspendre une organisation l’empêche de déclarer et d’interroger. Ses enregistrements existants demeurent et restent visibles : le retrait d’un participant ne justifie pas de réécrire ce sur quoi d’autres opérateurs se sont déjà appuyés.",
+    "addTitle": "Intégrer une organisation",
+    "addDescription": "Crée le locataire. La signature de l’accord de partage se fait hors de cet écran.",
+    "name": "Raison sociale",
+    "slug": "Code court",
+    "slugHint": "Minuscules, avec tirets. Apparaît dans les URL et ne peut plus être modifié.",
+    "sectorHint": "Détermine l’édition sectorielle que verra l’organisation.",
+    "add": "Intégrer",
+    "onboardingNote": "Conformément à DATA_GOVERNANCE.md, une source n’est acceptée qu’une fois l’accord de partage, la définition des usages autorisés, les règles de conservation et un import pilote en place. Cet écran crée le compte, pas l’autorisation.",
+    "needPlatformAdmin": "Cette vue appartient à l’exploitant du réseau. Connectez-vous comme administrateur de la plateforme pour y accéder.",
+    "editions": {
+      "TELECOM": "Opérateur télécom",
+      "BANKING": "Banque ou prêteur",
+      "GOVERNMENT": "Institution publique",
+      "NGO": "ONG",
+      "HEALTHCARE": "Santé",
+      "ENTERPRISE": "Entreprise"
     }
   }
 }

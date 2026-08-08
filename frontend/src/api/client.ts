@@ -186,6 +186,58 @@ export type DeclarationResult = {
   identifiersLearned: number;
 };
 
+export type Edition =
+  | "BANKING"
+  | "NGO"
+  | "TELECOM"
+  | "GOVERNMENT"
+  | "HEALTHCARE"
+  | "ENTERPRISE";
+
+/** A participating institution. One tenant, one organisation on the exchange. */
+export type Participant = {
+  id: string;
+  name: string;
+  slug: string;
+  edition: Edition;
+  defaultLocale: string;
+  active: boolean;
+  createdAt: string;
+};
+
+/**
+ * Platform administration.
+ *
+ * <p>Guarded by PLATFORM_ADMIN on the server. The nav hides these screens when the signed-in user
+ * lacks the role, which is a courtesy rather than a control — the server refuses regardless, and
+ * hiding a link has never stopped anybody typing a URL.
+ */
+export const participantsApi = {
+  list(): Promise<Participant[]> {
+    return request<Participant[]>("/api/v1/platform/tenants");
+  },
+
+  create(body: {
+    name: string;
+    slug: string;
+    edition: Edition;
+    defaultLocale: string;
+  }): Promise<Participant> {
+    return request<Participant>("/api/v1/platform/tenants", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  activate(id: string): Promise<Participant> {
+    return request<Participant>(`/api/v1/platform/tenants/${id}/activate`, { method: "POST" });
+  },
+
+  deactivate(id: string): Promise<Participant> {
+    return request<Participant>(`/api/v1/platform/tenants/${id}/deactivate`, { method: "POST" });
+  },
+};
+
 export type SourceKind = "SPREADSHEET" | "API" | "MANUAL";
 
 export type IngestSource = {

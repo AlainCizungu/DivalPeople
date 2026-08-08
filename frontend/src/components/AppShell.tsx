@@ -58,6 +58,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/app/tix/declare", label: messages.nav.declare, badge: 0 },
     { href: "/app/tix/records", label: messages.nav.records, badge: 0 },
     { href: "/app/imports", label: messages.nav.imports, badge: 0 },
+    // Platform administration. Hidden rather than shown-and-refused, because a menu item
+    // that always 403s teaches people to ignore refusals.
+    ...(profile?.roles.includes("PLATFORM_ADMIN")
+      ? [{ href: "/app/participants", label: messages.nav.participants, badge: 0 }]
+      : []),
     { href: "/app/organization", label: messages.nav.organization, badge: 0 },
     {
       href: "/app/notifications",
