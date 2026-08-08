@@ -46,3 +46,10 @@ npm-debug.log*
 coverage/
 .tmp/
 *.tsbuildinfo
+
+# Source data from operators. Field names and counts belong in docs/TIX_SOURCE_PROFILE.md; the
+# files themselves never enter this repository — they are somebody's customer list, and git
+# history is effectively permanent.
+*.xlsx
+*.xls
+*.csv
