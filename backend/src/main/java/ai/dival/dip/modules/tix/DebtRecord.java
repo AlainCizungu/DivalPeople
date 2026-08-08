@@ -50,6 +50,16 @@ public class DebtRecord extends TenantOwnedEntity {
     @Column(name = "settled_at")
     private Instant settledAt;
 
+    /**
+     * The day after which this record must not exist.
+     *
+     * <p>Set once, at declaration, from the default date — never from the declaration date, or an
+     * operator could keep somebody listed by declaring an old debt late. Settlement may bring it
+     * forward and nothing may push it back.
+     */
+    @Column(name = "retention_until", nullable = false)
+    private LocalDate retentionUntil;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
@@ -69,6 +79,18 @@ public class DebtRecord extends TenantOwnedEntity {
         this.updatedAt = Instant.now();
     }
 
+    /**
+     * Fixes when this record expires.
+     *
+     * <p>Package-private and callable once: retention is set by {@link DebtRecordService} at
+     * declaration and by settlement, and there is no path for a caller to extend it. A public
+     * setter here would be an endpoint away from becoming a way to keep somebody in a national
+     * registry indefinitely.
+     */
+    void retainUntil(LocalDate expiry) {
+        this.retentionUntil = expiry;
+    }
+
     /** Marks the obligation resolved. Only the declaring operator may call this. */
     public void settle() {
         if (status == DebtStatus.SETTLED) {
@@ -77,6 +99,17 @@ public class DebtRecord extends TenantOwnedEntity {
         this.status = DebtStatus.SETTLED;
         this.settledAt = Instant.now();
         this.updatedAt = Instant.now();
+    }
+
+    /**
+     * Whether this record is past its retention period as at {@code today}.
+     *
+     * <p>The date is passed in rather than read from a clock so that the entity stays free of
+     * ambient time — and so a test can ask "what does this look like in four years" without
+     * waiting or mocking statics.
+     */
+    public boolean isExpiredAsOf(LocalDate today) {
+        return retentionUntil != null && retentionUntil.isBefore(today);
     }
 
     /** Suspends the record from inquiry results while the subject's dispute is open. */
@@ -125,6 +158,10 @@ public class DebtRecord extends TenantOwnedEntity {
 
     public Instant getSettledAt() {
         return settledAt;
+    }
+
+    public LocalDate getRetentionUntil() {
+        return retentionUntil;
     }
 
     public Instant getUpdatedAt() {

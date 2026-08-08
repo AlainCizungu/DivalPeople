@@ -14,4 +14,27 @@ public interface SubjectRepository extends JpaRepository<Subject, UUID> {
     Optional<Subject> findByIdentifier(@Param("type") IdentifierType type, @Param("value") String value);
 
     List<Subject> findByNormalizedName(String normalizedName);
+
+    /**
+     * Subjects no operator holds a record against any more.
+     *
+     * <p>The tail of erasure. A subject is in the exchange only to carry debt records, so once the
+     * last one is gone the name, date of birth and identity documents have nothing justifying
+     * them. Leaving them behind is the worst outcome available: personal data with no lawful
+     * basis and no record explaining why it is held.
+     *
+     * <p><strong>Must be called in exchange mode.</strong> The NOT EXISTS is evaluated against
+     * tix_debt_record, which carries row-level security. Outside exchange mode a caller sees only
+     * its own tenant's records, so a subject that three other operators still hold records against
+     * looks orphaned — and this query feeds a delete. Run it bound to one tenant and it erases
+     * almost everybody in the registry, silently, on a schedule, at two in the morning.
+     *
+     * <p>That is not a hypothetical: the first version of the purge called this outside any tenant
+     * binding at all, where app_current_tenant() is null, every policy comparison is false, and
+     * the subquery returns nothing for every subject alive. The caller is what makes this safe,
+     * which is a fragile arrangement, so it is stated here as loudly as it can be stated.
+     */
+    @Query("select s from Subject s where not exists "
+            + "(select 1 from DebtRecord d where d.subject.id = s.id)")
+    List<Subject> findWithNoDebtRecords();
 }

@@ -21,7 +21,7 @@ class ReportingThresholdTest {
     private static final BigDecimal HUNDRED = new BigDecimal("100");
 
     private final ReportingThreshold threshold =
-            new ReportingThreshold(new TixProperties(Map.of("USD", HUNDRED)));
+            new ReportingThreshold(new TixProperties(Map.of("USD", HUNDRED), null));
 
     @Test
     @DisplayName("comfortably above the floor is declarable")
@@ -76,7 +76,7 @@ class ReportingThresholdTest {
     @Test
     @DisplayName("a deployment that configured nothing declares nothing")
     void noConfigurationMeansNoDeclarations() {
-        ReportingThreshold empty = new ReportingThreshold(new TixProperties(Map.of()));
+        ReportingThreshold empty = new ReportingThreshold(new TixProperties(Map.of(), null));
 
         // Failing closed. An empty threshold map most likely means the configuration did not load,
         // and the safe reading of "I do not know the floor" is not "then there isn't one".

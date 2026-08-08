@@ -24,13 +24,16 @@ public class DebtRecordService {
     private final AuditService audit;
     private final SubjectResolver subjects;
     private final ReportingThreshold threshold;
+    private final RetentionPolicy retention;
 
     public DebtRecordService(DebtRecordRepository debtRecords, AuditService audit,
-                             SubjectResolver subjects, ReportingThreshold threshold) {
+                             SubjectResolver subjects, ReportingThreshold threshold,
+                             RetentionPolicy retention) {
         this.debtRecords = debtRecords;
         this.audit = audit;
         this.subjects = subjects;
         this.threshold = threshold;
+        this.retention = retention;
     }
 
     @Transactional(readOnly = true)
@@ -84,13 +87,24 @@ public class DebtRecordService {
                                     + "rather than declaring a second one.");
                 });
 
-        DebtRecord saved = debtRecords.save(new DebtRecord(
+        DebtRecord record = new DebtRecord(
                 resolution.subject(), request.amount(), request.currency(),
-                request.serviceCategory(), request.defaultDate(), request.dunningEvidence()));
+                request.serviceCategory(), request.defaultDate(), request.dunningEvidence());
+
+        // A subject the exchange had never seen cannot be a repeat offender, and a subject it had
+        // seen necessarily defaulted before — subjects exist only because somebody declared
+        // against them. That equivalence is why this needs no cross-operator query, and it is
+        // load-bearing: if subjects ever become creatable by another route, this silently starts
+        // giving first-time defaulters the five-year period.
+        boolean repeatOffender = !resolution.created();
+        record.retainUntil(retention.expiryFor(request.defaultDate(), repeatOffender));
+
+        DebtRecord saved = debtRecords.save(record);
 
         audit.record("TIX_DEBT_DECLARED", "DebtRecord", saved.getId().toString(),
                 AuditService.OUTCOME_SUCCESS, actorId,
                 "Declared " + request.amount().toPlainString() + " " + request.currency()
+                        + "; retained until " + saved.getRetentionUntil()
                         + (resolution.created() ? "; subject new to the exchange" : ""));
 
         return new Declaration(saved, resolution.created(), resolution.identifiersLearned());
@@ -114,7 +128,12 @@ public class DebtRecordService {
         DebtRecord record = debtRecords.findByIdAndTenantId(recordId, tenantId)
                 .orElseThrow(() -> new DebtRecordNotFoundException(recordId));
         record.settle();
-        audit.recordSuccess("TIX_DEBT_SETTLED", "DebtRecord", recordId.toString(), actorId);
+        // Regularisation brings erasure forward. expiryOnSettlement takes the earlier of the two
+        // dates, so paying a debt can never extend how long the record about it is kept.
+        record.retainUntil(retention.expiryOnSettlement(record.getRetentionUntil()));
+        audit.record("TIX_DEBT_SETTLED", "DebtRecord", recordId.toString(),
+                AuditService.OUTCOME_SUCCESS, actorId,
+                "Settled; retention brought forward to " + record.getRetentionUntil());
         return record;
     }
 

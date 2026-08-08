@@ -25,11 +25,49 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * floor and revisits it.
  *
  * @param minimumDeclarable currency code to smallest amount that may be declared, inclusive
+ * @param retention        how long a record survives before it is erased
  */
 @ConfigurationProperties(prefix = "dip.tix")
-public record TixProperties(Map<String, BigDecimal> minimumDeclarable) {
+public record TixProperties(Map<String, BigDecimal> minimumDeclarable, Retention retention) {
+
+    /**
+     * Retention periods, from the terms of reference.
+     *
+     * <p>Configurable because these are legal periods, not engineering constants: they are the
+     * output of the feasibility study's analysis of the Code du numérique, and they will change
+     * when a regulator says so. A number compiled into a class is a number nobody can correct
+     * without a release, which is how systems end up holding data past the period they are
+     * allowed to.
+     *
+     * <p>The defaults below are the TDR's illustrative figures and <strong>have not been checked
+     * against the law</strong>. They are placeholders with plausible values, which is the
+     * dangerous kind: see {@code docs/TIX_RETENTION.md}.
+     *
+     * @param simpleYears  a first, unsettled default
+     * @param repeatYears  a default by somebody the exchange has seen default before
+     * @param settledDays  how long a regularised debt survives after settlement. The TDR asks for
+     *                     erasure on regularisation; a short window rather than zero exists so the
+     *                     settling operator can reconcile, and it can only ever shorten a
+     *                     record's life, never extend it. Boxed deliberately — zero is a
+     *                     meaningful setting here (erase at the next sweep), so it must be
+     *                     distinguishable from "nobody configured this", which a primitive int
+     *                     would silently conflate.
+     */
+    public record Retention(int simpleYears, int repeatYears, Integer settledDays) {
+
+        public Retention {
+            simpleYears = simpleYears > 0 ? simpleYears : 3;
+            repeatYears = repeatYears > 0 ? repeatYears : 5;
+            settledDays = settledDays == null || settledDays < 0 ? 30 : settledDays;
+        }
+
+        static Retention defaults() {
+            return new Retention(3, 5, 30);
+        }
+    }
 
     public TixProperties {
+        retention = retention == null ? Retention.defaults() : retention;
         Map<String, BigDecimal> normalized = new LinkedHashMap<>();
         if (minimumDeclarable != null) {
             minimumDeclarable.forEach((currency, floor) -> {

@@ -4,6 +4,8 @@ import ai.dival.dip.common.audit.AuditService;
 import ai.dival.dip.common.error.RateLimitExceededException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import jakarta.persistence.EntityManager;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -36,6 +38,7 @@ public class ExchangeService {
     private final AuditService audit;
     private final EntityManager entityManager;
     private final InquiryRateLimiter rateLimiter;
+    private final Clock clock;
 
     public ExchangeService(SubjectRepository subjects,
                            SubjectIdentifierRepository identifiers,
@@ -43,7 +46,8 @@ public class ExchangeService {
                            IdentityMatcher matcher,
                            AuditService audit,
                            EntityManager entityManager,
-                           InquiryRateLimiter rateLimiter) {
+                           InquiryRateLimiter rateLimiter,
+                           Clock clock) {
         this.subjects = subjects;
         this.identifiers = identifiers;
         this.debtRecords = debtRecords;
@@ -51,6 +55,7 @@ public class ExchangeService {
         this.audit = audit;
         this.entityManager = entityManager;
         this.rateLimiter = rateLimiter;
+        this.clock = clock;
     }
 
     /**
@@ -108,7 +113,13 @@ public class ExchangeService {
         }
 
         enterExchangeMode();
-        List<DebtRecord> records = debtRecords.findAcrossOperators(subject.getId(), EXCHANGEABLE_STATUSES);
+        // Filtered in the query rather than in the loop below. Both would work today, and only
+        // one of them stays correct: the loop is defence in depth against a status leaking, and
+        // if expiry were enforced only there, any future caller of findAcrossOperators would get
+        // records the retention period says must not exist. Erasure is not a rendering concern.
+        LocalDate today = LocalDate.now(clock);
+        List<DebtRecord> records =
+                debtRecords.findAcrossOperators(subject.getId(), EXCHANGEABLE_STATUSES, today);
         Set<DebtStatus> statuses = new LinkedHashSet<>();
         boolean outstanding = false;
         for (DebtRecord record : records) {

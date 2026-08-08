@@ -63,6 +63,20 @@ dip:
     minimum-declarable:
       USD: 100
 
+    # How long somebody stays in the registry. These are LEGAL periods, not engineering constants,
+    # and the values below are the TDR's illustrative figures — they have NOT been checked against
+    # the Code du numérique. See docs/TIX_RETENTION.md before treating them as settled.
+    retention:
+      simple-years: ${DIP_TIX_RETENTION_SIMPLE_YEARS:3}
+      repeat-years: ${DIP_TIX_RETENTION_REPEAT_YEARS:5}
+      # Days a regularised debt survives after settlement. The TDR asks for erasure on
+      # regularisation; a short window lets the settling operator reconcile, and settlement can
+      # only ever bring erasure forward, never push it away. Zero means erase at the next sweep.
+      settled-days: ${DIP_TIX_RETENTION_SETTLED_DAYS:30}
+
+    # Nightly, away from the HR sweeps so a slow purge cannot delay the morning alerts.
+    retention-purge-cron: ${DIP_TIX_RETENTION_PURGE_CRON:0 15 2 * * *}
+
   hr:
     # How much warning to give before a contract ends.
     contract-expiry-notice-days: ${DIP_CONTRACT_EXPIRY_NOTICE_DAYS:30}

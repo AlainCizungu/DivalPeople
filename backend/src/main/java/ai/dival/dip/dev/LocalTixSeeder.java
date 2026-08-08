@@ -46,15 +46,18 @@ public class LocalTixSeeder implements ApplicationRunner {
     private final SubjectRepository subjects;
     private final SubjectIdentifierRepository identifiers;
     private final DebtRecordRepository debtRecords;
+    private final ai.dival.dip.modules.tix.RetentionPolicy retention;
     private final TransactionTemplate transactionTemplate;
 
     public LocalTixSeeder(SubjectRepository subjects,
                           SubjectIdentifierRepository identifiers,
                           DebtRecordRepository debtRecords,
+                          ai.dival.dip.modules.tix.RetentionPolicy retention,
                           TransactionTemplate transactionTemplate) {
         this.subjects = subjects;
         this.identifiers = identifiers;
         this.debtRecords = debtRecords;
+        this.retention = retention;
         this.transactionTemplate = transactionTemplate;
     }
 
@@ -77,9 +80,15 @@ public class LocalTixSeeder implements ApplicationRunner {
             subject.addIdentifier(new SubjectIdentifier(IdentifierType.MSISDN, "+243900000001"));
             Subject saved = subjects.save(subject);
 
-            debtRecords.save(new DebtRecord(
-                    saved, new BigDecimal("250.00"), "USD", "POSTPAID",
-                    LocalDate.now().minusDays(90), true));
+            LocalDate defaultDate = LocalDate.now().minusDays(90);
+            DebtRecord record = new DebtRecord(
+                    saved, new BigDecimal("250.00"), "USD", "POSTPAID", defaultDate, true);
+            // retention_until is NOT NULL as of V19, and the seeder writes through the repository
+            // rather than DebtRecordService, so it has to set it. Going through the service would
+            // be better and is not possible here: the seeder builds the subject itself, and the
+            // service resolves subjects from submitted identifiers by design.
+            record.retainUntil(retention.expiryFor(defaultDate, false));
+            debtRecords.save(record);
         }));
 
         log.info("Seeded demo TIX subject '{}' with an outstanding debt held by operator B",
