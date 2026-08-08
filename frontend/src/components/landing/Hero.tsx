@@ -1,18 +1,28 @@
 "use client";
 
-import Link from "next/link";
-import { useSession } from "@/auth/SessionProvider";
+import { useState } from "react";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { CheckList, Eyebrow } from "./primitives";
 
-/** Hero with the executive-overview panel from the prototype. */
+/**
+ * Hero, with the universal-search panel from the prototype.
+ *
+ * <p>The panel is a <strong>mock</strong>: the tabs move, nothing is queried, and no request
+ * leaves the page. It is labelled as illustrative in both languages rather than only in the
+ * design, because a screenshot of a convincing risk score against a named company is exactly the
+ * kind of image that ends up in a deck as though it were real output. Grand Horizon SARL does not
+ * exist.
+ */
 export function Hero() {
   const messages = useMessages();
-  const { status } = useSession();
   const { hero, board, actions } = messages.landing;
+  const [tab, setTab] = useState<"business" | "individual">("business");
 
   return (
-    <section className="bg-[radial-gradient(circle_at_85%_20%,rgba(0,103,184,0.23),transparent_28%),linear-gradient(120deg,#eef6ff_0%,#fff_52%,#eefbf7_100%)]">
+    <section
+      id="search"
+      className="bg-[radial-gradient(circle_at_85%_20%,rgba(0,103,184,0.23),transparent_28%),linear-gradient(120deg,#eef6ff_0%,#fff_52%,#eefbf7_100%)]"
+    >
       <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
           <Eyebrow>{hero.eyebrow}</Eyebrow>
@@ -26,69 +36,97 @@ export function Hero() {
               href="#platform"
               className="rounded bg-blue px-5 py-3.5 text-sm font-bold text-white transition hover:bg-blue-dark"
             >
-              {actions.seePlatform}
+              {actions.explorePlatform}
             </a>
-            {status === "authenticated" ? (
-              <Link
-                href="/app"
-                className="rounded border border-ink bg-white px-5 py-3.5 text-sm font-bold text-ink transition hover:bg-soft"
-              >
-                {actions.dashboard}
-              </Link>
-            ) : (
-              <a
-                href="#hr"
-                className="rounded border border-ink bg-white px-5 py-3.5 text-sm font-bold text-ink transition hover:bg-soft"
-              >
-                {actions.exploreCapabilities}
-              </a>
-            )}
+            <a
+              href="#risk"
+              className="rounded border border-ink bg-white px-5 py-3.5 text-sm font-bold text-ink transition hover:bg-soft"
+            >
+              {actions.viewRiskReport}
+            </a>
           </div>
 
           <CheckList items={hero.checks} className="mt-7" />
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-[#e6edf5] bg-white shadow-xl">
-          <div className="flex justify-between bg-navy px-5 py-4.5 text-white">
+          <div className="flex items-start justify-between gap-4 bg-navy px-5 py-4.5 text-white">
             <div>
               <strong>{board.title}</strong>
               <br />
-              <small className="text-[#9ec5e8]">{board.subtitle}</small>
+              <small className="text-[#9ec5e8]">{board.illustrative}</small>
             </div>
-            <div className="text-sm">{board.period}</div>
+            <div className="flex items-center gap-1.5 text-sm whitespace-nowrap text-[#9ec5e8]">
+              <span aria-hidden="true" className="text-green">
+                ●
+              </span>
+              {board.secure}
+            </div>
           </div>
 
           <div className="bg-[#f7f9fc] p-5">
-            <div className="mb-3.5 grid grid-cols-3 gap-3">
-              {[
-                { label: board.totalEmployees, value: "2,486" },
-                { label: board.payrollAccuracy, value: "99.4%" },
-                { label: board.openAlerts, value: "18" },
-              ].map((metric) => (
-                <div
-                  key={metric.label}
-                  className="rounded-lg border border-[#e8edf3] bg-white p-4"
+            <div className="mb-3 flex gap-2">
+              {(
+                [
+                  ["business", board.tabBusiness],
+                  ["individual", board.tabIndividual],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  aria-pressed={tab === key}
+                  className={`rounded px-3.5 py-2 text-sm font-bold transition ${
+                    tab === key
+                      ? "bg-blue text-white"
+                      : "border border-[#e8edf3] bg-white text-ink hover:bg-soft"
+                  }`}
                 >
-                  <small className="text-[#64748b]">{metric.label}</small>
-                  <strong className="mt-1.5 block text-2xl tabular-nums text-navy">
-                    {metric.value}
-                  </strong>
-                </div>
+                  {label}
+                </button>
               ))}
             </div>
 
-            <div className="h-40 rounded-lg border border-[#e8edf3] bg-white p-4">
-              <svg viewBox="0 0 500 120" className="h-full w-full" aria-hidden="true">
-                <line x1="0" y1="100" x2="500" y2="100" stroke="#dbe3ec" />
-                <line x1="0" y1="70" x2="500" y2="70" stroke="#eef2f6" />
-                <line x1="0" y1="40" x2="500" y2="40" stroke="#eef2f6" />
-                <polyline
-                  fill="none"
-                  stroke="#0067b8"
-                  strokeWidth="4"
-                  points="0,95 55,72 110,79 165,48 220,62 275,40 330,54 385,25 440,36 500,14"
-                />
-              </svg>
+            {/* Not a form. There is nothing behind it, and a submit that silently did nothing
+                would be worse than an input that plainly cannot be typed into. */}
+            <div className="mb-3.5 flex gap-2">
+              <div className="flex-1 rounded-lg border border-[#e8edf3] bg-white px-3.5 py-3 text-sm text-[#94a3b8]">
+                {board.searchPlaceholder}
+              </div>
+              <span className="rounded-lg bg-blue px-4 py-3 text-sm font-bold text-white">
+                {board.searchAction}
+              </span>
+            </div>
+
+            <div className="rounded-lg border border-[#e8edf3] bg-white p-4">
+              <h3 className="text-lg font-bold text-navy">{board.resultName}</h3>
+              <p className="mb-3.5 text-sm text-[#64748b]">{board.resultMeta}</p>
+
+              <div className="mb-3.5 grid grid-cols-3 gap-3">
+                {[
+                  { label: board.scoreLabel, value: board.score, note: board.scoreValue },
+                  { label: board.exposureLabel, value: board.exposureValue },
+                  { label: board.sourcesLabel, value: board.sourcesValue },
+                ].map((metric) => (
+                  <div
+                    key={metric.label}
+                    className="rounded-lg border border-[#e8edf3] bg-[#f7f9fc] p-3"
+                  >
+                    <small className="text-[#64748b]">{metric.label}</small>
+                    <strong className="mt-1 block text-2xl tabular-nums text-navy">
+                      {metric.value}
+                    </strong>
+                    {metric.note && (
+                      <small className="text-[#64748b]">{metric.note}</small>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <p className="rounded-lg border-l-4 border-[#ff8c00] bg-[#fff8ef] p-3 text-sm text-[#7c4a03]">
+                {board.signal}
+              </p>
             </div>
           </div>
         </div>

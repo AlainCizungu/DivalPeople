@@ -71,18 +71,18 @@
   "landing": {
     "nav": {
       "platform": "Platform",
-      "hr": "HR Solutions",
-      "financial": "Financial Services",
+      "search": "Search",
+      "risk": "Risk Intelligence",
       "industries": "Industries",
-      "security": "Security",
-      "ai": "AI"
+      "exchange": "Data Exchange"
     },
     "actions": {
       "signIn": "Sign in",
       "dashboard": "Go to dashboard",
       "requestDemo": "Request demo",
-      "seePlatform": "See the platform",
-      "exploreCapabilities": "Explore capabilities"
+      "explorePlatform": "Explore the platform",
+      "viewRiskReport": "View a risk report",
+      "viewSampleReport": "View sample report"
     },
     "authError": {
       "title": "Sign-in did not complete.",
@@ -96,302 +96,374 @@
       }
     },
     "hero": {
-      "eyebrow": "Dival Intelligence Platform",
-      "title": "One platform for your people, intelligence, and growth.",
-      "body": "Manage the employee lifecycle, connect workers to financial benefits, automate HR operations, and protect your organization with AI-powered fraud and anomaly detection.",
+      "eyebrow": "Dival Intelligence Platform · DIP",
+      "title": "A trusted national intelligence platform for better business decisions.",
+      "body": "Search businesses or individuals, understand financial exposure, identify risk signals, detect fraud, and make faster decisions from one secure intelligence network designed for institutions across the Democratic Republic of Congo.",
       "checks": [
-        "English + Français",
-        "Cloud or private deployment",
-        "Built for Africa"
+        "B2B and individual intelligence",
+        "API-ready",
+        "Human-reviewed risk decisions"
       ]
     },
     "board": {
-      "title": "Workforce Intelligence",
-      "subtitle": "Executive overview",
-      "period": "August 2026",
-      "totalEmployees": "Total Employees",
-      "payrollAccuracy": "Payroll Accuracy",
-      "openAlerts": "Open Alerts"
+      "title": "Universal Intelligence Search",
+      "illustrative": "Illustrative prototype",
+      "secure": "Secure",
+      "tabBusiness": "Business",
+      "tabIndividual": "Individual",
+      "searchPlaceholder": "Name, identifier, phone number…",
+      "searchAction": "Search",
+      "resultName": "Grand Horizon SARL",
+      "resultMeta": "Business · Kinshasa · Multiple matched records",
+      "score": "72",
+      "scoreLabel": "Risk level",
+      "scoreValue": "Moderate",
+      "exposureLabel": "Known exposure",
+      "exposureValue": "$184K",
+      "sourcesLabel": "Data sources",
+      "sourcesValue": "2",
+      "signal": "Risk signal: aged telecom receivable detected. Identity confidence is high; review payment history before extending additional credit."
     },
     "quick": [
-      "Employee Management",
-      "Salary Advances",
-      "Fraud Intelligence",
-      "Bank & NGO Editions",
-      "AI Workforce Insights"
+      "Universal Search",
+      "DIP Risk Score",
+      "Data Exchange",
+      "Bank and Telecom",
+      "AI Intelligence"
     ],
     "platform": {
-      "eyebrow": "Built on DIP",
-      "title": "A modular platform that grows with your organization.",
-      "body": "Start with core HR. Add employee financial services, fraud prevention, sector compliance, analytics, and AI as your needs grow.",
+      "eyebrow": "National Intelligence Infrastructure",
+      "title": "From fragmented records to a trusted national intelligence layer.",
+      "body": "DIP is designed to become a nationally trusted infrastructure where approved institutions can securely contribute, validate, and consult risk intelligence while retaining ownership of their operational data.",
       "cards": [
         {
-          "badge": "HR",
-          "title": "Core HR & Employee Records",
-          "body": "Digital employee files, contracts, departments, branches, document tracking, workflows, and role-based access.",
-          "more": "Explore Core HR"
+          "badge": "SEARCH",
+          "title": "Universal Entity Search",
+          "body": "Search businesses and individuals across available participating data sources using names, identifiers, phone numbers, account references, and other approved attributes.",
+          "more": "Explore search"
         },
         {
-          "badge": "AI",
-          "title": "AI Workforce Intelligence",
-          "body": "Turnover signals, contract alerts, staffing insights, policy assistance, workforce forecasting, and executive reporting.",
-          "more": "Explore AI insights"
+          "badge": "ID",
+          "title": "Identity Resolution",
+          "body": "Match inconsistent names, aliases, identifiers, phone numbers, and historical records to create a trusted entity profile with confidence scoring.",
+          "more": "Explore identity"
         },
         {
-          "badge": "$",
-          "title": "Employee Financial Services",
-          "body": "Salary advances, affordable credit, health insurance, savings products, benefits, and payroll-connected services.",
-          "more": "Explore financial services"
+          "badge": "RISK",
+          "title": "Risk Intelligence",
+          "body": "Combine payment behaviour, aging, exposure, disputes, source history, and fraud indicators into transparent risk insights for human decision makers.",
+          "more": "Explore risk"
         },
         {
-          "badge": "!",
-          "title": "Fraud & Anomaly Prevention",
-          "body": "Detect ghost employees, duplicate identities, suspicious payroll changes, conflicts of interest, and unusual activity.",
-          "more": "Explore fraud intelligence"
+          "badge": "FRAUD",
+          "title": "Fraud and Anomaly Detection",
+          "body": "Surface duplicate identities, unusual relationships, repeated defaults, conflicting information, suspicious account patterns, and potential data-quality problems.",
+          "more": "Explore fraud"
         }
       ]
     },
-    "lifecycle": {
-      "eyebrow": "Complete Employee Lifecycle",
-      "title": "Everything HR teams need. One connected experience.",
-      "tiles": [
+    "exchange": {
+      "eyebrow": "Trusted Data Exchange",
+      "title": "From spreadsheet to shared intelligence network.",
+      "body": "Start with secure file ingestion today. Evolve toward real-time APIs and multi-institution intelligence as participating organizations connect.",
+      "steps": [
         {
-          "tag": "Hire",
-          "title": "Recruitment & Onboarding",
-          "body": "Applicant tracking, interviews, offers, background checks, and digital onboarding."
+          "title": "Ingest",
+          "body": "Excel, CSV, secure uploads, APIs, and scheduled feeds."
         },
         {
-          "tag": "Manage",
-          "title": "Time, Leave & Attendance",
-          "body": "Leave requests, shifts, overtime, country calendars, approvals, and attendance."
+          "title": "Validate",
+          "body": "Schema checks, missing values, formats, reconciliation, and source quality."
         },
         {
-          "tag": "Develop",
-          "title": "Performance & Learning",
-          "body": "Goals, reviews, probation, skills, training compliance, and succession planning."
+          "title": "Resolve",
+          "body": "Normalize names, detect duplicates, match entities, and assign confidence."
         },
         {
-          "tag": "Pay",
-          "title": "Payroll Preparation",
-          "body": "Salaries, deductions, allowances, bonuses, bank exports, payslips, and approvals."
+          "title": "Enrich",
+          "body": "Exposure, aging, history, relationships, fraud indicators, and trends."
         },
         {
-          "tag": "Serve",
-          "title": "Employee Self-Service",
-          "body": "Mobile-friendly access to payslips, leave, documents, benefits, and policies."
-        },
-        {
-          "tag": "Automate",
-          "title": "Workflow Automation",
-          "body": "Approvals for hiring, promotion, travel, expenses, contracts, and disciplinary cases."
+          "title": "Decide",
+          "body": "Search, risk reports, alerts, APIs, dashboards, and human review."
         }
       ]
     },
-    "financial": {
-      "eyebrow": "Employee Financial Wellbeing",
-      "title": "Connect workers to financial services through the workplace.",
-      "body": "Give employees access to responsible financial products while employers retain secure, governed administration.",
-      "feature": {
-        "eyebrow": "Embedded Financial Services",
-        "title": "Turn payroll into a gateway to financial wellbeing.",
-        "body": "Partner with banks, insurers, and regulated lenders to offer salary-linked products directly within Dival People.",
-        "cta": "Explore partner model"
-      },
-      "minis": [
-        {
-          "title": "Salary Advances",
-          "body": "Controlled access to earned wages and employer-approved advances."
-        },
-        {
-          "title": "Affordable Credit",
-          "body": "Connect employees to responsible banks and microfinance partners."
-        },
-        {
-          "title": "Health Insurance",
-          "body": "Compare plans, enroll dependents, and manage contributions."
-        },
-        {
-          "title": "Savings & Benefits",
-          "body": "Support savings plans, pensions, and financial education."
-        }
-      ]
-    },
-    "fraud": {
-      "eyebrow": "Fraud Intelligence",
-      "title": "Built-in protection for banks, telecoms, NGOs, and regulated organizations.",
-      "body": "Dival People identifies suspicious patterns and routes them for human review without replacing compliance or investigative judgment.",
-      "checks": [
-        "Ghost employee detection",
-        "Duplicate identity alerts",
-        "Payroll anomaly monitoring",
-        "Conflict-of-interest checks"
+    "risk": {
+      "eyebrow": "Risk Intelligence",
+      "title": "A risk profile built from evidence, not a black box.",
+      "body": "DIP can present a transparent score or rating alongside the factors that influenced it, so banks, telecoms, insurers, and enterprises can make their own decisions.",
+      "factors": [
+        "Payment history",
+        "Aging and exposure",
+        "Identity confidence",
+        "Cross-source signals",
+        "Fraud indicators"
       ],
-      "cta": "See fraud controls",
-      "panel": {
-        "title": "Risk & Compliance Review",
-        "openAlerts": "18 open alerts",
-        "high": "High",
-        "review": "Review",
-        "clear": "Clear",
-        "rows": [
-          {
-            "name": "Possible duplicate bank account",
-            "area": "Payroll"
-          },
-          {
-            "name": "Employee identity similarity",
-            "area": "Identity"
-          },
-          {
-            "name": "Contract expiration approaching",
-            "area": "Compliance"
-          },
-          {
-            "name": "Unusual salary override",
-            "area": "Payroll"
-          },
-          {
-            "name": "Training compliance completed",
-            "area": "Learning"
-          }
-        ]
-      }
+      "panelTitle": "Business Risk Overview",
+      "panelTag": "Illustrative",
+      "scoreLabel": "DIP risk score",
+      "scoreValue": "72 / 100",
+      "exposureLabel": "Total exposure",
+      "exposureValue": "$184K",
+      "confidenceLabel": "Identity confidence",
+      "confidenceValue": "96%",
+      "bars": [
+        {
+          "label": "Payment history",
+          "value": "58"
+        },
+        {
+          "label": "Debt aging",
+          "value": "79"
+        },
+        {
+          "label": "Identity",
+          "value": "96"
+        },
+        {
+          "label": "Fraud signals",
+          "value": "18"
+        }
+      ]
+    },
+    "entity": {
+      "eyebrow": "Entity Intelligence",
+      "title": "Business and individual intelligence in the same platform.",
+      "body": "Different users need different evidence. DIP maintains separate profiles, permissions, signals, and reporting for businesses and individuals.",
+      "cards": [
+        {
+          "badge": "B2B",
+          "title": "Business Intelligence",
+          "body": "Search organizations, consolidate operator records, review payment exposure, aging, account status, identifiers, business relationships, and risk indicators.",
+          "more": "Business profile"
+        },
+        {
+          "badge": "INDIVIDUAL",
+          "title": "Individual Intelligence",
+          "body": "Resolve identities using approved personal identifiers and historical records, surface payment and fraud signals, and support responsible onboarding decisions.",
+          "more": "Individual profile"
+        },
+        {
+          "badge": "MONITORING",
+          "title": "Portfolio Monitoring",
+          "body": "Monitor existing customers and portfolios for new debt, aging changes, fraud indicators, write-offs, disputes, and material risk changes.",
+          "more": "Portfolio monitoring"
+        }
+      ]
+    },
+    "trust": {
+      "eyebrow": "National Trust Framework",
+      "title": "Designed to become a trusted reference across institutions.",
+      "body": "DIP is not another isolated database. Its long-term role is to provide a governed national intelligence network that banks, telecom operators, insurers, utilities, enterprises, and authorized public institutions can rely on when assessing identity, exposure, and risk.",
+      "cards": [
+        {
+          "badge": "TRUSTED SOURCES",
+          "title": "Verified Institutional Data",
+          "body": "Intelligence is derived from approved participating sources, with provenance retained for every record."
+        },
+        {
+          "badge": "GOVERNANCE",
+          "title": "Shared Rules, Clear Ownership",
+          "body": "Participants retain ownership of their operational data while DIP applies governed sharing and access rules."
+        },
+        {
+          "badge": "AUDITABILITY",
+          "title": "Every Search Accountable",
+          "body": "Searches, reports, exports, and risk reviews are designed to be logged and auditable."
+        },
+        {
+          "badge": "NATIONAL SCALE",
+          "title": "Built to Grow Nationwide",
+          "body": "The architecture supports growth from initial telecom datasets to a broader multi-industry national intelligence ecosystem."
+        }
+      ]
     },
     "industries": {
-      "eyebrow": "Industry Editions",
-      "title": "One platform. Tailored for each organization.",
-      "body": "Deploy specialized workflows, controls, and analytics on the same DIP foundation.",
+      "eyebrow": "Industry Solutions",
+      "title": "One platform. Different decisions.",
+      "body": "DIP serves as the shared intelligence foundation while each industry receives workflows and risk views tailored to its own operating model.",
       "cards": [
         {
           "badge": "BANK",
-          "title": "Financial Services",
-          "body": "HR, compliance training, insider-risk controls, background verification, and payroll anomaly detection.",
-          "more": "Explore banking edition"
+          "title": "Banking and Lending",
+          "body": "Customer due diligence, business search, identity matching, pre-credit risk indicators, portfolio monitoring, fraud signals, and API-based decision support.",
+          "more": "Banking edition"
         },
         {
-          "badge": "NGO",
-          "title": "NGOs & Development",
-          "body": "Grant staffing, project timesheets, consultant records, contract alerts, safeguarding, and donor reporting.",
-          "more": "Explore NGO edition"
+          "badge": "TIX",
+          "title": "Telecom Intelligence Exchange",
+          "body": "Shared telecom debt intelligence, aging exposure, customer hopping indicators, account history, duplicate records, and onboarding risk support.",
+          "more": "TIX module"
         },
         {
-          "badge": "TELCO",
-          "title": "Telecommunications",
-          "body": "Workforce management, compliance, employee fraud controls, and the TIX customer risk exchange.",
-          "more": "Explore telecom edition"
+          "badge": "INS",
+          "title": "Insurance",
+          "body": "Identity verification, business due diligence, anomaly indicators, customer relationships, and configurable underwriting support signals.",
+          "more": "Insurance edition"
+        },
+        {
+          "badge": "UTIL",
+          "title": "Utilities and ISPs",
+          "body": "Assess service applicants, monitor unpaid balances, identify repeat defaults, and share approved risk information across participating networks.",
+          "more": "Utilities edition"
+        },
+        {
+          "badge": "B2B",
+          "title": "Enterprise Trade Risk",
+          "body": "Search companies before offering credit, contracts, equipment, postpaid services, or supplier terms. Monitor strategic counterparties continuously.",
+          "more": "Enterprise edition"
         },
         {
           "badge": "GOV",
-          "title": "Government",
-          "body": "Workforce records, controlled approvals, audit trails, document compliance, and public-sector reporting.",
-          "more": "Explore government edition"
+          "title": "Public Sector",
+          "body": "Use governed identity, business, and risk intelligence for authorized public-sector verification, licensing, collections, and program-integrity workflows.",
+          "more": "Public sector edition"
+        }
+      ]
+    },
+    "portfolio": {
+      "eyebrow": "Portfolio Intelligence",
+      "title": "Understand exposure before it becomes a loss.",
+      "body": "Dashboards help decision makers see concentrations, aging, operator exposure, high-risk entities, recovery priorities, and data quality across the portfolio.",
+      "columns": {
+        "entity": "Entity",
+        "type": "Type",
+        "exposure": "Exposure",
+        "risk": "Risk",
+        "status": "Status"
+      },
+      "rows": [
+        {
+          "entity": "Grand Horizon SARL",
+          "type": "Business",
+          "exposure": "$184,000",
+          "risk": "Moderate",
+          "status": "Review"
         },
         {
-          "badge": "HEALTH",
-          "title": "Healthcare",
-          "body": "Credential tracking, shifts, clinical training compliance, workforce planning, and secure employee records.",
-          "more": "Explore healthcare edition"
+          "entity": "Atlas Distribution",
+          "type": "Business",
+          "exposure": "$96,200",
+          "risk": "High",
+          "status": "Active"
         },
         {
-          "badge": "ENT",
-          "title": "Enterprise",
-          "body": "A flexible edition for education, insurance, mining, logistics, and multi-country employers.",
-          "more": "Explore enterprise edition"
+          "entity": "Customer 01984",
+          "type": "Individual",
+          "exposure": "$2,480",
+          "risk": "Low",
+          "status": "Clear"
+        },
+        {
+          "entity": "Regional Services Ltd",
+          "type": "Business",
+          "exposure": "$61,500",
+          "risk": "High",
+          "status": "Monitor"
+        }
+      ]
+    },
+    "ai": {
+      "eyebrow": "Dival AI Intelligence",
+      "title": "Ask questions across the intelligence network.",
+      "body": "AI summarizes evidence and helps analysts navigate large portfolios, while final lending, onboarding, fraud, and service decisions remain with authorized humans.",
+      "exchanges": [
+        {
+          "role": "Risk Analyst",
+          "question": "Why is this business classified as moderate risk?",
+          "answer": "The primary drivers are aged outstanding telecom balances and repeated late-payment indicators. Identity confidence is high and no material fraud indicators are currently present. Review the detailed exposure timeline before extending additional terms."
+        },
+        {
+          "role": "Portfolio Manager",
+          "question": "Show me companies with high exposure and aging above 180 days.",
+          "answer": "I found 14 entities matching the selected portfolio criteria. The largest exposure concentration is within enterprise telecom accounts. Open the filtered portfolio view to review source records and recovery status."
+        }
+      ],
+      "answeredBy": "Dival AI"
+    },
+    "governance": {
+      "eyebrow": "Governed by Design",
+      "title": "Intelligence without surrendering control.",
+      "body": "Each participating institution retains ownership of its operational data. DIP controls access through permissions, audit trails, purpose-based workflows, tenant isolation, and configurable information-sharing rules.",
+      "cards": [
+        {
+          "badge": "SECURITY",
+          "title": "Role-Based Access",
+          "body": "Users see only the data and actions permitted for their organization and function."
+        },
+        {
+          "badge": "AUDIT",
+          "title": "Complete Traceability",
+          "body": "Every search, report, update, export, and risk review can be logged and investigated."
+        },
+        {
+          "badge": "PRIVACY",
+          "title": "Data Minimization",
+          "body": "Share the intelligence required for a decision without unnecessarily exposing underlying operational data."
+        },
+        {
+          "badge": "HUMAN REVIEW",
+          "title": "Decision Support",
+          "body": "DIP provides risk evidence and recommendations; authorized institutions retain final decision authority."
         }
       ]
     },
     "finalCta": {
-      "title": "Ready to visualize Dival People inside your organization?",
-      "body": "Start with a guided prototype and configure the first industry edition around a real workflow.",
-      "button": "Request a prototype demo"
+      "title": "Turn the data you already have into intelligence you can act on.",
+      "body": "Start with existing telecom spreadsheets. Add new institutions, APIs, and risk capabilities as the network grows.",
+      "action": "Request a DIP prototype demo"
     },
     "footer": {
-      "columns": [
+      "groups": [
         {
-          "title": "Dival People",
+          "title": "Dival Intelligence",
           "links": [
             "Overview",
-            "Core HR",
-            "Payroll",
-            "Self-Service"
+            "Universal Search",
+            "Risk Intelligence",
+            "Portfolio Monitoring"
           ]
         },
         {
-          "title": "Intelligence",
+          "title": "Solutions",
           "links": [
-            "AI Assistant",
-            "Fraud Prevention",
-            "Analytics",
-            "Compliance"
+            "Banking",
+            "TIX",
+            "Insurance",
+            "Enterprise"
           ]
         },
         {
-          "title": "Industries",
+          "title": "Platform",
           "links": [
-            "Financial Services",
-            "NGOs",
-            "Telecom",
-            "Government"
+            "Identity Resolution",
+            "Fraud Intelligence",
+            "APIs",
+            "AI Assistant"
           ]
         },
         {
-          "title": "Company",
+          "title": "Trust",
           "links": [
-            "About Dival AI",
+            "Security",
+            "Privacy",
+            "Governance",
+            "Audit"
+          ]
+        },
+        {
+          "title": "Dival AI",
+          "links": [
+            "Company",
+            "Dival People",
             "Insights",
-            "Partners",
             "Contact"
           ]
-        },
-        {
-          "title": "Language",
-          "links": [
-            "English",
-            "Français",
-            "Privacy",
-            "Security"
-          ]
         }
       ],
-      "copyright": "© 2026 Dival AI. Prototype concept.",
-      "builtOn": "Built on the Dival Intelligence Platform (DIP)."
-    },
-    "ai": {
-      "eyebrow": "Artificial Intelligence",
-      "title": "Intelligence that assists. People who decide.",
-      "body": "AI runs throughout Dival People — summarizing, matching, explaining and recommending. It stops there. Employment, credit, insurance, fraud and payroll outcomes remain human decisions, by design and by policy.",
-      "capabilities": [
-        {
-          "badge": "ASSIST",
-          "title": "AI Assistant",
-          "body": "Policy questions answered from your own documents, guidance through HR requests, contract expiry alerts, and workforce summaries written for executives."
-        },
-        {
-          "badge": "PREDICT",
-          "title": "Predictive Workforce Insights",
-          "body": "Turnover signals, staffing forecasts, absence patterns and skills gaps surfaced early enough to do something about them."
-        },
-        {
-          "badge": "DETECT",
-          "title": "Fraud & Anomaly Detection",
-          "body": "Ghost employees, duplicate identities, shared bank accounts, payroll anomalies and conflicts of interest — each presented with its evidence."
-        },
-        {
-          "badge": "MATCH",
-          "title": "Identity Intelligence",
-          "body": "Probabilistic matching that resolves the same person across incomplete and inconsistently entered records, with a confidence score on every match."
-        }
-      ],
-      "safeguards": {
-        "title": "How the AI is kept accountable",
-        "items": [
-          "Every output is labelled advisory and shows the evidence behind it",
-          "Retrieval respects the permissions of the person asking",
-          "Alerts are indicators requiring review, never findings of misconduct",
-          "Model access and output are audited like any other action",
-          "No autonomous employment, credit, insurance, fraud or payroll decisions"
-        ]
-      }
+      "legal": "© 2026 Dival AI. Prototype concept.",
+      "tagline": "Dival Intelligence Platform (DIP) · Telecom Intelligence Exchange (TIX)"
     }
   },
   "org": {

@@ -71,18 +71,18 @@
   "landing": {
     "nav": {
       "platform": "Plateforme",
-      "hr": "Solutions RH",
-      "financial": "Services financiers",
+      "search": "Recherche",
+      "risk": "Intelligence du risque",
       "industries": "Secteurs",
-      "security": "Sécurité",
-      "ai": "IA"
+      "exchange": "Échange de données"
     },
     "actions": {
-      "signIn": "Se connecter",
+      "signIn": "Connexion",
       "dashboard": "Accéder au tableau de bord",
       "requestDemo": "Demander une démo",
-      "seePlatform": "Découvrir la plateforme",
-      "exploreCapabilities": "Explorer les fonctionnalités"
+      "explorePlatform": "Explorer la plateforme",
+      "viewRiskReport": "Voir un rapport de risque",
+      "viewSampleReport": "Voir un rapport type"
     },
     "authError": {
       "title": "La connexion n'a pas abouti.",
@@ -96,302 +96,374 @@
       }
     },
     "hero": {
-      "eyebrow": "Dival Intelligence Platform",
-      "title": "Une plateforme pour vos équipes, votre intelligence et votre croissance.",
-      "body": "Gérez le cycle de vie des employés, connectez vos collaborateurs aux avantages financiers, automatisez les opérations RH et protégez votre organisation grâce à la détection de la fraude et des anomalies par IA.",
+      "eyebrow": "Dival Intelligence Platform · DIP",
+      "title": "Une plateforme nationale d’intelligence de confiance pour de meilleures décisions.",
+      "body": "Recherchez des entreprises ou des particuliers, analysez l’exposition financière, identifiez les signaux de risque, détectez la fraude et prenez de meilleures décisions grâce à un réseau d’intelligence sécurisé conçu pour les institutions de la République démocratique du Congo.",
       "checks": [
-        "English + Français",
-        "Cloud ou déploiement privé",
-        "Conçu pour l'Afrique"
+        "Intelligence entreprises et particuliers",
+        "Prêt pour les API",
+        "Décisions de risque revues par des humains"
       ]
     },
     "board": {
-      "title": "Intelligence du personnel",
-      "subtitle": "Vue d'ensemble",
-      "period": "Août 2026",
-      "totalEmployees": "Effectif total",
-      "payrollAccuracy": "Exactitude de la paie",
-      "openAlerts": "Alertes ouvertes"
+      "title": "Recherche universelle",
+      "illustrative": "Prototype illustratif",
+      "secure": "Sécurisé",
+      "tabBusiness": "Entreprise",
+      "tabIndividual": "Particulier",
+      "searchPlaceholder": "Nom, identifiant, numéro de téléphone…",
+      "searchAction": "Recherche",
+      "resultName": "Grand Horizon SARL",
+      "resultMeta": "Entreprise · Kinshasa · Plusieurs enregistrements correspondants",
+      "score": "72",
+      "scoreLabel": "Niveau de risque",
+      "scoreValue": "Modéré",
+      "exposureLabel": "Exposition connue",
+      "exposureValue": "184 k$",
+      "sourcesLabel": "Sources de données",
+      "sourcesValue": "2",
+      "signal": "Signal de risque : créance télécom ancienne détectée. La confiance dans l’identité est élevée ; examinez l’historique de paiement avant d’accorder un crédit supplémentaire."
     },
     "quick": [
-      "Gestion du personnel",
-      "Avances sur salaire",
-      "Prévention de la fraude",
-      "Éditions Banque & ONG",
-      "Analyses RH par IA"
+      "Recherche universelle",
+      "Score de risque DIP",
+      "Échange de données",
+      "Banque et télécoms",
+      "Intelligence IA"
     ],
     "platform": {
-      "eyebrow": "Bâti sur DIP",
-      "title": "Une plateforme modulaire qui grandit avec votre organisation.",
-      "body": "Commencez par les RH essentielles. Ajoutez les services financiers, la prévention de la fraude, la conformité sectorielle, l'analytique et l'IA au fil de vos besoins.",
+      "eyebrow": "Infrastructure nationale d’intelligence",
+      "title": "Des données fragmentées vers une couche nationale d’intelligence de confiance.",
+      "body": "DIP est conçu pour devenir une infrastructure nationale de confiance permettant aux institutions autorisées de contribuer, valider et consulter des informations de risque en toute sécurité, tout en conservant la propriété de leurs données opérationnelles.",
       "cards": [
         {
-          "badge": "RH",
-          "title": "RH & dossiers du personnel",
-          "body": "Dossiers numériques, contrats, départements, agences, suivi documentaire, flux de travail et accès par rôle.",
-          "more": "Découvrir les RH essentielles"
+          "badge": "RECHERCHE",
+          "title": "Recherche universelle d’entités",
+          "body": "Recherchez entreprises et particuliers dans les sources participantes disponibles à partir de noms, identifiants, numéros de téléphone, références de compte et autres attributs approuvés.",
+          "more": "Explorer la recherche"
         },
         {
-          "badge": "IA",
-          "title": "Intelligence RH par IA",
-          "body": "Signaux de départ, alertes de contrats, analyses d'effectifs, assistance sur les politiques, prévisions et rapports de direction.",
-          "more": "Découvrir les analyses IA"
+          "badge": "ID",
+          "title": "Résolution d’identité",
+          "body": "Rapprochez noms incohérents, alias, identifiants, numéros de téléphone et enregistrements historiques pour constituer un profil d’entité fiable, assorti d’un indice de confiance.",
+          "more": "Explorer l’identité"
         },
         {
-          "badge": "$",
-          "title": "Services financiers aux employés",
-          "body": "Avances sur salaire, crédit abordable, assurance santé, épargne, avantages et services adossés à la paie.",
-          "more": "Découvrir les services financiers"
+          "badge": "RISQUE",
+          "title": "Intelligence du risque",
+          "body": "Combinez comportement de paiement, ancienneté, exposition, litiges, historique des sources et indicateurs de fraude en analyses de risque transparentes destinées à des décideurs humains.",
+          "more": "Explorer le risque"
         },
         {
-          "badge": "!",
-          "title": "Prévention de la fraude et des anomalies",
-          "body": "Détectez les employés fictifs, les identités dupliquées, les modifications de paie suspectes et les conflits d'intérêts.",
-          "more": "Découvrir la prévention de la fraude"
+          "badge": "FRAUDE",
+          "title": "Détection de fraude et d’anomalies",
+          "body": "Faites ressortir identités dupliquées, relations inhabituelles, défauts répétés, informations contradictoires, schémas de comptes suspects et problèmes potentiels de qualité des données.",
+          "more": "Explorer la fraude"
         }
       ]
     },
-    "lifecycle": {
-      "eyebrow": "Cycle de vie complet de l'employé",
-      "title": "Tout ce dont les équipes RH ont besoin. Une expérience unifiée.",
-      "tiles": [
+    "exchange": {
+      "eyebrow": "Échange de données de confiance",
+      "title": "Du tableur au réseau d’intelligence partagé.",
+      "body": "Commencez aujourd’hui par l’ingestion sécurisée de fichiers. Évoluez vers des API en temps réel et une intelligence multi-institutionnelle à mesure que les organisations se connectent.",
+      "steps": [
         {
-          "tag": "Recruter",
-          "title": "Recrutement & intégration",
-          "body": "Suivi des candidatures, entretiens, offres, vérifications et intégration numérique."
+          "title": "Ingérer",
+          "body": "Excel, CSV, dépôts sécurisés, API et flux planifiés."
         },
         {
-          "tag": "Gérer",
-          "title": "Temps, congés & présence",
-          "body": "Demandes de congés, équipes, heures supplémentaires, calendriers par pays, approbations et présence."
+          "title": "Valider",
+          "body": "Contrôles de schéma, valeurs manquantes, formats, rapprochement et qualité des sources."
         },
         {
-          "tag": "Développer",
-          "title": "Performance & formation",
-          "body": "Objectifs, évaluations, période d'essai, compétences, conformité des formations et plans de succession."
+          "title": "Résoudre",
+          "body": "Normalisez les noms, détectez les doublons, rapprochez les entités et attribuez un indice de confiance."
         },
         {
-          "tag": "Payer",
-          "title": "Préparation de la paie",
-          "body": "Salaires, retenues, indemnités, primes, exports bancaires, bulletins et approbations."
+          "title": "Enrichir",
+          "body": "Exposition, ancienneté, historique, relations, indicateurs de fraude et tendances."
         },
         {
-          "tag": "Servir",
-          "title": "Libre-service employé",
-          "body": "Accès mobile aux bulletins, congés, documents, avantages et politiques internes."
-        },
-        {
-          "tag": "Automatiser",
-          "title": "Automatisation des flux",
-          "body": "Approbations pour embauches, promotions, déplacements, frais, contrats et procédures disciplinaires."
+          "title": "Décider",
+          "body": "Recherche, rapports de risque, alertes, API, tableaux de bord et revue humaine."
         }
       ]
     },
-    "financial": {
-      "eyebrow": "Bien-être financier des employés",
-      "title": "Connectez vos collaborateurs aux services financiers via l'employeur.",
-      "body": "Offrez à vos employés des produits financiers responsables tout en conservant une administration sécurisée et encadrée.",
-      "feature": {
-        "eyebrow": "Services financiers intégrés",
-        "title": "Faites de la paie une porte d'entrée vers le bien-être financier.",
-        "body": "Associez-vous à des banques, assureurs et prêteurs régulés pour proposer des produits adossés au salaire directement dans Dival People.",
-        "cta": "Découvrir le modèle partenaire"
-      },
-      "minis": [
-        {
-          "title": "Avances sur salaire",
-          "body": "Accès encadré au salaire acquis et aux avances approuvées par l'employeur."
-        },
-        {
-          "title": "Crédit abordable",
-          "body": "Mise en relation avec des banques et institutions de microfinance responsables."
-        },
-        {
-          "title": "Assurance santé",
-          "body": "Comparez les offres, inscrivez les ayants droit et gérez les cotisations."
-        },
-        {
-          "title": "Épargne & avantages",
-          "body": "Plans d'épargne, pensions et éducation financière."
-        }
-      ]
-    },
-    "fraud": {
-      "eyebrow": "Prévention de la fraude",
-      "title": "Une protection intégrée pour les banques, télécoms, ONG et organisations régulées.",
-      "body": "Dival People identifie les schémas suspects et les oriente vers une revue humaine, sans se substituer au jugement des équipes de conformité.",
-      "checks": [
-        "Détection des employés fictifs",
-        "Alertes d'identités dupliquées",
-        "Surveillance des anomalies de paie",
-        "Contrôle des conflits d'intérêts"
+    "risk": {
+      "eyebrow": "Intelligence du risque",
+      "title": "Un profil de risque fondé sur des preuves, pas sur une boîte noire.",
+      "body": "DIP peut présenter un score ou une notation transparente accompagné des facteurs qui l’ont influencé, afin que banques, télécoms, assureurs et entreprises décident par eux-mêmes.",
+      "factors": [
+        "Historique de paiement",
+        "Ancienneté et exposition",
+        "Confiance dans l’identité",
+        "Signaux inter-sources",
+        "Indicateurs de fraude"
       ],
-      "cta": "Voir les contrôles anti-fraude",
-      "panel": {
-        "title": "Revue des risques et de la conformité",
-        "openAlerts": "18 alertes ouvertes",
-        "high": "Élevé",
-        "review": "À revoir",
-        "clear": "Conforme",
-        "rows": [
-          {
-            "name": "Compte bancaire potentiellement dupliqué",
-            "area": "Paie"
-          },
-          {
-            "name": "Similarité d'identité entre employés",
-            "area": "Identité"
-          },
-          {
-            "name": "Échéance de contrat proche",
-            "area": "Conformité"
-          },
-          {
-            "name": "Modification de salaire inhabituelle",
-            "area": "Paie"
-          },
-          {
-            "name": "Formation de conformité terminée",
-            "area": "Formation"
-          }
-        ]
-      }
+      "panelTitle": "Vue d’ensemble du risque entreprise",
+      "panelTag": "Illustratif",
+      "scoreLabel": "Score de risque DIP",
+      "scoreValue": "72 / 100",
+      "exposureLabel": "Exposition totale",
+      "exposureValue": "184 k$",
+      "confidenceLabel": "Confiance dans l’identité",
+      "confidenceValue": "96 %",
+      "bars": [
+        {
+          "label": "Historique de paiement",
+          "value": "58"
+        },
+        {
+          "label": "Ancienneté de la dette",
+          "value": "79"
+        },
+        {
+          "label": "Identité",
+          "value": "96"
+        },
+        {
+          "label": "Signaux de fraude",
+          "value": "18"
+        }
+      ]
+    },
+    "entity": {
+      "eyebrow": "Intelligence sur les entités",
+      "title": "Intelligence entreprises et particuliers sur une même plateforme.",
+      "body": "Chaque utilisateur a besoin de preuves différentes. DIP gère des profils, autorisations, signaux et rapports distincts pour les entreprises et les particuliers.",
+      "cards": [
+        {
+          "badge": "B2B",
+          "title": "Intelligence entreprises",
+          "body": "Recherchez des organisations, consolidez les enregistrements des opérateurs, examinez l’exposition de paiement, l’ancienneté, le statut des comptes, les identifiants, les relations d’affaires et les indicateurs de risque.",
+          "more": "Profil entreprise"
+        },
+        {
+          "badge": "PARTICULIER",
+          "title": "Intelligence particuliers",
+          "body": "Résolvez les identités à partir d’identifiants personnels approuvés et d’enregistrements historiques, faites ressortir les signaux de paiement et de fraude, et appuyez des décisions d’entrée en relation responsables.",
+          "more": "Profil particulier"
+        },
+        {
+          "badge": "SURVEILLANCE",
+          "title": "Surveillance de portefeuille",
+          "body": "Surveillez clients et portefeuilles existants : nouvelles dettes, évolution de l’ancienneté, indicateurs de fraude, passages en perte, litiges et changements de risque significatifs.",
+          "more": "Surveillance de portefeuille"
+        }
+      ]
+    },
+    "trust": {
+      "eyebrow": "Cadre national de confiance",
+      "title": "Conçu pour devenir une référence de confiance entre institutions.",
+      "body": "DIP n’est pas une base de données isolée de plus. Son objectif à long terme est de fournir un réseau national d’intelligence gouverné sur lequel les banques, opérateurs télécoms, assureurs, services publics, entreprises et institutions publiques autorisées peuvent s’appuyer pour évaluer l’identité, l’exposition et le risque.",
+      "cards": [
+        {
+          "badge": "SOURCES DE CONFIANCE",
+          "title": "Données institutionnelles vérifiées",
+          "body": "L’intelligence provient de sources participantes approuvées, avec traçabilité de l’origine de chaque donnée."
+        },
+        {
+          "badge": "GOUVERNANCE",
+          "title": "Règles partagées, propriété claire",
+          "body": "Les participants conservent la propriété de leurs données opérationnelles tandis que DIP applique des règles de partage et d’accès gouvernées."
+        },
+        {
+          "badge": "AUDITABILITÉ",
+          "title": "Chaque recherche est traçable",
+          "body": "Les recherches, rapports, exports et analyses de risque sont conçus pour être journalisés et auditables."
+        },
+        {
+          "badge": "ÉCHELLE NATIONALE",
+          "title": "Conçu pour évoluer à l’échelle nationale",
+          "body": "L’architecture permet d’évoluer des premières données télécoms vers un écosystème national multi-sectoriel d’intelligence."
+        }
+      ]
     },
     "industries": {
-      "eyebrow": "Éditions sectorielles",
-      "title": "Une plateforme. Adaptée à chaque organisation.",
-      "body": "Déployez des flux, contrôles et analyses spécialisés sur la même fondation DIP.",
+      "eyebrow": "Solutions sectorielles",
+      "title": "Une plateforme. Des décisions différentes.",
+      "body": "DIP constitue le socle d’intelligence partagé, chaque secteur disposant de flux de travail et de vues du risque adaptés à son propre modèle opérationnel.",
       "cards": [
         {
           "badge": "BANQUE",
-          "title": "Services financiers",
-          "body": "RH, formations de conformité, contrôle du risque interne, vérifications et détection des anomalies de paie.",
-          "more": "Découvrir l'édition bancaire"
+          "title": "Banque et crédit",
+          "body": "Diligence client, recherche d’entreprises, rapprochement d’identités, indicateurs de risque avant crédit, surveillance de portefeuille, signaux de fraude et aide à la décision par API.",
+          "more": "Édition banque"
         },
         {
-          "badge": "ONG",
-          "title": "ONG & développement",
-          "body": "Personnel sur financement, feuilles de temps projet, consultants, alertes de contrats et rapports aux bailleurs.",
-          "more": "Découvrir l'édition ONG"
+          "badge": "TIX",
+          "title": "Échange d’intelligence télécom",
+          "body": "Intelligence partagée sur les impayés télécoms, ancienneté de l’exposition, indicateurs de nomadisme client, historique des comptes, doublons et évaluation du risque à l’entrée en relation.",
+          "more": "Module TIX"
         },
         {
-          "badge": "TÉLÉCOM",
-          "title": "Télécommunications",
-          "body": "Gestion du personnel de terrain, conformité, contrôles anti-fraude et échange des risques clients TIX.",
-          "more": "Découvrir l'édition télécom"
+          "badge": "ASSUR",
+          "title": "Assurance",
+          "body": "Vérification d’identité, diligence entreprise, indicateurs d’anomalie, relations client et signaux configurables d’aide à la souscription.",
+          "more": "Édition assurance"
+        },
+        {
+          "badge": "SERV",
+          "title": "Services publics et FAI",
+          "body": "Évaluez les demandeurs de service, suivez les impayés, identifiez les défauts répétés et partagez des informations de risque approuvées entre réseaux participants.",
+          "more": "Édition services publics"
+        },
+        {
+          "badge": "B2B",
+          "title": "Risque commercial entreprise",
+          "body": "Recherchez des entreprises avant d’accorder crédit, contrats, équipements, services postpayés ou conditions fournisseur. Surveillez en continu vos contreparties stratégiques.",
+          "more": "Édition entreprise"
         },
         {
           "badge": "GOUV",
           "title": "Secteur public",
-          "body": "Dossiers du personnel, approbations encadrées, pistes d'audit, conformité documentaire et reporting public.",
-          "more": "Découvrir l'édition publique"
+          "body": "Utilisez une intelligence gouvernée sur l’identité, les entreprises et le risque pour les vérifications, licences, recouvrements et contrôles d’intégrité des programmes publics autorisés.",
+          "more": "Édition secteur public"
+        }
+      ]
+    },
+    "portfolio": {
+      "eyebrow": "Intelligence de portefeuille",
+      "title": "Comprendre l’exposition avant qu’elle ne devienne une perte.",
+      "body": "Les tableaux de bord montrent aux décideurs les concentrations, l’ancienneté, l’exposition par opérateur, les entités à risque élevé, les priorités de recouvrement et la qualité des données sur l’ensemble du portefeuille.",
+      "columns": {
+        "entity": "Entité",
+        "type": "Type",
+        "exposure": "Exposition",
+        "risk": "Risque",
+        "status": "Statut"
+      },
+      "rows": [
+        {
+          "entity": "Grand Horizon SARL",
+          "type": "Entreprise",
+          "exposure": "184 000 $",
+          "risk": "Modéré",
+          "status": "À examiner"
         },
         {
-          "badge": "SANTÉ",
-          "title": "Santé",
-          "body": "Suivi des accréditations, plannings, conformité des formations cliniques et planification des effectifs.",
-          "more": "Découvrir l'édition santé"
+          "entity": "Atlas Distribution",
+          "type": "Entreprise",
+          "exposure": "96 200 $",
+          "risk": "Élevé",
+          "status": "Actif"
         },
         {
-          "badge": "ENT",
-          "title": "Entreprise",
-          "body": "Une édition flexible pour l'éducation, l'assurance, les mines, la logistique et les employeurs multi-pays.",
-          "more": "Découvrir l'édition entreprise"
+          "entity": "Client 01984",
+          "type": "Particulier",
+          "exposure": "2 480 $",
+          "risk": "Faible",
+          "status": "Sain"
+        },
+        {
+          "entity": "Regional Services Ltd",
+          "type": "Entreprise",
+          "exposure": "61 500 $",
+          "risk": "Élevé",
+          "status": "Sous surveillance"
+        }
+      ]
+    },
+    "ai": {
+      "eyebrow": "Intelligence Dival AI",
+      "title": "Interrogez l’ensemble du réseau d’intelligence.",
+      "body": "L’IA synthétise les preuves et aide les analystes à naviguer dans de grands portefeuilles ; les décisions finales de crédit, d’entrée en relation, de fraude et de service restent aux personnes autorisées.",
+      "exchanges": [
+        {
+          "role": "Analyste risque",
+          "question": "Pourquoi cette entreprise est-elle classée à risque modéré ?",
+          "answer": "Les facteurs principaux sont des soldes télécoms impayés anciens et des retards de paiement répétés. La confiance dans l’identité est élevée et aucun indicateur de fraude significatif n’est présent. Consultez la chronologie détaillée de l’exposition avant d’accorder des conditions supplémentaires."
+        },
+        {
+          "role": "Gestionnaire de portefeuille",
+          "question": "Montrez-moi les entreprises à forte exposition avec une ancienneté supérieure à 180 jours.",
+          "answer": "J’ai trouvé 14 entités correspondant aux critères de portefeuille sélectionnés. La plus forte concentration d’exposition se situe sur les comptes télécoms entreprises. Ouvrez la vue filtrée du portefeuille pour examiner les enregistrements sources et l’état du recouvrement."
+        }
+      ],
+      "answeredBy": "Dival AI"
+    },
+    "governance": {
+      "eyebrow": "Gouvernance par conception",
+      "title": "L’intelligence sans renoncer au contrôle.",
+      "body": "Chaque institution participante conserve la propriété de ses données opérationnelles. DIP contrôle les accès par des autorisations, des pistes d’audit, des flux liés à une finalité, l’isolation des locataires et des règles de partage configurables.",
+      "cards": [
+        {
+          "badge": "SÉCURITÉ",
+          "title": "Accès selon le rôle",
+          "body": "Les utilisateurs ne voient que les données et actions autorisées pour leur organisation et leur fonction."
+        },
+        {
+          "badge": "AUDIT",
+          "title": "Traçabilité complète",
+          "body": "Chaque recherche, rapport, mise à jour, export et analyse de risque peut être journalisé et investigué."
+        },
+        {
+          "badge": "CONFIDENTIALITÉ",
+          "title": "Minimisation des données",
+          "body": "Partagez l’information nécessaire à une décision sans exposer inutilement les données opérationnelles sous-jacentes."
+        },
+        {
+          "badge": "REVUE HUMAINE",
+          "title": "Aide à la décision",
+          "body": "DIP fournit preuves de risque et recommandations ; les institutions autorisées conservent l’autorité de décision finale."
         }
       ]
     },
     "finalCta": {
-      "title": "Prêt à visualiser Dival People dans votre organisation ?",
-      "body": "Commencez par un prototype guidé et configurez la première édition sectorielle autour d'un flux réel.",
-      "button": "Demander une démo du prototype"
+      "title": "Transformez les données que vous détenez déjà en intelligence exploitable.",
+      "body": "Commencez avec vos tableurs télécoms existants. Ajoutez de nouvelles institutions, des API et des capacités de risque à mesure que le réseau grandit.",
+      "action": "Demander une démo du prototype DIP"
     },
     "footer": {
-      "columns": [
+      "groups": [
         {
-          "title": "Dival People",
+          "title": "Dival Intelligence",
           "links": [
-            "Présentation",
-            "RH essentielles",
-            "Paie",
-            "Libre-service"
+            "Vue d’ensemble",
+            "Recherche universelle",
+            "Intelligence du risque",
+            "Surveillance de portefeuille"
           ]
         },
         {
-          "title": "Intelligence",
+          "title": "Solutions",
           "links": [
-            "Assistant IA",
-            "Prévention de la fraude",
-            "Analytique",
-            "Conformité"
+            "Banque",
+            "TIX",
+            "Assurance",
+            "Entreprise"
           ]
         },
         {
-          "title": "Secteurs",
+          "title": "Plateforme",
           "links": [
-            "Services financiers",
-            "ONG",
-            "Télécom",
-            "Secteur public"
+            "Résolution d’identité",
+            "Intelligence fraude",
+            "API",
+            "Assistant IA"
           ]
         },
         {
-          "title": "Entreprise",
+          "title": "Confiance",
           "links": [
-            "À propos de Dival AI",
+            "Sécurité",
+            "Confidentialité",
+            "Gouvernance",
+            "Audit"
+          ]
+        },
+        {
+          "title": "Dival AI",
+          "links": [
+            "Entreprise",
+            "Dival People",
             "Analyses",
-            "Partenaires",
             "Contact"
           ]
-        },
-        {
-          "title": "Langue",
-          "links": [
-            "English",
-            "Français",
-            "Confidentialité",
-            "Sécurité"
-          ]
         }
       ],
-      "copyright": "© 2026 Dival AI. Concept prototype.",
-      "builtOn": "Bâti sur la Dival Intelligence Platform (DIP)."
-    },
-    "ai": {
-      "eyebrow": "Intelligence artificielle",
-      "title": "Une IA qui assiste. Des humains qui décident.",
-      "body": "L'IA est présente dans tout Dival People : elle résume, rapproche, explique et recommande. Et s'arrête là. Les décisions d'emploi, de crédit, d'assurance, de fraude et de paie restent humaines, par conception et par politique.",
-      "capabilities": [
-        {
-          "badge": "ASSISTER",
-          "title": "Assistant IA",
-          "body": "Réponses aux questions de politique interne à partir de vos propres documents, accompagnement des demandes RH, alertes d'échéance de contrat et synthèses pour la direction."
-        },
-        {
-          "badge": "PRÉDIRE",
-          "title": "Analyses prédictives du personnel",
-          "body": "Signaux de départ, prévisions d'effectifs, tendances d'absentéisme et lacunes de compétences, identifiés assez tôt pour agir."
-        },
-        {
-          "badge": "DÉTECTER",
-          "title": "Détection de la fraude et des anomalies",
-          "body": "Employés fictifs, identités dupliquées, comptes bancaires partagés, anomalies de paie et conflits d'intérêts — chacun présenté avec ses éléments probants."
-        },
-        {
-          "badge": "RAPPROCHER",
-          "title": "Intelligence des identités",
-          "body": "Un rapprochement probabiliste qui reconnaît une même personne malgré des données incomplètes ou saisies de façon incohérente, avec un score de confiance sur chaque correspondance."
-        }
-      ],
-      "safeguards": {
-        "title": "Comment l'IA reste redevable",
-        "items": [
-          "Chaque résultat est signalé comme indicatif et présente les éléments qui le fondent",
-          "La recherche documentaire respecte les habilitations de la personne qui interroge",
-          "Les alertes sont des indicateurs nécessitant une revue, jamais des constats de faute",
-          "L'accès aux modèles et leurs résultats sont audités comme toute autre action",
-          "Aucune décision autonome en matière d'emploi, de crédit, d'assurance, de fraude ou de paie"
-        ]
-      }
+      "legal": "© 2026 Dival AI. Concept prototype.",
+      "tagline": "Dival Intelligence Platform (DIP) · Telecom Intelligence Exchange (TIX)"
     }
   },
   "org": {

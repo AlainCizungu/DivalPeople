@@ -2,212 +2,198 @@
 
 import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
-import { CheckList, Eyebrow, FeatureCard, SectionHeading, gradientFor } from "./primitives";
+import { Eyebrow, FeatureCard, SectionHeading, gradientFor } from "./primitives";
 
-/** The five shortcut tiles that overlap the hero. */
+/**
+ * The marketing sections, in page order.
+ *
+ * <p>Everything numeric on this page — risk scores, exposure figures, the portfolio table, the
+ * assistant's answers — is invented, and every panel carrying one is labelled illustrative in
+ * both languages. That labelling is content, not decoration: the whole point of the page is to
+ * show institutions what a national risk registry would look like, and the failure mode is
+ * somebody screenshotting a plausible score against a named company and circulating it as output.
+ */
+
 export function QuickLinks() {
-  const { landing } = useMessages();
+  const messages = useMessages();
   return (
-    <div className="mx-auto -mt-7 mb-16 grid max-w-6xl grid-cols-2 gap-3.5 px-6 md:grid-cols-5">
-      {landing.quick.map((label) => (
-        <a
-          key={label}
-          href="#platform"
-          className="border border-line bg-white p-5 text-center font-bold shadow-md transition hover:text-blue"
-        >
-          {label}
-        </a>
-      ))}
+    <div className="border-y border-line bg-white">
+      <div className="mx-auto flex max-w-7xl flex-wrap gap-x-8 gap-y-3 px-6 py-4 text-sm font-semibold text-ink">
+        {messages.landing.quick.map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      </div>
     </div>
   );
 }
 
 export function PlatformSection() {
-  const { landing } = useMessages();
+  const messages = useMessages();
+  const { platform } = messages.landing;
   return (
     <section id="platform" className="mx-auto max-w-7xl px-6 py-20">
-      <SectionHeading
-        eyebrow={landing.platform.eyebrow}
-        title={landing.platform.title}
-        body={landing.platform.body}
-      />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {landing.platform.cards.map((card, index) => (
-          <FeatureCard key={card.title} gradient={gradientFor(index)} {...card} />
+      <SectionHeading eyebrow={platform.eyebrow} title={platform.title} body={platform.body} />
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {platform.cards.map((card, index) => (
+          <FeatureCard
+            key={card.title}
+            badge={card.badge}
+            gradient={gradientFor(index)}
+            title={card.title}
+            body={card.body}
+            more={card.more}
+          />
         ))}
       </div>
     </section>
   );
 }
 
-export function LifecycleSection() {
-  const { landing } = useMessages();
+/** The ingestion pipeline, as five numbered steps. */
+export function ExchangeSection() {
+  const messages = useMessages();
+  const { exchange } = messages.landing;
   return (
-    <section id="hr" className="mx-auto max-w-7xl px-6 py-20">
-      <SectionHeading eyebrow={landing.lifecycle.eyebrow} title={landing.lifecycle.title} />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {landing.lifecycle.tiles.map((tile) => (
-          <div key={tile.title} className="min-h-56 border border-line bg-white p-7">
-            <span className="mb-4 inline-block bg-[#eaf3fb] px-2.5 py-1 text-xs font-extrabold text-blue">
-              {tile.tag}
-            </span>
-            <h3 className="mb-3 text-2xl font-bold text-navy">{tile.title}</h3>
-            <p className="text-muted">{tile.body}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/**
- * Artificial intelligence.
- *
- * <p>The safeguards are given equal weight to the capabilities on purpose. "AI is advisory,
- * humans decide" is a rule the platform actually enforces (see docs/SECURITY_MODEL.md), so
- * stating it plainly is accurate rather than decorative — and for buyers in regulated sectors
- * it is the part that matters most.
- */
-export function AiSection() {
-  const { landing } = useMessages();
-  const { ai } = landing;
-
-  return (
-    <section id="ai" className="bg-soft">
+    <section id="exchange" className="bg-soft">
       <div className="mx-auto max-w-7xl px-6 py-20">
-        <SectionHeading eyebrow={ai.eyebrow} title={ai.title} body={ai.body} />
-
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {ai.capabilities.map((capability, index) => (
-            <article
-              key={capability.title}
-              className="flex flex-col border border-line bg-white p-6"
+        <SectionHeading eyebrow={exchange.eyebrow} title={exchange.title} body={exchange.body} />
+        <ol className="grid gap-6 md:grid-cols-3 xl:grid-cols-5">
+          {exchange.steps.map((step, index) => (
+            <li
+              key={step.title}
+              className="rounded-xl border border-line bg-white p-6 transition hover:-translate-y-1 hover:shadow-lg"
             >
-              <span
-                className={`mb-4 w-fit px-2.5 py-1 text-xs font-extrabold tracking-wider text-white ${gradientFor(index)}`}
-              >
-                {capability.badge}
-              </span>
-              <h3 className="mb-3 text-xl font-bold text-navy">{capability.title}</h3>
-              <p className="text-muted">{capability.body}</p>
-            </article>
+              <div className="mb-3 text-3xl font-extrabold tabular-nums text-blue">
+                {String(index + 1).padStart(2, "0")}
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-navy">{step.title}</h3>
+              <p className="text-sm text-muted">{step.body}</p>
+            </li>
           ))}
-        </div>
+        </ol>
+      </div>
+    </section>
+  );
+}
 
-        <div className="mt-8 border-l-4 border-teal bg-white p-8">
-          <h3 className="mb-4 text-xl font-bold text-navy">{ai.safeguards.title}</h3>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {ai.safeguards.items.map((item) => (
-              <li key={item} className="flex gap-2.5 text-ink">
-                <span aria-hidden="true" className="font-extrabold text-teal">
-                  ✓
-                </span>
-                <span>{item}</span>
+export function RiskSection() {
+  const messages = useMessages();
+  const { risk, actions } = messages.landing;
+  return (
+    <section id="risk" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.9fr]">
+        <div>
+          <SectionHeading eyebrow={risk.eyebrow} title={risk.title} body={risk.body} />
+          <ul className="mb-7 flex flex-wrap gap-2.5">
+            {risk.factors.map((factor) => (
+              <li
+                key={factor}
+                className="rounded-full border border-line bg-white px-3.5 py-1.5 text-sm text-ink"
+              >
+                {factor}
               </li>
             ))}
           </ul>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function FinancialSection() {
-  const { landing } = useMessages();
-  const icons = ["⚡", "🏦", "🩺", "💰"];
-
-  return (
-    <section id="financial" className="bg-navy">
-      <div className="mx-auto max-w-7xl px-6 py-20">
-        <SectionHeading
-          eyebrow={landing.financial.eyebrow}
-          title={landing.financial.title}
-          body={landing.financial.body}
-          inverted
-        />
-
-        <div className="grid gap-7 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="flex min-h-[27rem] flex-col justify-end bg-gradient-to-br from-[#0078d4] to-[#005a9e] p-10">
-            <Eyebrow tone="pale">{landing.financial.feature.eyebrow}</Eyebrow>
-            <h3 className="mb-3.5 text-[2.5rem] leading-tight font-bold text-white">
-              {landing.financial.feature.title}
-            </h3>
-            <p className="mb-6 text-lg text-[#eef7ff]">{landing.financial.feature.body}</p>
-            <a
-              href="#demo"
-              className="w-fit rounded border border-white bg-transparent px-5 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-navy"
-            >
-              {landing.financial.feature.cta}
-            </a>
-          </div>
-
-          <div className="grid gap-4.5 sm:grid-cols-2">
-            {landing.financial.minis.map((mini, index) => (
-              <div key={mini.title} className="min-h-52 bg-white p-6">
-                <b aria-hidden="true" className="text-3xl">
-                  {icons[index]}
-                </b>
-                <h4 className="mt-3 mb-2 text-xl font-bold text-navy">{mini.title}</h4>
-                <p className="text-muted">{mini.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function FraudSection() {
-  const { landing } = useMessages();
-  const { fraud } = landing;
-  // Mirrors the prototype's sample panel: the last row is the deliberate "clear" case, and the
-  // third is a softer review state, so the panel does not read as all-alarms.
-  const severityFor = (index: number) =>
-    index === 4
-      ? { label: fraud.panel.clear, className: "bg-[#e7f6ec] text-green" }
-      : index === 2
-        ? { label: fraud.panel.review, className: "bg-[#e7f6ec] text-green" }
-        : { label: fraud.panel.high, className: "bg-[#fff1f0] text-error" };
-
-  return (
-    <section id="security" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="grid items-center gap-16 lg:grid-cols-2">
-        <div>
-          <Eyebrow>{fraud.eyebrow}</Eyebrow>
-          <h2 className="mb-4 text-[clamp(2rem,4vw,3.25rem)] leading-[1.08] font-bold tracking-tight text-navy">
-            {fraud.title}
-          </h2>
-          <p className="mb-6 text-lg text-muted">{fraud.body}</p>
-          <CheckList items={fraud.checks} />
           <a
             href="#demo"
-            className="mt-7 inline-block rounded bg-blue px-5 py-3.5 text-sm font-bold text-white transition hover:bg-blue-dark"
+            className="rounded bg-blue px-5 py-3.5 text-sm font-bold text-white transition hover:bg-blue-dark"
           >
-            {fraud.cta}
+            {actions.viewSampleReport}
           </a>
         </div>
 
-        <div className="border border-line bg-[#f7f9fc] p-5 shadow-lg">
-          <div className="mb-3.5 flex justify-between">
-            <strong className="text-navy">{fraud.panel.title}</strong>
-            <span className="text-sm text-muted">{fraud.panel.openAlerts}</span>
+        <div className="overflow-hidden rounded-2xl border border-[#e6edf5] bg-white shadow-xl">
+          <div className="flex items-center justify-between bg-navy px-5 py-4.5 text-white">
+            <strong>{risk.panelTitle}</strong>
+            <small className="text-[#9ec5e8]">{risk.panelTag}</small>
           </div>
-          {fraud.panel.rows.map((row, index) => {
-            const severity = severityFor(index);
-            return (
-              <div
-                key={row.name}
-                className="grid grid-cols-[1fr_110px_80px] items-center gap-2.5 border-b border-line py-3 text-sm"
-              >
-                <strong className="text-ink">{row.name}</strong>
-                <span className="text-muted">{row.area}</span>
-                <span className={`p-1 text-center font-bold ${severity.className}`}>
-                  {severity.label}
-                </span>
-              </div>
-            );
-          })}
+          <div className="p-5">
+            <dl className="mb-5 grid grid-cols-3 gap-3">
+              {[
+                [risk.scoreLabel, risk.scoreValue],
+                [risk.exposureLabel, risk.exposureValue],
+                [risk.confidenceLabel, risk.confidenceValue],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-[#e8edf3] bg-[#f7f9fc] p-3">
+                  <dt className="text-xs text-[#64748b]">{label}</dt>
+                  <dd className="mt-1 text-xl font-bold tabular-nums text-navy">{value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="flex flex-col gap-3.5">
+              {risk.bars.map((bar) => (
+                <div key={bar.label}>
+                  <div className="mb-1.5 flex justify-between text-sm">
+                    <span className="text-ink">{bar.label}</span>
+                    <span className="font-bold tabular-nums text-navy">{bar.value}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-[#eef2f6]">
+                    {/* Inline width because the value is data, not a design token — Tailwind
+                        cannot generate a class for a number it never sees at build time. */}
+                    <div
+                      className="h-full rounded-full bg-blue"
+                      style={{ width: `${Number(bar.value)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function EntitySection() {
+  const messages = useMessages();
+  const { entity } = messages.landing;
+  return (
+    <section className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading eyebrow={entity.eyebrow} title={entity.title} body={entity.body} />
+        <div className="grid gap-6 md:grid-cols-3">
+          {entity.cards.map((card, index) => (
+            <FeatureCard
+              key={card.title}
+              badge={card.badge}
+              gradient={gradientFor(index)}
+              title={card.title}
+              body={card.body}
+              more={card.more}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Dark section: the governance claim is the one institutions actually interrogate. */
+export function NationalTrustSection() {
+  const messages = useMessages();
+  const { trust } = messages.landing;
+  return (
+    <section id="national-trust" className="bg-navy">
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          eyebrow={trust.eyebrow}
+          title={trust.title}
+          body={trust.body}
+          inverted
+        />
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {trust.cards.map((card) => (
+            <article
+              key={card.title}
+              className="rounded-xl border border-[#1e3d63] bg-[#0f2947] p-6"
+            >
+              <Eyebrow tone="pale">{card.badge}</Eyebrow>
+              <h3 className="mb-2 text-xl font-bold text-white">{card.title}</h3>
+              <p className="text-sm text-[#c4d7ec]">{card.body}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
@@ -215,67 +201,182 @@ export function FraudSection() {
 }
 
 export function IndustriesSection() {
-  const { landing } = useMessages();
+  const messages = useMessages();
+  const { industries } = messages.landing;
   return (
     <section id="industries" className="mx-auto max-w-7xl px-6 py-20">
       <SectionHeading
-        eyebrow={landing.industries.eyebrow}
-        title={landing.industries.title}
-        body={landing.industries.body}
+        eyebrow={industries.eyebrow}
+        title={industries.title}
+        body={industries.body}
       />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {landing.industries.cards.map((card, index) => (
-          <FeatureCard key={card.title} gradient={gradientFor(index + 5)} {...card} />
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {industries.cards.map((card, index) => (
+          <FeatureCard
+            key={card.title}
+            badge={card.badge}
+            gradient={gradientFor(index)}
+            title={card.title}
+            body={card.body}
+            more={card.more}
+          />
         ))}
+      </div>
+    </section>
+  );
+}
+
+export function PortfolioSection() {
+  const messages = useMessages();
+  const { portfolio } = messages.landing;
+  const columns = portfolio.columns;
+  return (
+    <section className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          eyebrow={portfolio.eyebrow}
+          title={portfolio.title}
+          body={portfolio.body}
+        />
+        <div className="overflow-x-auto rounded-xl border border-line bg-white">
+          <table className="w-full min-w-[36rem] text-left text-sm">
+            <thead className="border-b border-line bg-[#f7f9fc] text-xs tracking-wide text-[#64748b] uppercase">
+              <tr>
+                {[
+                  columns.entity,
+                  columns.type,
+                  columns.exposure,
+                  columns.risk,
+                  columns.status,
+                ].map((heading) => (
+                  <th key={heading} scope="col" className="px-5 py-3 font-semibold">
+                    {heading}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {portfolio.rows.map((row) => (
+                <tr key={row.entity} className="border-b border-line last:border-0">
+                  <th scope="row" className="px-5 py-3.5 font-semibold text-navy">
+                    {row.entity}
+                  </th>
+                  <td className="px-5 py-3.5 text-muted">{row.type}</td>
+                  <td className="px-5 py-3.5 tabular-nums text-ink">{row.exposure}</td>
+                  <td className="px-5 py-3.5 text-ink">{row.risk}</td>
+                  <td className="px-5 py-3.5 text-muted">{row.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function AiSection() {
+  const messages = useMessages();
+  const { ai } = messages.landing;
+  return (
+    <section id="ai" className="mx-auto max-w-7xl px-6 py-20">
+      <SectionHeading eyebrow={ai.eyebrow} title={ai.title} body={ai.body} />
+      <div className="grid gap-6 md:grid-cols-2">
+        {ai.exchanges.map((item) => (
+          <article key={item.role} className="rounded-xl border border-line bg-white p-6">
+            <Eyebrow>{item.role}</Eyebrow>
+            <p className="mb-4 text-lg font-semibold text-navy">“{item.question}”</p>
+            <p className="rounded-lg bg-soft p-4 text-sm text-ink">
+              <strong className="text-blue">{ai.answeredBy}: </strong>
+              {item.answer}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function GovernanceSection() {
+  const messages = useMessages();
+  const { governance } = messages.landing;
+  return (
+    <section className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          eyebrow={governance.eyebrow}
+          title={governance.title}
+          body={governance.body}
+        />
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {governance.cards.map((card) => (
+            <article key={card.title} className="rounded-xl border border-line bg-white p-6">
+              <Eyebrow>{card.badge}</Eyebrow>
+              <h3 className="mb-2 text-xl font-bold text-navy">{card.title}</h3>
+              <p className="text-sm text-muted">{card.body}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
 export function FinalCta() {
-  const { landing } = useMessages();
+  const messages = useMessages();
   const { status, signIn } = useSession();
-
+  const { finalCta, actions } = messages.landing;
   return (
-    <section id="demo" className="mx-auto my-16 max-w-7xl px-6">
-      <div className="flex flex-col items-start justify-between gap-7 bg-gradient-to-r from-[#eef6ff] to-[#e8fbf4] p-14 md:flex-row md:items-center">
-        <div>
-          <h2 className="mb-2.5 text-[2.6rem] leading-[1.08] font-bold text-navy">
-            {landing.finalCta.title}
-          </h2>
-          <p className="text-lg text-muted">{landing.finalCta.body}</p>
+    <section id="demo" className="bg-navy">
+      <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+        <h2 className="mb-4 text-[clamp(2rem,4vw,3rem)] leading-tight font-bold text-white">
+          {finalCta.title}
+        </h2>
+        <p className="mb-8 text-lg text-[#d7e4f4]">{finalCta.body}</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <a
+            href="mailto:contact@dival.ai"
+            className="rounded bg-blue px-6 py-3.5 text-sm font-bold text-white transition hover:bg-blue-dark"
+          >
+            {finalCta.action}
+          </a>
+          {status !== "authenticated" && (
+            <button
+              type="button"
+              onClick={() => signIn("/app")}
+              className="rounded border border-[#5bb4ff] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-[#0f2947]"
+            >
+              {actions.signIn}
+            </button>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={() => signIn("/app")}
-          className="shrink-0 rounded bg-blue px-6 py-3.5 text-sm font-bold text-white transition hover:bg-blue-dark"
-        >
-          {landing.finalCta.button}
-        </button>
       </div>
     </section>
   );
 }
 
 export function LandingFooter() {
-  const { landing } = useMessages();
+  const messages = useMessages();
+  const { footer } = messages.landing;
   return (
-    <footer className="bg-[#f2f2f2] px-6 pt-12 pb-6 text-[#4b5563]">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-7 md:grid-cols-5">
-        {landing.footer.columns.map((column) => (
-          <div key={column.title}>
-            <h4 className="font-bold text-ink">{column.title}</h4>
-            {column.links.map((link) => (
-              <span key={link} className="my-2 block text-[13px]">
-                {link}
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className="mx-auto mt-7 flex max-w-7xl flex-col gap-2 border-t border-[#d4d4d4] pt-5 text-xs md:flex-row md:justify-between">
-        <span>{landing.footer.copyright}</span>
-        <span>{landing.footer.builtOn}</span>
+    <footer className="border-t border-line bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-14">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+          {footer.groups.map((group) => (
+            <div key={group.title}>
+              <h3 className="mb-3 text-sm font-bold text-navy">{group.title}</h3>
+              <ul className="flex flex-col gap-2 text-sm text-muted">
+                {group.links.map((link) => (
+                  <li key={link}>{link}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10 border-t border-line pt-6 text-sm text-muted">
+          <p>{footer.legal}</p>
+          <p>{footer.tagline}</p>
+        </div>
       </div>
     </footer>
   );
