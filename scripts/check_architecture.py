@@ -17,6 +17,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 JAVA_MAIN = REPO / "backend/src/main/java/ai/dival/dip"
+JAVA_TEST = REPO / "backend/src/test/java/ai/dival/dip"
 MIGRATIONS = REPO / "backend/src/main/resources/db/migration"
 
 BASE_PACKAGE = "ai.dival.dip"
@@ -277,12 +278,122 @@ def check_every_endpoint_declares_authorization() -> None:
             f"{report}")
 
 
+# ---------------------------------------------------------------------------
+# Rule 6 — a raw INSERT names every column the schema demands.
+#
+# Some tests write SQL by hand on purpose: RowLevelSecurityTest checks the policies themselves, so
+# it must bypass every Java guard and talk to PostgreSQL as the application role. The cost is that
+# it breaks whenever a NOT NULL column is added — retention_until in V19, origin in V20 — and it
+# breaks by failing the whole suite rather than by failing to compile.
+#
+# Both times the fix was one line and the diagnosis took a full test run. The second time there was
+# already a script that would have found it, written after the first, and never wired in here. A
+# check that lives in somebody's shell history is not a check.
+# ---------------------------------------------------------------------------
+def _split_top_level(body: str) -> list[str]:
+    """Split a CREATE TABLE body on commas at bracket depth zero.
+
+    Splitting on every comma tears NUMERIC(18, 2) in half and turns CHECK (x IN ('a','b')) into
+    fragments — which is how an earlier version of this concluded that performance_review had a
+    column named "OR".
+    """
+    depth, item, items = 0, [], []
+    for ch in body:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        if ch == "," and depth == 0:
+            items.append("".join(item))
+            item = []
+        else:
+            item.append(ch)
+    items.append("".join(item))
+    return items
+
+
+def required_columns() -> dict[str, set[str]]:
+    """Columns an INSERT must name: NOT NULL, with no default and not generated."""
+    required: dict[str, set[str]] = {}
+    defaulted: dict[str, set[str]] = {}
+
+    migrations = sorted(MIGRATIONS.glob("*.sql"),
+                        key=lambda path: int(re.match(r"V(\d+)__", path.name).group(1)))
+    for path in migrations:
+        sql = re.sub(r"--[^\n]*", "", path.read_text(encoding="utf-8"))
+
+        for match in re.finditer(
+                r"CREATE TABLE\s+(?:IF NOT EXISTS\s+)?(\w+)\s*\((.*?)\n\);", sql, re.S | re.I):
+            table, body = match.group(1), match.group(2)
+            required.setdefault(table, set())
+            defaulted.setdefault(table, set())
+            for line in _split_top_level(body):
+                line = line.strip()
+                declaration = re.match(r"^(\w+)\s+[A-Za-z]", line)
+                if not declaration:
+                    continue
+                column = declaration.group(1)
+                if column.upper() in ("CONSTRAINT", "PRIMARY", "UNIQUE", "FOREIGN", "CHECK", "LIKE"):
+                    continue
+                if re.search(r"\bDEFAULT\b|\bGENERATED\b|PRIMARY KEY", line, re.I):
+                    defaulted[table].add(column)
+                elif re.search(r"\bNOT NULL\b", line, re.I):
+                    required[table].add(column)
+
+        # Added later and then made mandatory: required from that migration onwards.
+        for match in re.finditer(
+                r"ALTER TABLE\s+(\w+)\s+ALTER COLUMN\s+(\w+)\s+SET NOT NULL", sql, re.I):
+            table, column = match.group(1), match.group(2)
+            if column not in defaulted.get(table, set()):
+                required.setdefault(table, set()).add(column)
+
+        for match in re.finditer(
+                r"ALTER TABLE\s+(\w+)\s+ALTER COLUMN\s+(\w+)\s+DROP NOT NULL", sql, re.I):
+            required.get(match.group(1), set()).discard(match.group(2))
+
+        for match in re.finditer(
+                r"ALTER TABLE\s+(\w+)\s+DROP COLUMN\s+(?:IF EXISTS\s+)?(\w+)", sql, re.I):
+            required.get(match.group(1), set()).discard(match.group(2))
+
+    return required
+
+
+def check_raw_inserts_name_required_columns() -> None:
+    required = required_columns()
+    problems = []
+
+    sources = list(JAVA_MAIN.rglob("*.java"))
+    if JAVA_TEST.exists():
+        sources += list(JAVA_TEST.rglob("*.java"))
+
+    for path in sorted(sources):
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"INSERT INTO\s+(\w+)\s*\(([^)]*)\)", text, re.I | re.S):
+            table = match.group(1)
+            if table not in required:
+                continue
+            named = {c.strip() for c in match.group(2).replace("\n", " ").split(",") if c.strip()}
+            missing = required[table] - named
+            if missing:
+                problems.append(
+                    f"    {path.relative_to(REPO)} — INSERT INTO {table} omits "
+                    f"{', '.join(sorted(missing))}")
+
+    if problems:
+        raise Failure(
+            "A hand-written INSERT must name every NOT NULL column that has no default.\n"
+            "These fail at runtime, not at compile time, so the whole suite runs before you\n"
+            "find out.\n"
+            + "\n".join(problems))
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
     ("no cross-module repository access", check_no_cross_module_persistence),
     ("tenant-owned tables have RLS policies", check_tenant_owned_tables_have_policies),
     ("no fixed-width CHAR columns", check_no_char_columns),
     ("every endpoint declares authorization", check_every_endpoint_declares_authorization),
+    ("raw INSERTs name every required column", check_raw_inserts_name_required_columns),
 ]
 
 

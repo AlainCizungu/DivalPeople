@@ -179,17 +179,21 @@ class RowLevelSecurityTest extends AbstractIntegrationTest {
 
     private void insertDebtRecord(Connection connection, UUID tenantId, String status)
             throws SQLException {
-        // retention_until is NOT NULL as of V19. This test writes raw SQL on purpose — it is
-        // checking the row-level security policy itself, not the application's behaviour, so it
-        // deliberately bypasses every Java guard and therefore has to satisfy the schema by hand.
-        // Far in the future, so a purge running concurrently could never erase the rows this test
-        // is asserting about.
+        // This test writes raw SQL on purpose — it checks the row-level security policy itself
+        // rather than the application's behaviour, so it deliberately bypasses every Java guard
+        // and therefore has to satisfy the schema by hand. Which means it breaks every time a
+        // NOT NULL column is added: retention_until in V19, origin in V20. That is now checked by
+        // scripts/check_architecture.py rule 6 rather than discovered by running the suite.
+        //
+        // retention_until is far in the future so a purge running concurrently could never erase
+        // the rows under assertion. origin is API_DECLARATION because the V20 check constraint
+        // ties IMPORT to a raw_record_id, and this row has no source file behind it.
         try (PreparedStatement statement = connection.prepareStatement("""
                 INSERT INTO tix_debt_record
                     (tenant_id, subject_id, status, amount, currency, service_category,
-                     default_date, dunning_evidence, retention_until)
+                     default_date, dunning_evidence, retention_until, origin)
                 VALUES (?, ?, ?, 100.00, 'USD', 'POSTPAID', CURRENT_DATE, TRUE,
-                        CURRENT_DATE + INTERVAL '10 years')
+                        CURRENT_DATE + INTERVAL '10 years', 'API_DECLARATION')
                 """)) {
             statement.setObject(1, tenantId);
             statement.setObject(2, subjectId);
