@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class IngestService {
+
+    private static final Logger log = LoggerFactory.getLogger(IngestService.class);
 
     private final SourceDatasetRepository sources;
     private final ImportBatchRepository batches;
@@ -114,6 +118,8 @@ public class IngestService {
         ImportBatch batch = batches.save(
                 new ImportBatch(source, filename, checksum, content.length, actorId));
 
+        long startedAt = System.nanoTime();
+
         int rowNumber = 0;
         for (Map<String, String> row : rows) {
             // 1-based: row 1 is the first row of data as a person reading the file would count,
@@ -126,6 +132,14 @@ public class IngestService {
         audit.record("INGEST_BATCH_RECEIVED", "ImportBatch", batch.getId().toString(),
                 AuditService.OUTCOME_SUCCESS, actorId,
                 filename + "; " + rowNumber + " rows; sha256 " + checksum);
+
+        // Measured rather than assumed. JDBC batching was turned on for exactly this loop, and
+        // the honest way to know whether it helped is a number in the log rather than a claim in
+        // a commit message. Note that the rows are still in the persistence context here: the
+        // batches go to the database when the transaction commits, after this line, so this
+        // measures the work of building them and not the write itself.
+        log.info("Received {} rows from {} in {} ms (excluding commit)",
+                rowNumber, filename, (System.nanoTime() - startedAt) / 1_000_000);
         return batch;
     }
 

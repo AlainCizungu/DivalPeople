@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { ApiError, tixApi, type Portfolio } from "@/api/client";
-import { Card, EmptyState, Metric, PageHeader, Pill } from "@/components/ui";
+import { Card, EmptyState, ErrorNotice, Metric, PageHeader, Pill } from "@/components/ui";
 
 /**
  * What this operator is owed, aged.
@@ -27,6 +27,15 @@ export default function PortfolioPage() {
 
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [refused, setRefused] = useState(false);
+  /**
+   * Anything that is not a refusal.
+   *
+   * <p>Tracked separately, because without it a failed request left `portfolio` null and the page
+   * rendered its loading state permanently — a spinner that means "broken" is worse than an error,
+   * since nobody knows when to stop waiting. Found by walking the demo path rather than by a test,
+   * which is the honest note to leave here.
+   */
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,14 +48,22 @@ export default function PortfolioPage() {
         // An inquirer-only account is refused, and that is correct rather than broken: it has
         // declared nothing, so it has no book. Say so instead of showing it an error about a
         // permission it was never meant to hold.
-        setRefused(caught instanceof ApiError && caught.status === 403);
+        const forbidden = caught instanceof ApiError && caught.status === 403;
+        setRefused(forbidden);
+        setError(
+          forbidden
+            ? null
+            : caught instanceof ApiError
+              ? caught.message
+              : messages.common.unexpectedError,
+        );
         setPortfolio(null);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [messages.common.unexpectedError]);
 
   /**
    * Groups digits for reading. Display only — the string is the value.
@@ -75,7 +92,7 @@ export default function PortfolioPage() {
     return (
       <div className="mx-auto max-w-6xl">
         <PageHeader title={t.title} subtitle={t.subtitle} />
-        <EmptyState>{messages.common.loading}</EmptyState>
+        {error ? <ErrorNotice>{error}</ErrorNotice> : <EmptyState>{messages.common.loading}</EmptyState>}
       </div>
     );
   }

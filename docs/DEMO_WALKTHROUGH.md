@@ -1,0 +1,142 @@
+# Demonstrating DIP / TIX
+
+A path through the product that shows the loop end to end, with the exact values to type. Local
+profile only; every business named here is invented and every figure is seeded.
+
+## Before starting
+
+```
+infra/dev.sh up            # Postgres, Redis, Keycloak
+cd backend  && ./gradlew bootRun
+cd frontend && npm run dev
+```
+
+Seeding runs on first start and is skipped afterwards, so a restart against an existing database
+changes nothing. To start clean, drop the database and let Flyway rebuild it.
+
+**Sign-ins** (from `infra/keycloak/realm-dip.json`):
+
+| User | What it is | Sees |
+|---|---|---|
+| `operator-a` | A telecom, declarant + inquirer + compliance officer | Everything except participants |
+| `operator-b` | A second telecom | The same, over its own book |
+| `platform-admin` | Runs the network, no tenant of its own | Participants only |
+| `no-roles` | A signed-in account with nothing granted | The refusals |
+
+## The loop, in order
+
+### 1. Who is on the network — `platform-admin` → **Participants**
+
+Eight organisations across five sectors: two telecoms, two banks, an enterprise utility, a
+government body, an NGO microfinance, and one telecom **suspended** so the status column shows more
+than one state.
+
+The point to make: DIP is not a telecom product. TIX is one edition of six, and the participant
+list is the network the exchange is worth having.
+
+*If asked why the banks have no data: because no bank has joined. The screen shows who is
+registered, not who is contributing, and conflating those would be the first dishonest number on
+it.*
+
+### 2. Reporting a default by hand — `operator-a` → **Declare**
+
+Use a business that is not already seeded, so it is visibly created in front of the audience:
+
+| Field | Value |
+|---|---|
+| Identifier type | RCCM |
+| Identifier | `CD/KIN/RCCM/22-B-8800` |
+| Legal name | `Nouvelle Société Démo SARL` |
+| Amount | `1500` USD |
+| Service | `POSTPAID` |
+| Default date | any date in the past |
+| Dunning evidence | tick it |
+
+Two things to show deliberately:
+
+- **Untick dunning evidence** and submit. It is refused, in a sentence. A default cannot be
+  reported without evidence that the contractual chase happened first.
+- **Enter `50` as the amount.** Refused: below the 100 USD reporting threshold. That floor is the
+  whole proportionality argument for the scheme — a national bad-payer registry that accepts a
+  two-dollar dispute is a punishment, not a credit instrument.
+
+The response says whether this put somebody into the registry who was not in it before. That
+distinction — adding to a file versus opening one — is worth pointing at.
+
+### 3. Reporting by spreadsheet — `operator-a` → **Data imports**
+
+Register a source, then upload a file. The real Vodacom export works: XLSX, header on row 4 under a
+blank row and an unlabelled total, 4,290 rows.
+
+What to show:
+
+- The batch carries a **SHA-256 of the bytes as received**, so an auditor holding the operator's
+  copy can ask "is this the file you sent us".
+- The rows are shown **exactly as stored** — nothing is mapped, no amount is parsed. Point at this
+  rather than around it: publishing the batch does not create exposures yet, and the exposure
+  screen says so out loud.
+- Upload the same file twice. Refused, naming the batch that already holds it.
+
+*Timing: the console logs `Received N rows from … in X ms`. If that number is large, say so and
+move on — it is measured rather than hidden.*
+
+### 4. Checking a business before extending credit — `operator-a` → **Inquiries**
+
+| Look up | Expect |
+|---|---|
+| RCCM `CD/KIN/RCCM/15-B-6604` | **Outstanding debt**, 1 institution reporting — a business only *operator B* knows about |
+| RCCM `CD/KIN/RCCM/16-B-5150` | **Outstanding debt**, 2 institutions — owed at both operators |
+| RCCM `CD/UVI/RCCM/20-B-1199` | **No adverse record** — this one is under dispute and therefore withheld |
+| RCCM `CD/KIN/RCCM/99-B-0000` | **No match** |
+
+A purpose is required before the button enables. Every inquiry is recorded with it.
+
+**The line to deliver on the second row:** operator A now knows two institutions report a debt
+against this company, and does not know the amount, does not know which institutions, and never
+will. That is why a competitor would join.
+
+**And on the third:** the business is disputing that record, so it stopped being reported the day
+the dispute was raised — before anybody decided who is right. The harm of being wrongly listed
+accrues daily.
+
+The illustrative score panel below the result is marked as a mock in heavy amber. Say plainly that
+there is no risk model yet and that the panel is what one would look like.
+
+### 5. The operator's own book — `operator-a` → **Exposure**
+
+Real records, aged from the date each obligation fell due.
+
+- **Two currencies, never added together.** USD and CDF sit on separate rows. Adding 500 USD to
+  500 CDF produces a number that is wrong and looks entirely normal on a dashboard.
+- **Every aging band has something in it**, so the distribution has a shape rather than one bar.
+- **Contested is a separate column** from outstanding — still money the operator is owed, but
+  somebody is arguing about it.
+- **Awaiting erasure should read zero.** If it does not, the nightly purge has stopped, and nothing
+  else in the product would say so.
+- The provenance panel at the bottom says how many of these records came from an imported file.
+  It says **zero**, and it is on the screen rather than in a document nobody opens.
+
+### 6. The refusals — sign in as `no-roles`
+
+Every TIX screen refuses, in a sentence explaining which permission is missing rather than an error
+code. Worth thirty seconds: an authorisation boundary that has never been demonstrated is a claim.
+
+## What to say when asked "is this live?"
+
+It is not. The landing page's **Where this is today** section is the honest answer and is on the
+public page rather than in a footnote — running, designed, and undecided, in three columns. The
+undecided column is real: whether a written-off debt is a status or a different kind of record,
+where a default date comes from when the source file has none, and whether the reporting threshold
+survives contact with real data.
+
+And the larger one, which belongs in any serious conversation: **the Code du numérique offers two
+lawful bases and neither is legitimate interest.** See `TIX_LEGAL_BASIS.md`. Nobody should be
+promised a launch date before that is settled.
+
+## Things that will not work, so do not open them
+
+- **Universal search and business profiles** — not built. The inquiry screen is the only lookup.
+- **A risk score** — not built. Only the clearly-marked mock.
+- **Publishing an import to create records** — the batch publishes, and derives nothing.
+- **Subject rights screens** — the rights are built in the backend and have no UI yet. Demonstrate
+  them by describing them from the landing page section rather than by clicking.

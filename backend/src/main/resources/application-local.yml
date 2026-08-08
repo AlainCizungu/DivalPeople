@@ -37,6 +37,21 @@ spring:
           issuer-uri: http://localhost:8081/realms/dip
 
 dip:
+  tix:
+    # A CDF floor, for local demonstration only, and deliberately absent from application.yml.
+    #
+    # Production refuses a currency whose reporting threshold nobody has decided, because setting
+    # one means choosing a USD/CDF rate that moves and that somebody accountable has to own. That
+    # stays true. The figure below exists so the local dataset can hold two currencies and show
+    # that the exposure view never adds them together — which is a property no single-currency
+    # book can demonstrate.
+    #
+    # It is a fixture. If it ever appears in a deployed configuration, somebody has copied the
+    # wrong file.
+    minimum-declarable:
+      USD: 100
+      CDF: 250000
+
   cors:
     # Empty since ADR 0003. The browser talks only to the Next.js application, which calls this
     # API server-to-server, so no cross-origin request should reach here at all. Leaving an
@@ -88,11 +103,16 @@ dip:
     seed-self-service: true
 
     # Seeds one demo subject with a debt held by operator B, so an inquiry from operator A
-    # actually crosses the tenant boundary and exercises exchange mode.
+    # actually crosses the tenant boundary and exercises exchange mode — plus, from
+    # LocalTixPortfolioSeeder, two books of businesses spread across every aging band.
     seed-tix: true
 
 logging:
   level:
     ai.dival.dip: DEBUG
-    org.hibernate.SQL: DEBUG
+    # Was DEBUG. An import of the real 4,290-row export writes one log line per insert, which
+    # costs more than the inserts do and buries everything else in the console — including the
+    # timing line the batching was added to be judged by. Raise it back when debugging a query;
+    # the ai.dival.dip logger above still carries what the application is doing.
+    org.hibernate.SQL: INFO
     org.springframework.security: DEBUG

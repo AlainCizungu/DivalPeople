@@ -30,6 +30,26 @@ public class LocalTenantSeeder implements ApplicationRunner {
     public static final UUID OPERATOR_A = UUID.fromString("11111111-1111-1111-1111-111111111111");
     public static final UUID OPERATOR_B = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
+    /**
+     * Participants with no sign-in of their own.
+     *
+     * <p>They exist so that the participants screen shows a network rather than two rows called
+     * "Operator A" and "Operator B", and so that the six editions are visible as something other
+     * than a dropdown. Nobody logs in as these: a tenant is a row, and a user is a Keycloak
+     * account carrying a tenant attribute. Adding a tenant here costs nothing and adding a user
+     * would mean editing the realm.
+     *
+     * <p>Names are marked "(local)" for the same reason the other two are. A screenshot of demo
+     * data that names a real bank without qualification is a screenshot that will circulate.
+     */
+    private static final UUID BANK = UUID.fromString("33333333-3333-3333-3333-333333333333");
+    private static final UUID SECOND_BANK = UUID.fromString("44444444-4444-4444-4444-444444444444");
+    private static final UUID UTILITY = UUID.fromString("55555555-5555-5555-5555-555555555555");
+    private static final UUID MINISTRY = UUID.fromString("66666666-6666-6666-6666-666666666666");
+    private static final UUID MICROFINANCE =
+            UUID.fromString("77777777-7777-7777-7777-777777777777");
+    private static final UUID SUSPENDED = UUID.fromString("88888888-8888-8888-8888-888888888888");
+
     private final TenantService tenants;
 
     public LocalTenantSeeder(TenantService tenants) {
@@ -43,5 +63,26 @@ public class LocalTenantSeeder implements ApplicationRunner {
                 Tenant.Edition.TELECOM, "fr", null);
         tenants.provision(OPERATOR_B, "Operator B (local)", "operator-b",
                 Tenant.Edition.TELECOM, "fr", null);
+
+        tenants.provision(BANK, "Banque de Kinshasa (local)", "banque-kinshasa",
+                Tenant.Edition.BANKING, "fr", null);
+        tenants.provision(SECOND_BANK, "Crédit du Fleuve (local)", "credit-fleuve",
+                Tenant.Edition.BANKING, "fr", null);
+        tenants.provision(UTILITY, "Énergie du Congo (local)", "energie-congo",
+                Tenant.Edition.ENTERPRISE, "fr", null);
+        tenants.provision(MINISTRY, "Direction Générale des Impôts (local)", "dgi",
+                Tenant.Edition.GOVERNMENT, "fr", null);
+        tenants.provision(MICROFINANCE, "Microfinance Solidarité (local)", "microfinance-solidarite",
+                Tenant.Edition.NGO, "fr", null);
+        // Left active here and suspended by the TIX seeder, so the participants screen has both
+        // states on it. A status column where every row says the same thing teaches nobody what
+        // the other state looks like.
+        tenants.provision(SUSPENDED, "Télécom Régional (local)", "telecom-regional",
+                Tenant.Edition.TELECOM, "fr", null);
+    }
+
+    /** The participant the TIX seeder suspends, so the screen shows more than one status. */
+    static UUID suspendedParticipant() {
+        return SUSPENDED;
     }
 }
