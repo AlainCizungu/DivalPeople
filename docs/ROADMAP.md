@@ -24,11 +24,25 @@ is, and TIX exists in a form that predates this design.
 | 3 | Universal search, business and individual profiles | Not built |
 | 4 | Cross-operator inquiry returning status, never another operator's data | **Built**, rate-limited, audited with a stated purpose |
 | 4 | Declaration by an operator, with a reporting threshold | **Built** |
-| 4 | Retention, expiry and real erasure | **Built** — the periods are unverified placeholders, see `TIX_RETENTION.md` |
+| 4 | Retention, expiry and real erasure | **Built** — the Code sets no period, so the figures need a written justification rather than a citation. See `TIX_LEGAL_BASIS.md` |
+| 0 | DRC legal and regulatory analysis | **Statute read**, not reviewed by counsel. `TIX_LEGAL_BASIS.md` |
 | 4 | Aging buckets and an operator exposure view | **Built.** Aged from the default date, per currency, own records only |
 | 4 | Write-off indicator, authorised reports, portfolio alerts | Not built — write-off is decision 2 in `TIX_SOURCE_PROFILE.md` |
 | 5 | Risk rating with reason codes and a model version | **Not built.** The score on the landing page is invented |
 | 6+ | Pilot, multi-operator production, banking, AI | Not started |
+
+### The gap that now outranks the rest
+
+**TIX has no lawful basis, and the Code offers only two.** Article 192 of the Code du numérique
+permits processing on the data subject's consent or on a legal obligation binding the controller.
+There is no legitimate-interest basis — the one a European credit reference agency exists on. Until
+AJF and counsel choose between subscriber consent (fragile, and revocable under article 215(5)) and
+an instrument obliging operators to report (durable, and not yet in existence), the schedule below
+describes a system that cannot lawfully be switched on.
+
+Two engineering consequences are concrete enough to build now, and are in `TIX_LEGAL_BASIS.md`:
+notifying every institution that enquired when a record is later corrected or erased (article 214),
+and putting statutory deadlines — 60 days for access, 30 for the rest — on subject requests.
 
 ### The gap that mattered most, and what is left of it
 

@@ -2,6 +2,20 @@
 
 **Status: the mechanism is built and the numbers are placeholders.**
 
+> **Update, 8 August 2026.** The Code du numérique has now been read — see
+> [`TIX_LEGAL_BASIS.md`](TIX_LEGAL_BASIS.md). Two findings land directly here.
+>
+> **There is no statutory retention period.** Article 193(3) bounds retention only by necessity
+> relative to purpose. So no amount of further reading will produce a number to point at; what the
+> law requires instead is a written justification for whichever number is chosen, and article 216
+> adds a duty to review it periodically. The gap in item 1 below is therefore not "find the figure"
+> but "write the reasoning" — a smaller task and a harder one.
+>
+> **The lawful basis is narrower than assumed.** Article 192 offers consent or a legal obligation,
+> and nothing else. If the basis is consent, article 215(5) obliges erasure the moment it is
+> withdrawn, regardless of any period configured here — which would make the periods below
+> unenforceable rather than merely unverified.
+
 The exchange now has a retention clock, excludes expired records from inquiries, and erases them
 nightly. What it does not have is a defensible answer to "why three years". This document exists so
 that gap is visible rather than implied by a configuration file.
@@ -38,9 +52,11 @@ These are the open questions. All of them are the feasibility study's to answer,
 for exactly this analysis under *faisabilité juridique et réglementaire*.
 
 1. **The periods themselves.** 3 and 5 years are the TDR's own illustrative figures, offered as
-   examples. Nobody has checked them against the Code du numérique (Ordonnance-loi 23/010 of
-   13 March 2023, in force 11 April 2023). They are plausible numbers, which is the dangerous
-   kind — plausible placeholders get treated as decisions.
+   examples. They have now been checked against the Code du numérique (Ordonnance-loi 23/010 of
+   13 March 2023, in force 11 April 2023) and **the Code sets no period at all** — article 193(3)
+   requires only that data be kept no longer than necessary for the purpose. The figures are
+   therefore not wrong; they are unjustified, and the justification is the deliverable. They remain
+   plausible numbers, which is the dangerous kind — plausible placeholders get treated as decisions.
 2. **Whether a settled debt should be visible at all.** The TDR asks for erasure *après
    régularisation*. The implementation keeps a settled record visible for 30 days so the settling
    operator can reconcile, which is a reading of "after regularisation" and not the only one. The
@@ -49,6 +65,13 @@ for exactly this analysis under *faisabilité juridique et réglementaire*.
 3. **The lawful basis.** The TDR asks for identification of the legal basis and the mechanism
    (inter-operator contracts, a sharing agreement). The retention periods follow from the basis;
    choosing periods first is backwards, and this codebase has done it in that order.
+
+   **Now the sharpest open question in the project.** Article 192 of the Code offers exactly two
+   bases — the subject's consent, or a legal obligation binding the controller. There is no
+   legitimate-interest basis, which is the one a credit reference agency in Europe relies on. TIX
+   therefore needs consent obtained through the operators' subscriber contracts, with all the
+   fragility article 196 attaches to that, or an instrument obliging operators to report. The second
+   does not exist yet. See `TIX_LEGAL_BASIS.md` §1.
 4. **What a subject can demand.** Built in V21, as a case: somebody comes forward, a member of
    staff records how their identity was checked, and a decision is made with written grounds.
    Access returns their whole file across every operator. Dispute and rectification suppress the
@@ -68,5 +91,6 @@ for exactly this analysis under *faisabilité juridique et réglementaire*.
 ## Before this goes anywhere near real data
 
 The numbers in `application.yml` must be reviewed by somebody qualified on DRC data protection
-law, and the review recorded here. Until then, treat every period in this system as an engineering
-default that happens to look like a legal one.
+law, and the review recorded here. Reading the statute — which has now been done — is not that
+review; it narrows the questions and does not answer them. Until counsel has looked at it, treat
+every period in this system as an engineering default that happens to look like a legal one.
