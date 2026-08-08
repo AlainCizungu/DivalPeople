@@ -4,23 +4,38 @@ AI coding agents must read all files in `/docs` before making architectural or f
 Start with [`docs/DELIVERY_PLAN.md`](docs/DELIVERY_PLAN.md) for current status, what is prioritized
 next, and which gaps are knowingly open.
 
-## Scope: this repository is HR only
+## Scope: TIX is the active work
 
-As of August 2026 this repository builds **HR and workforce intelligence only**. Dival Telecom
-Intelligence (TIX) is a separate product in a separate project and is no longer developed here.
+**Current focus, from 8 August 2026: TIX.** HR is paused — not abandoned, and not to be
+regressed. HR modules keep their tests green and nobody breaks them, but new feature work goes to
+`modules/tix`.
 
-The existing TIX code — `modules/tix`, `V2__tix.sql`, `LocalTixSeeder`, `/app/tix`,
-`docs/TIX_MODULE.md` — is **frozen, not deleted**. Do not extend it, and do not delete it either.
-Two things make deletion a deliberate piece of work rather than a tidy-up:
+This reverses a note written on 7 August that said the opposite, which stood for about a day. The
+history is left visible on purpose: this project changed direction twice in one week, and a
+scope note that quietly rewrites itself teaches nobody anything.
 
-- TIX is `V2`, the second migration ever applied. Flyway validates checksums against every
-  database that has already run it, so `V2` can never be removed — only a forward migration that
-  drops the tables would do, leaving `V2` in history permanently.
-- `AuditTrailTest` proves audit rows record their purpose and cannot be rewritten, and it does so
-  through a TIX inquiry. Removing TIX means rewriting one of the suite's most valuable tests
-  against a different audited action first.
+### What TIX is
 
-New work goes to HR modules. If a change would touch TIX, stop and ask.
+A *centrale des risques* for DRC telecoms — participating operators declare subscribers who have
+defaulted, and query each other before extending post-paid service. Alain is working with Groupe
+AJF Corporation, the Kinshasa debt-collection firm that issued the March 2026 terms of reference
+(`TDR ETUDE DE FAISABILITE centrale des risques.docx`).
+
+Read that TDR before designing anything. It is not a product specification — it commissions a
+feasibility study and a *cahier des charges* — but it fixes several constraints that the module
+does not yet honour, and the working system is what will make that cahier des charges concrete:
+
+- a reporting threshold, suggested at 100 USD, below which nobody enters the registry
+- retention with an expiry clock: erasure on regularisation, ~3 years simple, ~5 for a repeat
+- subject rights: access, rectification, erasure
+- joint controllership between operators, not a single owner
+- **competition law**, flagged twice. A shared blacklist among competitors is antitrust exposure.
+  Rate limiting and making a refusal indistinguishable from "no such record" are not only privacy
+  controls — they are what stops operator A mapping operator B's subscriber base one query at a
+  time. The same mechanism answers both objections.
+
+The governing law is the Code du numérique (Ordonnance-loi 23/010 of 13 March 2023, in force
+since 11 April 2023); Title IV creates the data protection authority.
 
 ## Mandatory rules
 - Preserve tenant isolation.

@@ -42,6 +42,27 @@ public class TixController {
         return exchange.inquire(request, actorId());
     }
 
+    /**
+     * Declare that a subscriber has defaulted.
+     *
+     * <p>The writing end of the exchange, and the endpoint the module shipped without. Note what
+     * the response does <em>not</em> contain: the subject id is returned because the declaring
+     * operator now legitimately holds a record against that person, but nothing tells the caller
+     * whether any other operator does. Reporting a default must not double as a free inquiry —
+     * otherwise the cheapest way to search the registry is to declare a debt and read the reply.
+     */
+    @PostMapping("/debt-records")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public ResponseEntity<DeclarationResponse> declare(
+            @Valid @RequestBody DeclarationRequest request) {
+        DebtRecordService.Declaration declared = debtRecords.declare(request, actorId());
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(new DeclarationResponse(
+                        DebtRecordResponse.from(declared.record()),
+                        declared.subjectWasCreated(),
+                        declared.identifiersLearned()));
+    }
+
     /** Records declared by the calling operator. */
     @GetMapping("/debt-records")
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
@@ -67,6 +88,17 @@ public class TixController {
      */
     private UUID actorId() {
         return currentUser.currentUserIdOrNull();
+    }
+
+    /**
+     * What a declaration produced.
+     *
+     * @param subjectWasCreated whether this put a person into the exchange who was not in it
+     *                          before. The declaring operator is entitled to know: it is the
+     *                          difference between adding to a file and opening one.
+     */
+    public record DeclarationResponse(DebtRecordResponse record, boolean subjectWasCreated,
+                                      int identifiersLearned) {
     }
 
     /** Response projection — the entity is never serialised directly. */

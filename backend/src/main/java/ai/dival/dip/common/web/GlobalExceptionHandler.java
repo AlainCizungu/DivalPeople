@@ -2,6 +2,7 @@ package ai.dival.dip.common.web;
 
 import ai.dival.dip.common.error.AccessRefusedException;
 import ai.dival.dip.common.error.ConflictException;
+import ai.dival.dip.common.error.PolicyRefusedException;
 import ai.dival.dip.common.error.RateLimitExceededException;
 import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
@@ -87,6 +88,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
                 .body(ApiError.of("RATE_LIMITED", ex.getMessage()));
+    }
+
+    /**
+     * 422 rather than 400, deliberately. The payload was understood and is syntactically fine —
+     * a client that retries it unchanged will be refused again, and the distinction from a
+     * malformed request is what tells an integrator to fix the submission rather than the parser.
+     */
+    @ExceptionHandler(PolicyRefusedException.class)
+    public ResponseEntity<ApiError> handlePolicyRefused(PolicyRefusedException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiError.of("POLICY_REFUSED", ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

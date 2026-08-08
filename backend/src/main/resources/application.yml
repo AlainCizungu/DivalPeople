@@ -51,6 +51,18 @@ dip:
     # audit trail has time to be read.
     inquiries-per-hour: ${DIP_TIX_INQUIRIES_PER_HOUR:120}
 
+    # The reporting threshold from the March 2026 terms of reference: obligations below this do
+    # not enter the registry at all. It is the only control here that keeps people out rather
+    # than limiting what happens to those already in, and a shared bad-payer list with no floor
+    # makes somebody unbankable over a rounding error.
+    #
+    # Per currency, and a currency absent from this map is REFUSED rather than defaulted. CDF is
+    # deliberately not listed. Setting it means choosing a USD/CDF rate, that rate moves, and
+    # somebody accountable has to own it and revisit it — an invented constant here would be a
+    # stale exchange rate dressed up as policy. Add CDF when a person has decided the number.
+    minimum-declarable:
+      USD: 100
+
   hr:
     # How much warning to give before a contract ends.
     contract-expiry-notice-days: ${DIP_CONTRACT_EXPIRY_NOTICE_DAYS:30}

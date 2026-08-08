@@ -59,9 +59,9 @@ class TenantIsolationTest extends AbstractIntegrationTest {
     @DisplayName("an operator sees only its own debt records")
     void operatorSeesOnlyOwnRecords() {
         TenantContext.runAs(operatorA, () ->
-                debtRecordService.declare(newRecord(sharedSubject), UUID.randomUUID()));
+                debtRecordService.declare(newDeclaration(), UUID.randomUUID()));
         TenantContext.runAs(operatorB, () ->
-                debtRecordService.declare(newRecord(sharedSubject), UUID.randomUUID()));
+                debtRecordService.declare(newDeclaration(), UUID.randomUUID()));
 
         List<DebtRecord> ownedByA = debtRecords.findByTenantId(operatorA);
         List<DebtRecord> ownedByB = debtRecords.findByTenantId(operatorB);
@@ -76,7 +76,8 @@ class TenantIsolationTest extends AbstractIntegrationTest {
     @DisplayName("an operator cannot settle another operator's record")
     void cannotSettleForeignRecord() {
         UUID recordOfA = TenantContext.runAsResult(operatorA,
-                () -> debtRecordService.declare(newRecord(sharedSubject), UUID.randomUUID()).getId());
+                () -> debtRecordService.declare(newDeclaration(), UUID.randomUUID())
+                        .record().getId());
 
         assertThatThrownBy(() ->
                 TenantContext.runAs(operatorB, () -> debtRecordService.settle(recordOfA, UUID.randomUUID())))
@@ -93,7 +94,8 @@ class TenantIsolationTest extends AbstractIntegrationTest {
     @DisplayName("a tenant-scoped lookup by id refuses to cross tenants")
     void lookupByIdIsTenantScoped() {
         UUID recordOfA = TenantContext.runAsResult(operatorA,
-                () -> debtRecordService.declare(newRecord(sharedSubject), UUID.randomUUID()).getId());
+                () -> debtRecordService.declare(newDeclaration(), UUID.randomUUID())
+                        .record().getId());
 
         assertThat(debtRecords.findByIdAndTenantId(recordOfA, operatorB)).isEmpty();
         assertThat(debtRecords.findByIdAndTenantId(recordOfA, operatorA)).isPresent();
@@ -120,6 +122,32 @@ class TenantIsolationTest extends AbstractIntegrationTest {
         return current;
     }
 
+    /**
+     * Goes through the real declaration path rather than constructing the entity.
+     *
+     * <p>These used to build a DebtRecord directly and hand it to the service, which stopped
+     * being possible when declaration grew a threshold and subject resolution — and that is an
+     * improvement, not an inconvenience. A test that assembles the entity itself proves isolation
+     * for a path no operator can reach. The identifier below resolves to the subject created in
+     * setUp, so both operators land on the same person, which is the case that matters: subjects
+     * are shared across the exchange and only the records about them are tenant-owned.
+     */
+    private DeclarationRequest newDeclaration() {
+        return new DeclarationRequest(
+                List.of(new DeclarationRequest.SubmittedIdentifier(
+                        IdentifierType.NATIONAL_ID, "CD-1234-5678")),
+                "Jean Kabila",
+                Subject.SubjectType.INDIVIDUAL,
+                LocalDate.of(1990, 5, 12),
+                "CD",
+                new BigDecimal("150.00"),
+                "USD",
+                "POSTPAID",
+                LocalDate.now().minusDays(60),
+                true);
+    }
+
+    /** Still built by hand: this one must reach the repository without passing through a tenant. */
     private DebtRecord newRecord(Subject subject) {
         return new DebtRecord(subject, new BigDecimal("150.00"), "USD", "POSTPAID",
                 LocalDate.now().minusDays(60), true);
