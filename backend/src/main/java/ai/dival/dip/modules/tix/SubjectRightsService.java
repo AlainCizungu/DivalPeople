@@ -114,6 +114,13 @@ public class SubjectRightsService {
             throw new PolicyRefusedException(
                     "Verify the person's identity before disclosing their file.");
         }
+        if (actorId == null) {
+            // The most sensitive read in the system: one person's entire file, across every
+            // operator. An audit row for it that names nobody would record that it happened and
+            // not who did it, which is the half that matters if it is ever misused.
+            throw new PolicyRefusedException(
+                    "A disclosure has to name who made it.");
+        }
 
         List<Disclosure> disclosures = new ArrayList<>();
         for (Tenant tenant : tenants.list()) {

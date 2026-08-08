@@ -109,6 +109,17 @@ public class SubjectRequest {
                     "Identity can only be verified on a case that is still RECEIVED; this one is "
                             + status + ".");
         }
+        if (verifier == null) {
+            // The database says the same thing, and finding out there rather than here means a
+            // 500 with a Postgres constraint name in it. This happened: the actor is nullable
+            // everywhere in this codebase because currentUserIdOrNull() can legitimately return
+            // null for a signed-in user whose local record has not been provisioned yet, so the
+            // constraint would have fired in production for an ordinary caller.
+            throw new PolicyRefusedException(
+                    "A verification has to name who performed it. An anonymous identity check is "
+                            + "not one — the whole value of the record is that somebody can be "
+                            + "asked about it afterwards.");
+        }
         if (evidence == null || evidence.isBlank()) {
             throw new PolicyRefusedException(
                     "Say how the person's identity was checked. A verification nobody can assess "
@@ -140,6 +151,11 @@ public class SubjectRequest {
             throw new PolicyRefusedException(
                     "A case cannot be decided before the person's identity has been verified. "
                             + "This one is " + status + ".");
+        }
+        if (decider == null) {
+            throw new PolicyRefusedException(
+                    "A decision has to name who made it. Same reason as the verification: an "
+                            + "answer nobody is accountable for is not a decision.");
         }
         if (reason == null || reason.isBlank()) {
             throw new PolicyRefusedException(

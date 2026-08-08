@@ -42,6 +42,16 @@ class SubjectRightsTest extends AbstractIntegrationTest {
     private UUID operatorB;
     private String document;
 
+    /**
+     * The member of staff handling these cases.
+     *
+     * <p>Not null, and that is the point of the first run of this class: every other service test
+     * here passes null for the actor, because currentUserIdOrNull() may legitimately return one.
+     * A verification or a decision may not — an anonymous identity check is worthless, and the
+     * database says so too. Passing null used to reach Postgres and surface as a 500.
+     */
+    private static final UUID STAFF = UUID.randomUUID();
+
     @BeforeEach
     void setUp() {
         operatorA = tenants.save(new Tenant("Rights A", "rights-a-" + UUID.randomUUID(),
@@ -68,8 +78,8 @@ class SubjectRightsTest extends AbstractIntegrationTest {
 
     private SubjectRequest verified(SubjectRequestType type) {
         SubjectRequest request = rights.raise(type, IdentifierType.NATIONAL_ID, document,
-                "Raised at the counter", null);
-        return rights.verifyIdentity(request.getId(), "National ID seen in person", null);
+                "Raised at the counter", STAFF);
+        return rights.verifyIdentity(request.getId(), "National ID seen in person", STAFF);
     }
 
     // --- the case itself ----------------------------------------------------
@@ -92,7 +102,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
                 IdentifierType.NATIONAL_ID, document, "Remove my data", null);
 
         // Otherwise "I am that person" is enough to erase somebody else's debts.
-        assertThatThrownBy(() -> rights.decideErasure(request.getId(), null))
+        assertThatThrownBy(() -> rights.decideErasure(request.getId(), STAFF))
                 .isInstanceOf(PolicyRefusedException.class);
     }
 
@@ -103,7 +113,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         SubjectRequest request = rights.raise(SubjectRequestType.ACCESS,
                 IdentifierType.NATIONAL_ID, document, "What do you hold?", null);
 
-        assertThatThrownBy(() -> rights.verifyIdentity(request.getId(), "  ", null))
+        assertThatThrownBy(() -> rights.verifyIdentity(request.getId(), "  ", STAFF))
                 .isInstanceOf(PolicyRefusedException.class);
     }
 
@@ -116,7 +126,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         declareAs(operatorB, "700.00");
 
         List<SubjectRightsService.Disclosure> file =
-                rights.disclose(verified(SubjectRequestType.ACCESS).getId(), null);
+                rights.disclose(verified(SubjectRequestType.ACCESS).getId(), STAFF);
 
         // A person's right of access is to everything held about them, not to whichever operator's
         // office they happened to walk into. This is the one call that crosses the boundary on the
@@ -136,7 +146,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         SubjectRequest request = rights.raise(SubjectRequestType.ACCESS,
                 IdentifierType.NATIONAL_ID, document, "What do you hold?", null);
 
-        assertThatThrownBy(() -> rights.disclose(request.getId(), null))
+        assertThatThrownBy(() -> rights.disclose(request.getId(), STAFF))
                 .isInstanceOf(PolicyRefusedException.class);
     }
 
@@ -178,7 +188,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         SubjectRequest request = verified(SubjectRequestType.DISPUTE);
 
         rights.close(request.getId(), false, "Signed contract and dunning correspondence produced",
-                null);
+                STAFF);
 
         assertThat(recordsOf(operatorA)).allMatch(r -> r.getStatus() == DebtStatus.OUTSTANDING);
         assertThat(recordsOf(operatorA)).allMatch(r -> r.getSuppressedByRequestId() == null);
@@ -190,7 +200,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         declareAs(operatorA, "500.00");
         SubjectRequest request = verified(SubjectRequestType.DISPUTE);
 
-        rights.close(request.getId(), true, "Operator could produce no contract", null);
+        rights.close(request.getId(), true, "Operator could produce no contract", STAFF);
 
         // A claim found to be wrong should not quietly return to the exchange because the case
         // closed. Correcting it is the operator's move, through settlement or a new declaration.
@@ -203,7 +213,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         declareAs(operatorA, "500.00");
         SubjectRequest request = verified(SubjectRequestType.DISPUTE);
 
-        assertThatThrownBy(() -> rights.close(request.getId(), false, "   ", null))
+        assertThatThrownBy(() -> rights.close(request.getId(), false, "   ", STAFF))
                 .as("a refusal nobody can appeal is not a decision")
                 .isInstanceOf(PolicyRefusedException.class);
     }
@@ -215,7 +225,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
     void outstandingDebtsSurviveAnErasureRequest() {
         declareAs(operatorA, "500.00");
 
-        SubjectRequest decided = rights.decideErasure(verified(SubjectRequestType.ERASURE).getId(), null);
+        SubjectRequest decided = rights.decideErasure(verified(SubjectRequestType.ERASURE).getId(), STAFF);
 
         // An unconditional erasure right would let anybody delete their own debts, and no operator
         // would contribute to an exchange that worked that way — the right would defeat the thing
@@ -232,7 +242,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         UUID recordId = recordsOf(operatorA).get(0).getId();
         TenantContext.runAs(operatorA, () -> debtRecords.settle(recordId, null));
 
-        SubjectRequest decided = rights.decideErasure(verified(SubjectRequestType.ERASURE).getId(), null);
+        SubjectRequest decided = rights.decideErasure(verified(SubjectRequestType.ERASURE).getId(), STAFF);
 
         // Once regularised the operator has no remaining interest in reporting it, and waiting out
         // the retention window serves nobody.
@@ -248,7 +258,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
         UUID settledOne = recordsOf(operatorA).get(0).getId();
         TenantContext.runAs(operatorA, () -> debtRecords.settle(settledOne, null));
 
-        SubjectRequest decided = rights.decideErasure(verified(SubjectRequestType.ERASURE).getId(), null);
+        SubjectRequest decided = rights.decideErasure(verified(SubjectRequestType.ERASURE).getId(), STAFF);
 
         assertThat(decided.getStatus()).isEqualTo(SubjectRequestStatus.UPHELD);
         assertThat(decided.getDecisionReason())
@@ -266,7 +276,7 @@ class SubjectRightsTest extends AbstractIntegrationTest {
                 IdentifierType.NATIONAL_ID, document, "Mine", null);
 
         TenantContext.runAs(operatorB, () ->
-                assertThatThrownBy(() -> rights.verifyIdentity(ofA.getId(), "seen", null))
+                assertThatThrownBy(() -> rights.verifyIdentity(ofA.getId(), "seen", STAFF))
                         .isInstanceOf(SubjectRightsService.RequestNotFoundException.class));
     }
 
