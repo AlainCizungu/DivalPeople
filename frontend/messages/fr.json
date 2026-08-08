@@ -4,8 +4,11 @@
     "platform": "Dival Intelligence Platform"
   },
   "nav": {
-    "home": "Accueil",
-    "tix": "Échange télécoms",
+    "home": "Vue d’ensemble",
+    "inquiries": "Interrogations",
+    "declare": "Déclarer",
+    "records": "Mes enregistrements",
+    "tix": "TIX",
     "organization": "Organisation",
     "notifications": "Notifications"
   },
@@ -15,15 +18,27 @@
     "language": "Langue",
     "tenant": "Organisation",
     "loading": "Chargement…",
-    "noResults": "Aucun résultat"
+    "noResults": "Aucun résultat",
+    "unexpectedError": "Une erreur est survenue. Réessayez, et signalez-le si cela persiste."
   },
   "dashboard": {
     "title": "Vue d’ensemble de l’échange",
-    "subtitle": "Enregistrements déclarés par votre organisation et interrogations effectuées.",
-    "empty": "Rien pour l’instant. Ces chiffres proviennent de l’échange lui-même et ne s’affichent qu’après une première déclaration ou interrogation de votre organisation.",
+    "subtitle": "Calculé à partir des enregistrements déclarés par votre organisation. Aucune estimation ici.",
     "declaredRecords": "Enregistrements déclarés",
-    "openRecords": "Enregistrements ouverts",
-    "inquiries": "Interrogations ce mois-ci"
+    "openRecords": "Ouverts",
+    "openNote": "Visibles par les autres opérateurs",
+    "settledRecords": "Régularisés",
+    "expiringSoon": "Expirent sous 90 jours",
+    "expiringNote": "Effacés automatiquement à la fin de la période de conservation",
+    "empty": "Votre organisation n’a encore rien déclaré.",
+    "noAccess": "Votre compte peut interroger l’échange mais pas déclarer d’enregistrements ; il n’y a donc rien à compter ici.",
+    "recentTitle": "Défauts les plus récents",
+    "recentDescription": "Par date d’exigibilité de la créance, et non par date de déclaration.",
+    "actionsTitle": "Actions disponibles",
+    "actionsDescription": "Tout ce que l’échange permet aujourd’hui.",
+    "actionDeclare": "Déclarer un défaut",
+    "actionInquire": "Vérifier un client potentiel",
+    "actionRecords": "Consulter vos enregistrements"
   },
   "tix": {
     "title": "Échange d'informations télécoms",
@@ -45,7 +60,70 @@
     "fraudSignals": "Indicateurs de fraude",
     "inquiryFailed": "La vérification n'a pas pu aboutir",
     "forbidden": "Votre compte n'est pas autorisé à effectuer des vérifications.",
-    "networkError": "Le service de vérification est injoignable."
+    "networkError": "Le service de vérification est injoignable.",
+    "identifierTypes": {
+      "NATIONAL_ID": "Carte d’identité nationale",
+      "MSISDN": "Numéro de téléphone",
+      "PASSPORT": "Passeport",
+      "DRIVER_LICENSE": "Permis de conduire",
+      "VOTER_CARD": "Carte d’électeur",
+      "RCCM": "RCCM (registre du commerce)",
+      "TAX_NUMBER": "Numéro d’impôt"
+    },
+    "statuses": {
+      "OUTSTANDING": "Impayé",
+      "SETTLED": "Régularisé",
+      "DISPUTED": "Contesté",
+      "UNDER_INVESTIGATION": "En cours d’enquête",
+      "CLEARED": "Sain"
+    },
+    "declare": {
+      "title": "Déclarer un défaut",
+      "subtitle": "Signalez un abonné en défaut afin que les autres opérateurs puissent voir le statut avant d’accorder un crédit. Seul le statut circule dans l’échange, jamais le montant.",
+      "viewRecords": "Mes enregistrements",
+      "subjectType": "Sujet",
+      "business": "Entreprise",
+      "individual": "Particulier",
+      "fullName": "Nom",
+      "fullNameHint": "Tel qu’il figure dans vos propres dossiers. Utilisé pour le rapprochement, jamais communiqué à un autre opérateur.",
+      "identifierType": "Type d’identifiant",
+      "identifier": "Identifiant",
+      "identifierHint": "Séparateurs et casse sont ignorés. Le RCCM ou le numéro d’impôt identifie une entreprise de la manière la plus fiable.",
+      "amount": "Montant impayé",
+      "amountHint": "Doit atteindre le seuil de déclaration, fixé à 100 USD.",
+      "currency": "Devise",
+      "currencyHint": "Une devise sans seuil configuré est refusée plutôt que supposée.",
+      "serviceCategory": "Service",
+      "defaultDate": "Date d’exigibilité de la créance",
+      "defaultDateHint": "Pas la date de signalement. Le délai de conservation court à partir de cette date.",
+      "dunning": "Je confirme que la procédure de relance contractuelle a été menée avant cette déclaration et que l’abonné a eu la possibilité de payer.",
+      "dunningRequired": "Obligatoire avant de pouvoir déclarer.",
+      "submit": "Déclarer",
+      "declared": "Déclaré",
+      "status": "Statut",
+      "retainedUntil": "Conservé jusqu’au",
+      "subjectCreatedTitle": "Ceci a ouvert un nouveau dossier.",
+      "subjectCreatedBody": "L’échange n’avait aucune trace de ce sujet jusqu’à présent. Il figure au registre en raison de cette déclaration.",
+      "subjectExisted": "Ce sujet était déjà connu de l’échange. Votre enregistrement s’ajoute à ce qui est détenu à son sujet.",
+      "retentionNote": "L’enregistrement est effacé automatiquement à la date de conservation. Une régularisation avance cette date et ne peut jamais la repousser."
+    },
+    "records": {
+      "title": "Mes enregistrements",
+      "subtitle": "Tout ce que votre organisation a déclaré. Les autres opérateurs ne voient que le statut de ces enregistrements — jamais le montant, le service, ni votre nom.",
+      "declare": "Déclarer un défaut",
+      "empty": "Rien de déclaré pour l’instant.",
+      "amount": "Montant",
+      "service": "Service",
+      "defaultDate": "Échéance",
+      "status": "Statut",
+      "retention": "Conservé jusqu’au",
+      "actions": "Actions",
+      "settle": "Marquer régularisé",
+      "dispute": "Marquer contesté",
+      "daysRemaining": "{days} jours restants",
+      "awaitingErasure": "période dépassée",
+      "settleNote": "Marquer un enregistrement comme régularisé avance sa date d’effacement et cesse de le compter contre le sujet. Le marquer contesté le retire des résultats d’interrogation tant que la contestation est ouverte."
+    }
   },
   "auth": {
     "signIn": "Se connecter",

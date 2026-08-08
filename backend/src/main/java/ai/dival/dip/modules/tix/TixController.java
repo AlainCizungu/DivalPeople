@@ -101,23 +101,39 @@ public class TixController {
                                       int identifiersLearned) {
     }
 
-    /** Response projection — the entity is never serialised directly. */
+    /**
+     * Response projection — the entity is never serialised directly.
+     *
+     * <p>Carries the amount and the retention date, and both are deliberate. This projection is
+     * only ever returned to the operator that <em>declared</em> the record, from
+     * {@code GET /debt-records} and the settle and dispute endpoints. Withholding an operator's
+     * own figure from it protects nobody, and the retention date is the answer to the question a
+     * declarant most needs to be able to answer — "when does this stop being visible" — which
+     * until now existed only in the database.
+     *
+     * <p>Nothing here crosses the exchange. An enquiring operator sees {@link InquiryResult},
+     * which has never carried an amount and still does not.
+     */
     public record DebtRecordResponse(
             UUID id,
             UUID subjectId,
             DebtStatus status,
+            java.math.BigDecimal amount,
             String currency,
             String serviceCategory,
-            java.time.LocalDate defaultDate) {
+            java.time.LocalDate defaultDate,
+            java.time.LocalDate retentionUntil) {
 
         static DebtRecordResponse from(DebtRecord record) {
             return new DebtRecordResponse(
                     record.getId(),
                     record.getSubject().getId(),
                     record.getStatus(),
+                    record.getAmount(),
                     record.getCurrency(),
                     record.getServiceCategory(),
-                    record.getDefaultDate());
+                    record.getDefaultDate(),
+                    record.getRetentionUntil());
         }
     }
 }

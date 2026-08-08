@@ -141,6 +141,45 @@ export const notificationsApi = {
   },
 };
 
+export type SubjectType = "INDIVIDUAL" | "BUSINESS";
+
+/** What an operator submits to declare that one of its subscribers has defaulted. */
+export type DeclarationRequest = {
+  identifiers: { type: IdentifierType; value: string }[];
+  fullName: string;
+  subjectType: SubjectType;
+  dateOfBirth: string | null;
+  nationality: string | null;
+  amount: string;
+  currency: string;
+  serviceCategory: string;
+  defaultDate: string;
+  dunningEvidence: boolean;
+};
+
+/**
+ * A record as returned to the operator that declared it.
+ *
+ * <p>Carries an amount, which {@link InquiryResult} deliberately never does. This is an
+ * operator's own data coming back to it; the exchange still tells other operators only a status.
+ */
+export type DebtRecord = {
+  id: string;
+  subjectId: string;
+  status: DebtStatus;
+  amount: string;
+  currency: string;
+  serviceCategory: string;
+  defaultDate: string;
+  retentionUntil: string;
+};
+
+export type DeclarationResult = {
+  record: DebtRecord;
+  subjectWasCreated: boolean;
+  identifiersLearned: number;
+};
+
 export const tixApi = {
   inquire(body: InquiryRequest): Promise<InquiryResult> {
     return request<InquiryResult>("/api/v1/tix/inquiries", {
@@ -149,7 +188,26 @@ export const tixApi = {
     });
   },
 
-  listDebtRecords() {
-    return request<unknown[]>("/api/v1/tix/debt-records");
+  declare(body: DeclarationRequest): Promise<DeclarationResult> {
+    return request<DeclarationResult>("/api/v1/tix/debt-records", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  listDebtRecords(): Promise<DebtRecord[]> {
+    return request<DebtRecord[]>("/api/v1/tix/debt-records");
+  },
+
+  settle(id: string): Promise<DebtRecord> {
+    return request<DebtRecord>(`/api/v1/tix/debt-records/${id}/settle`, {
+      method: "POST",
+    });
+  },
+
+  dispute(id: string): Promise<DebtRecord> {
+    return request<DebtRecord>(`/api/v1/tix/debt-records/${id}/dispute`, {
+      method: "POST",
+    });
   },
 };

@@ -4,8 +4,11 @@
     "platform": "Dival Intelligence Platform"
   },
   "nav": {
-    "home": "Home",
-    "tix": "Telecom Exchange",
+    "home": "Overview",
+    "inquiries": "Inquiries",
+    "declare": "Declare",
+    "records": "My records",
+    "tix": "TIX",
     "organization": "Organization",
     "notifications": "Notifications"
   },
@@ -15,15 +18,27 @@
     "language": "Language",
     "tenant": "Organization",
     "loading": "Loading…",
-    "noResults": "No results"
+    "noResults": "No results",
+    "unexpectedError": "Something went wrong. Try again, and tell us if it keeps happening."
   },
   "dashboard": {
     "title": "Exchange overview",
-    "subtitle": "Records your organisation has declared, and inquiries it has made.",
-    "empty": "Nothing here yet. These figures come from the exchange itself and are not populated until your organisation declares records or makes inquiries.",
+    "subtitle": "Counted from the records your organisation has declared. Nothing here is an estimate.",
     "declaredRecords": "Records declared",
-    "openRecords": "Open records",
-    "inquiries": "Inquiries this month"
+    "openRecords": "Open",
+    "openNote": "Visible to other operators",
+    "settledRecords": "Settled",
+    "expiringSoon": "Expiring within 90 days",
+    "expiringNote": "Erased automatically once the retention period ends",
+    "empty": "Your organisation has not declared anything yet.",
+    "noAccess": "Your account can make inquiries but not declare records, so there is nothing here to count.",
+    "recentTitle": "Most recent defaults",
+    "recentDescription": "By the date the obligation fell due, not the date it was reported.",
+    "actionsTitle": "What you can do",
+    "actionsDescription": "Everything the exchange currently supports.",
+    "actionDeclare": "Declare a default",
+    "actionInquire": "Check a prospective customer",
+    "actionRecords": "Review your records"
   },
   "tix": {
     "title": "Telecom Information Exchange",
@@ -45,7 +60,70 @@
     "fraudSignals": "Fraud indicators",
     "inquiryFailed": "Verification could not be completed",
     "forbidden": "Your account does not have permission to run verifications.",
-    "networkError": "Could not reach the verification service."
+    "networkError": "Could not reach the verification service.",
+    "identifierTypes": {
+      "NATIONAL_ID": "National ID",
+      "MSISDN": "Phone number",
+      "PASSPORT": "Passport",
+      "DRIVER_LICENSE": "Driving licence",
+      "VOTER_CARD": "Voter card",
+      "RCCM": "RCCM (business register)",
+      "TAX_NUMBER": "Tax number"
+    },
+    "statuses": {
+      "OUTSTANDING": "Outstanding",
+      "SETTLED": "Settled",
+      "DISPUTED": "Disputed",
+      "UNDER_INVESTIGATION": "Under investigation",
+      "CLEARED": "Cleared"
+    },
+    "declare": {
+      "title": "Declare a default",
+      "subtitle": "Report a subscriber who has defaulted, so other operators can see the status before extending credit. Only the status crosses the exchange — never the amount.",
+      "viewRecords": "My records",
+      "subjectType": "Subject",
+      "business": "Business",
+      "individual": "Individual",
+      "fullName": "Name",
+      "fullNameHint": "As held on your own records. Used for matching, and never shown to another operator.",
+      "identifierType": "Identifier type",
+      "identifier": "Identifier",
+      "identifierHint": "Separators and case are ignored. RCCM or tax number identifies a business most reliably.",
+      "amount": "Amount outstanding",
+      "amountHint": "Must be at or above the reporting threshold, which is 100 USD.",
+      "currency": "Currency",
+      "currencyHint": "A currency with no configured threshold is refused rather than assumed.",
+      "serviceCategory": "Service",
+      "defaultDate": "Date the obligation fell due",
+      "defaultDateHint": "Not the date you are reporting it. The retention clock runs from this date.",
+      "dunning": "I confirm the contractual dunning process ran before this declaration, and the subscriber was given the opportunity to pay.",
+      "dunningRequired": "Required before you can declare.",
+      "submit": "Declare",
+      "declared": "Declared",
+      "status": "Status",
+      "retainedUntil": "Retained until",
+      "subjectCreatedTitle": "This opened a new file.",
+      "subjectCreatedBody": "The exchange had no record of this subject before now. They are in the registry because of this declaration.",
+      "subjectExisted": "This subject was already known to the exchange. Your record has been added to what is held about them.",
+      "retentionNote": "The record is erased automatically on the retention date. Settling it brings that date forward and can never push it back."
+    },
+    "records": {
+      "title": "My records",
+      "subtitle": "Everything your organisation has declared. Other operators see only the status of these records — never the amount, the service, or your name.",
+      "declare": "Declare a default",
+      "empty": "Nothing declared yet.",
+      "amount": "Amount",
+      "service": "Service",
+      "defaultDate": "Fell due",
+      "status": "Status",
+      "retention": "Retained until",
+      "actions": "Actions",
+      "settle": "Mark settled",
+      "dispute": "Mark disputed",
+      "daysRemaining": "{days} days left",
+      "awaitingErasure": "past its period",
+      "settleNote": "Marking a record settled brings its erasure date forward and stops it counting against the subject. Marking it disputed suspends it from inquiry results while the dispute is open."
+    }
   },
   "auth": {
     "signIn": "Sign in",
