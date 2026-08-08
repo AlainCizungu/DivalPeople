@@ -5,6 +5,7 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Hero } from "@/components/landing/Hero";
 import {
   AiSection,
+  BoundarySection,
   EntitySection,
   ExchangeSection,
   FinalCta,
@@ -16,6 +17,8 @@ import {
   PortfolioSection,
   QuickLinks,
   RiskSection,
+  StatusSection,
+  SubjectRightsSection,
 } from "@/components/landing/sections";
 
 /**
@@ -24,6 +27,13 @@ import {
  * <p>Order matters and follows the argument the page is making: what DIP is, how data gets in,
  * what comes out, who it is for, and only then how it is governed. Governance last is deliberate;
  * leading with it answers an objection nobody has raised yet.
+ *
+ * <p>Three sections were added once there was a real product to describe. {@code Boundary} follows
+ * the exchange because the question it answers — what will my competitors learn — is the next one
+ * a reader has. {@code SubjectRights} precedes governance, since the rights are the substance and
+ * governance is the machinery around them. {@code Status} sits last before the call to action: a
+ * page that has just described a national platform should say which parts of it exist before it
+ * asks anybody to get in touch.
  */
 export default function LandingPage() {
   return (
@@ -38,13 +48,16 @@ export default function LandingPage() {
         <QuickLinks />
         <PlatformSection />
         <ExchangeSection />
+        <BoundarySection />
         <RiskSection />
         <EntitySection />
         <NationalTrustSection />
         <IndustriesSection />
         <PortfolioSection />
         <AiSection />
+        <SubjectRightsSection />
         <GovernanceSection />
+        <StatusSection />
         <FinalCta />
       </main>
 

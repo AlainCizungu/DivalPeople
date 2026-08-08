@@ -204,7 +204,7 @@
       "checks": [
         "B2B and individual intelligence",
         "API-ready",
-        "Human-reviewed risk decisions"
+        "Every inquiry logged with its purpose"
       ]
     },
     "board": {
@@ -290,6 +290,27 @@
           "body": "Search, risk reports, alerts, APIs, dashboards, and human review."
         }
       ]
+    },
+    "boundary": {
+      "eyebrow": "The Exchange Boundary",
+      "title": "Institutions share a verdict, not their books.",
+      "body": "The reason a competing operator will join is not what the exchange reveals. It is what it refuses to.",
+      "receivedTitle": "What an enquiring institution receives",
+      "received": [
+        "Whether an adverse record exists, and its status",
+        "How many institutions hold one",
+        "How confident the identity match is",
+        "Fraud and duplicate-identity signals"
+      ],
+      "withheldTitle": "What it is never told",
+      "withheld": [
+        "The amount owed",
+        "Which institution reported it",
+        "Account references, tariffs, usage, or any operational data",
+        "Anything at all about a record while it is under dispute"
+      ],
+      "note": "Enforced by the database, not by the application. A participant's rows are unreadable to another participant's connection; the exchange relaxes reads for one specific question and never relaxes writes.",
+      "purpose": "Every inquiry is rate-limited and recorded with a stated purpose. Each one is individually legitimate — the aggregate is what turns a lookup service into a bulk export."
     },
     "risk": {
       "eyebrow": "Risk Intelligence",
@@ -484,6 +505,30 @@
       ],
       "answeredBy": "Dival AI"
     },
+    "subjects": {
+      "eyebrow": "The People in the Registry",
+      "title": "A national registry is only defensible if the people in it can answer back.",
+      "body": "A shared bad-payer list decides who can open a line, take a loan, or win a contract. That is real power over people who did not choose to be in it, and the rights below are built rather than promised.",
+      "cards": [
+        {
+          "title": "Ask what is held",
+          "body": "A person can obtain their whole file across every participating institution — not only the one whose office they happened to walk into."
+        },
+        {
+          "title": "Dispute, and be suppressed while it is examined",
+          "body": "A contested record stops being reported to other institutions the day the dispute is raised. Before the decision, not after: the harm of being wrongly listed accrues every day the listing stands."
+        },
+        {
+          "title": "Be forgotten on a clock",
+          "body": "Every record carries an expiry set from the date the obligation fell due, never from the date it was reported — so reporting a debt late cannot keep somebody listed for longer. When it passes, the record is deleted rather than hidden."
+        },
+        {
+          "title": "Not be added by asking",
+          "body": "Looking somebody up never creates them. Somebody who comes forward to ask whether they are listed does not become listed by asking."
+        }
+      ],
+      "note": "Retention periods are configuration, not constants, because they are legal periods. The values in the current build are the terms of reference's illustrative figures and are being checked against the Code du numérique before anyone should treat them as settled."
+    },
     "governance": {
       "eyebrow": "Governed by Design",
       "title": "Intelligence without surrendering control.",
@@ -510,6 +555,36 @@
           "body": "DIP provides risk evidence and recommendations; authorized institutions retain final decision authority."
         }
       ]
+    },
+    "status": {
+      "eyebrow": "Where This Is Today",
+      "title": "What runs, and what is still a drawing.",
+      "body": "Much of this page describes a design. This section says which parts of it exist, because a platform asking institutions to trust it with a national dataset should be the kind that tells them.",
+      "builtTitle": "Running today",
+      "built": [
+        "Bilingual platform, sign-in, roles, and tenant isolation enforced by the database",
+        "Declaring a default, with a reporting threshold below which nothing enters the registry",
+        "Cross-operator inquiry returning status only, rate-limited and audited with a stated purpose",
+        "CSV and Excel import with immutable raw storage and provenance for every row",
+        "Retention, expiry, and erasure that deletes rather than hides",
+        "Subject access, dispute, and erasure requests",
+        "An operator exposure view, aged, per currency"
+      ],
+      "designedTitle": "Designed, not built",
+      "designed": [
+        "Universal search and consolidated entity profiles",
+        "The DIP risk score and its reason codes",
+        "Deriving debt records from an imported file",
+        "The AI analyst",
+        "Real-time APIs and scheduled feeds"
+      ],
+      "openTitle": "Not yet decided",
+      "open": [
+        "Whether a written-off debt is a status or a different kind of record",
+        "Where a default date comes from when the source file carries none",
+        "Whether the reporting threshold survives contact with real data"
+      ],
+      "note": "This is a prototype built alongside a feasibility study, not a live national registry. Every figure elsewhere on this page is illustrative, and nothing here runs against real customer data."
     },
     "finalCta": {
       "title": "Turn the data you already have into intelligence you can act on.",

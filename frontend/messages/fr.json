@@ -204,7 +204,7 @@
       "checks": [
         "Intelligence entreprises et particuliers",
         "Prêt pour les API",
-        "Décisions de risque revues par des humains"
+        "Chaque interrogation tracée avec sa finalité"
       ]
     },
     "board": {
@@ -290,6 +290,27 @@
           "body": "Recherche, rapports de risque, alertes, API, tableaux de bord et revue humaine."
         }
       ]
+    },
+    "boundary": {
+      "eyebrow": "La frontière de l’échange",
+      "title": "Les institutions partagent un constat, pas leurs livres.",
+      "body": "Ce qui décidera un opérateur concurrent à participer n’est pas ce que l’échange révèle. C’est ce qu’il refuse de révéler.",
+      "receivedTitle": "Ce que reçoit l’institution qui interroge",
+      "received": [
+        "L’existence d’un enregistrement défavorable, et son statut",
+        "Le nombre d’institutions qui en détiennent un",
+        "Le degré de confiance de la correspondance d’identité",
+        "Les signaux de fraude et d’identités dupliquées"
+      ],
+      "withheldTitle": "Ce qu’elle n’apprend jamais",
+      "withheld": [
+        "Le montant dû",
+        "L’institution qui l’a déclaré",
+        "Les références de compte, tarifs, consommations ou toute donnée d’exploitation",
+        "Quoi que ce soit sur un enregistrement tant qu’il est contesté"
+      ],
+      "note": "Appliqué par la base de données, non par l’application. Les lignes d’un participant sont illisibles depuis la connexion d’un autre ; l’échange assouplit la lecture pour une question précise et n’assouplit jamais l’écriture.",
+      "purpose": "Chaque interrogation est plafonnée et consignée avec sa finalité déclarée. Chacune est légitime prise isolément — c’est le volume qui transforme un service de consultation en extraction de masse."
     },
     "risk": {
       "eyebrow": "Intelligence du risque",
@@ -484,6 +505,30 @@
       ],
       "answeredBy": "Dival AI"
     },
+    "subjects": {
+      "eyebrow": "Les personnes inscrites au registre",
+      "title": "Un registre national ne se défend que si les personnes qui y figurent peuvent répondre.",
+      "body": "Une liste partagée de mauvais payeurs décide qui peut ouvrir une ligne, obtenir un crédit ou remporter un marché. C’est un pouvoir réel sur des personnes qui n’ont pas choisi d’y figurer : les droits ci-dessous sont construits, non promis.",
+      "cards": [
+        {
+          "title": "Savoir ce qui est détenu",
+          "body": "Une personne peut obtenir l’intégralité de son dossier auprès de toutes les institutions participantes — et pas seulement de celle dont elle a poussé la porte."
+        },
+        {
+          "title": "Contester, et être retiré pendant l’examen",
+          "body": "Un enregistrement contesté cesse d’être communiqué aux autres institutions dès le jour de la contestation. Avant la décision, non après : le préjudice d’une inscription erronée s’accumule chaque jour où elle subsiste."
+        },
+        {
+          "title": "Être oublié à échéance",
+          "body": "Chaque enregistrement porte une date d’expiration calculée depuis l’exigibilité de la créance, jamais depuis sa déclaration — déclarer tardivement ne permet donc pas de prolonger une inscription. À l’échéance, l’enregistrement est supprimé, non masqué."
+        },
+        {
+          "title": "Ne pas être inscrit par le fait de demander",
+          "body": "Consulter quelqu’un ne le crée jamais. Une personne qui se présente pour savoir si elle est inscrite ne le devient pas en le demandant."
+        }
+      ],
+      "note": "Les durées de conservation sont paramétrables et non codées en dur, car ce sont des durées légales. Les valeurs de la version actuelle sont les chiffres indicatifs des termes de référence ; elles sont en cours de vérification au regard du Code du numérique avant d’être tenues pour acquises."
+    },
     "governance": {
       "eyebrow": "Gouvernance par conception",
       "title": "L’intelligence sans renoncer au contrôle.",
@@ -510,6 +555,36 @@
           "body": "DIP fournit preuves de risque et recommandations ; les institutions autorisées conservent l’autorité de décision finale."
         }
       ]
+    },
+    "status": {
+      "eyebrow": "Où en est le projet",
+      "title": "Ce qui fonctionne, et ce qui reste un plan.",
+      "body": "Une grande partie de cette page décrit une conception. Cette section indique ce qui en existe : une plateforme qui demande aux institutions de lui confier un patrimoine national doit être de celles qui le disent.",
+      "builtTitle": "En fonctionnement aujourd’hui",
+      "built": [
+        "Plateforme bilingue, authentification, rôles et cloisonnement des participants appliqué par la base de données",
+        "Déclaration d’un défaut, avec un seuil en deçà duquel rien n’entre au registre",
+        "Interrogation inter-opérateurs restituant le seul statut, plafonnée et tracée avec sa finalité",
+        "Import CSV et Excel, stockage brut immuable et traçabilité de chaque ligne",
+        "Conservation, expiration et effacement qui supprime au lieu de masquer",
+        "Demandes d’accès, de contestation et d’effacement par la personne concernée",
+        "Une vue des encours de l’opérateur, par ancienneté et par devise"
+      ],
+      "designedTitle": "Conçu, non construit",
+      "designed": [
+        "La recherche universelle et les profils d’entités consolidés",
+        "Le score de risque DIP et ses motifs",
+        "La création d’enregistrements de créance à partir d’un fichier importé",
+        "L’analyste IA",
+        "Les API temps réel et les flux programmés"
+      ],
+      "openTitle": "Non encore tranché",
+      "open": [
+        "Si une créance passée en perte est un statut ou un enregistrement d’une autre nature",
+        "D’où vient la date d’exigibilité lorsque le fichier source n’en contient aucune",
+        "Si le seuil de déclaration résiste à l’épreuve des données réelles"
+      ],
+      "note": "Il s’agit d’un prototype développé en parallèle d’une étude de faisabilité, non d’un registre national en production. Tous les chiffres présentés ailleurs sur cette page sont illustratifs, et rien ici ne fonctionne sur des données clients réelles."
     },
     "finalCta": {
       "title": "Transformez les données que vous détenez déjà en intelligence exploitable.",

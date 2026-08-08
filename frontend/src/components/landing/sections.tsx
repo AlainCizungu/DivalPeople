@@ -355,6 +355,159 @@ export function FinalCta() {
   );
 }
 
+/**
+ * What crosses the exchange and what never does.
+ *
+ * <p>The rest of the page sells sharing. This section is the other half of the argument and the
+ * one an operator's legal team reaches first: a competing telecom joins because of what its
+ * competitors will <em>not</em> learn. Two columns rather than prose, so the withheld list is as
+ * prominent as the shared one.
+ */
+export function BoundarySection() {
+  const messages = useMessages();
+  const { boundary } = messages.landing;
+  return (
+    <section id="boundary" className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading
+          eyebrow={boundary.eyebrow}
+          title={boundary.title}
+          body={boundary.body}
+        />
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <article className="rounded-xl border border-line bg-white p-7">
+            <h3 className="mb-4 text-xl font-bold text-navy">{boundary.receivedTitle}</h3>
+            <ul className="flex flex-col gap-3">
+              {boundary.received.map((item) => (
+                <li key={item} className="flex gap-3 text-muted">
+                  <span aria-hidden="true" className="font-extrabold text-green">
+                    ✓
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </article>
+
+          {/* The same visual weight as the column above it. A withheld list rendered as a
+              footnote would read as a limitation rather than as the design. */}
+          <article className="rounded-xl border-2 border-navy bg-navy p-7">
+            <h3 className="mb-4 text-xl font-bold text-white">{boundary.withheldTitle}</h3>
+            <ul className="flex flex-col gap-3">
+              {boundary.withheld.map((item) => (
+                <li key={item} className="flex gap-3 text-[#d7e4f4]">
+                  <span aria-hidden="true" className="font-extrabold text-[#5bb4ff]">
+                    ✕
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </article>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <p className="rounded-lg border border-line bg-white px-5 py-4 text-sm text-muted">
+            {boundary.note}
+          </p>
+          <p className="rounded-lg border border-line bg-white px-5 py-4 text-sm text-muted">
+            {boundary.purpose}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The rights of the people in the registry.
+ *
+ * <p>Everything else on this page is addressed to institutions. This is the only section written
+ * about the people the registry is about, and it is on the page because the rights behind it are
+ * built — cross-operator access, suppression the day a dispute is raised, erasure on a clock
+ * running from the default date. A national bad-payer list that says nothing about data subjects
+ * reads as though nobody considered them.
+ */
+export function SubjectRightsSection() {
+  const messages = useMessages();
+  const { subjects } = messages.landing;
+  return (
+    <section id="subjects" className="mx-auto max-w-7xl px-6 py-20">
+      <SectionHeading eyebrow={subjects.eyebrow} title={subjects.title} body={subjects.body} />
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {subjects.cards.map((card) => (
+          <article
+            key={card.title}
+            className="rounded-xl border border-line bg-white p-7 border-l-4 border-l-green"
+          >
+            <h3 className="mb-2 text-xl font-bold text-navy">{card.title}</h3>
+            <p className="text-muted">{card.body}</p>
+          </article>
+        ))}
+      </div>
+
+      <p className="mt-6 rounded-lg border border-line bg-soft px-5 py-4 text-sm text-muted">
+        {subjects.note}
+      </p>
+    </section>
+  );
+}
+
+/**
+ * What runs, and what is still a drawing.
+ *
+ * <p>The most uncomfortable section to write and the most useful one to have. The rest of the
+ * page describes a design in the present tense; the terms of reference commissioned a feasibility
+ * study, and a page implying a live national registry is a liability rather than merely an
+ * inaccuracy. Stating the gap plainly costs nothing with a bank and is the strongest thing a
+ * regulator can be shown.
+ */
+export function StatusSection() {
+  const messages = useMessages();
+  const { status } = messages.landing;
+
+  const columns = [
+    { title: status.builtTitle, items: status.built, accent: "border-l-green", mark: "✓" },
+    { title: status.designedTitle, items: status.designed, accent: "border-l-blue", mark: "○" },
+    { title: status.openTitle, items: status.open, accent: "border-l-warning", mark: "?" },
+  ];
+
+  return (
+    <section id="status" className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <SectionHeading eyebrow={status.eyebrow} title={status.title} body={status.body} />
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          {columns.map((column) => (
+            <article
+              key={column.title}
+              className={`rounded-xl border border-line border-l-4 bg-white p-7 ${column.accent}`}
+            >
+              <h3 className="mb-4 text-lg font-bold text-navy">{column.title}</h3>
+              <ul className="flex flex-col gap-3 text-sm text-muted">
+                {column.items.map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <span aria-hidden="true" className="font-extrabold text-ink">
+                      {column.mark}
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+
+        <p className="mt-6 rounded-lg border-2 border-navy bg-white px-5 py-4 font-semibold text-navy">
+          {status.note}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export function LandingFooter() {
   const messages = useMessages();
   const { footer } = messages.landing;
