@@ -98,7 +98,10 @@ public class IngestController {
         }
 
         byte[] content = file.getBytes();
-        List<Map<String, String>> rows = CsvReader.read(content);
+        // The format is decided from the bytes, not the filename. An operator who renames an
+        // export has not changed what is inside it, and a .csv that is really a workbook would
+        // otherwise be read as one very long line.
+        List<Map<String, String>> rows = TabularReader.read(content);
         String filename = originalFilename(file);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(BatchResponse.from(

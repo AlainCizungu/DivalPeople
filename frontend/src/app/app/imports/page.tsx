@@ -38,8 +38,9 @@ const STATUS_TONE: Record<BatchStatus, Tone> = {
  * bytes mean belongs on the server where the checksum is taken. A page that parsed the CSV and
  * posted JSON would make the stored rows and the checksummed file two unrelated claims.
  *
- * <p>CSV only for now. XLSX needs a parser and decisions about typed cells that should be made
- * while looking at a real export.
+ * <p>CSV and XLSX. The format is decided from the bytes on the server, not from the extension
+ * here, so `accept` below is a convenience in the file picker and never a guarantee — an operator
+ * who renames an export has not changed what is inside it.
  */
 export default function ImportsPage() {
   const messages = useMessages();
@@ -200,7 +201,7 @@ export default function ImportsPage() {
                 id="file"
                 ref={fileInput}
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 className={inputClass}
                 required
               />

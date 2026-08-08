@@ -16,8 +16,17 @@ this repository.
 | 4 | **header** |
 | 5+ | data |
 
-The parser we have would reject this outright: `CsvReader` expects the header on row 1, and this is
-XLSX rather than CSV. Both are the file telling us something true about how telecom exports arrive.
+The parser we had rejected this outright: `CsvReader` expected the header on row 1, and this is
+XLSX rather than CSV. Both were the file telling us something true about how telecom exports
+arrive.
+
+**Both are now handled.** `XlsxReader` reads the workbook without a new dependency, and
+`TabularReader` finds the header past the preamble — skipping a leading row only when it holds
+fewer than two values and the file elsewhere is wider than that, which admits blank rows and an
+unlabelled total and nothing else. Two limits are worth knowing: a workbook with more than one
+sheet is refused rather than guessed at, and **a date cell arrives as an Excel serial number**
+because resolving the display format is where a hand-written reader goes quietly wrong. This file
+has no dates, so nothing is lost today.
 
 ## Columns
 
@@ -92,4 +101,6 @@ before it belongs in a schema.
 3. **Does the 100 USD threshold stand** when it excludes a seventh of the first real dataset?
 4. **What happens to credit balances** — refuse, ignore, or record as evidence the account is
    settled?
-5. **XLSX support**, and header detection that survives a preamble.
+5. ~~**XLSX support**, and header detection that survives a preamble.~~ Built, 8 August 2026.
+   The file can now be uploaded, stored and inspected; what it still cannot do is become debt
+   records, which is decisions 1–4.

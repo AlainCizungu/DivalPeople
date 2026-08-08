@@ -630,7 +630,7 @@
     "uploadDescription": "The file is sent as-is and parsed on the server, so the checksum and the stored rows describe the same bytes.",
     "source": "Source",
     "file": "File",
-    "fileHint": "CSV. Quoted fields, commas inside names and Windows line endings are handled. XLSX is not supported yet.",
+    "fileHint": "CSV or XLSX. A header that sits below blank rows or an unlabelled total is found; quoted fields, commas inside names and Windows line endings are handled. Dates in a spreadsheet arrive as Excel serial numbers, and the old binary .xls is not supported.",
     "upload": "Upload",
     "needSourceFirst": "Register a source before uploading.",
     "batchesTitle": "Deliveries",

@@ -3,7 +3,6 @@ package ai.dival.dip.modules.ingest;
 import ai.dival.dip.common.error.PolicyRefusedException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,9 +17,10 @@ import java.util.Map;
  * not tell. Provenance would be decoration. So the bytes arrive, and the rows are derived from
  * the same bytes that were hashed.
  *
- * <p>CSV only. XLSX needs a library, a new dependency, and decisions about how a spreadsheet's
- * typed cells become text — all of which should be made while looking at a real Vodacom export
- * rather than in advance of one.
+ * <p>CSV only; {@link XlsxReader} handles spreadsheets and {@link TabularReader} decides which of
+ * them a delivery needs. This class now does one job — bytes to a grid of cells — and hands the
+ * grid to {@code TabularReader} for the header and the keyed rows, so that a CSV with a preamble
+ * above its header is treated the same as a spreadsheet with one.
  *
  * <p>Hand-written rather than a dependency because the format is small and the failure modes are
  * specific to what telecom systems actually emit: a UTF-8 byte order mark from Excel on Windows,
@@ -41,54 +41,12 @@ final class CsvReader {
      *         names, or a row whose length disagrees with the header
      */
     static List<Map<String, String>> read(byte[] content) {
-        List<List<String>> rows = split(new String(content, StandardCharsets.UTF_8));
-        if (rows.isEmpty()) {
-            throw new PolicyRefusedException("The file is empty.");
-        }
+        return TabularReader.rowsFrom(grid(content));
+    }
 
-        List<String> header = rows.get(0);
-        for (int i = 0; i < header.size(); i++) {
-            String name = header.get(i).trim();
-            if (name.isEmpty()) {
-                throw new PolicyRefusedException(
-                        "Column " + (i + 1) + " has no name. Every column needs a heading, "
-                                + "because the heading is how a mapping refers to it.");
-            }
-            header.set(i, name);
-        }
-        if (header.stream().distinct().count() != header.size()) {
-            throw new PolicyRefusedException(
-                    "Two columns share a name. One would silently overwrite the other when the "
-                            + "row became a map, so the file is refused rather than half-stored.");
-        }
-
-        List<Map<String, String>> parsed = new ArrayList<>();
-        for (int i = 1; i < rows.size(); i++) {
-            List<String> cells = rows.get(i);
-            // A row that is entirely empty is the blank line at the end of almost every exported
-            // file. Skipping it is not leniency about malformed data — it is refusing to treat a
-            // trailing newline as a customer.
-            if (cells.stream().allMatch(cell -> cell.trim().isEmpty())) {
-                continue;
-            }
-            if (cells.size() != header.size()) {
-                throw new PolicyRefusedException(
-                        "Row " + (i + 1) + " has " + cells.size() + " cells but the header has "
-                                + header.size() + ". A row that does not line up with the header "
-                                + "cannot be stored honestly, because which column each value "
-                                + "belongs to would be a guess.");
-            }
-            Map<String, String> row = new LinkedHashMap<>();
-            for (int c = 0; c < header.size(); c++) {
-                row.put(header.get(c), cells.get(c));
-            }
-            parsed.add(row);
-        }
-
-        if (parsed.isEmpty()) {
-            throw new PolicyRefusedException("The file has a header but no rows.");
-        }
-        return parsed;
+    /** The cells, laid out as they appear, before anything decides which row is the header. */
+    static List<List<String>> grid(byte[] content) {
+        return split(new String(content, StandardCharsets.UTF_8));
     }
 
     /** Splits into rows and cells, honouring quotes. */

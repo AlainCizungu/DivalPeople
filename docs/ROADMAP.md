@@ -15,7 +15,7 @@ is, and TIX exists in a form that predates this design.
 | 1 | MFA | Not built — Keycloak supports it, it is not turned on |
 | 1 | Object storage | Filesystem locally; no S3-compatible store |
 | 1 | Observability | Structured logs with request ids; no metrics, traces or alerting |
-| 2 | CSV upload, import batches, raw immutable storage, provenance | **Built.** XLSX is not; the parser is CSV only |
+| 2 | CSV and XLSX upload, import batches, raw immutable storage, provenance | **Built.** Header found past a preamble; multi-sheet workbooks and dated cells are refused or left raw |
 | 2 | Source mappings, validation engine, normalisation, aging/balance mapping | **Not built** — waiting on the Vodacom sample, deliberately |
 | 2 | Import preview, rejection report, data-quality dashboard | Preview built (rows as stored); quality reporting not |
 | 3 | Deterministic entity resolution | **Built** for the write path (`SubjectResolver`), exact match only, refuses ambiguity |

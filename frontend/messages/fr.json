@@ -630,7 +630,7 @@
     "uploadDescription": "Le fichier est transmis tel quel et analysé côté serveur, afin que l’empreinte et les lignes enregistrées décrivent les mêmes octets.",
     "source": "Source",
     "file": "Fichier",
-    "fileHint": "CSV. Champs entre guillemets, virgules dans les noms et fins de ligne Windows sont pris en charge. XLSX n’est pas encore géré.",
+    "fileHint": "CSV ou XLSX. Un en-tête situé sous des lignes vides ou un total sans libellé est détecté ; les champs entre guillemets, les virgules dans les noms et les fins de ligne Windows sont gérés. Les dates d’un classeur arrivent sous forme de numéros de série Excel, et l’ancien format binaire .xls n’est pas pris en charge.",
     "upload": "Déposer",
     "needSourceFirst": "Enregistrez une source avant de déposer un fichier.",
     "batchesTitle": "Livraisons",
