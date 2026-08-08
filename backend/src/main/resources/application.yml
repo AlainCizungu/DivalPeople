@@ -1,4 +1,13 @@
 spring:
+  servlet:
+    multipart:
+      # Spring's default is 1 MB, which is smaller than every limit the application enforces for
+      # itself: FileProperties allows 20 MB and ingest allows 10. Left unset, a 2 MB upload is
+      # rejected by the container before any module's own check runs, and the caller gets a 500
+      # for an ordinary client mistake. This is set above both so each module's limit — with its
+      # own readable message — is the one that decides.
+      max-file-size: ${DIP_MAX_UPLOAD_SIZE:20MB}
+      max-request-size: ${DIP_MAX_REQUEST_SIZE:25MB}
   application:
     name: dip-backend
 

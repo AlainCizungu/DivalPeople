@@ -15,6 +15,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * Translates exceptions into a stable error shape.
@@ -88,6 +89,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
                 .body(ApiError.of("RATE_LIMITED", ex.getMessage()));
+    }
+
+    /**
+     * An upload larger than the container will accept.
+     *
+     * <p>413 rather than 500. This fires in the servlet layer before any controller runs, so
+     * without a handler an ordinary client mistake — a file somebody dragged in that is too big —
+     * reaches the user as an internal error, and the security review recorded exactly that under
+     * M9. The limit is not named in the message because it is configuration rather than policy,
+     * and each module states its own tighter limit in a sentence the caller can act on.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ApiError.of("UPLOAD_TOO_LARGE", "That file is too large to upload."));
     }
 
     /**

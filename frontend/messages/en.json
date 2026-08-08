@@ -10,7 +10,8 @@
     "records": "My records",
     "tix": "TIX",
     "organization": "Organization",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "imports": "Data imports"
   },
   "common": {
     "search": "Search",
@@ -575,6 +576,53 @@
       "reviewShared": "Your {cycle} review has been shared with you",
       "reviewDisputed": "{employee} has disputed their {cycle} review",
       "certificationExpiring": "{employee}'s {course} expires in {days} day(s)"
+    }
+  },
+  "imports": {
+    "title": "Data imports",
+    "subtitle": "Deliver a file, look at what was stored, then publish it or send it back. Nothing is derived from a delivery until it is published.",
+    "sourcesTitle": "Sources",
+    "sourcesDescription": "Successive deliveries of the same export share one source, so their history is one history.",
+    "noSources": "No sources yet. Register one before uploading.",
+    "newSourceCode": "Code",
+    "newSourceCodeHint": "Short and stable, e.g. VODACOM_POSTPAID. Case and spacing are normalised.",
+    "newSourceName": "Description",
+    "addSource": "Register source",
+    "uploadTitle": "Upload a delivery",
+    "uploadDescription": "The file is sent as-is and parsed on the server, so the checksum and the stored rows describe the same bytes.",
+    "source": "Source",
+    "file": "File",
+    "fileHint": "CSV. Quoted fields, commas inside names and Windows line endings are handled. XLSX is not supported yet.",
+    "upload": "Upload",
+    "needSourceFirst": "Register a source before uploading.",
+    "batchesTitle": "Deliveries",
+    "batchesDescription": "Every file this organisation has sent, whatever became of it.",
+    "noBatches": "Nothing delivered yet.",
+    "filename": "File",
+    "rows": "Rows",
+    "status": "Status",
+    "received": "Received",
+    "inspect": "Inspect",
+    "batch": "Delivery",
+    "batchSubtitle": "The rows exactly as stored. Nothing here has been interpreted.",
+    "allBatches": "All deliveries",
+    "size": "Bytes",
+    "checksum": "SHA-256 of the file as received",
+    "checksumHint": "Compare this against your own copy to confirm the platform holds the file you sent.",
+    "validate": "Mark validated",
+    "publish": "Publish",
+    "reject": "Reject",
+    "revert": "Withdraw",
+    "reasonPlaceholder": "Reason",
+    "rowsTitle": "Stored rows",
+    "rowsDescription": "The first 50 rows, as they were delivered. These cannot be edited — only replaced by a new delivery.",
+    "noRows": "No rows.",
+    "statuses": {
+      "RECEIVED": "Received",
+      "VALIDATED": "Validated",
+      "PUBLISHED": "Published",
+      "REJECTED": "Rejected",
+      "REVERTED": "Withdrawn"
     }
   }
 }

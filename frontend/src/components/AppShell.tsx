@@ -57,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/app/tix", label: messages.nav.inquiries, badge: 0 },
     { href: "/app/tix/declare", label: messages.nav.declare, badge: 0 },
     { href: "/app/tix/records", label: messages.nav.records, badge: 0 },
+    { href: "/app/imports", label: messages.nav.imports, badge: 0 },
     { href: "/app/organization", label: messages.nav.organization, badge: 0 },
     {
       href: "/app/notifications",

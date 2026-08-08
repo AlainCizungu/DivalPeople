@@ -10,7 +10,8 @@
     "records": "Mes enregistrements",
     "tix": "TIX",
     "organization": "Organisation",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "imports": "Imports de données"
   },
   "common": {
     "search": "Rechercher",
@@ -575,6 +576,53 @@
       "reviewShared": "Votre évaluation {cycle} vous a été partagée",
       "reviewDisputed": "{employee} conteste son évaluation {cycle}",
       "certificationExpiring": "{course} de {employee} expire dans {days} jour(s)"
+    }
+  },
+  "imports": {
+    "title": "Imports de données",
+    "subtitle": "Déposez un fichier, examinez ce qui a été enregistré, puis publiez-le ou renvoyez-le. Rien n’est dérivé d’une livraison avant sa publication.",
+    "sourcesTitle": "Sources",
+    "sourcesDescription": "Les livraisons successives d’un même export partagent une seule source, afin que leur historique n’en fasse qu’un.",
+    "noSources": "Aucune source. Enregistrez-en une avant de déposer un fichier.",
+    "newSourceCode": "Code",
+    "newSourceCodeHint": "Court et stable, par exemple VODACOM_POSTPAID. Casse et espaces sont normalisés.",
+    "newSourceName": "Description",
+    "addSource": "Enregistrer la source",
+    "uploadTitle": "Déposer une livraison",
+    "uploadDescription": "Le fichier est transmis tel quel et analysé côté serveur, afin que l’empreinte et les lignes enregistrées décrivent les mêmes octets.",
+    "source": "Source",
+    "file": "Fichier",
+    "fileHint": "CSV. Champs entre guillemets, virgules dans les noms et fins de ligne Windows sont pris en charge. XLSX n’est pas encore géré.",
+    "upload": "Déposer",
+    "needSourceFirst": "Enregistrez une source avant de déposer un fichier.",
+    "batchesTitle": "Livraisons",
+    "batchesDescription": "Tous les fichiers envoyés par votre organisation, quel qu’en soit le sort.",
+    "noBatches": "Aucune livraison pour l’instant.",
+    "filename": "Fichier",
+    "rows": "Lignes",
+    "status": "Statut",
+    "received": "Reçu le",
+    "inspect": "Examiner",
+    "batch": "Livraison",
+    "batchSubtitle": "Les lignes exactement telles qu’enregistrées. Rien n’a été interprété.",
+    "allBatches": "Toutes les livraisons",
+    "size": "Octets",
+    "checksum": "SHA-256 du fichier tel que reçu",
+    "checksumHint": "Comparez cette empreinte à votre propre copie pour confirmer que la plateforme détient bien le fichier envoyé.",
+    "validate": "Marquer validé",
+    "publish": "Publier",
+    "reject": "Rejeter",
+    "revert": "Retirer",
+    "reasonPlaceholder": "Motif",
+    "rowsTitle": "Lignes enregistrées",
+    "rowsDescription": "Les 50 premières lignes, telles que livrées. Elles ne peuvent pas être modifiées, seulement remplacées par une nouvelle livraison.",
+    "noRows": "Aucune ligne.",
+    "statuses": {
+      "RECEIVED": "Reçu",
+      "VALIDATED": "Validé",
+      "PUBLISHED": "Publié",
+      "REJECTED": "Rejeté",
+      "REVERTED": "Retiré"
     }
   }
 }

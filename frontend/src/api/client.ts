@@ -50,11 +50,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   // /api/v1/employees becomes /api/proxy/employees; the proxy puts the version back.
   const proxied = path.replace(/^\/api\/v1/, "/api/proxy");
 
+  // FormData must set its own Content-Type, because only the browser knows the multipart
+  // boundary it generated. Sending "application/json" over a file upload makes the server unable
+  // to parse it; sending the header with an undefined value is worse, because Headers coerces it
+  // to the literal string "undefined".
+  const sendingForm = init?.body instanceof FormData;
+
   const response = await fetch(proxied, {
     ...init,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(sendingForm ? {} : { "Content-Type": "application/json" }),
       ...init?.headers,
     },
   });
@@ -178,6 +184,101 @@ export type DeclarationResult = {
   record: DebtRecord;
   subjectWasCreated: boolean;
   identifiersLearned: number;
+};
+
+export type SourceKind = "SPREADSHEET" | "API" | "MANUAL";
+
+export type IngestSource = {
+  id: string;
+  code: string;
+  name: string;
+  kind: SourceKind;
+  active: boolean;
+};
+
+export type BatchStatus =
+  | "RECEIVED"
+  | "VALIDATED"
+  | "PUBLISHED"
+  | "REJECTED"
+  | "REVERTED";
+
+export type ImportBatch = {
+  id: string;
+  sourceId: string;
+  sourceCode: string;
+  filename: string;
+  checksumSha256: string;
+  byteSize: number;
+  rowCount: number;
+  status: BatchStatus;
+  receivedAt: string;
+  publishedAt: string | null;
+};
+
+/** @param payload the row as stored: a JSON object, verbatim, never re-serialised. */
+export type RawRow = { id: string; rowNumber: number; payload: string };
+
+export const ingestApi = {
+  listSources(): Promise<IngestSource[]> {
+    return request<IngestSource[]>("/api/v1/ingest/sources");
+  },
+
+  registerSource(body: { code: string; name: string; kind: SourceKind }): Promise<IngestSource> {
+    return request<IngestSource>("/api/v1/ingest/sources", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /**
+   * Uploads the file itself, not a parsed version of it.
+   *
+   * <p>`request` omits its default Content-Type for a FormData body, so the browser supplies the
+   * multipart boundary itself.
+   *
+   * <p>The server parses the CSV. Doing it here would mean the checksum and the stored rows were
+   * two unrelated claims — see CsvReader.
+   */
+  upload(sourceId: string, file: File): Promise<ImportBatch> {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("sourceId", sourceId);
+    return request<ImportBatch>("/api/v1/ingest/batches", {
+      method: "POST",
+      body: form,
+    });
+  },
+
+  listBatches(): Promise<ImportBatch[]> {
+    return request<ImportBatch[]>("/api/v1/ingest/batches");
+  },
+
+  rows(batchId: string, limit = 50): Promise<RawRow[]> {
+    return request<RawRow[]>(`/api/v1/ingest/batches/${batchId}/rows?limit=${limit}`);
+  },
+
+  validate(batchId: string): Promise<ImportBatch> {
+    return request<ImportBatch>(`/api/v1/ingest/batches/${batchId}/validate`, { method: "POST" });
+  },
+
+  publish(batchId: string): Promise<ImportBatch> {
+    return request<ImportBatch>(`/api/v1/ingest/batches/${batchId}/publish`, { method: "POST" });
+  },
+
+  reject(batchId: string, reason: string): Promise<ImportBatch> {
+    return request<ImportBatch>(`/api/v1/ingest/batches/${batchId}/reject`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  revert(batchId: string, reason: string): Promise<ImportBatch> {
+    return request<ImportBatch>(`/api/v1/ingest/batches/${batchId}/revert`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    });
+  },
 };
 
 export const tixApi = {
