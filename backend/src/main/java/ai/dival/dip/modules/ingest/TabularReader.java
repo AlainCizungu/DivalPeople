@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.ingest;
 
 import ai.dival.dip.common.error.PolicyRefusedException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -112,14 +113,24 @@ final class TabularReader {
      *
      * <p><strong>Deliberately unclever.</strong> The temptation is to score each row and pick the
      * most header-looking one, and that is how a parser starts disagreeing with the person who
-     * made the file. The rule here is narrow enough to state in a sentence: skip a leading row
-     * only when it holds fewer than two values <em>and</em> the file elsewhere is wider than that.
+     * made the file. The rule is narrow enough to state in a sentence: skip a leading row only
+     * when it is <em>narrower than the file's widest row</em> and holds nothing but numbers — or
+     * next to nothing at all.
      *
-     * <p>That admits exactly the preamble a spreadsheet export produces — empty rows, and a totals
-     * line with one figure floating in a column. It refuses to skip anything else. A single-column
-     * CSV keeps its one-cell header, because the file is never wider than one; and a header with a
-     * missing name is still treated as the header and still refused by name, rather than being
-     * quietly stepped over in favour of the first row of data.
+     * <p>The second half of that was learned from the file rather than imagined. The rule here
+     * first said "fewer than two values", on the belief that a spreadsheet total is one figure
+     * floating in a column. The real export's total is <em>eleven</em> figures — a grand total in
+     * the first column and a subtotal under each of the ten aging buckets — so that rule promoted
+     * the totals line to header, and the four columns it has no subtotal for became unnamed
+     * columns. The file was refused for having no headings when its headings were two rows lower.
+     *
+     * <p>What separates the two rows is not how full they are. It is that a heading is a name and
+     * a total is a number, and that the real header spans every column while a total spans only
+     * the ones worth totalling. Both conditions are required: a full-width row is never skipped,
+     * so a genuine header of years — {@code Name, 2023, 2024} — stays the header, and a header
+     * with a missing name is still refused by name rather than quietly stepped over in favour of
+     * the first row of data. A single-column CSV keeps its one-cell header, because a file that
+     * is never wider than one has no row narrower than its widest.
      */
     private static int findHeader(List<List<String>> grid) {
         int widest = 0;
@@ -129,8 +140,10 @@ final class TabularReader {
 
         int limit = Math.min(grid.size(), MAX_PREAMBLE_ROWS);
         for (int i = 0; i < limit; i++) {
-            int count = filled(grid.get(i));
-            if (count >= 2 || count >= widest) {
+            List<String> row = grid.get(i);
+            int count = filled(row);
+            boolean narrower = count < widest;
+            if (!narrower || (count >= 2 && !allNumbers(row))) {
                 return i;
             }
         }
@@ -138,6 +151,45 @@ final class TabularReader {
                 "No header row was found in the first " + limit + " rows. A header is a row of "
                         + "column names above the data; without one there is no way to say what "
                         + "any value means.");
+    }
+
+    /**
+     * Whether every value in the row is a figure rather than a name.
+     *
+     * <p>An empty row satisfies this trivially, which is correct: it is certainly not a row of
+     * names. Used only to recognise a totals line above the table, never to interpret data.
+     */
+    private static boolean allNumbers(List<String> row) {
+        for (String cell : row) {
+            if (cell == null || cell.trim().isEmpty()) {
+                continue;
+            }
+            if (!isNumber(cell)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Tolerant on purpose.
+     *
+     * <p>A spreadsheet writes a total with thousands separators and sometimes a non-breaking
+     * space, and none of that makes it a column name. Erring towards "this is a number" only ever
+     * skips a row above the table; erring the other way leaves the totals line as the header,
+     * which is the bug this exists to prevent.
+     */
+    private static boolean isNumber(String cell) {
+        String bare = cell.replace(",", "").replace(" ", "").replace("\u00a0", "");
+        if (bare.isEmpty()) {
+            return false;
+        }
+        try {
+            new BigDecimal(bare);
+            return true;
+        } catch (NumberFormatException notANumber) {
+            return false;
+        }
     }
 
     /** Cells with something in them. */

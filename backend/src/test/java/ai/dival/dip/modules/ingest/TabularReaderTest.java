@@ -43,6 +43,41 @@ class TabularReaderTest {
     }
 
     @Test
+    @DisplayName("a totals row wider than two columns is still preamble, not the header")
+    void skipsAWideTotalsRow() {
+        // This is the row the real export actually has, and the one the first version of this
+        // rule got wrong: a grand total in the first column, a subtotal under each aging bucket,
+        // and nothing under the columns that are not amounts. Eleven values in the file, which
+        // "fewer than two values" read as a header — and then the file was refused for the gaps
+        // between them, told it had no column headings when its headings were two rows lower.
+        List<Map<String, String>> rows = read("""
+                ,,,,
+                12383011.42,,,,20286.87
+                ,,,,
+                Bsr,Status A,BPR_0,Balance,Not Due
+                Grand Horizon SARL,Write off,V0172109,184000,0
+                """);
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("BPR_0", "V0172109");
+        assertThat(rows.get(0).values()).doesNotContain("12383011.42");
+    }
+
+    @Test
+    @DisplayName("a header whose names are numbers is still the header")
+    void numericHeadingsAreNotPreamble() {
+        // Both halves of the rule are load-bearing. Skipping every all-numeric row would step
+        // over this one and store the first customer as the column names.
+        List<Map<String, String>> rows = read("""
+                Customer,2023,2024
+                Acme,100,200
+                """);
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("2024", "200");
+    }
+
+    @Test
     @DisplayName("a leading blank line does not become a nameless header")
     void skipsLeadingBlankLines() {
         assertThat(read("\n\nCustomer,Balance\nAcme,100\n")).hasSize(1);
