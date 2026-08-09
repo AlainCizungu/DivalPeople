@@ -75,6 +75,15 @@ What to show:
 - The rows are shown **exactly as stored** — nothing is mapped, no amount is parsed. Point at this
   rather than around it: publishing the batch does not create exposures yet, and the exposure
   screen says so out loud.
+- **Press "Profile the delivery".** This is the moment worth pausing on with a telecom in the room.
+  The hand analysis in `TIX_SOURCE_PROFILE.md` took an afternoon; the screen does it on their file
+  while they watch. Expect it to say what that document says: `BPR_0` unique on every row and
+  flagged as identifier-shaped, `Status A` a constant reading *Write off*, `Vaccounts` always `1`,
+  the aging columns almost entirely empty, and `Balance` totalled exactly.
+
+  Say plainly that **nothing here decides what a column means.** Which one is an amount and which
+  is an identifier is still open; how many cells are filled is not, and that is the whole reason
+  this could be built before those decisions.
 - Upload the same file twice. Refused, naming the batch that already holds it.
 
 *Timing: the console logs `Received N rows from … in X ms`. If that number is large, say so and

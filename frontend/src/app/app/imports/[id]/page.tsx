@@ -7,6 +7,7 @@ import { useMessages } from "@/i18n/LocaleProvider";
 import {
   ApiError,
   ingestApi,
+  type BatchProfile,
   type BatchStatus,
   type ImportBatch,
   type RawRow,
@@ -49,6 +50,15 @@ export default function BatchPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [reason, setReason] = useState("");
+  /**
+   * Loaded on request rather than with the page.
+   *
+   * <p>Profiling reads every row of the batch, which for the real export is four thousand of them.
+   * The rows table above needs fifty. Making the page wait for the larger of the two would slow
+   * down the common case — an operator checking that a delivery arrived — for the sake of the
+   * rarer one.
+   */
+  const [profile, setProfile] = useState<BatchProfile | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -186,6 +196,115 @@ export default function BatchPage() {
           </Card>
         </div>
       )}
+
+      <div className="mb-6">
+        <Card title={t.profileTitle} description={t.profileDescription}>
+          {profile === null ? (
+            <Button
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                setError(null);
+                void ingestApi
+                  .profile(batchId)
+                  .then(setProfile)
+                  .catch((caught) =>
+                    setError(
+                      caught instanceof ApiError
+                        ? caught.message
+                        : messages.common.unexpectedError,
+                    ),
+                  )
+                  .finally(() => setBusy(false));
+              }}
+            >
+              {busy ? messages.common.loading : t.profileAction}
+            </Button>
+          ) : profile.columns.length === 0 ? (
+            <EmptyState>{t.profileEmpty}</EmptyState>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[46rem] text-left text-sm">
+                  <thead className="border-b border-line text-xs tracking-wide text-muted uppercase">
+                    <tr>
+                      <th scope="col" className="pb-3 pr-4 font-semibold">{t.colColumn}</th>
+                      <th scope="col" className="pb-3 pr-4 text-right font-semibold">
+                        {t.colFilled}
+                      </th>
+                      <th scope="col" className="pb-3 pr-4 text-right font-semibold">
+                        {t.colDistinct}
+                      </th>
+                      <th scope="col" className="pb-3 pr-4 text-right font-semibold">
+                        {t.colTotal}
+                      </th>
+                      <th scope="col" className="pb-3 pr-4 font-semibold">{t.colRange}</th>
+                      <th scope="col" className="pb-3 font-semibold">{t.colValues}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profile.columns.map((column) => {
+                      // Two shapes worth naming on sight. A column unique on every row is what an
+                      // identifier looks like — it is how BPR_0 was found in the real export. A
+                      // column with one distinct value carries no information at all.
+                      const unique = column.filled > 0 && column.filled === column.distinct;
+                      const constant = column.distinct === 1;
+                      const sparse = profile.rows > 0 && column.filled / profile.rows < 0.05;
+                      return (
+                        <tr key={column.column} className="border-b border-line last:border-0">
+                          <th scope="row" className="py-3 pr-4 font-semibold text-navy">
+                            {column.column}
+                            <span className="ml-2 inline-flex flex-wrap gap-1.5 align-middle">
+                              {unique && <Pill tone="positive">{t.identifierLike}</Pill>}
+                              {constant && <Pill>{t.constant}</Pill>}
+                              {sparse && column.filled > 0 && (
+                                <Pill tone="review">{t.mostlyEmpty}</Pill>
+                              )}
+                            </span>
+                          </th>
+                          <td className="py-3 pr-4 text-right tabular-nums text-ink">
+                            {column.filled}
+                            <span className="ml-1 text-xs text-muted">
+                              /{profile.rows}
+                            </span>
+                          </td>
+                          <td className="py-3 pr-4 text-right tabular-nums text-ink">
+                            {column.distinct}
+                          </td>
+                          <td className="py-3 pr-4 text-right font-bold tabular-nums text-navy">
+                            {column.total ?? <span className="font-normal text-muted">—</span>}
+                          </td>
+                          <td className="py-3 pr-4 text-xs text-muted tabular-nums">
+                            {column.numeric
+                              ? `${column.minimum} – ${column.maximum}`
+                              : column.filled === 0
+                                ? "—"
+                                : t.textLength
+                                    .replace("{shortest}", String(column.shortestLength))
+                                    .replace("{longest}", String(column.longestLength))}
+                          </td>
+                          <td className="py-3">
+                            <span className="flex flex-wrap gap-1.5">
+                              {column.vocabulary.map((entry) => (
+                                <Pill key={entry.value}>
+                                  {entry.value} · {entry.count}
+                                </Pill>
+                              ))}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-5 border-t border-line pt-4 text-xs text-muted">
+                {t.profileNote}
+              </p>
+            </>
+          )}
+        </Card>
+      </div>
 
       <Card title={t.rowsTitle} description={t.rowsDescription}>
         {rows === null ? (

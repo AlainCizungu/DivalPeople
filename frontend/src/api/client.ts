@@ -369,6 +369,32 @@ export type ImportBatch = {
 /** @param payload the row as stored: a JSON object, verbatim, never re-serialised. */
 export type RawRow = { id: string; rowNumber: number; payload: string };
 
+/**
+ * One column of a delivery, counted.
+ *
+ * <p>`vocabulary` is empty for any column with more than a handful of distinct values — that line
+ * is what separates a set of statuses worth showing from a list of customers that is not.
+ *
+ * <p>`total`, `minimum` and `maximum` are decimal strings and are null unless every non-blank
+ * value in the column parses as a number. One `#N/A` makes the whole column text, deliberately:
+ * a total over the rows that happened to parse would hide the row somebody needs to look at.
+ */
+export type ProfiledColumn = {
+  column: string;
+  filled: number;
+  blank: number;
+  distinct: number;
+  numeric: boolean;
+  total: string | null;
+  minimum: string | null;
+  maximum: string | null;
+  shortestLength: number;
+  longestLength: number;
+  vocabulary: { value: string; count: number }[];
+};
+
+export type BatchProfile = { rows: number; columns: ProfiledColumn[] };
+
 export const ingestApi = {
   listSources(): Promise<IngestSource[]> {
     return request<IngestSource[]>("/api/v1/ingest/sources");
@@ -406,6 +432,11 @@ export const ingestApi = {
 
   rows(batchId: string, limit = 50): Promise<RawRow[]> {
     return request<RawRow[]>(`/api/v1/ingest/batches/${batchId}/rows?limit=${limit}`);
+  },
+
+  /** Counted over every row, not the page of them the rows endpoint returns. */
+  profile(batchId: string): Promise<BatchProfile> {
+    return request<BatchProfile>(`/api/v1/ingest/batches/${batchId}/profile`);
   },
 
   validate(batchId: string): Promise<ImportBatch> {

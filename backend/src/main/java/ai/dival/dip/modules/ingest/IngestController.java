@@ -128,6 +128,20 @@ public class IngestController {
         return ingest.rowsOf(id).stream().limit(capped).map(RowResponse::from).toList();
     }
 
+    /**
+     * What is in the delivery, counted.
+     *
+     * <p>Fill rates, distinct counts, totals for the columns that are entirely numeric, and the
+     * vocabulary of the ones small enough to have one. Nothing here identifies a column as an
+     * amount or an identifier — that mapping is still unbuilt and still depends on decisions
+     * nobody has taken. Counting needs none of them.
+     */
+    @GetMapping("/batches/{id}/profile")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public BatchProfiler.Profile profile(@PathVariable UUID id) {
+        return ingest.profileOf(id);
+    }
+
     @PostMapping("/batches/{id}/validate")
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
     public BatchResponse validate(@PathVariable UUID id) {

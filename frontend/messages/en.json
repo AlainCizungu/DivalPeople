@@ -738,7 +738,22 @@
       "PUBLISHED": "Published",
       "REJECTED": "Rejected",
       "REVERTED": "Withdrawn"
-    }
+    },
+    "profileTitle": "What is in this delivery",
+    "profileDescription": "Counted over every row, and nothing here decides what any column means. Which one is a balance and which is an identifier is still an open question; how many cells are filled is not.",
+    "profileAction": "Profile the delivery",
+    "profileEmpty": "Nothing to count.",
+    "colColumn": "Column",
+    "colFilled": "Filled",
+    "colDistinct": "Distinct",
+    "colTotal": "Total",
+    "colRange": "Range",
+    "colValues": "Values",
+    "identifierLike": "Unique on every row",
+    "constant": "Always the same",
+    "mostlyEmpty": "Mostly empty",
+    "textLength": "{shortest}–{longest} characters",
+    "profileNote": "A column whose distinct count equals its filled count is unique on every row, which is what an identifier looks like. A column with one distinct value is a constant and carries no information. Values are shown only where there are few enough of them to be a vocabulary rather than a customer list."
   },
   "participants": {
     "title": "Participating organisations",

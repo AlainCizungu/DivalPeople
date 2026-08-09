@@ -6,6 +6,7 @@ import ai.dival.dip.common.error.PolicyRefusedException;
 import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -203,6 +204,27 @@ public class IngestService {
         return rawRecords.findByBatchIdOrderByRowNumberAsc(batchId);
     }
 
+    /**
+     * Counts what is in a delivery, without deciding what any of it means.
+     *
+     * <p>Reads every row rather than a sample. A fill rate computed from the first two hundred rows
+     * of a spreadsheet is a fill rate for the first two hundred rows, and the columns that matter
+     * in a real export are precisely the ones that are empty at the top — the aging buckets in the
+     * Vodacom file are populated on a few dozen rows out of four thousand.
+     *
+     * <p>The whole batch is held in memory to do it, which the upload limit already implies: the
+     * rows were parsed in memory to get here.
+     */
+    @Transactional(readOnly = true)
+    public BatchProfiler.Profile profileOf(UUID batchId) {
+        requireOwnBatch(batchId);
+        List<Map<String, String>> rows = rawRecords.findByBatchIdOrderByRowNumberAsc(batchId)
+                .stream()
+                .map(record -> fromJson(record.getPayload(), record.getRowNumber()))
+                .toList();
+        return BatchProfiler.profile(rows);
+    }
+
     private ImportBatch requireOwnBatch(UUID batchId) {
         return batches.findByIdAndTenantId(batchId, TenantContext.require())
                 .orElseThrow(() -> new BatchNotFoundException(batchId));
@@ -241,6 +263,23 @@ public class IngestService {
             throw new PolicyRefusedException(
                     "Row " + rowNumber + " could not be stored: its contents are not "
                             + "representable as JSON.");
+        }
+    }
+
+    /**
+     * Reads a stored row back.
+     *
+     * <p>The counterpart of {@link #toJson}. A row that cannot be read is a defect in this
+     * platform rather than in the operator's file — the payload was written by
+     * {@code writeValueAsString} and nothing may update it — so it fails loudly instead of being
+     * skipped, which would quietly shrink every count on the profile.
+     */
+    private Map<String, String> fromJson(String payload, int rowNumber) {
+        try {
+            return json.readValue(payload, new TypeReference<LinkedHashMap<String, String>>() { });
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException(
+                    "Stored row " + rowNumber + " is not readable as JSON", ex);
         }
     }
 

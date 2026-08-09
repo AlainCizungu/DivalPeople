@@ -738,7 +738,22 @@
       "PUBLISHED": "Publié",
       "REJECTED": "Rejeté",
       "REVERTED": "Retiré"
-    }
+    },
+    "profileTitle": "Contenu de cette livraison",
+    "profileDescription": "Compté sur toutes les lignes, et rien ici ne décide de la signification d’une colonne. Laquelle est un solde et laquelle un identifiant reste une question ouverte ; combien de cellules sont remplies ne l’est pas.",
+    "profileAction": "Analyser la livraison",
+    "profileEmpty": "Rien à compter.",
+    "colColumn": "Colonne",
+    "colFilled": "Remplies",
+    "colDistinct": "Distinctes",
+    "colTotal": "Total",
+    "colRange": "Étendue",
+    "colValues": "Valeurs",
+    "identifierLike": "Unique sur chaque ligne",
+    "constant": "Toujours identique",
+    "mostlyEmpty": "Presque vide",
+    "textLength": "{shortest}–{longest} caractères",
+    "profileNote": "Une colonne dont le nombre de valeurs distinctes égale le nombre de cellules remplies est unique sur chaque ligne : c’est à cela que ressemble un identifiant. Une colonne à une seule valeur distincte est une constante et ne porte aucune information. Les valeurs ne sont affichées que lorsqu’elles sont assez peu nombreuses pour constituer un vocabulaire plutôt qu’une liste de clients."
   },
   "participants": {
     "title": "Organisations participantes",
