@@ -15,7 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -33,29 +34,35 @@ import org.springframework.transaction.support.TransactionTemplate;
  * it keeps the boundary a boundary. The alternative — a policy permitting cross-tenant writes —
  * would exist for every future query as well as this one.
  *
- * <p><strong>KNOWN DEFECT, found August 2026 and not yet fixed. Read this before trusting the
- * per-tenant loops below.</strong> {@code TenantAwareDataSource} binds the tenant when a
- * connection is checked out, so a transaction is pinned to whichever tenant was current when it
- * began. Every public method here is {@code @Transactional}, which means the
- * {@code transactionTemplate.execute} calls inside the loops join the caller's transaction rather
- * than starting their own — and therefore keep the caller's connection, and the caller's tenant
- * binding. Under row-level security as the unprivileged {@code dip_app} role, the cross-operator
- * suppression and erasure would silently affect only the calling operator's rows.
+ * <p><strong>No method here is {@code @Transactional}, and that is the whole design rather than an
+ * omission.</strong> {@link ai.dival.dip.common.tenancy.TenantAwareDataSource} binds the tenant
+ * when a connection is checked out, so a transaction is pinned to whichever tenant was current
+ * when it began. Annotating these methods — which they were until August 2026 — meant the
+ * per-tenant blocks below joined the caller's transaction, kept the caller's connection, and kept
+ * the caller's tenant binding. Under row-level security as the unprivileged {@code dip_app} role,
+ * the cross-operator suppression, erasure and disclosure would have touched only the calling
+ * operator's rows: a person's "whole file" would have contained one operator, and a dispute would
+ * have suppressed nothing anywhere else.
  *
- * <p>{@link RetentionPurge} and the scheduled scanners have the same shape and are correct,
- * because nothing wraps them in an outer transaction; the template genuinely starts a new one each
- * time. This class is the exception.
+ * <p>Nothing failed, because the integration tests connect as the schema owner and bypass
+ * row-level security entirely. {@code RowLevelSecurityTest} is where it shows, and it now has a
+ * case for it.
  *
- * <p>The integration tests cannot see it: they connect as the schema owner, which bypasses
- * row-level security entirely, so the writes succeed regardless of which tenant the connection is
- * bound to. It would show in {@code RowLevelSecurityTest}, which connects as {@code dip_app}, and
- * there is no case there for this path.
+ * <p>So the work is split into units, each in its own {@code REQUIRES_NEW} transaction, and the
+ * order of those units is load-bearing:
  *
- * <p>The fix is not a one-line propagation change. {@code REQUIRES_NEW} on the suppression loop in
- * {@link #raise} would commit the suppression before the {@code subject_request} row it points at,
- * and V21's foreign key would reject it. Doing this properly means committing the case first and
- * applying effects afterwards, as separate units — which is what this class's documentation always
- * claimed it did.
+ * <ul>
+ *   <li>the case is committed <em>before</em> any record is suppressed, because
+ *       {@code suppressed_by_request_id} is a foreign key to it;</li>
+ *   <li>the decision is committed <em>before</em> anybody is notified, because telling
+ *       institutions a record was withdrawn and then rolling that back is worse than silence;</li>
+ *   <li>the suppression is read <em>before</em> the decision when a case is upheld, because
+ *       upholding leaves it in place and nothing afterwards can say how far back to look.</li>
+ * </ul>
+ *
+ * <p>The cost of splitting is that a failure halfway leaves work done. A case opened whose
+ * suppression then failed is visible — an open case in the queue with a deadline on it — and it is
+ * the safer of the two failures, since the alternative ordering cannot commit at all.
  */
 @Service
 public class SubjectRightsService {
@@ -75,7 +82,22 @@ public class SubjectRightsService {
     private final TenantService tenants;
     private final NotificationService notifications;
     private final AuditService audit;
-    private final TransactionTemplate transactionTemplate;
+
+    /**
+     * Every unit of work here, and the reason this class has no {@code @Transactional} methods.
+     *
+     * <p>{@code PROPAGATION_REQUIRES_NEW}, deliberately and load-bearingly.
+     * {@link ai.dival.dip.common.tenancy.TenantAwareDataSource} binds the tenant when a connection
+     * is checked out, so a transaction is pinned to whichever tenant was current when it began.
+     * A template with the default {@code REQUIRED} joins whatever transaction it finds — and if
+     * the caller had one, every "act as tenant B" block would quietly keep tenant A's connection
+     * and tenant A's binding. Suspending and starting afresh is what forces a new checkout, and a
+     * new checkout is what reads {@link TenantContext} again.
+     *
+     * <p>Depending on the caller not being transactional would work today and break the first time
+     * somebody annotates a method above this one, with no test failing.
+     */
+    private final TransactionTemplate perTenant;
 
     public SubjectRightsService(SubjectRequestRepository requests,
                                 DebtRecordRepository debtRecords,
@@ -83,14 +105,28 @@ public class SubjectRightsService {
                                 TenantService tenants,
                                 NotificationService notifications,
                                 AuditService audit,
-                                TransactionTemplate transactionTemplate) {
+                                PlatformTransactionManager transactionManager) {
         this.requests = requests;
         this.debtRecords = debtRecords;
         this.subjects = subjects;
         this.tenants = tenants;
         this.notifications = notifications;
         this.audit = audit;
-        this.transactionTemplate = transactionTemplate;
+        this.perTenant = new TransactionTemplate(transactionManager);
+        this.perTenant.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    /**
+     * One unit of work, in its own transaction, as whichever tenant is currently bound.
+     *
+     * <p>Deliberately not overloaded with a {@code Runnable} variant. A lambda like
+     * {@code () -> repository.findAll()} is both a valid {@code Supplier} and a valid
+     * {@code Runnable}, so the two overloads would make every such call site an ambiguous-method
+     * compile error. Work with nothing to return ends with {@code return null;} instead, which is
+     * uglier in three places and unambiguous in all of them.
+     */
+    private <T> T unit(java.util.function.Supplier<T> work) {
+        return perTenant.execute(status -> work.get());
     }
 
     /**
@@ -106,35 +142,49 @@ public class SubjectRightsService {
      * other operators while their claim is examined rather than after. The suppression is
      * reversible and recorded; a wrongful refusal of credit is not.
      */
-    @Transactional
     public SubjectRequest raise(SubjectRequestType type, IdentifierType identifierType,
                                 String identifier, String detail, UUID actorId) {
-        Subject subject = subjects.locate(identifierType, identifier)
-                .orElseThrow(SubjectNotInRegistryException::new);
-
-        SubjectRequest request = requests.save(
-                new SubjectRequest(subject, type, detail, actorId));
-
-        audit.record("TIX_SUBJECT_REQUEST_RAISED", "SubjectRequest",
-                request.getId().toString(), AuditService.OUTCOME_SUCCESS, actorId,
-                type + " for subject " + subject.getId());
+        // The case is opened and committed before anything is suppressed, and the order is forced
+        // rather than chosen: tix_debt_record.suppressed_by_request_id is a foreign key, so a
+        // suppression committed in its own transaction before the subject_request row exists
+        // would be rejected by the database.
+        //
+        // The cost of that order is a window. If a later per-tenant unit fails, the case exists
+        // and open with the person still listed. That is visible — an open case is in the queue
+        // with a deadline on it — and it is the safer of the two failures: the alternative
+        // ordering cannot happen at all.
+        // The subject id is read here, inside the unit, and carried out. Reaching through
+        // request.getSubject() afterwards would be a LazyInitializationException on a detached
+        // entity — the standing tax on managing transactions by hand.
+        CaseAndSubject opened = unit(() -> {
+            Subject subject = subjects.locate(identifierType, identifier)
+                    .orElseThrow(SubjectNotInRegistryException::new);
+            SubjectRequest saved = requests.save(new SubjectRequest(subject, type, detail, actorId));
+            audit.record("TIX_SUBJECT_REQUEST_RAISED", "SubjectRequest",
+                    saved.getId().toString(), AuditService.OUTCOME_SUCCESS, actorId,
+                    type + " for subject " + subject.getId());
+            return new CaseAndSubject(saved, subject.getId());
+        });
 
         if (type == SubjectRequestType.DISPUTE || type == SubjectRequestType.RECTIFICATION) {
-            int suppressed = suppressAcrossOperators(subject.getId(), request.getId());
+            int suppressed = suppressAcrossOperators(
+                    opened.subjectId(), opened.request().getId());
             audit.record("TIX_RECORDS_SUPPRESSED", "SubjectRequest",
-                    request.getId().toString(), AuditService.OUTCOME_SUCCESS, actorId,
+                    opened.request().getId().toString(), AuditService.OUTCOME_SUCCESS, actorId,
                     suppressed + " record(s) suppressed pending the outcome");
         }
-        return request;
+        return opened.request();
     }
 
-    @Transactional
+    /** Single-tenant: the case belongs to whoever is asking, and nothing crosses a boundary. */
     public SubjectRequest verifyIdentity(UUID requestId, String evidence, UUID actorId) {
-        SubjectRequest request = requireOwnRequest(requestId);
-        request.verifyIdentity(actorId, evidence);
-        audit.record("TIX_SUBJECT_IDENTITY_VERIFIED", "SubjectRequest", requestId.toString(),
-                AuditService.OUTCOME_SUCCESS, actorId, request.getIdentityEvidence());
-        return request;
+        return unit(() -> {
+            SubjectRequest request = requireOwnRequest(requestId);
+            request.verifyIdentity(actorId, evidence);
+            audit.record("TIX_SUBJECT_IDENTITY_VERIFIED", "SubjectRequest", requestId.toString(),
+                    AuditService.OUTCOME_SUCCESS, actorId, request.getIdentityEvidence());
+            return request;
+        });
     }
 
     /**
@@ -145,35 +195,43 @@ public class SubjectRightsService {
      * audited for that reason: this is the single call in the system that assembles one person's
      * whole file, and if it were ever misused, the trail is what makes that visible.
      */
-    @Transactional(readOnly = true)
     public List<Disclosure> disclose(UUID requestId, UUID actorId) {
-        SubjectRequest request = requireOwnRequest(requestId);
-        if (request.getRequestType() != SubjectRequestType.ACCESS) {
-            throw new PolicyRefusedException("This case is not an access request.");
-        }
-        if (request.getStatus() != SubjectRequestStatus.IDENTITY_VERIFIED) {
-            throw new PolicyRefusedException(
-                    "Verify the person's identity before disclosing their file.");
-        }
-        if (actorId == null) {
-            // The most sensitive read in the system: one person's entire file, across every
-            // operator. An audit row for it that names nobody would record that it happened and
-            // not who did it, which is the half that matters if it is ever misused.
-            throw new PolicyRefusedException(
-                    "A disclosure has to name who made it.");
-        }
+        UUID subjectId = unit(() -> {
+            SubjectRequest request = requireOwnRequest(requestId);
+            if (request.getRequestType() != SubjectRequestType.ACCESS) {
+                throw new PolicyRefusedException("This case is not an access request.");
+            }
+            if (request.getStatus() != SubjectRequestStatus.IDENTITY_VERIFIED) {
+                throw new PolicyRefusedException(
+                        "Verify the person's identity before disclosing their file.");
+            }
+            if (actorId == null) {
+                // The most sensitive read in the system: one person's entire file, across every
+                // operator. An audit row for it that names nobody would record that it happened
+                // and not who did it, which is the half that matters if it is ever misused.
+                throw new PolicyRefusedException(
+                        "A disclosure has to name who made it.");
+            }
+            return request.getSubject().getId();
+        });
 
         List<Disclosure> disclosures = new ArrayList<>();
         for (Tenant tenant : tenants.list()) {
-            TenantContext.runAs(tenant.getId(), () ->
-                    debtRecords.findByTenantIdAndSubjectIdOrderByDefaultDateDesc(
-                                    tenant.getId(), request.getSubject().getId())
-                            .forEach(record -> disclosures.add(new Disclosure(
-                                    tenant.getName(),
-                                    record.getStatus(),
-                                    record.getAmount().toPlainString() + " " + record.getCurrency(),
-                                    record.getDefaultDate().toString(),
-                                    record.getRetentionUntil().toString()))));
+            // A read, and it still needs its own transaction per tenant. Row-level security
+            // governs SELECT as well as INSERT: on a connection bound to the caller, an explicit
+            // tenant predicate naming somebody else matches nothing at all, and the person's file
+            // would come back containing only the operator whose office they walked into.
+            TenantContext.runAs(tenant.getId(), () -> unit(() -> {
+                debtRecords.findByTenantIdAndSubjectIdOrderByDefaultDateDesc(
+                                tenant.getId(), subjectId)
+                        .forEach(record -> disclosures.add(new Disclosure(
+                                tenant.getName(),
+                                record.getStatus(),
+                                record.getAmount().toPlainString() + " " + record.getCurrency(),
+                                record.getDefaultDate().toString(),
+                                record.getRetentionUntil().toString())));
+                return null;
+            }));
         }
 
         audit.record("TIX_SUBJECT_FILE_DISCLOSED", "SubjectRequest", requestId.toString(),
@@ -195,14 +253,15 @@ public class SubjectRightsService {
      * <p>Partial outcomes are normal and are stated as such. Somebody with two settled debts and
      * one outstanding gets two erased and a written reason for the third.
      */
-    @Transactional
     public SubjectRequest decideErasure(UUID requestId, UUID actorId) {
-        SubjectRequest request = requireOwnRequest(requestId);
-        if (request.getRequestType() != SubjectRequestType.ERASURE) {
-            throw new PolicyRefusedException("This case is not an erasure request.");
-        }
+        UUID subjectId = unit(() -> {
+            SubjectRequest request = requireOwnRequest(requestId);
+            if (request.getRequestType() != SubjectRequestType.ERASURE) {
+                throw new PolicyRefusedException("This case is not an erasure request.");
+            }
+            return request.getSubject().getId();
+        });
 
-        UUID subjectId = request.getSubject().getId();
         int erased = 0;
         int kept = 0;
         // Captured before the rows are deleted, because it is the only way to know how far back
@@ -212,7 +271,7 @@ public class SubjectRightsService {
 
         for (Tenant tenant : tenants.list()) {
             Counts counts = TenantContext.runAsResult(tenant.getId(), () ->
-                    transactionTemplate.execute(status -> {
+                    perTenant.execute(status -> {
                         List<DebtRecord> mine = debtRecords
                                 .findByTenantIdAndSubjectIdOrderByDefaultDateDesc(
                                         tenant.getId(), subjectId);
@@ -244,44 +303,65 @@ public class SubjectRightsService {
                 + "A record of an unpaid debt may be kept for its retention period; "
                 + "settle it and the erasure can be granted.";
 
-        if (erased > 0) {
-            request.uphold(actorId, reason);
-        } else {
-            request.refuse(actorId, reason);
+        boolean granted = erased > 0;
+        SubjectRequest decided = unit(() -> {
+            SubjectRequest request = requireOwnRequest(requestId);
+            if (granted) {
+                request.uphold(actorId, reason);
+            } else {
+                request.refuse(actorId, reason);
+            }
+            audit.record("TIX_SUBJECT_REQUEST_DECIDED", "SubjectRequest", requestId.toString(),
+                    AuditService.OUTCOME_SUCCESS, actorId, request.getStatus() + ": " + reason);
+            return request;
+        });
+
+        // Article 214 again, and it applies to erasure in the same sentence as rectification.
+        // After the decision is committed: telling institutions a record was withdrawn and then
+        // rolling the withdrawal back would be worse than not telling them.
+        if (earliestErased != null) {
+            notifyPriorRecipients(subjectId, earliestErased, actorId);
         }
-        audit.record("TIX_SUBJECT_REQUEST_DECIDED", "SubjectRequest", requestId.toString(),
-                AuditService.OUTCOME_SUCCESS, actorId, request.getStatus() + ": " + reason);
-        return request;
+        return decided;
     }
 
     /** Closes a dispute or rectification, and lifts exactly the suppression it caused. */
-    @Transactional
     public SubjectRequest close(UUID requestId, boolean upheld, String reason, UUID actorId) {
-        SubjectRequest request = requireOwnRequest(requestId);
+        // The suppression to be examined has to be read before the decision, because upholding
+        // leaves it in place and there is no later moment that can tell how far back to look.
+        Optional<Instant> affectedSince = upheld
+                ? earliestSuppressedCreation(requestId)
+                : Optional.empty();
+
+        CaseAndSubject decision = unit(() -> {
+            SubjectRequest request = requireOwnRequest(requestId);
+            if (upheld) {
+                request.uphold(actorId, reason);
+            } else {
+                request.refuse(actorId, reason);
+            }
+            audit.record("TIX_SUBJECT_REQUEST_DECIDED", "SubjectRequest", requestId.toString(),
+                    AuditService.OUTCOME_SUCCESS, actorId, request.getStatus() + ": " + reason);
+            return new CaseAndSubject(request, request.getSubject().getId());
+        });
 
         if (upheld) {
-            request.uphold(actorId, reason);
             // Article 214: the correction has to reach the institutions that were told the
             // uncorrected thing. Upholding a dispute is a finding that the record was wrong, and
             // the people who acted on it are the point of the obligation.
-            earliestSuppressedCreation(requestId).ifPresent(since ->
-                    notifyPriorRecipients(request.getSubject().getId(), since, actorId));
+            affectedSince.ifPresent(since ->
+                    notifyPriorRecipients(decision.subjectId(), since, actorId));
         } else {
-            request.refuse(actorId, reason);
             // Refused, so the records go back to being reported. Upholding leaves them suppressed:
             // a contested claim that was found to be wrong should not quietly return to the
             // exchange because the case is closed.
             liftAcrossOperators(requestId);
         }
-
-        audit.record("TIX_SUBJECT_REQUEST_DECIDED", "SubjectRequest", requestId.toString(),
-                AuditService.OUTCOME_SUCCESS, actorId, request.getStatus() + ": " + reason);
-        return request;
+        return decision.request();
     }
 
-    @Transactional(readOnly = true)
     public List<SubjectRequest> listOwn() {
-        return requests.findByTenantIdOrderByRaisedAtDesc(TenantContext.require());
+        return unit(() -> requests.findByTenantIdOrderByRaisedAtDesc(TenantContext.require()));
     }
 
     // --- article 214: telling the people who were told ----------------------
@@ -323,7 +403,7 @@ public class SubjectRightsService {
             // tenant-owned, and the policy's WITH CHECK clause forbids writing another
             // operator's rows however good the reason.
             Integer count = TenantContext.runAsResult(tenant.getId(), () ->
-                    transactionTemplate.execute(status -> {
+                    perTenant.execute(status -> {
                         List<UUID> enquirers = audit.actorsServed(
                                 ExchangeService.INQUIRY_ACTION, "Subject", subjectRef, since);
                         enquirers.forEach(enquirer -> notifications.notify(
@@ -360,9 +440,11 @@ public class SubjectRightsService {
     private Optional<Instant> earliestSuppressedCreation(UUID requestId) {
         Instant earliest = null;
         for (Tenant tenant : tenants.list()) {
+            // In its own transaction like every other per-tenant block, and for the same reason:
+            // a read on a connection bound to somebody else returns nothing under RLS.
             Optional<Instant> mine = TenantContext.runAsResult(tenant.getId(), () ->
-                    earliestCreation(debtRecords.findByTenantIdAndSuppressedByRequestId(
-                            tenant.getId(), requestId)));
+                    unit(() -> earliestCreation(debtRecords.findByTenantIdAndSuppressedByRequestId(
+                            tenant.getId(), requestId))));
             if (mine != null && mine.isPresent()
                     && (earliest == null || mine.get().isBefore(earliest))) {
                 earliest = mine.get();
@@ -377,7 +459,7 @@ public class SubjectRightsService {
         int total = 0;
         for (Tenant tenant : tenants.list()) {
             Integer count = TenantContext.runAsResult(tenant.getId(), () ->
-                    transactionTemplate.execute(status -> {
+                    perTenant.execute(status -> {
                         List<DebtRecord> mine = debtRecords
                                 .findByTenantIdAndSubjectIdOrderByDefaultDateDesc(
                                         tenant.getId(), subjectId).stream()
@@ -394,7 +476,7 @@ public class SubjectRightsService {
     private void liftAcrossOperators(UUID requestId) {
         for (Tenant tenant : tenants.list()) {
             TenantContext.runAs(tenant.getId(), () ->
-                    transactionTemplate.executeWithoutResult(status ->
+                    perTenant.executeWithoutResult(status ->
                             debtRecords.findByTenantIdAndSuppressedByRequestId(
                                             tenant.getId(), requestId)
                                     .forEach(DebtRecord::liftSuppression)));
@@ -407,6 +489,17 @@ public class SubjectRightsService {
     }
 
     private record Counts(int erased, int kept, Instant oldestErased) {
+    }
+
+    /**
+     * A case, plus the subject id read while the entity was still managed.
+     *
+     * <p>The second field exists only because the first is detached by the time the caller uses
+     * it. Reaching through {@code request.getSubject()} afterwards is a
+     * {@code LazyInitializationException} — the standing tax on managing transactions by hand,
+     * and cheaper than what it buys.
+     */
+    private record CaseAndSubject(SubjectRequest request, UUID subjectId) {
     }
 
     /**

@@ -26,6 +26,17 @@ import org.springframework.test.context.DynamicPropertySource;
  * legitimately act as two tenants inside a single transaction, which a tenant-pinned connection
  * cannot do. The database policies are proven separately by {@code RowLevelSecurityTest}, which
  * connects as the unprivileged {@code dip_app} role the application really uses.
+ *
+ * <p><strong>Know what that costs.</strong> A whole class of defect is invisible from here: any
+ * code whose correctness depends on which tenant a connection is bound to will pass as the owner
+ * and fail in production. One did. Every method of {@code SubjectRightsService} was
+ * {@code @Transactional}, so its per-tenant blocks kept the caller's connection and its binding,
+ * and cross-operator suppression, erasure and disclosure would each have touched only the calling
+ * operator's rows — with three hundred tests green.
+ *
+ * <p>A subclass can downgrade the application's own datasource to {@code dip_app} with
+ * {@code @TestPropertySource}, leaving Flyway as the owner exactly as a deployment does.
+ * {@code SubjectRightsUnderRlsTest} is the example. Anything that acts across tenants deserves one.
  */
 @SpringBootTest
 @Import(TestRequestCounter.class)
