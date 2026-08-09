@@ -22,7 +22,7 @@ is, and TIX exists in a form that predates this design.
 | 3 | Fuzzy matching with confidence | **Built** for the read path (`IdentityMatcher`) |
 | 3 | Merge / unmerge, human review queue | Not built |
 | 3 | Search and profiles, over the operator's own book | **Built.** Scoped to records the caller declared, because tix_subject has no tenant and a search over subjects is a search over the national registry |
-| 3 | Search across the exchange | Not built, and not a screen problem — see below |
+| 3 | Name matching across the exchange | **Built** on the inquiry path: exact match, one confirmed subject or none, never a list. A personal name never clears the threshold alone |
 | 4 | Cross-operator inquiry returning status, never another operator's data | **Built**, rate-limited, audited with a stated purpose |
 | 4 | Declaration by an operator, with a reporting threshold | **Built** |
 | 4 | Retention, expiry and real erasure | **Built** — the Code sets no period, so the figures need a written justification rather than a citation. See `TIX_LEGAL_BASIS.md` |
@@ -82,10 +82,18 @@ its rivals will *not* learn; hand them enumeration and there is no second teleco
 reason an inquiry takes an identifier rather than a name, carries a stated purpose, and is
 rate-limited.
 
-The version that does work across the exchange is name matching that returns **one confirmed match
-or none, never a list**, on the existing inquiry path with its purpose and its limit. That is what
-credit bureaux elsewhere do, it is buildable, and it is a deliberate next step rather than a
-blocked one.
+The version that does work across the exchange is now built. An inquiry accepts a name instead of
+an identifier, and four properties keep it a lookup rather than a directory: the match is **exact**
+on the normalised name and never a prefix, so the box cannot be walked one letter at a time; **two
+candidates stop the answer** rather than producing a list, and the caller is not told how many;
+a **personal name never clears the confidence threshold** on its own, because the profiled export
+had 48 names on more than one account inside a single operator's book; and it runs on the existing
+inquiry path, with its stated purpose, its rate limit and its audit row.
+
+A registered trading name does clear it. That distinction is drawn from the data rather than from
+principle — a trading name is a public register entry, chosen to be distinctive and checked for
+collision, and refusing to answer without an RCCM number would decline a question the exchange can
+answer.
 
 Anyone picking this up should read `TIX_MODULE.md` for what exists before designing what replaces
 it.

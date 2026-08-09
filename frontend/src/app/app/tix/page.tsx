@@ -65,7 +65,12 @@ export default function CreditCheckPage() {
     try {
       setResult(
         await tixApi.inquire({
-          identifiers: [{ type: identifierType, value: identifier.trim() }],
+          // An empty list rather than an entry with an empty value. The server treats "no
+          // identifier" and "an identifier that is blank" differently, and it should: the first
+          // means resolve by name, the second is a caller sending nonsense.
+          identifiers: identifier.trim()
+            ? [{ type: identifierType, value: identifier.trim() }]
+            : [],
           fullName: legalName.trim() || undefined,
           purpose: purpose.trim(),
         }),
@@ -113,7 +118,6 @@ export default function CreditCheckPage() {
                 className={inputClass}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                required
               />
             </Field>
 
@@ -140,7 +144,16 @@ export default function CreditCheckPage() {
           {error && <ErrorNotice>{error}</ErrorNotice>}
 
           <div>
-            <Button type="submit" disabled={submitting || purpose.trim() === ""}>
+            {/* Either an identifier or a name of at least four characters. The server enforces
+                the same rule; this only stops the request that would certainly be refused. */}
+            <Button
+              type="submit"
+              disabled={
+                submitting ||
+                purpose.trim() === "" ||
+                (identifier.trim() === "" && legalName.trim().length < 4)
+              }
+            >
               {submitting ? messages.common.loading : t.submit}
             </Button>
           </div>

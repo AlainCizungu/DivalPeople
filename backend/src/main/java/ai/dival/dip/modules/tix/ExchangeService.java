@@ -100,8 +100,17 @@ public class ExchangeService {
             throw refused;
         }
 
-        Optional<Match> match = resolveSubject(request);
-        if (match.isEmpty()) {
+        Resolution resolution = resolveSubject(request);
+
+        if (resolution.ambiguous()) {
+            // Several subjects carry that name. Choosing one would be a guess presented as an
+            // answer, and saying how many would be the first sentence of an enumeration. The
+            // caller is told a human must look, which is true and carries nothing.
+            audit.record(INQUIRY_ACTION, "Subject", null, AuditService.OUTCOME_SUCCESS, actorId,
+                    request.purpose());
+            return InquiryResult.reviewRequired();
+        }
+        if (!resolution.found()) {
             // The purpose is recorded even when nothing matched. A sweep looking for which
             // identifiers exist is exactly the pattern an auditor needs to see, and it produces
             // nothing but no-matches.
@@ -110,11 +119,16 @@ public class ExchangeService {
             return InquiryResult.noMatch();
         }
 
-        Subject subject = match.get().subject();
+        Subject subject = resolution.subject();
         // Scored against the identifier that actually resolved the subject. Scoring the strongest
         // identifier *submitted* let a caller add an invented passport number to a real phone
         // number and have a weak match treated as a strong one.
-        double confidence = matcher.confidence(subject, request, match.get().identifier());
+        //
+        // With no identifier at all the name did the resolving, and it is scored as what it is:
+        // strong for a registered trading name, and below the threshold for a personal name.
+        double confidence = resolution.identifier() == null
+                ? matcher.confidenceByName(subject)
+                : matcher.confidence(subject, request, resolution.identifier());
         audit.record(INQUIRY_ACTION, "Subject", subject.getId().toString(),
                 AuditService.OUTCOME_SUCCESS, actorId, request.purpose());
 
@@ -155,11 +169,45 @@ public class ExchangeService {
                 detectFraudSignals(subject, tenantId));
     }
 
-    /** A subject and the identifier that found it. The second half is what the score rests on. */
-    private record Match(Subject subject, InquiryRequest.SubmittedIdentifier identifier) {
+    /**
+     * What the submitted details resolved to.
+     *
+     * @param identifier the identifier that found the subject, or null when the name did — which
+     *                   is what the score rests on, so the difference has to survive to the caller
+     * @param ambiguous  more than one subject matched. Distinct from "nothing matched", because
+     *                   the answers differ: nothing found is an answer, and several found is a
+     *                   refusal to guess
+     */
+    private record Resolution(Subject subject, InquiryRequest.SubmittedIdentifier identifier,
+                              boolean ambiguous) {
+
+        static Resolution none() {
+            return new Resolution(null, null, false);
+        }
+
+        static Resolution tooMany() {
+            return new Resolution(null, null, true);
+        }
+
+        boolean found() {
+            return subject != null;
+        }
     }
 
-    private Optional<Match> resolveSubject(InquiryRequest request) {
+    /**
+     * Identifiers first, then the name.
+     *
+     * <p>The order is not a preference, it is the accuracy ranking. A national ID that matches is
+     * proof of very nearly the strength the exchange needs; a name is a hypothesis. Falling back
+     * to the name only when no identifier resolved means a caller cannot use a name to override a
+     * document that disagrees with it.
+     *
+     * <p><strong>Exact match on the normalised name, never a prefix or a substring.</strong> A
+     * prefix search would answer "how many businesses begin with these letters", one letter at a
+     * time, and that is enumeration wearing a lookup's clothes. Exact matching answers only the
+     * question the caller already knew how to ask.
+     */
+    private Resolution resolveSubject(InquiryRequest request) {
         // Strong identifiers first: a national ID match is worth more than a name match.
         List<InquiryRequest.SubmittedIdentifier> ordered = new ArrayList<>(request.identifiers());
         ordered.sort((a, b) -> Boolean.compare(b.type().isStrong(), a.type().isStrong()));
@@ -168,10 +216,23 @@ public class ExchangeService {
             Optional<Subject> found = subjects.findByIdentifier(
                     submitted.type(), SubjectIdentifier.normalizeValue(submitted.value()));
             if (found.isPresent()) {
-                return Optional.of(new Match(found.get(), submitted));
+                return new Resolution(found.get(), submitted, false);
             }
         }
-        return Optional.empty();
+
+        if (!request.hasUsableName()) {
+            return Resolution.none();
+        }
+
+        List<Subject> byName = subjects.findByNormalizedName(
+                Subject.normalizeName(request.fullName()));
+        if (byName.isEmpty()) {
+            return Resolution.none();
+        }
+        if (byName.size() > 1) {
+            return Resolution.tooMany();
+        }
+        return new Resolution(byName.get(0), null, false);
     }
 
     /**

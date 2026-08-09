@@ -32,6 +32,27 @@ public class IdentityMatcher {
     private static final double NAME_CONFLICT_PENALTY = 0.25;
 
     /**
+     * A registered trading name, matched exactly and uniquely, is a strong identifier.
+     *
+     * <p>Above the automatic threshold, deliberately. "Grand Horizon SARL" is an entry in a public
+     * register: it is chosen to be distinctive, it is checked for collision at registration, and
+     * an operator typing it has read it off a document. Requiring an RCCM number as well would
+     * refuse to answer a question the exchange can answer.
+     */
+    private static final double UNIQUE_BUSINESS_NAME_BASE = 0.92;
+
+    /**
+     * A personal name, matched exactly and uniquely, is not.
+     *
+     * <p>Below the threshold and intended to stay there. The profiled Vodacom export had 48 names
+     * appearing on more than one account out of four thousand, and that is within one operator's
+     * book — across a national registry the collision rate can only be worse. A name-only inquiry
+     * about a person therefore returns "review required", which is not the matcher failing but the
+     * matcher being right: somebody has to look.
+     */
+    private static final double UNIQUE_PERSONAL_NAME_BASE = 0.55;
+
+    /**
      * @param matched the identifier that actually resolved the subject, which is not necessarily
      *                one the caller would like it to be — see {@link #baseScore}
      * @return confidence in the range 0.0–1.0, for the server's own use
@@ -53,6 +74,29 @@ public class IdentityMatcher {
         }
 
         return clamp(score);
+    }
+
+    /**
+     * Scores a subject resolved by its name alone.
+     *
+     * <p>Only ever called when exactly one subject in the whole registry carries that normalised
+     * name — {@link ExchangeService} treats two candidates as a reason to stop rather than a
+     * reason to choose, so this never has to break a tie.
+     *
+     * <p>The distinction it does draw is between a business and a person, and it comes from the
+     * data rather than from principle. A trading name is registered, distinctive and checked for
+     * collision; a personal name is none of those. Scoring them the same would either refuse to
+     * answer a reasonable question about a company or confidently answer an unreasonable one about
+     * somebody's neighbour with the same surname.
+     *
+     * <p>No corroboration is available to raise a personal name above the line today: the inquiry
+     * carries identifiers, a name and a purpose, and nothing else. When a date of birth is added
+     * to it, this is the method that should use it.
+     */
+    public double confidenceByName(Subject subject) {
+        return clamp(subject.getSubjectType() == Subject.SubjectType.BUSINESS
+                ? UNIQUE_BUSINESS_NAME_BASE
+                : UNIQUE_PERSONAL_NAME_BASE);
     }
 
     /**
