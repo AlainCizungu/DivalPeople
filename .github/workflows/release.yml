@@ -43,14 +43,25 @@ jobs:
     name: Refuse to publish a red build
     runs-on: ubuntu-latest
     # The whole reason this workflow is separate. `workflow_run` fires on failure too.
+    #
+    # The branch check on the manual path is not decoration. `branches: [main]` above applies to
+    # `workflow_run` and to nothing else, so until August 2026 a workflow_dispatch from any branch
+    # in the repository would build that branch and push it to the registry — while the comment on
+    # the trigger claimed manual runs "still refuse to publish anything that is not on main". The
+    # comment described an intention and the code did not implement it. Now it does.
+    #
+    # A manual run still skips the did-CI-pass check, and that is deliberate: its purpose is
+    # re-publishing after a registry problem, when CI passed and the push did not. It is a smaller
+    # hole than the one above because main is at least a commit somebody reviewed.
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
       github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Report what is being published
         run: |
           echo "Event:      ${{ github.event_name }}"
           echo "Conclusion: ${{ github.event.workflow_run.conclusion || 'n/a (manual)' }}"
+          echo "Ref:        ${{ github.ref }}"
           echo "Commit:     ${{ github.event.workflow_run.head_sha || github.sha }}"
 
   images:
