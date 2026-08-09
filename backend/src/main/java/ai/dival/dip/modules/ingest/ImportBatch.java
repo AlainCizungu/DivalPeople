@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -66,6 +67,22 @@ public class ImportBatch {
     @Column(name = "status", nullable = false, length = 20)
     private BatchStatus status;
 
+    /**
+     * What the operator says the delivery reflects.
+     *
+     * <p>Supplied, never inferred. The profiled export carries no dates, so something has to
+     * establish when its balances were true — and the choice was between DIP guessing from an
+     * aging bucket and the operator saying. Deriving would have given 4,262 of 4,290 rows the same
+     * date and a retention expiry clustered on one day; asking costs one field and moves the
+     * assumption to the only party who can answer.
+     *
+     * <p>Nullable because batches predate the column. The derivation refuses to run without it,
+     * which is the honest arrangement: an old batch is not wrong, it is unmappable until somebody
+     * says what it is.
+     */
+    @Column(name = "reported_as_at")
+    private LocalDate reportedAsAt;
+
     @Column(name = "uploaded_by")
     private UUID uploadedBy;
 
@@ -84,12 +101,20 @@ public class ImportBatch {
     }
 
     public ImportBatch(SourceDataset dataSource, String filename, String checksumSha256,
-                       long byteSize, UUID uploadedBy) {
+                       long byteSize, LocalDate reportedAsAt, UUID uploadedBy) {
         this.tenantId = TenantContext.require();
         this.dataSource = dataSource;
         this.filename = filename;
         this.checksumSha256 = checksumSha256;
         this.byteSize = byteSize;
+        // Validated here rather than only at the database, so an operator uploading a file dated
+        // next week is told why instead of receiving a constraint name.
+        if (reportedAsAt != null && reportedAsAt.isAfter(LocalDate.now())) {
+            throw new PolicyRefusedException(
+                    "A delivery cannot be as at a date in the future. Every record derived from "
+                            + "it would start its retention clock before the clock had begun.");
+        }
+        this.reportedAsAt = reportedAsAt;
         this.uploadedBy = uploadedBy;
         this.status = BatchStatus.RECEIVED;
         this.receivedAt = Instant.now();
@@ -173,6 +198,11 @@ public class ImportBatch {
 
     public BatchStatus getStatus() {
         return status;
+    }
+
+    /** Null on batches delivered before the column existed. Those cannot be derived from. */
+    public LocalDate getReportedAsAt() {
+        return reportedAsAt;
     }
 
     public UUID getUploadedBy() {

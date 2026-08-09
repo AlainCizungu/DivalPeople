@@ -771,7 +771,9 @@
       "EMPTY_ROW": "Nothing in it",
       "DUPLICATE_ROW": "Duplicates an earlier row",
       "MISSING_IDENTIFIER": "No identifier"
-    }
+    },
+    "asAt": "The delivery is as at",
+    "asAtHint": "The date these balances were true. Asked rather than guessed: the export carries no dates, and every record derived from it starts its retention clock here."
   },
   "participants": {
     "title": "Participating organisations",

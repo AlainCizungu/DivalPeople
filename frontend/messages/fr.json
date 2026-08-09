@@ -771,7 +771,9 @@
       "EMPTY_ROW": "Vide",
       "DUPLICATE_ROW": "Double d’une ligne précédente",
       "MISSING_IDENTIFIER": "Sans identifiant"
-    }
+    },
+    "asAt": "La livraison reflète la situation au",
+    "asAtHint": "La date à laquelle ces soldes étaient exacts. Demandée plutôt que devinée : l’export ne contient aucune date, et chaque enregistrement qui en est issu démarre ici son délai de conservation."
   },
   "participants": {
     "title": "Organisations participantes",

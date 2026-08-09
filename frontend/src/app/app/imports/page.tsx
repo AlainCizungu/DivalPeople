@@ -52,6 +52,15 @@ export default function ImportsPage() {
   const [busy, setBusy] = useState(false);
 
   const [sourceId, setSourceId] = useState("");
+  /**
+   * What the delivery reflects, from the operator rather than from the file.
+   *
+   * <p>The profiled export contains no dates. Deriving one from the aging buckets would give
+   * 4,262 of its 4,290 rows the same date and a retention expiry clustered on a single day — a
+   * guessed date is a guessed retention period. One input box moves the assumption to the only
+   * party who can answer it.
+   */
+  const [reportedAsAt, setReportedAsAt] = useState("");
   const [newCode, setNewCode] = useState("");
   const [newName, setNewName] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
@@ -95,11 +104,11 @@ export default function ImportsPage() {
   async function onUpload(event: React.FormEvent) {
     event.preventDefault();
     const file = fileInput.current?.files?.[0];
-    if (!file || !sourceId) {
+    if (!file || !sourceId || !reportedAsAt) {
       return;
     }
     await run(async () => {
-      await ingestApi.upload(sourceId, file);
+      await ingestApi.upload(sourceId, file, reportedAsAt);
       if (fileInput.current) {
         fileInput.current.value = "";
       }
@@ -196,6 +205,18 @@ export default function ImportsPage() {
               </select>
             </Field>
 
+            <Field label={t.asAt} htmlFor="reportedAsAt" hint={t.asAtHint}>
+              <input
+                id="reportedAsAt"
+                type="date"
+                className={inputClass}
+                value={reportedAsAt}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setReportedAsAt(e.target.value)}
+                required
+              />
+            </Field>
+
             <Field label={t.file} htmlFor="file" hint={t.fileHint}>
               <input
                 id="file"
@@ -207,7 +228,7 @@ export default function ImportsPage() {
               />
             </Field>
 
-            <Button type="submit" disabled={busy || !hasSources}>
+            <Button type="submit" disabled={busy || !hasSources || reportedAsAt === ""}>
               {busy ? messages.common.loading : t.upload}
             </Button>
             {!hasSources && <p className="text-sm text-muted">{t.needSourceFirst}</p>}

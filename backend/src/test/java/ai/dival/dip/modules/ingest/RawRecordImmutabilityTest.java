@@ -57,7 +57,8 @@ class RawRecordImmutabilityTest extends AbstractIntegrationTest {
                 SourceKind.SPREADSHEET, null).getId();
         ImportBatch batch = ingest.receive(sourceId, "aug.xlsx",
                 "bytes".getBytes(StandardCharsets.UTF_8),
-                List.of(Map.of("Customer", "Grand Horizon SARL", "Balance", "184000")), null);
+                List.of(Map.of("Customer", "Grand Horizon SARL", "Balance", "184000")),
+                java.time.LocalDate.of(2026, 3, 31), null);
 
         RawRecord stored = ingest.rowsOf(batch.getId()).get(0);
         rawRecordId = stored.getId();

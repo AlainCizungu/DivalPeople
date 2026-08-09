@@ -45,6 +45,17 @@ public class DebtRecord extends TenantOwnedEntity {
     @Column(name = "default_date", nullable = false)
     private LocalDate defaultDate;
 
+    /**
+     * Whether the date above was given or worked out.
+     *
+     * <p>REPORTED unless something says otherwise, and the default is deliberate: every path that
+     * creates a record today is an operator typing a date, and a field left to be set at the call
+     * site is one forgotten line away from a derived date masquerading as a reported one.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_date_source", nullable = false, updatable = false, length = 20)
+    private DateSource defaultDateSource = DateSource.REPORTED;
+
     /** Evidence that the contractual dunning process ran before declaration. */
     @Column(name = "dunning_evidence", nullable = false)
     private boolean dunningEvidence;
@@ -131,6 +142,23 @@ public class DebtRecord extends TenantOwnedEntity {
         }
         this.origin = RecordOrigin.IMPORT;
         this.rawRecordId = rawRecordId;
+    }
+
+    /**
+     * Records that the default date was worked out rather than given.
+     *
+     * <p>Package-private and refuses on anything that did not come from a file, which V24 checks
+     * again. The two guards say the same thing because this is the field that makes a later
+     * correction possible: if a derived date can be written onto an API declaration, the query
+     * that finds everything needing re-derivation stops being trustworthy.
+     */
+    void dateWasDerived() {
+        if (origin != RecordOrigin.IMPORT) {
+            throw new IllegalStateException(
+                    "Only an imported record can carry a derived date. An API declaration "
+                            + "carries a date somebody typed.");
+        }
+        this.defaultDateSource = DateSource.DERIVED;
     }
 
     /**
@@ -231,6 +259,10 @@ public class DebtRecord extends TenantOwnedEntity {
 
     public LocalDate getDefaultDate() {
         return defaultDate;
+    }
+
+    public DateSource getDefaultDateSource() {
+        return defaultDateSource;
     }
 
     public boolean hasDunningEvidence() {

@@ -95,8 +95,25 @@ before it belongs in a schema.
 
 ## Decisions this forces
 
-1. **Where does a default date come from?** Derived from the aging bucket, taken from the file's
-   reporting period, or does the schema stop requiring one?
+1. **Where does a default date come from?** ~~Derived from the aging bucket, taken from the file's
+   reporting period, or does the schema stop requiring one?~~ **Answered by asking, 9 August 2026.**
+
+   None of the three. The operator supplies the date the delivery is as at, on upload, and the
+   derived default date is computed from it — deriving from the aging bucket would have given
+   4,262 of 4,290 rows the same date and a retention expiry clustered on one day, and a guessed
+   date is a guessed retention period.
+
+   `tix_debt_record.default_date_source` records `REPORTED` or `DERIVED`, because the expensive
+   mistake is not approximating a date, it is forgetting that it was approximated. Raw rows are
+   immutable and every derived record names the row it came from, so when Vodacom sends real dates
+   the correction is a re-derivation rather than a hunt.
+
+   **A correction may only ever shorten retention, never extend it.** If a real date turns out to
+   be later than the assumed one, the earlier expiry stands — otherwise fixing our own
+   approximation would lengthen how long somebody is listed.
+
+   The better outcome is still available and costs one email: **ask Vodacom to add a date column
+   to the export.** That removes the approximation entirely.
 2. **Is a write-off a status, or a different kind of record?**
 3. **Does the 100 USD threshold stand** when it excludes a seventh of the first real dataset?
 4. **What happens to credit balances** — refuse, ignore, or record as evidence the account is

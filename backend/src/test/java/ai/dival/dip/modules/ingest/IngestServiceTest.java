@@ -33,6 +33,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiresDocker
 class IngestServiceTest extends AbstractIntegrationTest {
 
+    /**
+     * What the delivery is as at. Supplied by the operator in production; a fixed date here so a
+     * test never depends on today.
+     */
+    private static final java.time.LocalDate AS_AT = java.time.LocalDate.of(2026, 3, 31);
+
+
     @Autowired
     private TenantRepository tenants;
     @Autowired
@@ -73,7 +80,7 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("a delivery stores every row it claims to have")
     void rowsAreStoredWithTheBatch() {
-        ImportBatch batch = ingest.receive(sourceId, "aug-2026.xlsx", file("bytes"), twoRows(), null);
+        ImportBatch batch = ingest.receive(sourceId, "aug-2026.xlsx", file("bytes"), twoRows(), AS_AT, null);
 
         assertThat(batch.getRowCount()).isEqualTo(2);
         assertThat(rawRecords.countByBatchId(batch.getId())).isEqualTo(2);
@@ -83,7 +90,7 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("rows are numbered from one, as a person reads the file")
     void rowsAreNumberedFromOne() {
-        ImportBatch batch = ingest.receive(sourceId, "aug.xlsx", file("bytes"), twoRows(), null);
+        ImportBatch batch = ingest.receive(sourceId, "aug.xlsx", file("bytes"), twoRows(), AS_AT, null);
 
         // Zero-based numbering here would mean an operator told "row 4 is invalid" opens their
         // spreadsheet and corrects the wrong line.
@@ -96,7 +103,7 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @DisplayName("a row comes back saying exactly what it said")
     void payloadSurvivesUnchanged() {
         ingest.receive(sourceId, "aug.xlsx", file("bytes"),
-                List.of(Map.of("Customer", "Société Générale d'Alimentation, SARL")), null);
+                List.of(Map.of("Customer", "Société Générale d'Alimentation, SARL")), AS_AT, null);
 
         // Comma, accents and the apostrophe all intact. Real telecom exports are full of these,
         // and a normalisation applied on the way in is one nobody can undo later.
@@ -109,7 +116,7 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @DisplayName("the checksum is of the file, not of what we made of it")
     void checksumIsOfTheBytes() {
         ImportBatch batch = ingest.receive(sourceId, "a.xlsx", file("the-original-bytes"),
-                twoRows(), null);
+                twoRows(), AS_AT, null);
 
         // Independently computed, so this test fails if the implementation changes what it digests.
         assertThat(batch.getChecksumSha256())
@@ -122,13 +129,13 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @DisplayName("the same file cannot be published twice")
     void republishingTheSameFileIsRefused() {
         byte[] content = file("identical");
-        ImportBatch first = ingest.receive(sourceId, "aug.xlsx", content, twoRows(), null);
+        ImportBatch first = ingest.receive(sourceId, "aug.xlsx", content, twoRows(), AS_AT, null);
         ingest.validate(first.getId(), null);
         ingest.publish(first.getId(), null);
 
         // Every exposure in the file would otherwise be counted twice, which in a registry of
         // debts means people appearing to owe double.
-        assertThatThrownBy(() -> ingest.receive(sourceId, "aug-copy.xlsx", content, twoRows(), null))
+        assertThatThrownBy(() -> ingest.receive(sourceId, "aug-copy.xlsx", content, twoRows(), AS_AT, null))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("already published");
     }
@@ -137,25 +144,25 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @DisplayName("a file refused once can be corrected and sent again")
     void rejectionDoesNotBanTheFileForever() {
         byte[] content = file("identical");
-        ImportBatch first = ingest.receive(sourceId, "aug.xlsx", content, twoRows(), null);
+        ImportBatch first = ingest.receive(sourceId, "aug.xlsx", content, twoRows(), AS_AT, null);
         ingest.reject(first.getId(), "Balance column is empty on 200 rows", null);
 
         // The uniqueness rule is about what is live, not about what was ever attempted.
-        assertThatCode(() -> ingest.receive(sourceId, "aug.xlsx", content, twoRows(), null))
+        assertThatCode(() -> ingest.receive(sourceId, "aug.xlsx", content, twoRows(), AS_AT, null))
                 .doesNotThrowAnyException();
     }
 
     @Test
     @DisplayName("an empty file is refused rather than stored as a batch of nothing")
     void emptyDeliveryIsRefused() {
-        assertThatThrownBy(() -> ingest.receive(sourceId, "empty.xlsx", file(""), List.of(), null))
+        assertThatThrownBy(() -> ingest.receive(sourceId, "empty.xlsx", file(""), List.of(), AS_AT, null))
                 .isInstanceOf(PolicyRefusedException.class);
     }
 
     @Test
     @DisplayName("a batch cannot be published without being validated first")
     void publishRequiresValidation() {
-        ImportBatch batch = ingest.receive(sourceId, "aug.xlsx", file("b"), twoRows(), null);
+        ImportBatch batch = ingest.receive(sourceId, "aug.xlsx", file("b"), twoRows(), AS_AT, null);
 
         assertThatThrownBy(() -> ingest.publish(batch.getId(), null))
                 .isInstanceOf(PolicyRefusedException.class)
@@ -165,7 +172,7 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("a published batch is reverted, never rejected")
     void publishedBatchesCannotBeRejected() {
-        ImportBatch batch = ingest.receive(sourceId, "aug.xlsx", file("b"), twoRows(), null);
+        ImportBatch batch = ingest.receive(sourceId, "aug.xlsx", file("b"), twoRows(), AS_AT, null);
         ingest.validate(batch.getId(), null);
         ingest.publish(batch.getId(), null);
 
@@ -177,7 +184,7 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("a rejection must say why")
     void rejectionNeedsAReason() {
-        ImportBatch batch = ingest.receive(sourceId, "aug.xlsx", file("b"), twoRows(), null);
+        ImportBatch batch = ingest.receive(sourceId, "aug.xlsx", file("b"), twoRows(), AS_AT, null);
 
         assertThatThrownBy(() -> ingest.reject(batch.getId(), "  ", null))
                 .isInstanceOf(PolicyRefusedException.class);
@@ -186,7 +193,7 @@ class IngestServiceTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("one operator's delivery is invisible to another")
     void batchesDoNotCrossOperators() {
-        ImportBatch ofA = ingest.receive(sourceId, "aug.xlsx", file("b"), twoRows(), null);
+        ImportBatch ofA = ingest.receive(sourceId, "aug.xlsx", file("b"), twoRows(), AS_AT, null);
 
         // Asked as operator B, A's batch does not exist — and the refusal says "not found" rather
         // than "not yours", which would confirm it is there.

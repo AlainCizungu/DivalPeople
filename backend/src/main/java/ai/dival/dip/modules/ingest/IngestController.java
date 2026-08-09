@@ -9,9 +9,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +37,10 @@ import org.springframework.web.multipart.MultipartFile;
  * container. <strong>When publishing starts creating exposures, this needs revisiting</strong>:
  * at that point one action makes hundreds of people visible to competitors, and it should require
  * more than the right to report a single default.
+ *
+ * <p>That moment is now close. An upload carries the date the delivery is as at, which exists only
+ * so that derived records have a retention clock — so the derivation is the next piece, and this
+ * paragraph is the note to act on when it lands.
  */
 @RestController
 @RequestMapping("/api/v1/ingest")
@@ -84,8 +90,14 @@ public class IngestController {
      */
     @PostMapping("/batches")
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
-    public ResponseEntity<BatchResponse> upload(@RequestParam("file") MultipartFile file,
-                                                @RequestParam("sourceId") UUID sourceId)
+    public ResponseEntity<BatchResponse> upload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("sourceId") UUID sourceId,
+            // Required, and the requirement is the point. The profiled export carries no dates at
+            // all, so without this a derived record's retention clock would start from a moment
+            // DIP invented. The operator knows what their file reflects; the platform does not.
+            @RequestParam("reportedAsAt")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportedAsAt)
             throws IOException {
         if (file.isEmpty()) {
             throw new PolicyRefusedException("The file is empty.");
@@ -105,7 +117,7 @@ public class IngestController {
         String filename = originalFilename(file);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(BatchResponse.from(
-                ingest.receive(sourceId, filename, content, rows, actorId())));
+                ingest.receive(sourceId, filename, content, rows, reportedAsAt, actorId())));
     }
 
     @GetMapping("/batches")

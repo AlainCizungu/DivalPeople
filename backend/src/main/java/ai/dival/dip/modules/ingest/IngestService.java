@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -84,12 +85,16 @@ public class IngestService {
      * one: the rows that made it would look like a complete file, and the count on the batch
      * would be the only clue otherwise.
      *
-     * @param content the file exactly as received, used for the checksum and nothing else
-     * @param rows    one map per row, header to cell, in file order
+     * @param content      the file exactly as received, used for the checksum and nothing else
+     * @param rows         one map per row, header to cell, in file order
+     * @param reportedAsAt what the operator says the delivery reflects. Not inferred from the
+     *                     filename and not guessed from the contents — the file has no dates in
+     *                     it, which is the entire reason this parameter exists
      */
     @Transactional
     public ImportBatch receive(UUID sourceId, String filename, byte[] content,
-                              List<Map<String, String>> rows, UUID actorId) {
+                              List<Map<String, String>> rows, LocalDate reportedAsAt,
+                              UUID actorId) {
         UUID tenantId = TenantContext.require();
 
         SourceDataset source = sources.findByIdAndTenantId(sourceId, tenantId)
@@ -117,7 +122,8 @@ public class IngestService {
                 });
 
         ImportBatch batch = batches.save(
-                new ImportBatch(source, filename, checksum, content.length, actorId));
+                new ImportBatch(source, filename, checksum, content.length, reportedAsAt,
+                        actorId));
 
         long startedAt = System.nanoTime();
 

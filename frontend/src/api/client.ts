@@ -526,10 +526,17 @@ export const ingestApi = {
    * <p>The server parses the CSV. Doing it here would mean the checksum and the stored rows were
    * two unrelated claims — see CsvReader.
    */
-  upload(sourceId: string, file: File): Promise<ImportBatch> {
+  /**
+   * @param reportedAsAt what the operator says the delivery reflects, as YYYY-MM-DD. Required,
+   *                     because the profiled export carries no dates at all and a record derived
+   *                     from it would otherwise have a retention clock starting from a moment DIP
+   *                     invented rather than one anybody asserted.
+   */
+  upload(sourceId: string, file: File, reportedAsAt: string): Promise<ImportBatch> {
     const form = new FormData();
     form.append("file", file);
     form.append("sourceId", sourceId);
+    form.append("reportedAsAt", reportedAsAt);
     return request<ImportBatch>("/api/v1/ingest/batches", {
       method: "POST",
       body: form,
