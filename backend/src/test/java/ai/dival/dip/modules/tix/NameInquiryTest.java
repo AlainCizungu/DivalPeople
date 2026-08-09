@@ -147,15 +147,28 @@ class NameInquiryTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("an identifier that resolves wins over a name that disagrees")
     void identifiersAreTriedFirst() {
+        // The suffix is folded into the word rather than appended as a separate one, and that is
+        // load-bearing. Every other fixture here writes "Something SARL <suffix>", which gives the
+        // two names a token in common — and IdentityMatcher only penalises a name that shares
+        // *nothing* with the stored one. The first version of this test did that, so the
+        // disagreement it was written to create never happened, confidence stayed at the strong
+        // identifier's 0.90, and the assertion failed for a reason that had nothing to do with
+        // the code under test.
+        String held = "Kinlogistique" + suffix;
+        String other = "Autresociete" + suffix;
+        assertThat(Subject.normalizeName(held).split(" "))
+                .as("the two names must share no token, or no conflict penalty is applied")
+                .doesNotContainAnyElementsOf(List.of(Subject.normalizeName(other).split(" ")));
+
         String document = "CD-" + UUID.randomUUID();
-        declare("Kin Logistique SARL " + suffix, Subject.SubjectType.BUSINESS, document);
-        declare("Autre Société " + suffix, Subject.SubjectType.BUSINESS, "CD-" + UUID.randomUUID());
+        declare(held, Subject.SubjectType.BUSINESS, document);
+        declare(other, Subject.SubjectType.BUSINESS, "CD-" + UUID.randomUUID());
 
         InquiryResult result = TenantContext.runAsResult(enquirer, () ->
                 exchange.inquire(new InquiryRequest(
                         List.of(new InquiryRequest.SubmittedIdentifier(
                                 IdentifierType.NATIONAL_ID, document)),
-                        "Autre Société " + suffix,
+                        other,
                         "Credit application"), UUID.randomUUID()));
 
         // Resolution fell to the document, so the name cannot be used to steer the answer onto a
