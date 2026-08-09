@@ -202,14 +202,23 @@ EOF
             exit 1
         fi
 
+        # A delta, not a total. This asserts that signing in again provisions nobody new — which
+        # is the claim worth making. Counting members and expecting exactly one asserts something
+        # else entirely: that operator-a is the only account that has ever signed in, which stops
+        # being true the moment anybody demonstrates the product. That version failed on a working
+        # database and said "provisioning is broken", which is the worst kind of check.
         info "Confirming the same identity does not create a second record..."
+        members_now() {
+            curl -fsS -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/users" \
+                | grep -o '"id"' | wc -l | tr -d ' '
+        }
+        BEFORE="$(members_now)"
         curl -fsS -o /dev/null -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/users/me"
-        MEMBERS="$(curl -fsS -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/users")"
-        MEMBER_COUNT="$(printf '%s' "$MEMBERS" | grep -o '"id"' | wc -l | tr -d ' ')"
-        if [ "$MEMBER_COUNT" = "1" ]; then
-            ok "Provisioning is idempotent — 1 member in the tenant"
+        AFTER="$(members_now)"
+        if [ "$AFTER" = "$BEFORE" ]; then
+            ok "Provisioning is idempotent — still $AFTER member(s) after signing in again"
         else
-            fail "Expected exactly 1 tenant member after two requests, found $MEMBER_COUNT"
+            fail "Signing in again changed the member count: $BEFORE before, $AFTER after"
             exit 1
         fi
 
