@@ -72,10 +72,6 @@ public class ExchangeService {
     }
 
     /**
-     * Resolves the submitted identifiers to a subject and reports the statuses held against it.
-     */
-    @Transactional(readOnly = true)
-    /**
      * The audit action every inquiry is recorded under.
      *
      * <p>A constant rather than a literal because it is now a join key. Article 214 of the Code du
@@ -86,6 +82,10 @@ public class ExchangeService {
      */
     static final String INQUIRY_ACTION = "TIX_INQUIRY";
 
+    /**
+     * Resolves the submitted identifiers to a subject and reports the statuses held against it.
+     */
+    @Transactional(readOnly = true)
     public InquiryResult inquire(InquiryRequest request, UUID actorId) {
         UUID tenantId = TenantContext.require();
 

@@ -387,8 +387,71 @@ def check_raw_inserts_name_required_columns() -> None:
             + "\n".join(problems))
 
 
+# ---------------------------------------------------------------------------
+# Rule 7 — an annotation is attached to the thing below it.
+#
+# Added after a scripted edit inserted a constant and its javadoc between
+# @Transactional(readOnly = true) and the method it annotated. javac calls that "annotation
+# interface not applicable to this kind of declaration", which is clear enough once you see it —
+# but every check written here at the time passed, because braces balanced, symbols existed and
+# arities matched. The annotation was attached to the wrong thing, and nothing was looking.
+#
+# The rule is narrow on purpose: an annotation line followed immediately by the opening of a
+# javadoc comment always means something was inserted in between. Ordinary code never does it.
+# ---------------------------------------------------------------------------
+def _is_standalone_annotation(text: str) -> bool:
+    """An annotation occupying its whole line, with nothing after it.
+
+    Excludes parameter annotations — {@code @Param("to") LocalDate to);} and friends — which are
+    followed by a javadoc for the *next* member perfectly legitimately. Those carry a declaration
+    on the same line, so requiring the line to end at the annotation is the whole distinction.
+    """
+    if not text.startswith("@"):
+        return False
+    rest = text[1:]
+    name_length = 0
+    while name_length < len(rest) and (rest[name_length].isalnum() or rest[name_length] == "."):
+        name_length += 1
+    rest = rest[name_length:]
+    if not rest:
+        return True          # a bare @Override
+    if not rest.startswith("("):
+        return False
+    depth = 0
+    for index, character in enumerate(rest):
+        if character == "(":
+            depth += 1
+        elif character == ")":
+            depth -= 1
+            if depth == 0:
+                return rest[index + 1:].strip() == ""
+    return False
+
+
+def check_annotations_are_attached() -> None:
+    violations = []
+    for path in java_sources() + sorted(JAVA_TEST.rglob("*.java")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for number, line in enumerate(lines, start=1):
+            stripped = line.strip()
+            if not _is_standalone_annotation(stripped):
+                continue
+            following = next((nxt.strip() for nxt in lines[number:] if nxt.strip()), "")
+            if following.startswith("/*"):
+                violations.append((path, number, stripped))
+
+    if violations:
+        raise Failure(
+            "An annotation is separated from what it annotates by a comment. Something was\n"
+            "inserted between them:\n"
+            + "\n".join(
+                f"  {path.relative_to(REPO)}:{number}  {text}"
+                for path, number, text in violations))
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
+    ("annotations are attached to a declaration", check_annotations_are_attached),
     ("no cross-module repository access", check_no_cross_module_persistence),
     ("tenant-owned tables have RLS policies", check_tenant_owned_tables_have_policies),
     ("no fixed-width CHAR columns", check_no_char_columns),
