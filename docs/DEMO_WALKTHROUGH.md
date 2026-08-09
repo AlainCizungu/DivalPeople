@@ -84,6 +84,10 @@ What to show:
   Say plainly that **nothing here decides what a column means.** Which one is an amount and which
   is an identifier is still open; how many cells are filled is not, and that is the whole reason
   this could be built before those decisions.
+- Below the profile, **rows that cannot become records**. Empty rows, exact duplicates naming the
+  row they duplicate, and rows with a gap in a column that is unique everywhere else — a candidate
+  identifier with a hole in it. These hold whatever the mapping eventually says, which is why they
+  could be reported before it exists. Nothing is rejected: every row is stored as delivered.
 - Upload the same file twice. Refused, naming the batch that already holds it.
 
 *Timing: the console logs `Received N rows from … in X ms`. If that number is large, say so and
@@ -137,7 +141,9 @@ Real records, aged from the date each obligation fell due.
 
 - **Two currencies, never added together.** USD and CDF sit on separate rows. Adding 500 USD to
   500 CDF produces a number that is wrong and looks entirely normal on a dashboard.
-- **Every aging band has something in it**, so the distribution has a shape rather than one bar.
+- **The aging chart** has something in every band, so the distribution has a shape rather than one
+  bar. The oldest band is red because that is where the money is in a real book, and it is the one
+  a credit committee looks at first.
 - **Contested is a separate column** from outstanding — still money the operator is owed, but
   somebody is arguing about it.
 - **Awaiting erasure should read zero.** If it does not, the nightly purge has stopped, and nothing

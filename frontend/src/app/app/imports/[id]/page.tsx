@@ -17,6 +17,7 @@ import {
   Card,
   EmptyState,
   ErrorNotice,
+  Metric,
   PageHeader,
   Pill,
   inputClass,
@@ -301,6 +302,88 @@ export default function BatchPage() {
               <p className="mt-5 border-t border-line pt-4 text-xs text-muted">
                 {t.profileNote}
               </p>
+
+              <div className="mt-6 border-t border-line pt-5">
+                <h3 className="font-bold text-navy">{t.issuesTitle}</h3>
+                <p className="mt-0.5 mb-4 text-sm text-muted">{t.issuesDescription}</p>
+
+                {!profile.issues.emptyRows &&
+                !profile.issues.duplicateRows &&
+                !profile.issues.rowsMissingIdentifier ? (
+                  <EmptyState>{t.issuesNone}</EmptyState>
+                ) : (
+                  <>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <Metric
+                        label={t.issuesEmptyRows}
+                        value={String(profile.issues.emptyRows)}
+                        tone={profile.issues.emptyRows > 0 ? "warning" : "plain"}
+                      />
+                      <Metric
+                        label={t.issuesDuplicates}
+                        value={String(profile.issues.duplicateRows)}
+                        tone={profile.issues.duplicateRows > 0 ? "warning" : "plain"}
+                      />
+                      <Metric
+                        label={t.issuesMissingIdentifier}
+                        value={String(profile.issues.rowsMissingIdentifier)}
+                        note={t.issuesMissingIdentifierNote}
+                        tone={profile.issues.rowsMissingIdentifier > 0 ? "warning" : "plain"}
+                      />
+                    </div>
+
+                    {profile.issues.keyColumns.length > 0 && (
+                      <p className="mt-4 text-sm text-muted">
+                        {t.issuesKeyColumns}:{" "}
+                        {profile.issues.keyColumns.map((column) => (
+                          <span key={column} className="mr-1.5 align-middle">
+                            <Pill>{column}</Pill>
+                          </span>
+                        ))}
+                      </p>
+                    )}
+
+                    <div className="mt-4 overflow-x-auto">
+                      <table className="w-full min-w-[26rem] text-left text-sm">
+                        <thead className="border-b border-line text-xs tracking-wide text-muted uppercase">
+                          <tr>
+                            <th scope="col" className="pb-3 pr-4 font-semibold">{t.colRow}</th>
+                            <th scope="col" className="pb-3 pr-4 font-semibold">{t.colIssue}</th>
+                            <th scope="col" className="pb-3 font-semibold">{t.colColumn}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {profile.issues.findings.map((finding, index) => (
+                            <tr
+                              key={`${finding.rowNumber}-${finding.issue}-${index}`}
+                              className="border-b border-line last:border-0"
+                            >
+                              <th scope="row" className="py-2.5 pr-4 tabular-nums text-navy">
+                                {finding.rowNumber}
+                              </th>
+                              <td className="py-2.5 pr-4 text-ink">
+                                {t.issueKinds[finding.issue]}
+                                {/* Naming the row it duplicates is the whole value of the
+                                    finding: "row 3 is a duplicate" sends somebody hunting. */}
+                                {finding.detail && (
+                                  <span className="ml-1 tabular-nums text-muted">
+                                    {finding.detail}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-2.5 text-muted">{finding.column ?? "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {!profile.issues.complete && (
+                      <p className="mt-3 text-xs text-muted">{t.issuesTruncated}</p>
+                    )}
+                  </>
+                )}
+              </div>
             </>
           )}
         </Card>

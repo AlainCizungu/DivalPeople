@@ -755,7 +755,23 @@
     "constant": "Toujours identique",
     "mostlyEmpty": "Presque vide",
     "textLength": "{shortest}–{longest} caractères",
-    "profileNote": "Une colonne dont le nombre de valeurs distinctes égale le nombre de cellules remplies est unique sur chaque ligne : c’est à cela que ressemble un identifiant. Une colonne à une seule valeur distincte est une constante et ne porte aucune information. Les valeurs ne sont affichées que lorsqu’elles sont assez peu nombreuses pour constituer un vocabulaire plutôt qu’une liste de clients."
+    "profileNote": "Une colonne dont le nombre de valeurs distinctes égale le nombre de cellules remplies est unique sur chaque ligne : c’est à cela que ressemble un identifiant. Une colonne à une seule valeur distincte est une constante et ne porte aucune information. Les valeurs ne sont affichées que lorsqu’elles sont assez peu nombreuses pour constituer un vocabulaire plutôt qu’une liste de clients.",
+    "issuesTitle": "Lignes qui ne peuvent pas devenir des enregistrements",
+    "issuesDescription": "Des problèmes qui subsistent quelle que soit la signification retenue des colonnes. Rien n’est rejeté — chaque ligne est conservée telle que livrée — mais celles-ci ne survivront pas à la correspondance, et il est moins coûteux de corriger l’export que d’expliquer l’écart plus tard.",
+    "issuesNone": "Rien de structurellement anormal dans cette livraison.",
+    "issuesEmptyRows": "Lignes vides",
+    "issuesDuplicates": "Lignes en double",
+    "issuesMissingIdentifier": "Sans identifiant",
+    "issuesMissingIdentifierNote": "Vide dans une colonne unique partout ailleurs",
+    "issuesKeyColumns": "Considérée comme l’identifiant",
+    "issuesTruncated": "Seules les premières lignes sont listées. Les compteurs ci-dessus sont complets.",
+    "colRow": "Ligne",
+    "colIssue": "Problème",
+    "issueKinds": {
+      "EMPTY_ROW": "Vide",
+      "DUPLICATE_ROW": "Double d’une ligne précédente",
+      "MISSING_IDENTIFIER": "Sans identifiant"
+    }
   },
   "participants": {
     "title": "Organisations participantes",

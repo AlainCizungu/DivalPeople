@@ -18,7 +18,7 @@ is, and TIX exists in a form that predates this design.
 | 1 | Observability | Structured logs with request ids; no metrics, traces or alerting |
 | 2 | CSV and XLSX upload, import batches, raw immutable storage, provenance | **Built.** Header found past a preamble; multi-sheet workbooks and dated cells are refused or left raw |
 | 2 | Source mappings, validation engine, normalisation, aging/balance mapping | **Not built** — waiting on the Vodacom sample, deliberately |
-| 2 | Import preview, data-quality profile | **Built.** Fill rates, distinct counts, exact totals, and the vocabulary of categorical columns — described, never interpreted. Rejection reporting is not |
+| 2 | Import preview, data-quality profile, rejection report | **Built.** Fill rates, distinct counts, exact totals and vocabularies; plus the rows that cannot become records — empty, duplicate, or missing a candidate identifier. All of it describes and none of it interprets |
 | 3 | Deterministic entity resolution | **Built** for the write path (`SubjectResolver`), exact match only, refuses ambiguity |
 | 3 | Fuzzy matching with confidence | **Built** for the read path (`IdentityMatcher`) |
 | 3 | Merge / unmerge, human review queue | Not built |

@@ -6,6 +6,20 @@ import { ApiError, tixApi, type Portfolio } from "@/api/client";
 import { Card, EmptyState, ErrorNotice, Metric, PageHeader, Pill } from "@/components/ui";
 
 /**
+ * Chart geometry, in the SVG's own coordinate space.
+ *
+ * <p>The viewBox scales to whatever width the card has, so these are proportions rather than
+ * pixels. Nine bands is fixed by AgingBand, and the width is derived from it rather than typed —
+ * adding a band should widen the chart, not overflow it.
+ */
+const BAR_WIDTH = 40;
+const BAR_GAP = 12;
+const BANDS_WIDTH = 9 * (BAR_WIDTH + BAR_GAP);
+const CHART_TOP = 18;
+const PLOT_HEIGHT = 120;
+const CHART_HEIGHT = CHART_TOP + PLOT_HEIGHT;
+
+/**
  * What this operator is owed, aged.
  *
  * <p>Every figure comes from `GET /tix/portfolio`, which counts only the calling operator's own
@@ -198,34 +212,103 @@ export default function PortfolioPage() {
 
           <div className="mt-6">
             <Card title={t.agingTitle} description={t.agingDescription}>
-              <ol className="flex flex-col gap-3">
-                {portfolio.aging.map((band) => (
-                  <li key={band.band}>
-                    <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                      <span className={band.count > 0 ? "text-ink" : "text-muted"}>
-                        {t.bands[band.band]}
-                      </span>
-                      <span className="flex flex-wrap items-baseline gap-3">
-                        {band.amounts.map((money) => (
-                          <span
-                            key={money.currency}
-                            className="font-bold tabular-nums text-navy"
-                          >
-                            {amount(money.amount, money.currency)}
-                          </span>
-                        ))}
-                        <span className="text-xs text-muted tabular-nums">({band.count})</span>
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-soft">
-                      <div
-                        className="h-full rounded-full bg-blue"
-                        style={{ width: `${(band.count / busiest) * 100}%` }}
+              {/*
+                Hand-drawn SVG rather than a charting library. One chart does not justify a
+                dependency, and this one has to survive being printed and pasted into a board
+                paper — an inline SVG does both, and a canvas-based library does neither.
+
+                Bars are scaled to the fullest band, not to the total. An aging profile is read by
+                its shape; scaling to the total flattens every band into an indistinguishable
+                sliver as soon as one of them dominates, which in a real book it always does.
+              */}
+              <svg
+                viewBox={`0 0 ${BANDS_WIDTH} ${CHART_HEIGHT}`}
+                className="w-full"
+                role="img"
+                aria-label={t.agingTitle}
+                preserveAspectRatio="none"
+              >
+                {portfolio.aging.map((band, index) => {
+                  const height =
+                    band.count === 0 ? 0 : Math.max(2, (band.count / busiest) * PLOT_HEIGHT);
+                  const x = index * (BAR_WIDTH + BAR_GAP) + BAR_GAP / 2;
+                  return (
+                    <g key={band.band}>
+                      {/* The empty bands are drawn as a faint track, so a gap in the middle of
+                          the profile reads as a gap rather than as missing rendering. */}
+                      <rect
+                        x={x}
+                        y={CHART_TOP}
+                        width={BAR_WIDTH}
+                        height={PLOT_HEIGHT}
+                        rx="2"
+                        className="fill-soft"
                       />
-                    </div>
+                      <rect
+                        x={x}
+                        y={CHART_TOP + PLOT_HEIGHT - height}
+                        width={BAR_WIDTH}
+                        height={height}
+                        rx="2"
+                        className={band.band === "OVER_270" ? "fill-error" : "fill-blue"}
+                      />
+                      {band.count > 0 && (
+                        <text
+                          x={x + BAR_WIDTH / 2}
+                          y={CHART_TOP + PLOT_HEIGHT - height - 6}
+                          textAnchor="middle"
+                          className="fill-navy text-[11px] font-bold"
+                        >
+                          {band.count}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+
+              <ol className="mt-3 grid grid-cols-3 gap-x-4 gap-y-2 sm:grid-cols-5 lg:grid-cols-9">
+                {portfolio.aging.map((band) => (
+                  <li key={band.band} className="text-center">
+                    <p
+                      className={`text-[11px] leading-tight ${
+                        band.count > 0 ? "text-ink" : "text-muted"
+                      }`}
+                    >
+                      {t.bands[band.band]}
+                    </p>
+                    {band.amounts.map((money) => (
+                      <p
+                        key={money.currency}
+                        className="text-[11px] font-bold tabular-nums text-navy"
+                      >
+                        {amount(money.amount, money.currency)}
+                      </p>
+                    ))}
                   </li>
                 ))}
               </ol>
+
+              {/* The same numbers as a table, for anybody reading with a screen reader. A chart
+                  that is only a picture is a chart half the audience cannot read. */}
+              <table className="sr-only">
+                <caption>{t.agingTitle}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{t.agingTitle}</th>
+                    <th scope="col">{t.records}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {portfolio.aging.map((band) => (
+                    <tr key={band.band}>
+                      <th scope="row">{t.bands[band.band]}</th>
+                      <td>{band.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
               <p className="mt-5 border-t border-line pt-4 text-xs text-muted">
                 {t.agingFootnote}
               </p>

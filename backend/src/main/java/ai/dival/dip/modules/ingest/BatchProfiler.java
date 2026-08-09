@@ -37,6 +37,9 @@ final class BatchProfiler {
      */
     private static final int VOCABULARY_LIMIT = 8;
 
+    /** How many individual problem rows are listed. The counts beside them are complete. */
+    private static final int MAX_FINDINGS = 200;
+
     private BatchProfiler() {
     }
 
@@ -53,7 +56,81 @@ final class BatchProfiler {
 
         List<Column> columns = new ArrayList<>();
         byColumn.forEach((name, values) -> columns.add(describe(name, values, rows.size())));
-        return new Profile(rows.size(), List.copyOf(columns));
+        List<Column> described = List.copyOf(columns);
+        return new Profile(rows.size(), described, findIssues(rows, described));
+    }
+
+    /**
+     * Rows that cannot become records, whatever the mapping turns out to be.
+     *
+     * <p>A rejection report normally means "this amount is below the threshold", and that needs to
+     * know which column is the amount — a decision nobody has taken. These three do not.
+     *
+     * <ul>
+     *   <li>A row with nothing in it is not a customer.</li>
+     *   <li>A row identical to an earlier one is one customer counted twice, and would be however
+     *       the columns are eventually read.</li>
+     *   <li>A row missing a value in a column that is otherwise unique across the whole batch has
+     *       no identifier. That column is the candidate key — it is how {@code BPR_0} was found in
+     *       the real export — and a row without one cannot be resolved to a subject by any
+     *       mapping.</li>
+     * </ul>
+     *
+     * <p>Nothing is actually rejected. The batch stores every row exactly as delivered and always
+     * will; this says which of them will not survive contact with the mapping, so an operator can
+     * fix their export before anybody depends on it rather than afterwards.
+     */
+    private static Issues findIssues(List<Map<String, String>> rows, List<Column> columns) {
+        List<String> keyColumns = columns.stream()
+                .filter(column -> column.filled() > 0
+                        && column.filled() == column.distinct()
+                        && column.blank() > 0)
+                .map(Column::column)
+                .toList();
+
+        List<Finding> findings = new ArrayList<>();
+        Map<String, Integer> seen = new LinkedHashMap<>();
+        int empty = 0;
+        int duplicate = 0;
+        int missingKey = 0;
+
+        for (int index = 0; index < rows.size(); index++) {
+            // 1-based, as a person reading the file counts, and matching the row numbers the
+            // rejection messages elsewhere already use.
+            int rowNumber = index + 1;
+            Map<String, String> row = rows.get(index);
+
+            if (row.values().stream().allMatch(value -> value == null || value.isBlank())) {
+                empty++;
+                add(findings, new Finding(Issue.EMPTY_ROW, rowNumber, null, null));
+                continue;
+            }
+
+            Integer first = seen.putIfAbsent(row.toString(), rowNumber);
+            if (first != null) {
+                duplicate++;
+                add(findings, new Finding(Issue.DUPLICATE_ROW, rowNumber, null, String.valueOf(first)));
+                continue;
+            }
+
+            for (String key : keyColumns) {
+                String value = row.get(key);
+                if (value == null || value.isBlank()) {
+                    missingKey++;
+                    add(findings, new Finding(Issue.MISSING_IDENTIFIER, rowNumber, key, null));
+                }
+            }
+        }
+
+        return new Issues(empty, duplicate, missingKey, List.copyOf(keyColumns),
+                List.copyOf(findings), findings.size() < MAX_FINDINGS);
+    }
+
+    /** Counts are unbounded; the listing is not, because a page cannot render four thousand. */
+    private static void add(List<Finding> findings, Finding finding) {
+        if (findings.size() < MAX_FINDINGS) {
+            findings.add(finding);
+        }
     }
 
     private static Column describe(String name, List<String> values, int totalRows) {
@@ -125,7 +202,40 @@ final class BatchProfiler {
     /**
      * @param rows how many data rows the batch holds, so a fill rate can be read as a proportion
      */
-    record Profile(int rows, List<Column> columns) {
+    record Profile(int rows, List<Column> columns, Issues issues) {
+    }
+
+    /**
+     * What is wrong with the delivery, before anybody decides what its columns mean.
+     *
+     * @param keyColumns  the columns that are unique wherever they are filled and have gaps —
+     *                    candidate identifiers with holes in them, which is the finding that
+     *                    matters most and the one an operator can act on today
+     * @param complete    false when there were more problems than {@code findings} lists. The
+     *                    counts are still exact; only the listing is truncated, and saying so is
+     *                    the difference between a short report and a wrong one
+     */
+    record Issues(int emptyRows, int duplicateRows, int rowsMissingIdentifier,
+                  List<String> keyColumns, List<Finding> findings, boolean complete) {
+
+        /** Whether there is anything to report at all. */
+        boolean any() {
+            return emptyRows > 0 || duplicateRows > 0 || rowsMissingIdentifier > 0;
+        }
+    }
+
+    /**
+     * @param column the column concerned, for a missing identifier; null otherwise
+     * @param detail for a duplicate, the row it duplicates; null otherwise
+     */
+    record Finding(Issue issue, int rowNumber, String column, String detail) {
+    }
+
+    /** Deliberately three, and deliberately none of them about an amount. */
+    enum Issue {
+        EMPTY_ROW,
+        DUPLICATE_ROW,
+        MISSING_IDENTIFIER
     }
 
     /**

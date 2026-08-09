@@ -173,6 +173,107 @@ class BatchProfilerTest {
                 .isLessThan("Kin Logistique".length());
     }
 
+    // --- rows that cannot become records ------------------------------------
+
+    @Test
+    @DisplayName("a clean batch reports nothing wrong with it")
+    void noIssuesInACleanBatch() {
+        BatchProfiler.Issues issues = BatchProfiler.profile(EXPORT).issues();
+
+        assertThat(issues.any()).isFalse();
+        assertThat(issues.findings()).isEmpty();
+        assertThat(issues.complete()).isTrue();
+    }
+
+    @Test
+    @DisplayName("a row with nothing in it is reported, and is not a customer")
+    void emptyRowsAreFound() {
+        List<Map<String, String>> rows = List.of(
+                row("Ref", "V1", "Balance", "100"),
+                row("Ref", "", "Balance", "  "));
+
+        BatchProfiler.Issues issues = BatchProfiler.profile(rows).issues();
+
+        assertThat(issues.emptyRows()).isEqualTo(1);
+        assertThat(issues.findings()).extracting(BatchProfiler.Finding::issue)
+                .containsExactly(BatchProfiler.Issue.EMPTY_ROW);
+        assertThat(issues.findings()).first()
+                .satisfies(finding -> assertThat(finding.rowNumber()).isEqualTo(2));
+    }
+
+    @Test
+    @DisplayName("a duplicate names the row it duplicates, so somebody can compare them")
+    void duplicatesNameTheOriginal() {
+        List<Map<String, String>> rows = List.of(
+                row("Ref", "V1", "Balance", "100"),
+                row("Ref", "V2", "Balance", "200"),
+                row("Ref", "V1", "Balance", "100"));
+
+        BatchProfiler.Issues issues = BatchProfiler.profile(rows).issues();
+
+        assertThat(issues.duplicateRows()).isEqualTo(1);
+        assertThat(issues.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.issue()).isEqualTo(BatchProfiler.Issue.DUPLICATE_ROW);
+            assertThat(finding.rowNumber()).isEqualTo(3);
+            // Pointing at row 1 is the whole value of the finding. "Row 3 is a duplicate" sends
+            // somebody hunting; "row 3 duplicates row 1" does not.
+            assertThat(finding.detail()).isEqualTo("1");
+        });
+    }
+
+    @Test
+    @DisplayName("a gap in the only unique column is a row no mapping can resolve")
+    void gapsInACandidateIdentifierAreFound() {
+        // Ref is unique wherever it is filled, which is what a candidate key looks like — it is
+        // how BPR_0 was found in the real export. A row without one has no identifier, and that
+        // is true whichever column eventually turns out to be the amount.
+        List<Map<String, String>> rows = List.of(
+                row("Ref", "V1", "Name", "Alpha"),
+                row("Ref", "V2", "Name", "Beta"),
+                row("Ref", "", "Name", "Gamma"));
+
+        BatchProfiler.Issues issues = BatchProfiler.profile(rows).issues();
+
+        assertThat(issues.keyColumns()).containsExactly("Ref");
+        assertThat(issues.rowsMissingIdentifier()).isEqualTo(1);
+        assertThat(issues.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.issue()).isEqualTo(BatchProfiler.Issue.MISSING_IDENTIFIER);
+            assertThat(finding.rowNumber()).isEqualTo(3);
+            assertThat(finding.column()).isEqualTo("Ref");
+        });
+    }
+
+    @Test
+    @DisplayName("a column that repeats values is not treated as an identifier")
+    void repeatedValuesAreNotACandidateKey() {
+        // Status A is "Write off" on every row of the real file. It has no gaps and it is not a
+        // key; flagging every blank in a status column would bury the finding that matters.
+        List<Map<String, String>> rows = List.of(
+                row("Status", "Write off", "Ref", "V1"),
+                row("Status", "Write off", "Ref", "V2"),
+                row("Status", "", "Ref", "V3"));
+
+        assertThat(BatchProfiler.profile(rows).issues().keyColumns()).isEmpty();
+        assertThat(BatchProfiler.profile(rows).issues().rowsMissingIdentifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("counts stay exact when the listing is truncated, and it says so")
+    void countsAreCompleteEvenWhenTheListIsNot() {
+        List<Map<String, String>> rows = new java.util.ArrayList<>();
+        rows.add(row("Ref", "V0", "Name", "seed"));
+        for (int i = 0; i < 400; i++) {
+            rows.add(row("Ref", "", "Name", "Business " + i));
+        }
+
+        BatchProfiler.Issues issues = BatchProfiler.profile(rows).issues();
+
+        // A truncated report that did not say it was truncated would be a wrong one.
+        assertThat(issues.rowsMissingIdentifier()).isEqualTo(400);
+        assertThat(issues.findings()).hasSize(200);
+        assertThat(issues.complete()).isFalse();
+    }
+
     @Test
     @DisplayName("an empty file profiles to nothing rather than throwing")
     void emptyInput() {

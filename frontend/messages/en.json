@@ -755,7 +755,23 @@
     "constant": "Always the same",
     "mostlyEmpty": "Mostly empty",
     "textLength": "{shortest}–{longest} characters",
-    "profileNote": "A column whose distinct count equals its filled count is unique on every row, which is what an identifier looks like. A column with one distinct value is a constant and carries no information. Values are shown only where there are few enough of them to be a vocabulary rather than a customer list."
+    "profileNote": "A column whose distinct count equals its filled count is unique on every row, which is what an identifier looks like. A column with one distinct value is a constant and carries no information. Values are shown only where there are few enough of them to be a vocabulary rather than a customer list.",
+    "issuesTitle": "Rows that cannot become records",
+    "issuesDescription": "Problems that hold whatever the columns turn out to mean. Nothing is rejected — every row is stored exactly as delivered — but these will not survive the mapping, and it is cheaper to fix the export than to explain the gap later.",
+    "issuesNone": "Nothing structurally wrong with this delivery.",
+    "issuesEmptyRows": "Empty rows",
+    "issuesDuplicates": "Duplicate rows",
+    "issuesMissingIdentifier": "No identifier",
+    "issuesMissingIdentifierNote": "Blank in a column that is unique everywhere else",
+    "issuesKeyColumns": "Treated as the identifier",
+    "issuesTruncated": "Only the first rows are listed. The counts above are complete.",
+    "colRow": "Row",
+    "colIssue": "Problem",
+    "issueKinds": {
+      "EMPTY_ROW": "Nothing in it",
+      "DUPLICATE_ROW": "Duplicates an earlier row",
+      "MISSING_IDENTIFIER": "No identifier"
+    }
   },
   "participants": {
     "title": "Participating organisations",

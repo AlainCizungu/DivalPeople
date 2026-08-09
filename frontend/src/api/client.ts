@@ -474,7 +474,36 @@ export type ProfiledColumn = {
   vocabulary: { value: string; count: number }[];
 };
 
-export type BatchProfile = { rows: number; columns: ProfiledColumn[] };
+/**
+ * Rows that cannot become records, whatever the mapping turns out to be.
+ *
+ * <p>Nothing is actually rejected — the batch keeps every row exactly as delivered. This says
+ * which ones will not survive contact with the mapping, so an operator can fix their export
+ * before anybody depends on it.
+ *
+ * <p>`complete` is false when there were more problems than `findings` lists. The counts are still
+ * exact; only the listing is truncated, and a truncated report that did not say so would be wrong
+ * rather than short.
+ */
+export type BatchIssues = {
+  emptyRows: number;
+  duplicateRows: number;
+  rowsMissingIdentifier: number;
+  keyColumns: string[];
+  findings: {
+    issue: "EMPTY_ROW" | "DUPLICATE_ROW" | "MISSING_IDENTIFIER";
+    rowNumber: number;
+    column: string | null;
+    detail: string | null;
+  }[];
+  complete: boolean;
+};
+
+export type BatchProfile = {
+  rows: number;
+  columns: ProfiledColumn[];
+  issues: BatchIssues;
+};
 
 export const ingestApi = {
   listSources(): Promise<IngestSource[]> {
