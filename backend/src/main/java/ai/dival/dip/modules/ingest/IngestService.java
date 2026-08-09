@@ -15,6 +15,7 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,16 +40,75 @@ public class IngestService {
     private final SourceDatasetRepository sources;
     private final ImportBatchRepository batches;
     private final RawRecordRepository rawRecords;
+    private final SourceMappingRepository mappings;
     private final AuditService audit;
     private final ObjectMapper json;
 
     public IngestService(SourceDatasetRepository sources, ImportBatchRepository batches,
-                         RawRecordRepository rawRecords, AuditService audit, ObjectMapper json) {
+                         RawRecordRepository rawRecords, SourceMappingRepository mappings,
+                         AuditService audit, ObjectMapper json) {
         this.sources = sources;
         this.batches = batches;
         this.rawRecords = rawRecords;
+        this.mappings = mappings;
         this.audit = audit;
         this.json = json;
+    }
+
+    // --- mappings -----------------------------------------------------------
+
+    /**
+     * Records what this operator says its columns mean.
+     *
+     * <p>Supersedes rather than edits. A published delivery was derived through whichever mapping
+     * was current when it ran, so rewriting one in place would leave that batch untraceable to the
+     * rules that produced it — and immutable raw rows pointing at a mapping that has silently
+     * changed are provenance pointing at nothing.
+     *
+     * <p>The columns are not checked against a delivery here. A mapping can legitimately be defined
+     * before the first file arrives, and the check that matters happens where it can say something
+     * useful: at derivation, against the actual header, naming the column that is missing.
+     */
+    @Transactional
+    public SourceMapping defineMapping(UUID sourceId, String identifierColumn,
+                                       String identifierType, String nameColumn,
+                                       String amountColumn, String currency,
+                                       String serviceCategory, String subjectType, UUID actorId) {
+        UUID tenantId = TenantContext.require();
+        SourceDataset source = sources.findByIdAndTenantId(sourceId, tenantId)
+                .orElseThrow(() -> new SourceNotFoundException(sourceId));
+
+        int nextVersion = mappings
+                .findByTenantIdAndDataSourceIdAndSupersededAtIsNull(tenantId, sourceId)
+                .map(current -> {
+                    current.supersede();
+                    return current.getVersionNumber() + 1;
+                })
+                .orElse(1);
+
+        SourceMapping saved = mappings.save(new SourceMapping(
+                source, identifierColumn, identifierType, nameColumn, amountColumn,
+                currency, serviceCategory, subjectType, nextVersion, actorId));
+
+        audit.record("INGEST_MAPPING_DEFINED", "SourceMapping", saved.getId().toString(),
+                AuditService.OUTCOME_SUCCESS, actorId,
+                "v" + nextVersion + " for " + source.getCode() + ": identifier="
+                        + saved.getIdentifierColumn() + ", name=" + saved.getNameColumn()
+                        + ", amount=" + saved.getAmountColumn());
+        return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SourceMapping> currentMapping(UUID sourceId) {
+        return mappings.findByTenantIdAndDataSourceIdAndSupersededAtIsNull(
+                TenantContext.require(), sourceId);
+    }
+
+    /** Every version, newest first — how a batch published months ago is explained. */
+    @Transactional(readOnly = true)
+    public List<SourceMapping> mappingHistory(UUID sourceId) {
+        return mappings.findByTenantIdAndDataSourceIdOrderByVersionNumberDesc(
+                TenantContext.require(), sourceId);
     }
 
     // --- sources ------------------------------------------------------------

@@ -79,6 +79,41 @@ public class IngestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(SourceResponse.from(saved));
     }
 
+    // --- mappings -----------------------------------------------------------
+
+    /**
+     * Records what this operator says its columns mean.
+     *
+     * <p>The platform never guesses. The profiled export has a balance column and nine numeric
+     * aging buckets, and only somebody at the operator knows the buckets sum to the balance rather
+     * than the reverse — so the choice is theirs, and this endpoint is where it is written down.
+     */
+    @PostMapping("/sources/{id}/mapping")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public ResponseEntity<MappingResponse> defineMapping(
+            @PathVariable UUID id, @Valid @RequestBody DefineMappingRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(MappingResponse.from(
+                ingest.defineMapping(id, request.identifierColumn(), request.identifierType(),
+                        request.nameColumn(), request.amountColumn(), request.currency(),
+                        request.serviceCategory(), request.subjectType(), actorId())));
+    }
+
+    /** The mapping in force, or nothing when the operator has not defined one yet. */
+    @GetMapping("/sources/{id}/mapping")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public ResponseEntity<MappingResponse> currentMapping(@PathVariable UUID id) {
+        return ingest.currentMapping(id)
+                .map(mapping -> ResponseEntity.ok(MappingResponse.from(mapping)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /** Every version. How a delivery published months ago is explained. */
+    @GetMapping("/sources/{id}/mapping/history")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public List<MappingResponse> mappingHistory(@PathVariable UUID id) {
+        return ingest.mappingHistory(id).stream().map(MappingResponse::from).toList();
+    }
+
     // --- batches ------------------------------------------------------------
 
     /**
@@ -242,6 +277,46 @@ public class IngestController {
     }
 
     /** @param payload the row as stored, verbatim, as a JSON object */
+    /**
+     * What the operator says the columns mean.
+     *
+     * <p>Currency and service category are values rather than columns, because the profiled export
+     * carries neither and a mapping pointing at a column that does not exist is worse than one
+     * that admits the file does not say.
+     */
+    public record DefineMappingRequest(
+            @NotBlank @Size(max = 200) String identifierColumn,
+            @NotBlank @Size(max = 30) String identifierType,
+            @NotBlank @Size(max = 200) String nameColumn,
+            @NotBlank @Size(max = 200) String amountColumn,
+            @NotBlank @Size(min = 3, max = 3) String currency,
+            @NotBlank @Size(max = 60) String serviceCategory,
+            @NotBlank @Size(max = 20) String subjectType) {
+    }
+
+    /** @param current false once a newer version has superseded this one */
+    public record MappingResponse(UUID id, int versionNumber, String identifierColumn,
+                                  String identifierType, String nameColumn, String amountColumn,
+                                  String currency, String serviceCategory, String subjectType,
+                                  boolean current, Instant definedAt, Instant supersededAt) {
+
+        static MappingResponse from(SourceMapping mapping) {
+            return new MappingResponse(
+                    mapping.getId(),
+                    mapping.getVersionNumber(),
+                    mapping.getIdentifierColumn(),
+                    mapping.getIdentifierType(),
+                    mapping.getNameColumn(),
+                    mapping.getAmountColumn(),
+                    mapping.getCurrency(),
+                    mapping.getServiceCategory(),
+                    mapping.getSubjectType(),
+                    mapping.isCurrent(),
+                    mapping.getDefinedAt(),
+                    mapping.getSupersededAt());
+        }
+    }
+
     public record RowResponse(UUID id, int rowNumber, String payload) {
         static RowResponse from(RawRecord record) {
             return new RowResponse(record.getId(), record.getRowNumber(), record.getPayload());
