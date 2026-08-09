@@ -163,8 +163,14 @@ class BatchProfilerTest {
 
         // How the real file's truncation at 35 characters was spotted: every long name was
         // exactly the same length.
-        assertThat(bsr.shortestLength()).isEqualTo("Kin Logistique".length());
+        //
+        // Written against the actual strings rather than a literal 13 and 18, because the first
+        // version of this test asserted the wrong one of the three by counting in my head.
+        assertThat(bsr.shortestLength()).isEqualTo("Grand Horizon".length());
         assertThat(bsr.longestLength()).isEqualTo("Atlas Distribution".length());
+        assertThat("Grand Horizon".length())
+                .as("the shortest of the three, which is the point of the assertion above")
+                .isLessThan("Kin Logistique".length());
     }
 
     @Test
