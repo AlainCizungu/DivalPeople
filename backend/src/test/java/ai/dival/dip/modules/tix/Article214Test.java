@@ -200,13 +200,20 @@ class Article214Test extends AbstractIntegrationTest {
         assertThat(request.isOverdueAsOf(Instant.now())).isFalse();
         assertThat(request.isOverdueAsOf(Instant.now().plus(31, ChronoUnit.DAYS))).isTrue();
 
-        TenantContext.runAs(reporter, () -> {
+        // The decided instance, not the one raise() returned. Every method of the service now
+        // commits its own transaction and hands back a detached entity, so the object above is a
+        // snapshot of a case that was open at the time — it will report itself open forever,
+        // however the real row has moved on. This test asserted against that stale copy on its
+        // first run and failed, which is the standing tax on hand-managed transactions arriving
+        // exactly where it was predicted.
+        SubjectRequest decided = TenantContext.runAsResult(reporter, () -> {
             rights.verifyIdentity(request.getId(), "ID seen", STAFF);
-            rights.close(request.getId(), false, "Contract produced", STAFF);
+            return rights.close(request.getId(), false, "Contract produced", STAFF);
         });
 
         // The obligation is to answer, and it has been answered. Whether it was answered late is
         // a question for the audit trail, which records when the decision was taken.
-        assertThat(request.isOverdueAsOf(Instant.now().plus(400, ChronoUnit.DAYS))).isFalse();
+        assertThat(decided.isDecided()).isTrue();
+        assertThat(decided.isOverdueAsOf(Instant.now().plus(400, ChronoUnit.DAYS))).isFalse();
     }
 }
