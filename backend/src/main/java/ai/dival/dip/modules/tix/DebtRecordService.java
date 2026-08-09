@@ -56,6 +56,36 @@ public class DebtRecordService {
      */
     @Transactional
     public Declaration declare(DeclarationRequest request, UUID actorId) {
+        return declare(request, null, DateSource.REPORTED, actorId);
+    }
+
+    /**
+     * Declares a default derived from a row of a delivered file.
+     *
+     * <p><strong>The same path, deliberately.</strong> Every rule an operator meets when typing a
+     * declaration applies here too: the reporting threshold, the dunning requirement, the refusal
+     * of a future default date, the one-open-record-per-subject check. An import that could enter
+     * the registry through a side door would be a way to put people in a national database without
+     * passing the controls that decide who belongs in it — and it is exactly the shape the seeder
+     * had before it was routed through here.
+     *
+     * @param rawRecordId the row this came from. Not optional: V20's check constraint requires an
+     *                    IMPORT to name its source row, because "imported, source unknown" is the
+     *                    silent third state the provenance work exists to prevent
+     * @param dateSource  whether the default date was reported by the operator or worked out from
+     *                    the delivery's as-at date
+     */
+    @Transactional
+    public Declaration declareFromImport(DeclarationRequest request, UUID rawRecordId,
+                                         DateSource dateSource, UUID actorId) {
+        if (rawRecordId == null) {
+            throw new IllegalArgumentException("An imported record must name the row it came from");
+        }
+        return declare(request, rawRecordId, dateSource, actorId);
+    }
+
+    private Declaration declare(DeclarationRequest request, UUID rawRecordId,
+                                DateSource dateSource, UUID actorId) {
         UUID tenantId = TenantContext.require();
 
         threshold.requireDeclarable(request.amount(), request.currency());
@@ -91,6 +121,16 @@ public class DebtRecordService {
                 resolution.subject(), request.amount(), request.currency(),
                 request.serviceCategory(), request.defaultDate(), request.dunningEvidence());
 
+        // Order matters: derivedFrom sets the origin, and dateWasDerived refuses to run on
+        // anything that is not an import. Marking the date first would throw on a record that is
+        // about to become a legitimate one.
+        if (rawRecordId != null) {
+            record.derivedFrom(rawRecordId);
+        }
+        if (dateSource == DateSource.DERIVED) {
+            record.dateWasDerived();
+        }
+
         // A subject the exchange had never seen cannot be a repeat offender, and a subject it had
         // seen necessarily defaulted before — subjects exist only because somebody declared
         // against them. That equivalence is why this needs no cross-operator query, and it is
@@ -105,6 +145,8 @@ public class DebtRecordService {
                 AuditService.OUTCOME_SUCCESS, actorId,
                 "Declared " + request.amount().toPlainString() + " " + request.currency()
                         + "; retained until " + saved.getRetentionUntil()
+                        + (rawRecordId == null ? "" : "; from row " + rawRecordId)
+                        + (dateSource == DateSource.DERIVED ? "; date derived" : "")
                         + (resolution.created() ? "; subject new to the exchange" : ""));
 
         return new Declaration(saved, resolution.created(), resolution.identifiersLearned());

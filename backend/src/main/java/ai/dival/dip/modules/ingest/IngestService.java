@@ -264,6 +264,30 @@ public class IngestService {
         return batches.findByTenantIdOrderByReceivedAtDesc(TenantContext.require());
     }
 
+    /**
+     * One batch, if it belongs to the caller.
+     *
+     * <p>Public so that the derivation in tix can read a delivery without reaching for the
+     * repository — module boundaries hold at the repository, not at the service, and this is the
+     * accessor that keeps them there.
+     */
+    @Transactional(readOnly = true)
+    public ImportBatch batchFor(UUID batchId) {
+        return requireOwnBatch(batchId);
+    }
+
+    /**
+     * A stored row, back as cells.
+     *
+     * <p>The counterpart of the JSON written at receipt, and the only sanctioned way to read a
+     * payload — parsing it at the call site would put the storage format in two places, and the
+     * second one would be the one that drifted.
+     */
+    @Transactional(readOnly = true)
+    public Map<String, String> cellsOf(RawRecord record) {
+        return fromJson(record.getPayload(), record.getRowNumber());
+    }
+
     @Transactional(readOnly = true)
     public List<RawRecord> rowsOf(UUID batchId) {
         requireOwnBatch(batchId);

@@ -17,7 +17,7 @@ is, and TIX exists in a form that predates this design.
 | 1 | Object storage | Filesystem locally; no S3-compatible store |
 | 1 | Observability | Structured logs with request ids; no metrics, traces or alerting |
 | 2 | CSV and XLSX upload, import batches, raw immutable storage, provenance | **Built.** Header found past a preamble; multi-sheet workbooks and dated cells are refused or left raw |
-| 2 | Source mappings, validation engine, normalisation, aging/balance mapping | **Not built** — waiting on the Vodacom sample, deliberately |
+| 2 | Source mappings and derivation | **Built.** The operator declares which column is which; publishing and deriving are separate acts; every row goes through the same declaration path a typed one does |
 | 2 | Import preview, data-quality profile, rejection report | **Built.** Fill rates, distinct counts, exact totals and vocabularies; plus the rows that cannot become records — empty, duplicate, or missing a candidate identifier. All of it describes and none of it interprets |
 | 3 | Deterministic entity resolution | **Built** for the write path (`SubjectResolver`), exact match only, refuses ambiguity |
 | 3 | Fuzzy matching with confidence | **Built** for the read path (`IdentityMatcher`) |
@@ -58,11 +58,19 @@ database rule and erasable by retention, and every debt record carries an `origi
 constraint ties to a source row — an `IMPORT` must name one, an `API_DECLARATION` must not pretend
 to have one. A file can be uploaded, inspected exactly as stored, published or withdrawn.
 
-**What remains is the mapping.** Nothing is derived from a batch yet: publishing a delivery
-creates no exposures, so a raw row and a debt record are still two unconnected worlds. Closing
-that means deciding which column is a balance, which is an identifier, and what an aging bucket
-looks like — and the roadmap is explicit that those come from a real export rather than a guess.
-Until it is built, `origin` is `API_DECLARATION` on every row in the system.
+**Closed, 9 August 2026.** A delivery can now become records. Two answers made it possible, and
+neither was a guess: the operator says what date the file reflects, on upload, and the operator
+says which column is the amount, in a stored mapping. DIP supplies neither.
+
+Every derived row goes through `DebtRecordService` — the same path a typed declaration takes, with
+the same reporting threshold, dunning requirement and one-open-record-per-subject rule. An import
+that could enter the registry through a side door would be a way to put people into a national
+database without passing the controls that decide who belongs in it.
+
+Each row is derived in its own transaction, so a delivery of four thousand where six are below the
+threshold imports three thousand nine hundred and ninety-four and reports the six. Every derived
+record carries `default_date_source = DERIVED`, which is the query that finds them all when
+Vodacom eventually sends real dates.
 
 The aging vocabulary is now the one thing that crosses the gap in advance. `AgingBand` takes its
 edges from the columns of the profiled Vodacom export rather than from a generic 30/60/90, so a

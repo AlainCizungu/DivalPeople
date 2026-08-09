@@ -31,16 +31,19 @@ public class TixController {
     private final PortfolioService portfolio;
     private final SearchService search;
     private final SubjectRightsService rights;
+    private final ImportDeriver imports;
     private final CurrentUserService currentUser;
 
     public TixController(ExchangeService exchange, DebtRecordService debtRecords,
                          PortfolioService portfolio, SearchService search,
-                         SubjectRightsService rights, CurrentUserService currentUser) {
+                         SubjectRightsService rights, ImportDeriver imports,
+                         CurrentUserService currentUser) {
         this.exchange = exchange;
         this.debtRecords = debtRecords;
         this.portfolio = portfolio;
         this.search = search;
         this.rights = rights;
+        this.imports = imports;
         this.currentUser = currentUser;
     }
 
@@ -127,6 +130,34 @@ public class TixController {
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
     public ResponseEntity<DebtRecordResponse> dispute(@PathVariable UUID id) {
         return ResponseEntity.ok(DebtRecordResponse.from(debtRecords.dispute(id, actorId())));
+    }
+
+    /**
+     * Turns a delivered batch into records.
+     *
+     * <p>Separate from publishing, and deliberately. Publishing means the delivery is accepted;
+     * this means people in it become visible to every other operator on the exchange. They are
+     * different decisions with different consequences, and an operator should be able to accept a
+     * file and look at it before doing the second.
+     *
+     * <p>Guarded by the declarant role, which is the same right as reporting one default — and
+     * this creates thousands. The note on {@code IngestController} about that is now due: when a
+     * data-steward role exists in the realm, this endpoint is the first that should require it.
+     */
+    @PostMapping("/imports/{batchId}/derive")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public ImportDeriver.Report derive(@PathVariable UUID batchId,
+                                       @Valid @RequestBody DeriveRequest request) {
+        return imports.derive(batchId, request.dunningEvidence(), actorId());
+    }
+
+    /**
+     * @param dunningEvidence the operator asserting that the contractual chase ran for these
+     *                        accounts. A typed declaration carries this per record; an import has
+     *                        to carry it too, or thousands of records enter the registry with a
+     *                        guarantee nobody made
+     */
+    public record DeriveRequest(boolean dunningEvidence) {
     }
 
     // --- subject rights -----------------------------------------------------
