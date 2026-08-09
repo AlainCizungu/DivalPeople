@@ -226,6 +226,26 @@ EOF
         RESPONSE="$(curl -fsS -H "Authorization: Bearer $TOKEN" "$API_URL/api/v1/tix/debt-records")"
         ok "Authorized request succeeded: ${RESPONSE:-[]}"
 
+        # Reported as "Not Found" in red on the imports screen, which is what the browser shows
+        # when the API's 404 body carries no message of its own. The status here separates the
+        # three explanations that produce the same red box: 404 means the running process does not
+        # have these routes and is older than the source tree; 403 means the account is missing
+        # TIX_DECLARANT; 200 means the API is fine and the problem is in front of it.
+        info "Probing the ingest routes the imports screen calls..."
+        for ROUTE in /api/v1/ingest/sources /api/v1/ingest/batches; do
+            STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
+                -H "Authorization: Bearer $TOKEN" "$API_URL$ROUTE")"
+            if [ "$STATUS" = "200" ]; then
+                ok "$ROUTE → 200"
+            elif [ "$STATUS" = "404" ]; then
+                fail "$ROUTE → 404. The API is running an older build than this checkout. Stop bootRun and start it again."
+                exit 1
+            else
+                fail "$ROUTE → $STATUS"
+                exit 1
+            fi
+        done
+
         info "Confirming an unauthenticated request is rejected..."
         STATUS="$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/api/v1/tix/debt-records")"
         if [ "$STATUS" = "401" ]; then
