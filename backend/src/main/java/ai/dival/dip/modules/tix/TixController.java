@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -28,15 +29,17 @@ public class TixController {
     private final ExchangeService exchange;
     private final DebtRecordService debtRecords;
     private final PortfolioService portfolio;
+    private final SearchService search;
     private final SubjectRightsService rights;
     private final CurrentUserService currentUser;
 
     public TixController(ExchangeService exchange, DebtRecordService debtRecords,
-                         PortfolioService portfolio, SubjectRightsService rights,
-                         CurrentUserService currentUser) {
+                         PortfolioService portfolio, SearchService search,
+                         SubjectRightsService rights, CurrentUserService currentUser) {
         this.exchange = exchange;
         this.debtRecords = debtRecords;
         this.portfolio = portfolio;
+        this.search = search;
         this.rights = rights;
         this.currentUser = currentUser;
     }
@@ -91,6 +94,27 @@ public class TixController {
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
     public PortfolioService.Summary portfolio() {
         return portfolio.summarise(LocalDate.now());
+    }
+
+    /**
+     * Finds a business in the calling operator's own book.
+     *
+     * <p>Guarded by the declarant role, not the inquirer role, and the distinction is the control:
+     * this searches records you declared. An account that may only ask about other people's
+     * subjects has no book to search, and giving it one would turn a lookup service into a
+     * directory.
+     */
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public List<SearchService.Result> search(@RequestParam("q") String query) {
+        return search.searchOwn(query, actorId());
+    }
+
+    /** Everything the calling operator holds about one subject. Refuses subjects it does not. */
+    @GetMapping("/subjects/{id}")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public SearchService.Profile profile(@PathVariable UUID id) {
+        return search.profileOf(id, actorId());
     }
 
     @PostMapping("/debt-records/{id}/settle")

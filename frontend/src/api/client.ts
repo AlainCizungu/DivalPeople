@@ -237,6 +237,49 @@ export type Portfolio = {
   byService: { label: string; count: number }[];
 };
 
+/**
+ * One row of a search over the calling operator's own book.
+ *
+ * <p>`outstanding` and `currency` are null when the subject's records span more than one currency;
+ * `mixedCurrency` says so, because a single figure across two currencies is a number that is not
+ * of anything.
+ */
+export type SearchResult = {
+  subjectId: string;
+  name: string;
+  subjectType: SubjectType;
+  recordCount: number;
+  openCount: number;
+  outstanding: string | null;
+  currency: string | null;
+  mixedCurrency: boolean;
+  oldestDefault: string | null;
+  oldestBand: AgingBand | null;
+};
+
+export type HeldRecord = {
+  recordId: string;
+  status: DebtStatus;
+  amount: string;
+  currency: string;
+  serviceCategory: string;
+  defaultDate: string;
+  band: AgingBand;
+  retainedUntil: string;
+  imported: boolean;
+};
+
+export type SubjectProfile = {
+  subjectId: string;
+  name: string;
+  subjectType: SubjectType;
+  dateOfBirth: string | null;
+  nationality: string | null;
+  identifiers: { type: IdentifierType; value: string }[];
+  summary: SearchResult;
+  records: HeldRecord[];
+};
+
 /** What a person is asking the exchange to do about the data it holds on them. */
 export type SubjectRequestType = "ACCESS" | "RECTIFICATION" | "ERASURE" | "DISPUTE";
 
@@ -484,6 +527,23 @@ export const tixApi = {
   /** The calling operator's own exposure. Aggregated server-side; there is no tenant parameter. */
   portfolio(): Promise<Portfolio> {
     return request<Portfolio>("/api/v1/tix/portfolio");
+  },
+
+  /**
+   * Searches the calling operator's own book.
+   *
+   * <p>Not the registry. A subject is shared across operators, so a search starting from subjects
+   * would let any participant enumerate what its competitors have reported — the server scopes
+   * this to records the caller declared, and there is no parameter that could widen it.
+   */
+  search(query: string): Promise<SearchResult[]> {
+    return request<SearchResult[]>(
+      `/api/v1/tix/search?q=${encodeURIComponent(query)}`,
+    );
+  },
+
+  subject(subjectId: string): Promise<SubjectProfile> {
+    return request<SubjectProfile>(`/api/v1/tix/subjects/${subjectId}`);
   },
 
   settle(id: string): Promise<DebtRecord> {

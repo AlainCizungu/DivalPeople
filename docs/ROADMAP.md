@@ -21,7 +21,8 @@ is, and TIX exists in a form that predates this design.
 | 3 | Deterministic entity resolution | **Built** for the write path (`SubjectResolver`), exact match only, refuses ambiguity |
 | 3 | Fuzzy matching with confidence | **Built** for the read path (`IdentityMatcher`) |
 | 3 | Merge / unmerge, human review queue | Not built |
-| 3 | Universal search, business and individual profiles | Not built |
+| 3 | Search and profiles, over the operator's own book | **Built.** Scoped to records the caller declared, because tix_subject has no tenant and a search over subjects is a search over the national registry |
+| 3 | Search across the exchange | Not built, and not a screen problem — see below |
 | 4 | Cross-operator inquiry returning status, never another operator's data | **Built**, rate-limited, audited with a stated purpose |
 | 4 | Declaration by an operator, with a reporting threshold | **Built** |
 | 4 | Retention, expiry and real erasure | **Built** — the Code sets no period, so the figures need a written justification rather than a citation. See `TIX_LEGAL_BASIS.md` |
@@ -67,6 +68,24 @@ edges from the columns of the profiled Vodacom export rather than from a generic
 declared record and an imported one will land in the same bands when the mapping arrives. The
 exposure screen states the gap out loud — it shows how many of its records came from a file, and
 that figure is zero.
+
+### Why search stops at the operator's own book
+
+`tix_subject` carries no `tenant_id`. A subject is shared, because several operators declare
+against the same business, and that sharing is what makes this an exchange rather than a filing
+cabinet. It follows that any query beginning at the subject table searches the national registry —
+so an unrestricted name box would let one participant type a letter and list every business its
+competitors had reported.
+
+That is a commercial problem before it is a legal one. A second telecom joins TIX because of what
+its rivals will *not* learn; hand them enumeration and there is no second telecom. It is the same
+reason an inquiry takes an identifier rather than a name, carries a stated purpose, and is
+rate-limited.
+
+The version that does work across the exchange is name matching that returns **one confirmed match
+or none, never a list**, on the existing inquiry path with its purpose and its limit. That is what
+credit bureaux elsewhere do, it is buildable, and it is a deliberate next step rather than a
+blocked one.
 
 Anyone picking this up should read `TIX_MODULE.md` for what exists before designing what replaces
 it.

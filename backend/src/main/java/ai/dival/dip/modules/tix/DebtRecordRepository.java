@@ -39,6 +39,30 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
                                          @Param("today") LocalDate today);
 
     /**
+     * Subjects this operator holds a record against, matched by name or by any identifier.
+     *
+     * <p><strong>Tenant-scoped, and that is the entire security model of the search screen.</strong>
+     * {@code tix_subject} carries no {@code tenant_id} — a subject is shared, because several
+     * operators declare against the same person. So a query starting from the subject table would
+     * search the whole national registry and let any participant enumerate every business every
+     * competitor has reported. Starting from {@code tix_debt_record} and filtering on the tenant
+     * means an operator can only find people it already knows about, which is the difference
+     * between a search box and a bulk export.
+     *
+     * <p>Expired records are excluded. A record past its retention date must not be findable by
+     * the operator that declared it any more than by anybody else — the difference between erasure
+     * and concealment is that erasure applies to you too.
+     */
+    @Query("select distinct d.subject from DebtRecord d left join d.subject.identifiers i "
+            + "where d.tenantId = :tenantId and d.retentionUntil >= :today "
+            + "and (d.subject.normalizedName like concat('%', :name, '%') "
+            + "     or i.normalizedValue = :identifier)")
+    List<Subject> searchOwn(@Param("tenantId") UUID tenantId,
+                            @Param("name") String normalizedName,
+                            @Param("identifier") String normalizedIdentifier,
+                            @Param("today") LocalDate today);
+
+    /**
      * Records whose retention period has run out, for the calling tenant only.
      *
      * <p>Tenant-scoped on purpose, even though erasure is a system-wide obligation. Deleting
