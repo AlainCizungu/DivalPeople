@@ -82,6 +82,13 @@ public class IngestService {
                 .findByTenantIdAndDataSourceIdAndSupersededAtIsNull(tenantId, sourceId)
                 .map(current -> {
                     current.supersede();
+                    // Flushed here, before the new row is created, and the order is not optional.
+                    // Hibernate writes every pending INSERT before any pending UPDATE at flush —
+                    // so without this the new mapping arrives with a null supersession stamp while
+                    // the old one still has one too, and uq_source_mapping_current rejects both.
+                    // The partial unique index was doing exactly its job; the code was asking it
+                    // to tolerate a moment where two mappings were current.
+                    mappings.flush();
                     return current.getVersionNumber() + 1;
                 })
                 .orElse(1);

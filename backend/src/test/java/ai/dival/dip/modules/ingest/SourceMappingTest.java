@@ -63,7 +63,11 @@ class SourceMappingTest extends AbstractIntegrationTest {
 
         assertThat(mapping.getVersionNumber()).isEqualTo(1);
         assertThat(mapping.isCurrent()).isTrue();
-        assertThat(ingest.currentMapping(sourceId)).contains(mapping);
+        // By id, not by instance. SourceMapping has no equals(), so contains(mapping) compares
+        // object identity — and the mapping read back comes from a different persistence context,
+        // so it is never the same object however identical the row.
+        assertThat(ingest.currentMapping(sourceId))
+                .get().extracting(SourceMapping::getId).isEqualTo(mapping.getId());
     }
 
     @Test
@@ -73,14 +77,24 @@ class SourceMappingTest extends AbstractIntegrationTest {
         SourceMapping second = define("BPR_0", "360 + days");
 
         assertThat(second.getVersionNumber()).isEqualTo(2);
-        assertThat(ingest.currentMapping(sourceId)).contains(second);
+        assertThat(ingest.currentMapping(sourceId))
+                .get().extracting(SourceMapping::getId).isEqualTo(second.getId());
 
-        // The old one is still readable, and still says what it said. A batch published under it
-        // can be explained without anybody reconstructing what the rules used to be.
-        assertThat(ingest.mappingHistory(sourceId)).hasSize(2);
-        assertThat(first.getAmountColumn()).isEqualTo("Balance");
-        assertThat(first.isCurrent()).isFalse();
-        assertThat(first.getSupersededAt()).isNotNull();
+        // Re-read rather than asserted on the instance define() returned. That one is a snapshot
+        // taken before the supersession, and it will insist it is current forever — the same
+        // detached-entity trap that caught the subject-rights test.
+        List<SourceMapping> history = ingest.mappingHistory(sourceId);
+        assertThat(history).hasSize(2);
+
+        SourceMapping superseded = history.stream()
+                .filter(m -> m.getId().equals(first.getId()))
+                .findFirst().orElseThrow();
+
+        // Still readable, and still says what it said. A batch published under it can be explained
+        // without anybody reconstructing what the rules used to be.
+        assertThat(superseded.getAmountColumn()).isEqualTo("Balance");
+        assertThat(superseded.isCurrent()).isFalse();
+        assertThat(superseded.getSupersededAt()).isNotNull();
     }
 
     @Test
