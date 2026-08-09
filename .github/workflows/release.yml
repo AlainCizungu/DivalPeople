@@ -21,6 +21,23 @@ concurrency:
 env:
   REGISTRY: ghcr.io
 
+# Action versions, and why several of them are not the newest.
+#
+# The runner warns that Node 20 is deprecated and that actions still requesting it will stop
+# working. Actions/checkout, setup-java, setup-node and upload-artifact are all on majors that
+# bundle Node 20, and the newer majors that fix it exist. They are not bumped here because a
+# version bump nobody has verified, in the workflow that publishes container images, is the kind
+# of change that is fine four times and catastrophic the fifth.
+#
+# Check what is current and move them deliberately, one at a time, watching a run:
+#   gh api repos/actions/checkout/releases/latest --jq .tag_name
+#   gh api repos/actions/setup-java/releases/latest --jq .tag_name
+#   gh api repos/actions/setup-node/releases/latest --jq .tag_name
+#   gh api repos/actions/upload-artifact/releases/latest --jq .tag_name
+#
+# The deadline is real but it is not today: a deprecation warning is a warning, and the job that
+# was actually failing was failing for an unrelated reason — see the scan step below.
+
 jobs:
   guard:
     name: Refuse to publish a red build
@@ -122,7 +139,22 @@ jobs:
         #   git ls-remote https://github.com/aquasecurity/trivy-action v0.36.0
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component }}:latest
+          # The tag the Build step actually loaded, taken from the same action that produced it.
+          #
+          # This used to be assembled by hand as
+          #   ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component }}:latest
+          # and it had two faults, either of which was enough to break the job.
+          #
+          # github.repository is "AlainCizungu/DivalPeople". Docker references must be lowercase,
+          # and docker/metadata-action quietly lowercases its `images` input — so the image on the
+          # runner was ghcr.io/alaincizungu/divalpeople/..., the string above was not a valid
+          # reference at all, and Trivy had nothing to scan. It wrote no SARIF, and the upload step
+          # below then failed with "Path does not exist", which is the error that gets reported and
+          # the one that explains nothing.
+          #
+          # And ":latest" is conditional — metadata-action only emits it on the default branch.
+          # Reading the tag back out means the scan can never drift from the build.
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           format: sarif
           output: trivy-${{ matrix.component }}.sarif
           severity: CRITICAL,HIGH
@@ -132,8 +164,12 @@ jobs:
           exit-code: "0"
 
       - name: Publish the scan
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        # always(), so a scan that fails after writing its report still publishes what it found.
+        # And only when there is a file: if the scan produced nothing, the honest signal is the
+        # scan step's own failure above, not an upload complaining about a missing path.
+        if: always() && hashFiles(format('trivy-{0}.sarif', matrix.component)) != ''
+        # v4. GitHub's runner warns that v3 is deprecated from December 2026.
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-${{ matrix.component }}.sarif
           category: trivy-${{ matrix.component }}
