@@ -89,7 +89,21 @@ What to show:
 *Timing: the console logs `Received N rows from … in X ms`. If that number is large, say so and
 move on — it is measured rather than hidden.*
 
-### 4. Checking a business before extending credit — `operator-a` → **Inquiries**
+### 4. Finding one you already know about — `operator-a` → **Search**
+
+Type `grand horizon`. It finds the business in *your own book* and opens a profile: identifiers as
+the exchange stores them, every record you hold aged from the date it fell due, retention date, and
+whether it came from a file or the API.
+
+Then search a business only operator B has reported. **Nothing.** That is the screen working, and
+the empty state says so: finding nothing here means your own organisation has not reported them,
+and nothing more. The exchange answers the other question.
+
+Worth saying out loud if a telecom asks why it does not search everything: a subject is shared, so
+a search over subjects is a search over the national registry — and no operator joins an exchange
+where a rival can list its defaulters.
+
+### 5. Checking a business before extending credit — `operator-a` → **Inquiries**
 
 | Look up | Expect |
 |---|---|
@@ -99,6 +113,12 @@ move on — it is measured rather than hidden.*
 | RCCM `CD/KIN/RCCM/99-B-0000` | **No match** |
 
 A purpose is required before the button enables. Every inquiry is recorded with it.
+
+**Leave the identifier blank and type the exact registered name instead.** It resolves a business
+when precisely one in the registry carries that name. Three refusals are worth demonstrating: a
+*prefix* finds nothing (`Atlas` will not match `Atlas Distribution SARL`), two businesses sharing a
+name return "review required" rather than a list, and a *personal* name never resolves on its own —
+the profiled export had 48 names on more than one account inside a single operator's book.
 
 **The line to deliver on the second row:** operator A now knows two institutions report a debt
 against this company, and does not know the amount, does not know which institutions, and never
@@ -111,7 +131,7 @@ accrues daily.
 The illustrative score panel below the result is marked as a mock in heavy amber. Say plainly that
 there is no risk model yet and that the panel is what one would look like.
 
-### 5. The operator's own book — `operator-a` → **Exposure**
+### 6. The operator's own book — `operator-a` → **Exposure**
 
 Real records, aged from the date each obligation fell due.
 
@@ -125,7 +145,7 @@ Real records, aged from the date each obligation fell due.
 - The provenance panel at the bottom says how many of these records came from an imported file.
   It says **zero**, and it is on the screen rather than in a document nobody opens.
 
-### 6. Somebody comes forward — `operator-a` → **Subject requests**
+### 7. Somebody comes forward — `operator-a` → **Subject requests**
 
 The part of the product nobody else in this market has, and the one worth slowing down for.
 
@@ -151,7 +171,23 @@ competitor is not.
 *Sign in as `operator-b` to show the separation of duties: it can open a case and cannot decide
 one. Whoever takes the request at the counter should not also rule on it.*
 
-### 7. The refusals — sign in as `no-roles`
+### 8. Proving the accountability claim — `operator-a` → **Audit trail**
+
+Everything above has been writing rows here. The landing page tells institutions that every
+inquiry is recorded with the purpose it was made for; this is where that stops being a claim.
+
+- The **stated reason** column is the one to point at. It is what turns "somebody looked this
+  company up" into something an auditor can ask about.
+- **Refused attempts are here too.** A rate-limited sweep that left no trace would just be a
+  slower invisible sweep, so the denials are kept — which is why the count on the third card is
+  worth showing rather than hiding.
+- Rows are appended and never edited. A correction is a further event.
+- Sign in as `operator-b` to see its own trail and none of operator A's.
+
+*Accounts appear as identifiers rather than names, and that is deliberate: the trail belongs to no
+single part of the platform, so it does not depend on the part that knows who people are.*
+
+### 9. The refusals — sign in as `no-roles`
 
 Every TIX screen refuses, in a sentence explaining which permission is missing rather than an error
 code. Worth thirty seconds: an authorisation boundary that has never been demonstrated is a claim.
@@ -170,7 +206,6 @@ promised a launch date before that is settled.
 
 ## Things that will not work, so do not open them
 
-- **Universal search and business profiles** — not built. The inquiry screen is the only lookup.
 - **A risk score** — not built. Only the clearly-marked mock.
 - **Publishing an import to create records** — the batch publishes, and derives nothing.
 - **Withdrawing a case** — the status exists and nothing sets it. A person who stops pursuing a

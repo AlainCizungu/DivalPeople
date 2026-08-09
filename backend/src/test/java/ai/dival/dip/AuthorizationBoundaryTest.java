@@ -82,6 +82,8 @@ class AuthorizationBoundaryTest extends AbstractIntegrationTest {
     private RecruitmentController recruitmentController;
     @Autowired
     private TixController tixController;
+    @Autowired
+    private ai.dival.dip.common.audit.AuditController auditController;
 
     private Employee celestine;
     private Employee colleague;
@@ -281,6 +283,30 @@ class AuthorizationBoundaryTest extends AbstractIntegrationTest {
     void declarantCanReadThePortfolio() {
         signInAs("declarant-" + UUID.randomUUID(), "Grâce Ilunga", "TIX_DECLARANT");
         assertThatCode(() -> tixController.portfolio()).doesNotThrowAnyException();
+    }
+
+    // --- the trail ----------------------------------------------------------
+
+    @Test
+    @DisplayName("an ordinary account cannot read the record of what it did")
+    void employeesCannotReadTheAuditTrail() {
+        // Somebody watching their own watchers is not oversight. The trail is for an auditor, a
+        // compliance officer, or the administrator accountable for the staff in it.
+        assertThatThrownBy(() -> auditController.events(null, 100))
+                .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> auditController.summary())
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("a tenant administrator can, or the trail is unreadable rather than protected")
+    void administratorsCanReadTheAuditTrail() {
+        signInAs("admin-" + UUID.randomUUID(), "Nadine Lokolo", "EMPLOYEE", "TENANT_ADMIN");
+
+        assertThatCode(() -> {
+            auditController.events(null, 10);
+            auditController.summary();
+        }).doesNotThrowAnyException();
     }
 
     // --- and the reason none of this is a boundary if it refuses everyone ---

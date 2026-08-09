@@ -13,6 +13,7 @@
     "subjectRequests": "Demandes",
     "tix": "TIX",
     "organization": "Organisation",
+    "audit": "Journal d’audit",
     "notifications": "Notifications",
     "imports": "Imports de données",
     "participants": "Participants"
@@ -942,5 +943,35 @@
     "originDeclared": "Déclaré",
     "backToSearch": "Retour à la recherche",
     "inquire": "Interroger l’échange sur ce sujet"
+  },
+  "audit": {
+    "title": "Journal d’audit",
+    "subtitle": "Ce qu’ont fait les comptes de votre organisation, du plus récent au plus ancien. Chaque interrogation porte la finalité pour laquelle elle a été faite.",
+    "noAccess": "La lecture du journal requiert le rôle d’auditeur, de responsable de la conformité ou d’administrateur du locataire. Un compte ne peut pas être le seul lecteur de son propre relevé.",
+    "empty": "Rien n’a encore été enregistré.",
+    "loadFailed": "Impossible de charger le journal.",
+    "totalEvents": "Événements enregistrés",
+    "inquiries": "Interrogations effectuées",
+    "inquiriesNote": "Chacune porte une finalité déclarée",
+    "refusals": "Refusés ou en échec",
+    "refusalsNote": "Les tentatives refusées sont conservées, non écartées",
+    "filterTitle": "Filtrer",
+    "filterAll": "Tout",
+    "eventsTitle": "Événements",
+    "eventsDescription": "Les plus récents sont affichés. Les compteurs ci-dessus portent sur l’ensemble du journal.",
+    "colWhen": "Quand",
+    "colAction": "Action",
+    "colOutcome": "Résultat",
+    "colSubject": "Concernant",
+    "colActor": "Compte",
+    "colDetail": "Finalité déclarée",
+    "colOrigin": "Depuis",
+    "outcomes": {
+      "SUCCESS": "Réussi",
+      "DENIED": "Refusé",
+      "FAILURE": "Échec"
+    },
+    "actorNote": "Les comptes sont affichés par identifiant et non par nom. Le journal n’appartient à aucune partie de la plateforme en particulier : il ne dépend donc délibérément pas de celle qui connaît le nom des personnes.",
+    "immutableNote": "Les lignes sont ajoutées et jamais modifiées. Une correction est un nouvel événement, jamais une retouche — c’est pourquoi une tentative refusée y figure toujours."
   }
 }

@@ -12,6 +12,7 @@ is, and TIX exists in a form that predates this design.
 | Phase | Capability | State |
 |---|---|---|
 | 1 | Tenants, OIDC sign-in, RBAC, EN/FR, audit, PostgreSQL, files, notifications, CI/CD | **Built**, tenant isolation proved by tests |
+| 1 | Reading the audit trail | **Built.** Tenant-scoped, refusals kept and counted, stated purpose in its own column. Restricted to auditor, compliance officer and tenant administrator |
 | 1 | MFA | Not built — Keycloak supports it, it is not turned on |
 | 1 | Object storage | Filesystem locally; no S3-compatible store |
 | 1 | Observability | Structured logs with request ids; no metrics, traces or alerting |

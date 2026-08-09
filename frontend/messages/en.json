@@ -13,6 +13,7 @@
     "subjectRequests": "Subject requests",
     "tix": "TIX",
     "organization": "Organization",
+    "audit": "Audit trail",
     "notifications": "Notifications",
     "imports": "Data imports",
     "participants": "Participants"
@@ -942,5 +943,35 @@
     "originDeclared": "Declared",
     "backToSearch": "Back to search",
     "inquire": "Ask the exchange about this subject"
+  },
+  "audit": {
+    "title": "Audit trail",
+    "subtitle": "What your organisation's accounts have done, newest first. Every inquiry carries the purpose it was made for.",
+    "noAccess": "Reading the trail needs the auditor, compliance officer or tenant administrator role. An account cannot be the only reader of its own record.",
+    "empty": "Nothing recorded yet.",
+    "loadFailed": "Could not load the trail.",
+    "totalEvents": "Events recorded",
+    "inquiries": "Inquiries made",
+    "inquiriesNote": "Each one carries a stated purpose",
+    "refusals": "Refused or failed",
+    "refusalsNote": "Denied attempts are kept, not discarded",
+    "filterTitle": "Narrow it down",
+    "filterAll": "Everything",
+    "eventsTitle": "Events",
+    "eventsDescription": "The most recent are shown. Counts above are over the whole trail.",
+    "colWhen": "When",
+    "colAction": "Action",
+    "colOutcome": "Outcome",
+    "colSubject": "Concerning",
+    "colActor": "Account",
+    "colDetail": "Stated reason",
+    "colOrigin": "From",
+    "outcomes": {
+      "SUCCESS": "Succeeded",
+      "DENIED": "Refused",
+      "FAILURE": "Failed"
+    },
+    "actorNote": "Accounts are shown by identifier rather than by name. The trail belongs to no single part of the platform, so it deliberately does not depend on the part that knows people's names.",
+    "immutableNote": "Rows are appended and never changed. A correction is a further event, never an edit — which is why a refused attempt is still here."
   }
 }

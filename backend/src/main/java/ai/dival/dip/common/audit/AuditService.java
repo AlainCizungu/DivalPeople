@@ -4,8 +4,10 @@ import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.common.web.RequestIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,9 @@ public class AuditService {
     public static final String OUTCOME_SUCCESS = "SUCCESS";
     public static final String OUTCOME_DENIED = "DENIED";
     public static final String OUTCOME_FAILURE = "FAILURE";
+
+    /** The most rows one request may pull back. A page, not an export. */
+    private static final int MAX_TRAIL_PAGE = 500;
 
     private final AuditEventRepository repository;
 
@@ -72,6 +77,46 @@ public class AuditService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordSuccess(String action, String resourceType, String resourceId, UUID actorId) {
         record(action, resourceType, resourceId, OUTCOME_SUCCESS, actorId);
+    }
+
+    /**
+     * The current tenant's own trail, newest first.
+     *
+     * <p>Tenant-scoped, which is the whole of the access model: an operator reads what its own
+     * staff did and nothing else. The rows themselves are already confined that way — {@code
+     * audit_event} has carried a row-level security policy since V20 — so this is the application
+     * agreeing with the database rather than substituting for it.
+     *
+     * @param action null for everything; an exact action name to narrow to one kind of event
+     * @param limit  clamped, because the caller is a page and a page cannot render a hundred
+     *               thousand rows however sincerely it asks for them
+     */
+    @Transactional(readOnly = true)
+    public List<AuditEvent> recent(String action, int limit) {
+        int capped = Math.max(1, Math.min(limit, MAX_TRAIL_PAGE));
+        return repository.findRecent(
+                TenantContext.require(),
+                action == null || action.isBlank() ? null : action,
+                PageRequest.of(0, capped));
+    }
+
+    /**
+     * How often each action appears in this tenant's trail.
+     *
+     * <p>Counted over the whole trail rather than over the page above, deliberately. The number
+     * worth showing an auditor is how many inquiries an operator has ever made, not how many are
+     * on the screen.
+     */
+    @Transactional(readOnly = true)
+    public List<ActionCount> countsByAction() {
+        List<ActionCount> counts = new ArrayList<>();
+        for (Object[] row : repository.countByAction(TenantContext.require())) {
+            counts.add(new ActionCount((String) row[0], ((Number) row[1]).longValue()));
+        }
+        return List.copyOf(counts);
+    }
+
+    public record ActionCount(String action, long count) {
     }
 
     /**

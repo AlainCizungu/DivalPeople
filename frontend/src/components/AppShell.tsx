@@ -67,6 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ? [{ href: "/app/participants", label: messages.nav.participants, badge: 0 }]
       : []),
     { href: "/app/organization", label: messages.nav.organization, badge: 0 },
+    { href: "/app/audit", label: messages.nav.audit, badge: 0 },
     {
       href: "/app/notifications",
       label: messages.nav.notifications,

@@ -3,6 +3,7 @@ package ai.dival.dip.common.audit;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,30 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID> {
     List<AuditEvent> findByTenantIdOrderByOccurredAtDesc(UUID tenantId);
 
     List<AuditEvent> findByTenantIdAndResourceTypeOrderByOccurredAtDesc(UUID tenantId, String resourceType);
+
+    /**
+     * The most recent events for one tenant, newest first, optionally narrowed to one action.
+     *
+     * <p>Paged rather than unbounded. The existing {@code findByTenantId…} returns everything,
+     * which is fine for a test and not for a screen: an operator that has imported the real export
+     * a few times has tens of thousands of rows, and a trail nobody can load is a trail nobody
+     * reads.
+     *
+     * <p>{@code :action} is null to mean "all", which keeps this one query rather than two and
+     * keeps the ordering identical between them — a filtered view that sorted differently from the
+     * unfiltered one would be quietly misleading about what happened when.
+     */
+    @Query("select e from AuditEvent e where e.tenantId = :tenantId "
+            + "and (:action is null or e.action = :action) "
+            + "order by e.occurredAt desc")
+    List<AuditEvent> findRecent(@Param("tenantId") UUID tenantId,
+                                @Param("action") String action,
+                                Pageable page);
+
+    /** How many of each action a tenant has recorded, most frequent first. */
+    @Query("select e.action, count(e) from AuditEvent e where e.tenantId = :tenantId "
+            + "group by e.action order by count(e) desc")
+    List<Object[]> countByAction(@Param("tenantId") UUID tenantId);
 
     /**
      * Who, inside one tenant, successfully did something to a given resource since a moment.

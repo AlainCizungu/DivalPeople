@@ -280,6 +280,44 @@ export type SubjectProfile = {
   records: HeldRecord[];
 };
 
+/**
+ * One line of the audit trail.
+ *
+ * <p>`actorId` is an account id and not a name. Resolving one would mean the audit code importing
+ * the users module, which the architecture rules forbid — the trail belongs to no single module,
+ * which is exactly why it must not depend on one.
+ *
+ * <p>`detail` is the actor's stated reason where the API asked for one. On a TIX inquiry it is the
+ * purpose, and it is the column that makes the rest of the row worth keeping.
+ */
+export type AuditEntry = {
+  id: string;
+  action: string;
+  resourceType: string;
+  resourceId: string | null;
+  outcome: "SUCCESS" | "DENIED" | "FAILURE";
+  actorId: string | null;
+  requestId: string | null;
+  ipAddress: string | null;
+  detail: string | null;
+  occurredAt: string;
+};
+
+export type AuditActionCount = { action: string; count: number };
+
+export const auditApi = {
+  events(action: string | null, limit = 100): Promise<AuditEntry[]> {
+    const query = new URLSearchParams({ limit: String(limit) });
+    if (action) query.set("action", action);
+    return request<AuditEntry[]>(`/api/v1/audit/events?${query.toString()}`);
+  },
+
+  /** Counted over the whole trail, not the page. */
+  summary(): Promise<AuditActionCount[]> {
+    return request<AuditActionCount[]>("/api/v1/audit/summary");
+  },
+};
+
 /** What a person is asking the exchange to do about the data it holds on them. */
 export type SubjectRequestType = "ACCESS" | "RECTIFICATION" | "ERASURE" | "DISPUTE";
 
