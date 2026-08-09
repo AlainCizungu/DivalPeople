@@ -237,6 +237,53 @@ export type Portfolio = {
   byService: { label: string; count: number }[];
 };
 
+/** What a person is asking the exchange to do about the data it holds on them. */
+export type SubjectRequestType = "ACCESS" | "RECTIFICATION" | "ERASURE" | "DISPUTE";
+
+export type SubjectRequestStatus =
+  | "RECEIVED"
+  | "IDENTITY_VERIFIED"
+  | "UPHELD"
+  | "REFUSED"
+  | "WITHDRAWN";
+
+/**
+ * A case, as shown to whoever is handling it.
+ *
+ * <p>Carries no identifier and no name, and the server does not send them. Whoever is progressing
+ * the case already knows who walked in; a queue that echoed identity documents back would be a
+ * second copy of the registry with weaker controls around it.
+ *
+ * <p>`overdue` is computed on the server. Whether a statutory deadline has run out is a fact, not
+ * a rendering choice, and two browsers in different timezones must not disagree about it.
+ */
+export type SubjectRequest = {
+  id: string;
+  requestType: SubjectRequestType;
+  status: SubjectRequestStatus;
+  detail: string | null;
+  raisedAt: string;
+  dueAt: string;
+  overdue: boolean;
+  identityVerifiedAt: string | null;
+  decidedAt: string | null;
+  decisionReason: string | null;
+};
+
+/**
+ * One operator's entry in a person's file.
+ *
+ * <p>Names the operator, which is exactly what an enquiring operator is never told. The subject is
+ * entitled to know who is reporting them; a competitor is not.
+ */
+export type Disclosure = {
+  operator: string;
+  status: DebtStatus;
+  amount: string;
+  defaultDate: string;
+  retainedUntil: string;
+};
+
 export type Edition =
   | "BANKING"
   | "NGO"
@@ -417,6 +464,57 @@ export const tixApi = {
   dispute(id: string): Promise<DebtRecord> {
     return request<DebtRecord>(`/api/v1/tix/debt-records/${id}/dispute`, {
       method: "POST",
+    });
+  },
+};
+
+/**
+ * What a person may ask about themselves.
+ *
+ * <p>Raising and deciding are guarded by different roles on the server, and the split is the
+ * point: whoever takes the request at the counter should not also rule on it. These screens hide
+ * the actions an account cannot perform, which is a courtesy — the server refuses regardless.
+ */
+export const subjectRightsApi = {
+  list(): Promise<SubjectRequest[]> {
+    return request<SubjectRequest[]>("/api/v1/tix/subject-requests");
+  },
+
+  raise(body: {
+    requestType: SubjectRequestType;
+    identifierType: IdentifierType;
+    identifier: string;
+    detail?: string;
+  }): Promise<SubjectRequest> {
+    return request<SubjectRequest>("/api/v1/tix/subject-requests", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  verifyIdentity(id: string, evidence: string): Promise<SubjectRequest> {
+    return request<SubjectRequest>(
+      `/api/v1/tix/subject-requests/${id}/verify-identity`,
+      { method: "POST", body: JSON.stringify({ evidence }) },
+    );
+  },
+
+  /** The subject's whole file, across every operator. The most heavily audited read here. */
+  disclose(id: string): Promise<Disclosure[]> {
+    return request<Disclosure[]>(`/api/v1/tix/subject-requests/${id}/disclosure`);
+  },
+
+  decideErasure(id: string): Promise<SubjectRequest> {
+    return request<SubjectRequest>(
+      `/api/v1/tix/subject-requests/${id}/decide-erasure`,
+      { method: "POST" },
+    );
+  },
+
+  close(id: string, upheld: boolean, reason: string): Promise<SubjectRequest> {
+    return request<SubjectRequest>(`/api/v1/tix/subject-requests/${id}/close`, {
+      method: "POST",
+      body: JSON.stringify({ upheld, reason }),
     });
   },
 };

@@ -116,7 +116,33 @@ Real records, aged from the date each obligation fell due.
 - The provenance panel at the bottom says how many of these records came from an imported file.
   It says **zero**, and it is on the screen rather than in a document nobody opens.
 
-### 6. The refusals — sign in as `no-roles`
+### 6. Somebody comes forward — `operator-a` → **Subject requests**
+
+The part of the product nobody else in this market has, and the one worth slowing down for.
+
+Open a case against a business that is in the registry — `CD/KIN/RCCM/15-B-6604` will do — as a
+**Dispute**, with something in their own words. Then:
+
+- **Look at the queue.** Every case carries a deadline: sixty days for access under article 210 of
+  the Code du numérique, thirty for everything else. Overdue cases are marked, and missing the
+  deadline is itself grounds for a complaint to the Autorité de protection des données.
+- **Note what the queue does not show.** No name, no identifier. Whoever is handling a case already
+  knows who walked in; a queue echoing identity documents back would be a second copy of the
+  registry with weaker controls around it.
+- **Verify their identity.** The evidence box is free text and mandatory — "National ID seen in
+  person, photograph matches" is something a regulator can assess and a ticked box is not.
+- **Uphold it.** The records stay suppressed, and every institution that was previously told about
+  this subject gets a notification that the answer they were given is superseded. That is article
+  214, and it is the difference between correcting a database and correcting a decision.
+
+Then raise an **Access** request and disclose the file. It names the operators — which is exactly
+what an enquiring operator is never told. The subject is entitled to know who is reporting them; a
+competitor is not.
+
+*Sign in as `operator-b` to show the separation of duties: it can open a case and cannot decide
+one. Whoever takes the request at the counter should not also rule on it.*
+
+### 7. The refusals — sign in as `no-roles`
 
 Every TIX screen refuses, in a sentence explaining which permission is missing rather than an error
 code. Worth thirty seconds: an authorisation boundary that has never been demonstrated is a claim.
@@ -138,5 +164,5 @@ promised a launch date before that is settled.
 - **Universal search and business profiles** — not built. The inquiry screen is the only lookup.
 - **A risk score** — not built. Only the clearly-marked mock.
 - **Publishing an import to create records** — the batch publishes, and derives nothing.
-- **Subject rights screens** — the rights are built in the backend and have no UI yet. Demonstrate
-  them by describing them from the landing page section rather than by clicking.
+- **Withdrawing a case** — the status exists and nothing sets it. A person who stops pursuing a
+  case leaves it open until somebody decides it.

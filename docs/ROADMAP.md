@@ -26,6 +26,7 @@ is, and TIX exists in a form that predates this design.
 | 4 | Declaration by an operator, with a reporting threshold | **Built** |
 | 4 | Retention, expiry and real erasure | **Built** — the Code sets no period, so the figures need a written justification rather than a citation. See `TIX_LEGAL_BASIS.md` |
 | 0 | DRC legal and regulatory analysis | **Statute read**, not reviewed by counsel. `TIX_LEGAL_BASIS.md` |
+| 4 | Subject rights: access, dispute, rectification, erasure | **Built**, with a queue, statutory deadlines, and separation of duties between raising and deciding |
 | 4 | Aging buckets and an operator exposure view | **Built.** Aged from the default date, per currency, own records only |
 | 4 | Write-off indicator, authorised reports, portfolio alerts | Not built — write-off is decision 2 in `TIX_SOURCE_PROFILE.md` |
 | 5 | Risk rating with reason codes and a model version | **Not built.** The score on the landing page is invented |
