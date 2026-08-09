@@ -147,11 +147,11 @@ class SourceMappingTest extends AbstractIntegrationTest {
         // A mapping written against last quarter's header, applied to a file where somebody
         // renamed a column, would otherwise derive thousands of records with a blank identifier —
         // all refused later, for a reason that says nothing about the cause.
-        assertThatThrownBy(() -> mapping.cell(row, "BPR_0"))
+        assertThatThrownBy(() -> mapping.identifierIn(row))
                 .isInstanceOf(PolicyRefusedException.class)
                 .hasMessageContaining("BPR_0");
 
-        assertThat(mapping.cell(row, "Balance")).isEqualTo("184000.50");
+        assertThat(mapping.rawAmountIn(row)).isEqualTo("184000.50");
     }
 
     @Test

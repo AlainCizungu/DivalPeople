@@ -149,19 +149,19 @@ public class ImportDeriver {
      */
     private DeclarationRequest buildRequest(SourceMapping mapping, Map<String, String> cells,
                                             LocalDate asAt) {
-        String identifier = mapping.cell(cells, mapping.getIdentifierColumn());
+        String identifier = mapping.identifierIn(cells);
         if (identifier.isBlank()) {
             throw new PolicyRefusedException(
                     "No value in \"" + mapping.getIdentifierColumn() + "\", so there is nothing to "
                             + "resolve this row to a subject.");
         }
-        String name = mapping.cell(cells, mapping.getNameColumn());
+        String name = mapping.nameIn(cells);
         if (name.isBlank()) {
             throw new PolicyRefusedException(
                     "No value in \"" + mapping.getNameColumn() + "\".");
         }
 
-        String rawAmount = mapping.cell(cells, mapping.getAmountColumn());
+        String rawAmount = mapping.rawAmountIn(cells);
         BigDecimal amount;
         try {
             amount = new BigDecimal(rawAmount.replace(" ", "").replace(",", ""));

@@ -130,6 +130,31 @@ public class SourceMapping {
     }
 
     /**
+     * The three values this mapping defines, read out of a delivered row.
+     *
+     * <p>Public and specific, rather than a general "read column X". A caller cannot ask this
+     * mapping for a column the mapping does not define, which is the point: the deriver in
+     * {@code tix} consumes these across a module boundary, and the narrower the surface it reaches
+     * through the less there is to get wrong.
+     *
+     * <p>They were briefly a single package-private {@code cell(row, column)}, written when the
+     * derivation was expected to live in this package. It does not — {@code tix} decides what
+     * enters the registry — and the compiler said so.
+     */
+    public String identifierIn(Map<String, String> row) {
+        return cell(row, identifierColumn);
+    }
+
+    public String nameIn(Map<String, String> row) {
+        return cell(row, nameColumn);
+    }
+
+    /** As it appears in the file. Parsing it is the caller's problem, and its error message. */
+    public String rawAmountIn(Map<String, String> row) {
+        return cell(row, amountColumn);
+    }
+
+    /**
      * Reads one cell of a row through this mapping.
      *
      * <p>Refuses a column the delivery does not have, rather than returning empty. A mapping
@@ -137,7 +162,7 @@ public class SourceMapping {
      * would otherwise derive every record with a blank identifier — thousands of rows, silently
      * wrong, all of them refused later for a reason that says nothing about the cause.
      */
-    String cell(Map<String, String> row, String column) {
+    private String cell(Map<String, String> row, String column) {
         if (!row.containsKey(column)) {
             throw new PolicyRefusedException(
                     "This delivery has no column named \"" + column + "\". The mapping for this "

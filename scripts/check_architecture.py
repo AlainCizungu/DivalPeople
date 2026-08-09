@@ -449,10 +449,94 @@ def check_annotations_are_attached() -> None:
                 for path, number, text in violations))
 
 
+
+# ---------------------------------------------------------------------------
+# Rule 8 — a module only calls another module's public members.
+#
+# Added after ImportDeriver, in tix, called SourceMapping.cell(...), which is package-private in
+# ingest. javac catches it; nothing before javac did. That is the third accessibility mistake in
+# this project — retainUntil was widened and then called from another package, SubjectRequest's
+# verifier was reached from outside, and now this — and each one cost a round trip to a machine
+# that can compile.
+#
+# The check is deliberately approximate. It does not resolve types; it takes the classes a file
+# imports from another module, and for each one asks whether every method the file appears to call
+# by that name is declared public there. A same-named method on an unrelated local type will make
+# this look, find a public declaration, and pass — so it under-reports rather than over-reports,
+# which is the right direction for a rule that must never block a correct change.
+# ---------------------------------------------------------------------------
+# Java words that look like a method call and are not one.
+NOT_A_METHOD = {
+    "if", "for", "while", "switch", "catch", "return", "new", "this", "super", "try",
+    "synchronized", "do", "else",
+}
+
+
+def check_cross_module_calls_are_public() -> None:
+    declarations: dict[str, dict[str, bool]] = {}
+    for path in java_sources():
+        members: dict[str, bool] = {}
+        for line in path.read_text(encoding="utf-8").splitlines():
+            # A member declaration in this codebase sits at exactly four spaces of indent, inside
+            # the class body. Requiring that is what keeps `name.trim()` on line 12 of a method
+            # from being recorded as a package-private member called "trim" — which it was, along
+            # with eighteen other phantoms, when this rule was first written.
+            match = re.match(
+                r"^    (?:(public|protected|private) )?"
+                r"(?:static |final |abstract |synchronized )*"
+                r"[\w<>\[\],.? ]+ (\w+)\(", line)
+            if not match:
+                continue
+            visibility, name = match.group(1), match.group(2)
+            if name in NOT_A_METHOD:
+                continue
+            members[name] = members.get(name, False) or (visibility == "public")
+        declarations[path.stem] = members
+
+    violations = []
+    for path in java_sources():
+        module = module_of(path)
+        if module is None:
+            continue
+        text = path.read_text(encoding="utf-8")
+
+        for imported in re.finditer(
+                rf"^import {re.escape(BASE_PACKAGE)}\.modules\.(\w+)\.(\w+);", text, re.M):
+            other_module, other_class = imported.group(1), imported.group(2)
+            if other_module == module or other_class not in declarations:
+                continue
+
+            # Which local names actually hold one of these. Without this the rule flagged
+            # String.trim() against a private helper called trim, and a record accessor called
+            # overtime() against an unrelated private method of the same name — five phantoms out
+            # of five reports. A check that cries wolf gets switched off, so it now asks what the
+            # variable is rather than only what the method is called.
+            holders = set(re.findall(rf"\b{other_class}\s+(\w+)\s*[=;,)]", text))
+            holders |= set(re.findall(rf"\b{other_class}\s+(\w+)\s*\)", text))
+            if not holders:
+                continue
+
+            for holder in holders:
+                for name in re.findall(rf"\b{re.escape(holder)}\.(\w+)\s*\(", text):
+                    if name in NOT_A_METHOD:
+                        continue
+                    if name in declarations[other_class] and not declarations[other_class][name]:
+                        violations.append((path, other_class, name))
+
+    if violations:
+        raise Failure(
+            "A module calls a member that is not public in another module's class. javac will\n"
+            "say the same thing a round trip later:\n"
+            + "\n".join(
+                f"  {path.relative_to(REPO)}  ->  {cls}.{name}(...) is not public"
+                for path, cls, name in sorted(set(violations))))
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
     ("annotations are attached to a declaration", check_annotations_are_attached),
     ("no cross-module repository access", check_no_cross_module_persistence),
+    ("cross-module calls reach only public members", check_cross_module_calls_are_public),
     ("tenant-owned tables have RLS policies", check_tenant_owned_tables_have_policies),
     ("no fixed-width CHAR columns", check_no_char_columns),
     ("every endpoint declares authorization", check_every_endpoint_declares_authorization),
