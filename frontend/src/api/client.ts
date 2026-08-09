@@ -443,6 +443,8 @@ export type ImportBatch = {
   byteSize: number;
   rowCount: number;
   status: BatchStatus;
+  /** Null on deliveries received before the field existed; those cannot be derived from. */
+  reportedAsAt: string | null;
   receivedAt: string;
   publishedAt: string | null;
 };
@@ -497,6 +499,39 @@ export type BatchIssues = {
     detail: string | null;
   }[];
   complete: boolean;
+};
+
+/**
+ * What an operator says its columns mean.
+ *
+ * <p>`current` is false once a newer version supersedes this one. Mappings are never edited: a
+ * published delivery was derived through whichever was current at the time, and rewriting one in
+ * place would leave that batch untraceable to the rules that produced it.
+ */
+export type SourceMappingView = {
+  id: string;
+  versionNumber: number;
+  identifierColumn: string;
+  identifierType: IdentifierType;
+  nameColumn: string;
+  amountColumn: string;
+  currency: string;
+  serviceCategory: string;
+  subjectType: SubjectType;
+  current: boolean;
+  definedAt: string;
+  supersededAt: string | null;
+};
+
+/** What the derivation did. `complete` is false when more rows were refused than are listed. */
+export type DerivationReport = {
+  rows: number;
+  created: number;
+  refused: number;
+  refusals: { rowNumber: number; reason: string }[];
+  complete: boolean;
+  asAt: string;
+  mappingVersion: number;
 };
 
 export type BatchProfile = {
@@ -554,6 +589,38 @@ export const ingestApi = {
   /** Counted over every row, not the page of them the rows endpoint returns. */
   profile(batchId: string): Promise<BatchProfile> {
     return request<BatchProfile>(`/api/v1/ingest/batches/${batchId}/profile`);
+  },
+
+  /** Null when the operator has not defined one — the server answers 204 rather than 404. */
+  async currentMapping(sourceId: string): Promise<SourceMappingView | null> {
+    const mapping = await request<SourceMappingView | undefined>(
+      `/api/v1/ingest/sources/${sourceId}/mapping`,
+    );
+    return mapping ?? null;
+  },
+
+  mappingHistory(sourceId: string): Promise<SourceMappingView[]> {
+    return request<SourceMappingView[]>(
+      `/api/v1/ingest/sources/${sourceId}/mapping/history`,
+    );
+  },
+
+  defineMapping(
+    sourceId: string,
+    body: {
+      identifierColumn: string;
+      identifierType: IdentifierType;
+      nameColumn: string;
+      amountColumn: string;
+      currency: string;
+      serviceCategory: string;
+      subjectType: SubjectType;
+    },
+  ): Promise<SourceMappingView> {
+    return request<SourceMappingView>(`/api/v1/ingest/sources/${sourceId}/mapping`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   },
 
   validate(batchId: string): Promise<ImportBatch> {
@@ -618,6 +685,19 @@ export const tixApi = {
 
   subject(subjectId: string): Promise<SubjectProfile> {
     return request<SubjectProfile>(`/api/v1/tix/subjects/${subjectId}`);
+  },
+
+  /**
+   * Turns a delivered batch into records.
+   *
+   * <p>Separate from publishing on purpose: publishing accepts the delivery, this makes the people
+   * in it visible to every other operator on the exchange.
+   */
+  deriveImport(batchId: string, dunningEvidence: boolean): Promise<DerivationReport> {
+    return request<DerivationReport>(`/api/v1/tix/imports/${batchId}/derive`, {
+      method: "POST",
+      body: JSON.stringify({ dunningEvidence }),
+    });
   },
 
   settle(id: string): Promise<DebtRecord> {

@@ -88,6 +88,24 @@ What to show:
   row they duplicate, and rows with a gap in a column that is unique everywhere else — a candidate
   identifier with a hole in it. These hold whatever the mapping eventually says, which is why they
   could be reported before it exists. Nothing is rejected: every row is stored as delivered.
+- **Say what the columns mean.** Under the profile, a mapping: which column is the identifier,
+  which is the name, which is the amount, with the profile's findings restated beside the form —
+  the unique columns and the numeric ones. Point out that DIP is not choosing. Ten columns in that
+  file are numeric and only Vodacom knows which is the balance.
+
+  Saving does not edit a mapping, it supersedes it. A delivery already derived keeps the rules it
+  was derived under, and the earlier versions stay listed.
+
+- **Validate, publish, then create the records.** Deriving is a separate button from publishing on
+  purpose: publishing accepts the delivery, deriving makes the people in it visible to every other
+  operator. Tick the dunning confirmation — a typed declaration carries that assertion per record,
+  so an import has to carry it too, and it is recorded against whoever clicked.
+
+  Expect roughly 3,699 records created and 591 refused, listed by row number and reason: below the
+  100 USD floor, or a credit balance. That is the threshold and decision 4 working, visible, on
+  their own data. Then open **Exposure** — the provenance panel that has said zero imported records
+  all session now says otherwise.
+
 - Upload the same file twice. Refused, naming the batch that already holds it.
 
 *Timing: the console logs `Received N rows from … in X ms`. If that number is large, say so and

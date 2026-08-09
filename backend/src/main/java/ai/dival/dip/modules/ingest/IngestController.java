@@ -258,9 +258,12 @@ public class IngestController {
      *                       that what the platform holds is the file they sent, and a truncated
      *                       digest cannot be compared against anything.
      */
+    /** @param reportedAsAt null on deliveries received before the field existed; those cannot be
+     *                       derived from, because nothing derived would have a retention clock */
     public record BatchResponse(UUID id, UUID sourceId, String sourceCode, String filename,
                                 String checksumSha256, long byteSize, int rowCount,
-                                BatchStatus status, Instant receivedAt, Instant publishedAt) {
+                                BatchStatus status, LocalDate reportedAsAt,
+                                Instant receivedAt, Instant publishedAt) {
         static BatchResponse from(ImportBatch batch) {
             return new BatchResponse(
                     batch.getId(),
@@ -271,12 +274,12 @@ public class IngestController {
                     batch.getByteSize(),
                     batch.getRowCount(),
                     batch.getStatus(),
+                    batch.getReportedAsAt(),
                     batch.getReceivedAt(),
                     batch.getPublishedAt());
         }
     }
 
-    /** @param payload the row as stored, verbatim, as a JSON object */
     /**
      * What the operator says the columns mean.
      *
@@ -317,6 +320,7 @@ public class IngestController {
         }
     }
 
+    /** @param payload the row as stored, verbatim, as a JSON object */
     public record RowResponse(UUID id, int rowNumber, String payload) {
         static RowResponse from(RawRecord record) {
             return new RowResponse(record.getId(), record.getRowNumber(), record.getPayload());

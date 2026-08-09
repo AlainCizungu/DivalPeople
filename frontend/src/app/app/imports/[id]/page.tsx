@@ -7,16 +7,22 @@ import { useMessages } from "@/i18n/LocaleProvider";
 import {
   ApiError,
   ingestApi,
+  tixApi,
   type BatchProfile,
   type BatchStatus,
+  type DerivationReport,
+  type IdentifierType,
   type ImportBatch,
   type RawRow,
+  type SourceMappingView,
+  type SubjectType,
 } from "@/api/client";
 import {
   Button,
   Card,
   EmptyState,
   ErrorNotice,
+  Field,
   Metric,
   PageHeader,
   Pill,
@@ -60,6 +66,21 @@ export default function BatchPage() {
    * rarer one.
    */
   const [profile, setProfile] = useState<BatchProfile | null>(null);
+  const [mapping, setMapping] = useState<SourceMappingView | null>(null);
+  const [history, setHistory] = useState<SourceMappingView[]>([]);
+  const [report, setReport] = useState<DerivationReport | null>(null);
+  const [dunning, setDunning] = useState(false);
+
+  // The mapping form. Seeded from the mapping in force so that redefining one is an edit of what
+  // is there rather than a blank page — which is how somebody accidentally supersedes a correct
+  // mapping with three empty columns.
+  const [identifierColumn, setIdentifierColumn] = useState("");
+  const [identifierType, setIdentifierType] = useState<IdentifierType>("RCCM");
+  const [nameColumn, setNameColumn] = useState("");
+  const [amountColumn, setAmountColumn] = useState("");
+  const [currency, setCurrency] = useState("USD");
+  const [serviceCategory, setServiceCategory] = useState("POSTPAID");
+  const [subjectType, setSubjectType] = useState<SubjectType>("BUSINESS");
 
   const load = useCallback(async () => {
     try {
@@ -67,8 +88,27 @@ export default function BatchPage() {
         ingestApi.listBatches(),
         ingestApi.rows(batchId),
       ]);
-      setBatch(batches.find((candidate) => candidate.id === batchId) ?? null);
+      const found = batches.find((candidate) => candidate.id === batchId) ?? null;
+      setBatch(found);
       setRows(loadedRows);
+
+      if (found) {
+        const [current, versions] = await Promise.all([
+          ingestApi.currentMapping(found.sourceId),
+          ingestApi.mappingHistory(found.sourceId),
+        ]);
+        setMapping(current);
+        setHistory(versions);
+        if (current) {
+          setIdentifierColumn(current.identifierColumn);
+          setIdentifierType(current.identifierType);
+          setNameColumn(current.nameColumn);
+          setAmountColumn(current.amountColumn);
+          setCurrency(current.currency);
+          setServiceCategory(current.serviceCategory);
+          setSubjectType(current.subjectType);
+        }
+      }
     } catch (caught) {
       setRows([]);
       setError(caught instanceof ApiError ? caught.message : messages.common.unexpectedError);
@@ -133,6 +173,12 @@ export default function BatchPage() {
               <div>
                 <dt className="text-xs text-muted">{t.size}</dt>
                 <dd className="mt-1 font-bold tabular-nums text-navy">{batch.byteSize}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted">{t.asAt}</dt>
+                <dd className="mt-1 font-bold tabular-nums text-navy">
+                  {batch.reportedAsAt ?? "—"}
+                </dd>
               </div>
               <div>
                 <dt className="text-xs text-muted">{t.received}</dt>
@@ -388,6 +434,279 @@ export default function BatchPage() {
           )}
         </Card>
       </div>
+
+      {/* Beside the profile, not on another screen. The evidence for the choice is the profile:
+          which columns are unique, which are constant, which are entirely numeric. Asking
+          somebody to pick the amount column on a page that does not show them is asking them to
+          remember. */}
+      <div className="mb-6">
+        <Card title={t.mappingTitle} description={t.mappingDescription}>
+          {mapping ? (
+            <p className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted">
+              <Pill tone="positive">{t.mappingCurrent}</Pill>
+              <span>
+                {t.mappingVersion} {mapping.versionNumber}
+              </span>
+              <span className="tabular-nums">{mapping.definedAt.slice(0, 10)}</span>
+            </p>
+          ) : (
+            <div className="mb-4">
+              <EmptyState>{t.mappingNone}</EmptyState>
+            </div>
+          )}
+
+          {/* The profile's findings, restated as a hint. This is the whole reason the mapping
+              lives on this page. */}
+          {profile && (
+            <div className="mb-5 flex flex-col gap-2 rounded border border-line bg-soft px-4 py-3 text-sm">
+              <p className="text-muted">
+                <span className="font-semibold text-ink">{t.uniqueColumns}:</span>{" "}
+                {profile.columns
+                  .filter((c) => c.filled > 0 && c.filled === c.distinct)
+                  .map((c) => c.column)
+                  .join(", ") || "—"}
+              </p>
+              <p className="text-muted">
+                <span className="font-semibold text-ink">{t.numericColumns}:</span>{" "}
+                {profile.columns
+                  .filter((c) => c.numeric)
+                  .map((c) => c.column)
+                  .join(", ") || "—"}
+              </p>
+            </div>
+          )}
+
+          <form
+            className="grid gap-4 sm:grid-cols-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!batch) return;
+              void run(() =>
+                ingestApi.defineMapping(batch.sourceId, {
+                  identifierColumn: identifierColumn.trim(),
+                  identifierType,
+                  nameColumn: nameColumn.trim(),
+                  amountColumn: amountColumn.trim(),
+                  currency: currency.trim(),
+                  serviceCategory: serviceCategory.trim(),
+                  subjectType,
+                }),
+              );
+            }}
+          >
+            <Field
+              label={t.mappingIdentifier}
+              htmlFor="identifierColumn"
+              hint={t.mappingIdentifierHint}
+            >
+              <input
+                id="identifierColumn"
+                list="batch-columns"
+                className={inputClass}
+                value={identifierColumn}
+                onChange={(e) => setIdentifierColumn(e.target.value)}
+                required
+              />
+            </Field>
+
+            <Field label={t.mappingIdentifierType} htmlFor="identifierType">
+              <select
+                id="identifierType"
+                className={inputClass}
+                value={identifierType}
+                onChange={(e) => setIdentifierType(e.target.value as IdentifierType)}
+              >
+                {(Object.keys(messages.tix.identifierTypes) as IdentifierType[]).map((type) => (
+                  <option key={type} value={type}>
+                    {messages.tix.identifierTypes[type]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label={t.mappingName} htmlFor="nameColumn">
+              <input
+                id="nameColumn"
+                list="batch-columns"
+                className={inputClass}
+                value={nameColumn}
+                onChange={(e) => setNameColumn(e.target.value)}
+                required
+              />
+            </Field>
+
+            <Field label={t.mappingAmount} htmlFor="amountColumn" hint={t.mappingAmountHint}>
+              <input
+                id="amountColumn"
+                list="batch-columns"
+                className={inputClass}
+                value={amountColumn}
+                onChange={(e) => setAmountColumn(e.target.value)}
+                required
+              />
+            </Field>
+
+            <Field label={t.mappingCurrency} htmlFor="currency" hint={t.mappingCurrencyHint}>
+              <input
+                id="currency"
+                className={inputClass}
+                maxLength={3}
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                required
+              />
+            </Field>
+
+            <Field label={t.mappingService} htmlFor="serviceCategory">
+              <input
+                id="serviceCategory"
+                className={inputClass}
+                value={serviceCategory}
+                onChange={(e) => setServiceCategory(e.target.value)}
+                required
+              />
+            </Field>
+
+            <Field label={t.mappingSubjectType} htmlFor="subjectType">
+              <select
+                id="subjectType"
+                className={inputClass}
+                value={subjectType}
+                onChange={(e) => setSubjectType(e.target.value as SubjectType)}
+              >
+                <option value="BUSINESS">{messages.search.types.BUSINESS}</option>
+                <option value="INDIVIDUAL">{messages.search.types.INDIVIDUAL}</option>
+              </select>
+            </Field>
+
+            {/* The header of this delivery, offered as suggestions rather than as a closed list:
+                a mapping may legitimately name a column a later file will have. */}
+            <datalist id="batch-columns">
+              {columns.map((column) => (
+                <option key={column} value={column} />
+              ))}
+            </datalist>
+
+            <div className="sm:col-span-2">
+              <Button type="submit" disabled={busy}>
+                {mapping ? t.mappingReplace : t.mappingSave}
+              </Button>
+              {mapping && <p className="mt-2 text-xs text-muted">{t.mappingReplaceNote}</p>}
+            </div>
+          </form>
+
+          {history.length > 1 && (
+            <div className="mt-5 border-t border-line pt-4">
+              <p className="mb-2 text-xs text-muted">{t.mappingHistory}</p>
+              <ul className="flex flex-col gap-1.5 text-xs text-muted">
+                {history
+                  .filter((version) => !version.current)
+                  .map((version) => (
+                    <li key={version.id} className="tabular-nums">
+                      v{version.versionNumber} — {version.identifierColumn} /{" "}
+                      {version.nameColumn} / {version.amountColumn} · {t.mappingSupersededOn}{" "}
+                      {version.supersededAt?.slice(0, 10)}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {batch?.status === "PUBLISHED" && mapping && (
+        <div className="mb-6">
+          <Card title={t.deriveTitle} description={t.deriveDescription}>
+            {report === null ? (
+              <div className="flex flex-col gap-4">
+                <label className="flex items-start gap-3 text-sm text-ink">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={dunning}
+                    onChange={(e) => setDunning(e.target.checked)}
+                  />
+                  <span>
+                    {t.deriveDunning}
+                    <span className="mt-0.5 block text-xs text-muted">{t.deriveDunningHint}</span>
+                  </span>
+                </label>
+                <div>
+                  <Button
+                    disabled={busy || !dunning || batch.reportedAsAt === null}
+                    onClick={() => {
+                      setBusy(true);
+                      setError(null);
+                      void tixApi
+                        .deriveImport(batch.id, dunning)
+                        .then(setReport)
+                        .catch((caught) =>
+                          setError(
+                            caught instanceof ApiError
+                              ? caught.message
+                              : messages.common.unexpectedError,
+                          ),
+                        )
+                        .finally(() => setBusy(false));
+                    }}
+                  >
+                    {busy ? messages.common.loading : t.deriveAction}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Metric label={t.deriveCreated} value={String(report.created)} />
+                  <Metric
+                    label={t.deriveRefused}
+                    value={String(report.refused)}
+                    tone={report.refused > 0 ? "warning" : "plain"}
+                  />
+                </div>
+
+                <p className="mt-4 text-sm text-muted">
+                  {t.deriveAsAt} <span className="tabular-nums text-ink">{report.asAt}</span> ·{" "}
+                  {t.deriveMappingVersion}{" "}
+                  <span className="tabular-nums text-ink">{report.mappingVersion}</span>
+                </p>
+
+                {report.refusals.length > 0 && (
+                  <div className="mt-5 border-t border-line pt-4">
+                    <p className="mb-3 font-bold text-navy">{t.deriveRefusalsTitle}</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[26rem] text-left text-sm">
+                        <thead className="border-b border-line text-xs tracking-wide text-muted uppercase">
+                          <tr>
+                            <th scope="col" className="pb-3 pr-4 font-semibold">{t.colRow}</th>
+                            <th scope="col" className="pb-3 font-semibold">{t.colReason}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.refusals.map((refusal) => (
+                            <tr
+                              key={refusal.rowNumber}
+                              className="border-b border-line last:border-0"
+                            >
+                              <th scope="row" className="py-2.5 pr-4 tabular-nums text-navy">
+                                {refusal.rowNumber}
+                              </th>
+                              <td className="py-2.5 text-ink">{refusal.reason}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {!report.complete && (
+                      <p className="mt-3 text-xs text-muted">{t.deriveTruncated}</p>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </Card>
+        </div>
+      )}
 
       <Card title={t.rowsTitle} description={t.rowsDescription}>
         {rows === null ? (
