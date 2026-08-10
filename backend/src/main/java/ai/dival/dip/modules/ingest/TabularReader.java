@@ -17,6 +17,10 @@ import java.util.Map;
  * previous parser refused outright, which was the parser being right about its own rules and
  * useless about the only file we have.
  *
+ * <p>Columns without a heading are handled rather than refused, and the two cases are kept
+ * apart: an unlabelled column that is empty everywhere is padding and is dropped, and one holding
+ * data is kept under a name taken from its position. See {@link #keptColumns}.
+ *
  * <p>The rows are still stored exactly as read. Nothing here interprets a column.
  */
 final class TabularReader {
@@ -35,8 +39,8 @@ final class TabularReader {
 
     /**
      * @return one map per data row, header to cell, preserving column order
-     * @throws PolicyRefusedException when no header can be found, there are no data rows,
-     *         two columns share a name, a column has no heading, or a row does not line up
+     * @throws PolicyRefusedException when no header can be found, there are no data rows, two
+     *         columns share a name, or a row does not line up with the header
      */
     static List<Map<String, String>> read(byte[] content) {
         if (XlsxReader.looksLikeLegacyXls(content)) {
@@ -63,17 +67,19 @@ final class TabularReader {
 
         int headerIndex = findHeader(grid);
         List<String> header = new ArrayList<>(grid.get(headerIndex));
-
         for (int i = 0; i < header.size(); i++) {
-            String name = header.get(i).trim();
-            if (name.isEmpty()) {
-                throw new PolicyRefusedException(
-                        "Column " + (i + 1) + " has no name. Every column needs a heading, "
-                                + "because the heading is how a mapping refers to it.");
-            }
-            header.set(i, name);
+            header.set(i, header.get(i).trim());
         }
-        if (header.stream().distinct().count() != header.size()) {
+
+        List<Integer> keep = keptColumns(grid, headerIndex, header);
+        if (keep.isEmpty()) {
+            throw new PolicyRefusedException(
+                    "This file has no named columns holding anything. Without headings there is "
+                            + "no way to say what any value means.");
+        }
+
+        List<String> names = keep.stream().map(header::get).toList();
+        if (names.stream().distinct().count() != names.size()) {
             throw new PolicyRefusedException(
                     "Two columns share a name. One would silently overwrite the other when the "
                             + "row became a map, so the file is refused rather than half-stored.");
@@ -96,7 +102,7 @@ final class TabularReader {
                                 + "belongs to would be a guess.");
             }
             Map<String, String> row = new LinkedHashMap<>();
-            for (int c = 0; c < header.size(); c++) {
+            for (int c : keep) {
                 row.put(header.get(c), cells.get(c));
             }
             parsed.add(row);
@@ -106,6 +112,84 @@ final class TabularReader {
             throw new PolicyRefusedException("The file has a header but no rows.");
         }
         return parsed;
+    }
+
+    /**
+     * Which columns survive, and what the nameless ones are called.
+     *
+     * <p>The reader used to refuse any file with a blank heading, on the reasoning that a heading
+     * is how a mapping refers to a column. The reasoning is right and the refusal was too broad.
+     * The Orange export has three blank headings: one column empty from top to bottom, and two
+     * holding real content — a write-off flag on nine rows and a note on one. Refusing the whole
+     * delivery told an operator to go and edit their export before the platform would look at it,
+     * which is not a request anybody makes of a company they are trying to sign.
+     *
+     * <p>The two cases are not the same thing and are no longer treated as one.
+     *
+     * <p>A blank heading over an empty column is <em>padding</em> — the trailing cells a
+     * spreadsheet leaves behind after somebody deletes a column, carrying nothing. It is dropped.
+     * Nothing is lost, because there was nothing there.
+     *
+     * <p>A blank heading over a column with data is a column somebody forgot to label, and its
+     * contents are real. Dropping it would silently discard delivered data, which is the one thing
+     * this reader must never do. So it is kept and named for where it sits — {@code Column U} —
+     * because a position is the only true thing available. The name is honest about being a
+     * position rather than a meaning: it says where to look in the file and claims nothing about
+     * what is in it. The profile screen shows the contents, and the operator decides.
+     *
+     * <p>The letters match what the spreadsheet shows in its own column headers, so an operator
+     * told about {@code Column U} can open the file and land on it.
+     */
+    private static List<Integer> keptColumns(
+            List<List<String>> grid, int headerIndex, List<String> header) {
+        List<Integer> keep = new ArrayList<>();
+        for (int i = 0; i < header.size(); i++) {
+            if (!header.get(i).isEmpty()) {
+                keep.add(i);
+                continue;
+            }
+            if (isEmptyBelow(grid, headerIndex, i)) {
+                continue;
+            }
+            String positional = columnLabel(i);
+            if (header.contains(positional)) {
+                // Refused explicitly rather than left to the duplicate check below, which would
+                // report that two columns share a name when the file the operator is looking at
+                // contains that name exactly once.
+                throw new PolicyRefusedException(
+                        "Column " + positional + " has no heading, and another column is already "
+                                + "called \"" + positional + "\". Give one of them a different "
+                                + "name so a mapping can tell them apart.");
+            }
+            header.set(i, positional);
+            keep.add(i);
+        }
+        return List.copyOf(keep);
+    }
+
+    /** Whether a column holds nothing at all in any data row. */
+    private static boolean isEmptyBelow(List<List<String>> grid, int headerIndex, int column) {
+        for (int i = headerIndex + 1; i < grid.size(); i++) {
+            List<String> cells = grid.get(i);
+            if (column < cells.size() && !cells.get(column).trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The spreadsheet's own name for a position: A, B, ... Z, AA, AB.
+     *
+     * <p>Only correct because the grid places cells by their reference rather than by the order
+     * they appear in the file, so index 0 really is column A even when the row starts at D.
+     */
+    private static String columnLabel(int index) {
+        StringBuilder label = new StringBuilder();
+        for (int n = index + 1; n > 0; n = (n - 1) / 26) {
+            label.insert(0, (char) ('A' + (n - 1) % 26));
+        }
+        return "Column " + label;
     }
 
     /**

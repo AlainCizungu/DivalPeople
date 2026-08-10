@@ -86,15 +86,70 @@ class TabularReaderTest {
     // --- what it must not do ------------------------------------------------
 
     @Test
-    @DisplayName("a header with a missing name is still the header, and still refused by name")
+    @DisplayName("a header with a missing name is still the header")
     void doesNotStepOverABadHeader() {
         // The tempting rule — skip a row that looks worse than the one below it — would step over
-        // this header, promote the first row of data, and report "no rows" for a file whose real
-        // problem is an unnamed column. The operator would be told the wrong thing about their
-        // own file.
-        assertThatThrownBy(() -> read("Customer,,Balance\na,b,c\n"))
+        // this header and promote the first row of data, so the file would be keyed by a, b and c.
+        // That the row below is reachable under "Customer" is the whole assertion.
+        Map<String, String> row = read("Customer,,Balance\na,b,c\n").get(0);
+
+        assertThat(row).containsEntry("Customer", "a");
+        assertThat(row.keySet()).containsExactly("Customer", "Column B", "Balance");
+    }
+
+    // --- columns nobody labelled --------------------------------------------
+
+    @Test
+    @DisplayName("an unlabelled column with nothing in it is padding and is dropped")
+    void emptyUnnamedColumnsAreDropped() {
+        // What a spreadsheet leaves behind after somebody deletes a column. Keeping it would put
+        // an empty field called "Column C" on every row of the registry.
+        List<Map<String, String>> rows = read("""
+                Customer,Balance,,Ref
+                Acme,100,,CD-1
+                Atlas,200,,CD-2
+                """);
+
+        assertThat(rows.get(0).keySet()).containsExactly("Customer", "Balance", "Ref");
+    }
+
+    @Test
+    @DisplayName("an unlabelled column with data in it is kept, named for where it sits")
+    void populatedUnnamedColumnsAreKept() {
+        // The Orange export's shape: a write-off flag on a handful of rows under no heading at
+        // all. Dropping it would silently discard delivered data, which is the one thing this
+        // reader must not do — an operator who sent a column is entitled to see it come back.
+        List<Map<String, String>> rows = read("""
+                Customer,Balance,
+                Acme,100,write off
+                Atlas,200,
+                """);
+
+        assertThat(rows.get(0)).containsEntry("Column C", "write off");
+        assertThat(rows.get(1)).containsEntry("Column C", "");
+    }
+
+    @Test
+    @DisplayName("only the empty ones go, when a file has both kinds")
+    void paddingGoesAndContentStays() {
+        List<Map<String, String>> rows = read("""
+                Customer,,Balance,
+                Acme,,100,note
+                """);
+
+        assertThat(rows.get(0).keySet()).containsExactly("Customer", "Balance", "Column D");
+        assertThat(rows.get(0)).containsEntry("Column D", "note");
+    }
+
+    @Test
+    @DisplayName("a positional name that collides with a real heading is refused by name")
+    void aCollidingPositionalNameIsRefused() {
+        // Vanishingly rare and worth its own sentence anyway. Left to the duplicate check, this
+        // would report that two columns share a name, when the file in front of the operator
+        // contains that name exactly once.
+        assertThatThrownBy(() -> read("Column B,,Balance\na,b,c\n"))
                 .isInstanceOf(PolicyRefusedException.class)
-                .hasMessageContaining("Column 2");
+                .hasMessageContaining("Column B");
     }
 
     @Test

@@ -136,11 +136,15 @@ class CsvReaderTest {
     }
 
     @Test
-    @DisplayName("a column with no heading is refused")
-    void unnamedColumnIsRefused() {
-        assertThatThrownBy(() -> read("Customer,,Balance\na,b,c\n"))
-                .isInstanceOf(PolicyRefusedException.class)
-                .hasMessageContaining("Column 2");
+    @DisplayName("a column with no heading keeps its data under a positional name")
+    void unnamedColumnIsNamedForItsPosition() {
+        // It used to be refused. The whole file was, for one missing heading — which is a
+        // reasonable rule until a real export arrives with a note column somebody never labelled,
+        // and the platform tells a telecom to go and edit their spreadsheet first.
+        Map<String, String> row = read("Customer,,Balance\na,b,c\n").get(0);
+
+        assertThat(row).containsEntry("Column B", "b");
+        assertThat(row).containsEntry("Customer", "a").containsEntry("Balance", "c");
     }
 
     @Test
