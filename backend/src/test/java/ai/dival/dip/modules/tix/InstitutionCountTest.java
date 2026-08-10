@@ -92,15 +92,18 @@ class InstitutionCountTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("a suppressed record raises the count no more than it shows its status")
-    void suppressedRecordsAreNotCounted() {
+    @DisplayName("a dispute takes the subject out of the exchange entirely, count and all")
+    void aDisputeEmptiesTheAnswer() {
         declare(vodacom);
         declare(orange);
 
-        // A dispute suppresses the record at every operator from the moment it is raised, before
-        // anybody decides who is right. If the count kept including it, the enquirer would be told
-        // that two institutions report a debt while being shown one status — and the number is the
-        // half that carries the weight.
+        // Raised at Orange and it suppresses Vodacom's record too. That is the design: the harm of
+        // being wrongly listed accrues daily, so reporting stops everywhere the day somebody
+        // contests it and before anybody decides who is right.
+        //
+        // The first version of this test expected the count to fall to 1, on the assumption that a
+        // dispute suppresses only the record of the operator it was raised against. It does not,
+        // and asserting the wrong number would have quietly encoded that misunderstanding.
         TenantContext.runAs(orange, () -> subjectRights.raise(
                 SubjectRequestType.DISPUTE, IdentifierType.RCCM, rccm,
                 "This debt was settled in March.", null));
@@ -108,8 +111,33 @@ class InstitutionCountTest extends AbstractIntegrationTest {
         InquiryResult afterDispute = ask();
 
         assertThat(afterDispute.institutionCount())
-                .as("the disputed record stopped counting the day it was contested")
+                .as("nobody is reporting this company any more, so the count is nobody")
+                .isZero();
+        assertThat(afterDispute.outcome()).isEqualTo(InquiryResult.Outcome.CLEAR);
+    }
+
+    @Test
+    @DisplayName("a suppressed record stops counting while its neighbour keeps counting")
+    void onlySuppressedRecordsStopCounting() {
+        // The mixed state, which is what actually proves the count and the status set are built
+        // from the same filtered pass. A dispute suppresses outstanding records only, so settling
+        // Vodacom's first leaves it visible while Orange's is taken out.
+        UUID settled = declare(vodacom).getId();
+        TenantContext.runAs(vodacom, () -> debtRecords.settle(settled, null));
+        declare(orange);
+
+        TenantContext.runAs(orange, () -> subjectRights.raise(
+                SubjectRequestType.DISPUTE, IdentifierType.RCCM, rccm,
+                "This debt was settled in March.", null));
+
+        InquiryResult result = ask();
+
+        assertThat(result.institutionCount())
+                .as("Vodacom's settled record still counts; Orange's suppressed one does not")
                 .isEqualTo(1);
+        assertThat(result.statuses())
+                .as("and the status shown is the one belonging to the record that counted")
+                .containsExactly(DebtStatus.SETTLED);
     }
 
     @Test
@@ -148,12 +176,12 @@ class InstitutionCountTest extends AbstractIntegrationTest {
                 .doesNotContain(orange.toString());
     }
 
-    private void declare(UUID operator) {
-        TenantContext.runAs(operator, () -> debtRecords.declare(new DeclarationRequest(
+    private DebtRecord declare(UUID operator) {
+        return TenantContext.runAsResult(operator, () -> debtRecords.declare(new DeclarationRequest(
                 List.of(new DeclarationRequest.SubmittedIdentifier(IdentifierType.RCCM, rccm)),
                 "Trans-Congo Négoce", Subject.SubjectType.BUSINESS, null, "CD",
                 new BigDecimal("500.00"), "USD", "POSTPAID",
-                LocalDate.now().minusDays(30), true), null));
+                LocalDate.now().minusDays(30), true), null).record());
     }
 
     /** Asked by the bank, which reports nothing itself unless a test says otherwise. */
