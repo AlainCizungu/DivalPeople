@@ -34,6 +34,43 @@ require_docker() {
     fi
 }
 
+# ---------------------------------------------------------------------------
+# A container squatting on the application's port, which this script does not start.
+#
+# Written after losing an afternoon to it. A container called dival_api, up for four days from an
+# older build, held 8080. Every `./gradlew bootRun` failed to bind and exited — one line that
+# scrolls past in a hundred lines of Spring startup — while the container went on answering every
+# request. So the API was reachable, the frontend worked, and the code actually running was four
+# commits behind the checkout. Three separate defects were investigated before anybody looked at
+# the port, including a refusal message that no longer existed in the source.
+#
+# Only a *container* is reported. A local process holding 8080 is almost always the backend the
+# developer just started, and warning about that would make this noise to be scrolled past — which
+# is how the original message was missed.
+#
+# Kept out of check_ports() deliberately: that function returns early when our own compose stack is
+# up, which is exactly the situation where a stray container hides.
+# ---------------------------------------------------------------------------
+container_on_app_port() {
+    local port="${API_HOST_PORT:-8080}"
+    # Asked of Docker rather than read from lsof, which reports the publishing proxy
+    # ("com.docke") and never the container behind it.
+    docker ps --format '{{.Names}}\t{{.Ports}}' 2>/dev/null \
+        | awk -F'\t' -v needle=":$port->" 'index($2, needle) { print $1; exit }' \
+        | grep . || return 1
+}
+
+warn_about_app_port() {
+    local container
+    container="$(container_on_app_port)" || return 0
+
+    fail "The Docker container \"$container\" is holding port ${API_HOST_PORT:-8080}."
+    echo "    ./gradlew bootRun will fail to bind and exit, while that container keeps" >&2
+    echo "    answering — so the API you reach is whatever it is running, at whatever age." >&2
+    echo "    Stop it first:  docker stop $container" >&2
+    echo >&2
+}
+
 # Fails fast with an actionable message instead of letting Compose die halfway through.
 check_ports() {
     # If our own stack is already up, the ports are legitimately held by us — `up -d` is
@@ -122,6 +159,7 @@ case "${1:-up}" in
     up)
         require_docker
         check_ports
+        warn_about_app_port
         info "Starting PostgreSQL, Redis and Keycloak..."
         docker compose -f "$COMPOSE_FILE" up -d
         verify_postgres
@@ -164,6 +202,7 @@ EOF
         ;;
 
     check)
+        warn_about_app_port
         info "Fetching a token for operator-a..."
         TOKEN="$(fetch_token operator-a)"
         if [ -z "$TOKEN" ]; then
