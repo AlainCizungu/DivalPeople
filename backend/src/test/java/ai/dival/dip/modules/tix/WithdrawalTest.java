@@ -44,6 +44,16 @@ class WithdrawalTest extends AbstractIntegrationTest {
     @Autowired
     private ExchangeService exchange;
 
+    /**
+     * The member of staff handling the case.
+     *
+     * <p>Not null, and the first version of this test learned why the hard way: it passed null and
+     * the failure came from the setup, where close() refuses a decision that names nobody. The
+     * withdrawal path now refuses one too, for the same reason and a sharper one — it is the only
+     * way to close a case without ruling on it.
+     */
+    private static final UUID STAFF = UUID.randomUUID();
+
     private UUID operator;
     private UUID enquirer;
     private String rccm;
@@ -72,7 +82,7 @@ class WithdrawalTest extends AbstractIntegrationTest {
         assertThat(ask().outcome()).isEqualTo(InquiryResult.Outcome.CLEAR);
 
         TenantContext.runAs(operator, () ->
-                rights.withdraw(caseId, "Called on 14 May; settled directly with us.", null));
+                rights.withdraw(caseId, "Called on 14 May; settled directly with us.", STAFF));
 
         assertThat(ask().outcome())
                 .as("a true record does not stay out of the exchange because somebody walked away")
@@ -86,7 +96,7 @@ class WithdrawalTest extends AbstractIntegrationTest {
         UUID caseId = raiseDispute();
 
         SubjectRequest withdrawn = TenantContext.runAsResult(operator, () ->
-                rights.withdraw(caseId, "Called on 14 May; settled directly with us.", null));
+                rights.withdraw(caseId, "Called on 14 May; settled directly with us.", STAFF));
 
         // Not UPHELD and not REFUSED. Recording an abandonment as a refusal would say the operator
         // considered the complaint and rejected it, which is a claim nobody made.
@@ -103,9 +113,21 @@ class WithdrawalTest extends AbstractIntegrationTest {
         // queue and a deadline has an obvious use for it. The note is what separates a withdrawal
         // from a case quietly dropped.
         assertThatThrownBy(() -> TenantContext.runAsResult(operator, () ->
-                rights.withdraw(caseId, "   ", null)))
+                rights.withdraw(caseId, "   ", STAFF)))
                 .isInstanceOf(PolicyRefusedException.class)
                 .hasMessageContaining("how the person told you");
+    }
+
+    @Test
+    @DisplayName("a withdrawal has to name who recorded it")
+    void aWithdrawalNeedsAnActor() {
+        declare();
+        UUID caseId = raiseDispute();
+
+        assertThatThrownBy(() -> TenantContext.runAsResult(operator, () ->
+                rights.withdraw(caseId, "Called and asked to drop it.", null)))
+                .isInstanceOf(PolicyRefusedException.class)
+                .hasMessageContaining("who recorded it");
     }
 
     @Test
@@ -115,13 +137,13 @@ class WithdrawalTest extends AbstractIntegrationTest {
         UUID caseId = raiseDispute();
 
         TenantContext.runAs(operator, () -> {
-            rights.verifyIdentity(caseId, "National ID seen in person, photograph matches.", null);
-            rights.close(caseId, false, "The debt is owed and the invoices were produced.", null);
+            rights.verifyIdentity(caseId, "National ID seen in person, photograph matches.", STAFF);
+            rights.close(caseId, false, "The debt is owed and the invoices were produced.", STAFF);
         });
 
         // Otherwise withdrawal becomes a way to erase a finding somebody is accountable for.
         assertThatThrownBy(() -> TenantContext.runAsResult(operator, () ->
-                rights.withdraw(caseId, "Called and asked to drop it.", null)))
+                rights.withdraw(caseId, "Called and asked to drop it.", STAFF)))
                 .isInstanceOf(PolicyRefusedException.class)
                 .hasMessageContaining("decided");
     }

@@ -380,6 +380,15 @@ public class SubjectRightsService {
      * regulator can test; a bare status change is not.
      */
     public SubjectRequest withdraw(UUID requestId, String note, UUID actorId) {
+        // The same rule verification and decisions carry, and this path needs it most: it is the
+        // only way to close a case without ruling on it, so "who closed this" is the question a
+        // regulator asks first. Written here rather than left to the audit row, which would record
+        // a null actor without complaint.
+        if (actorId == null) {
+            throw new PolicyRefusedException(
+                    "A withdrawal has to name who recorded it. A case closed by nobody is a case "
+                            + "nobody is accountable for closing.");
+        }
         if (note == null || note.isBlank()) {
             throw new PolicyRefusedException(
                     "Say how the person told you they were withdrawing. A case closed without a "
