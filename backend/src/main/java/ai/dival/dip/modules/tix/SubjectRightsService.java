@@ -360,6 +360,48 @@ public class SubjectRightsService {
         return decision.request();
     }
 
+    /**
+     * The person stops pursuing their case.
+     *
+     * <p>WITHDRAWN existed as a status from the beginning and nothing set it, so a case somebody
+     * abandoned stayed open until an operator decided it — which is a request for a decision
+     * nobody wants to make, sitting on a queue with a statutory deadline it will miss.
+     *
+     * <p><strong>The suppression is lifted, and that is the part that matters.</strong> Raising a
+     * dispute takes the records out of the exchange immediately, before anybody weighs it, because
+     * the harm of being wrongly listed accrues daily. Withdrawing without lifting would make that
+     * protection into a hole: raise a dispute against a record that is entirely true, walk away,
+     * and it stays out of the exchange forever with no decision anybody can appeal. Same treatment
+     * as a refusal, for a stronger reason — a refusal at least represents somebody's finding.
+     *
+     * <p>A note is required for the same reason verification evidence is. This is the one way to
+     * close a case without deciding it, so an operator with a full queue and a deadline has an
+     * obvious use for it. "Called on 14 May, said she had settled with the shop" is something a
+     * regulator can test; a bare status change is not.
+     */
+    public SubjectRequest withdraw(UUID requestId, String note, UUID actorId) {
+        if (note == null || note.isBlank()) {
+            throw new PolicyRefusedException(
+                    "Say how the person told you they were withdrawing. A case closed without a "
+                            + "decision and without a record of who asked for it is indistinguishable "
+                            + "from a case quietly dropped.");
+        }
+
+        SubjectRequest withdrawn = unit(() -> {
+            SubjectRequest request = requireOwnRequest(requestId);
+            request.withdraw();
+            audit.record("TIX_SUBJECT_REQUEST_WITHDRAWN", "SubjectRequest", requestId.toString(),
+                    AuditService.OUTCOME_SUCCESS, actorId, note);
+            return request;
+        });
+
+        // After the status is committed, in the same order close() uses: lifting a suppression and
+        // then failing to record why would put records back into the exchange with nothing
+        // explaining it.
+        liftAcrossOperators(requestId);
+        return withdrawn;
+    }
+
     public List<SubjectRequest> listOwn() {
         return unit(() -> requests.findByTenantIdOrderByRaisedAtDesc(TenantContext.require()));
     }

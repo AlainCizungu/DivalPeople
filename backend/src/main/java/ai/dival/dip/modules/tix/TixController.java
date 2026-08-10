@@ -206,6 +206,21 @@ public class TixController {
         return SubjectRequestResponse.from(rights.decideErasure(id, actorId()));
     }
 
+    /**
+     * Closes a case the person is no longer pursuing.
+     *
+     * <p>Guarded by the declarant role rather than the compliance officer's, and the difference is
+     * the point of the whole rights process. Deciding a case is a finding and belongs to somebody
+     * who did not take it at the counter. A withdrawal is not a finding — it is recording what the
+     * person said — so it sits with whoever they spoke to.
+     */
+    @PostMapping("/subject-requests/{id}/withdraw")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public SubjectRequestResponse withdraw(@PathVariable UUID id,
+                                           @Valid @RequestBody WithdrawRequest request) {
+        return SubjectRequestResponse.from(rights.withdraw(id, request.note(), actorId()));
+    }
+
     @PostMapping("/subject-requests/{id}/close")
     @PreAuthorize("hasRole('" + Roles.COMPLIANCE_OFFICER + "')")
     public SubjectRequestResponse close(@PathVariable UUID id,
@@ -279,6 +294,12 @@ public class TixController {
     public record EvidenceRequest(
             @jakarta.validation.constraints.NotBlank
             @jakarta.validation.constraints.Size(max = 500) String evidence) {
+    }
+
+    /** @param note how the person said they were withdrawing, which is the whole accountability */
+    public record WithdrawRequest(
+            @jakarta.validation.constraints.NotBlank
+            @jakarta.validation.constraints.Size(max = 1000) String note) {
     }
 
     public record CloseRequest(

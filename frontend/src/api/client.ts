@@ -772,4 +772,17 @@ export const subjectRightsApi = {
       body: JSON.stringify({ upheld, reason }),
     });
   },
+
+  /**
+   * Closes a case the person is no longer pursuing, which is not a decision about it.
+   *
+   * Any suppression it caused is lifted server-side, or a dispute somebody abandoned would hold
+   * true records out of the exchange forever.
+   */
+  withdraw(id: string, note: string): Promise<SubjectRequest> {
+    return request<SubjectRequest>(`/api/v1/tix/subject-requests/${id}/withdraw`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    });
+  },
 };

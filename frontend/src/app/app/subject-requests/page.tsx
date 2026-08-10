@@ -76,6 +76,9 @@ export default function SubjectRequestsPage() {
   const { profile } = useSession();
 
   const canDecide = profile?.roles.includes("COMPLIANCE_OFFICER") ?? false;
+  // Recording a withdrawal is not deciding a case, so it belongs to whoever the person spoke to
+  // rather than to the officer who would rule on it.
+  const canWithdraw = profile?.roles.includes("TIX_DECLARANT") ?? false;
 
   const [cases, setCases] = useState<SubjectRequest[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -90,6 +93,7 @@ export default function SubjectRequestsPage() {
   const [detail, setDetail] = useState("");
   const [evidence, setEvidence] = useState("");
   const [reason, setReason] = useState("");
+  const [withdrawNote, setWithdrawNote] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -496,6 +500,43 @@ export default function SubjectRequestsPage() {
                       }
                     >
                       {t.refuse}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+          {canWithdraw &&
+            selected.status !== "UPHELD" &&
+            selected.status !== "REFUSED" &&
+            selected.status !== "WITHDRAWN" && (
+              <Card title={t.withdrawTitle} description={t.withdrawDescription}>
+                <div className="flex flex-col gap-4">
+                  <Field
+                    label={t.withdrawNote}
+                    htmlFor="withdrawNote"
+                    hint={t.withdrawNoteHint}
+                  >
+                    <textarea
+                      id="withdrawNote"
+                      rows={2}
+                      className={inputClass}
+                      value={withdrawNote}
+                      onChange={(e) => setWithdrawNote(e.target.value)}
+                      required
+                    />
+                  </Field>
+                  <div>
+                    <Button
+                      variant="secondary"
+                      disabled={busy || withdrawNote.trim() === ""}
+                      onClick={() =>
+                        void run(() =>
+                          subjectRightsApi.withdraw(selected.id, withdrawNote.trim()),
+                        )
+                      }
+                    >
+                      {t.withdraw}
                     </Button>
                   </div>
                 </div>

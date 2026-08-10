@@ -957,7 +957,12 @@
     "refuse": "Rejeter",
     "decisionTitle": "Décision",
     "cannotDecide": "Trancher un dossier requiert le rôle de responsable de la conformité. Celui qui reçoit la demande au guichet ne doit pas aussi statuer dessus.",
-    "select": "Sélectionnez un dossier pour le traiter."
+    "select": "Sélectionnez un dossier pour le traiter.",
+    "withdrawTitle": "La personne ne poursuit plus sa demande",
+    "withdrawDescription": "Clôt le dossier sans le trancher et rétablit ce qu’il avait suspendu. Possible tant qu’aucune décision n’a été prise.",
+    "withdrawNote": "Comment elle vous l’a fait savoir",
+    "withdrawNoteHint": "Quelque chose qu’un régulateur pourrait vérifier — « Appel du 14 mai, elle indique avoir réglé directement avec le commerçant ». Un dossier clos sans décision et sans trace de qui l’a demandé ne se distingue pas d’un dossier abandonné en silence.",
+    "withdraw": "Enregistrer le retrait"
   },
   "search": {
     "title": "Recherche",

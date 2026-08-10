@@ -291,6 +291,12 @@ competitor is not.
 *Sign in as `operator-b` to show the separation of duties: it can open a case and cannot decide
 one. Whoever takes the request at the counter should not also rule on it.*
 
+**If somebody changes their mind**, record it rather than deciding for them — the case closes as
+withdrawn and anything the dispute suppressed goes back into the exchange. That last part is the
+reason it needed building: a dispute takes records out immediately, so without it, disputing a
+true record and walking away would hold it out permanently with no decision to appeal. The note is
+required, because this is the one way to close a case without deciding it.
+
 ### 8. Proving the accountability claim — `operator-a` → **Audit trail**
 
 Everything above has been writing rows here. The landing page tells institutions that every
@@ -331,8 +337,6 @@ promised a launch date before that is settled.
 ## Things that will not work, so do not open them
 
 - **A risk score** — not built. Only the clearly-marked mock.
-- **Withdrawing a case** — the status exists and nothing sets it. A person who stops pursuing a
-  case leaves it open until somebody decides it.
 - **Matching a company across the two operators.** Not a defect and not a gap in the code: Vodacom
   identifies customers by its own account numbers and Orange by name alone, so there is nothing in
   either file that says a company in one is the company in the other. Section 3b is where to say

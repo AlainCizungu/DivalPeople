@@ -19,12 +19,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useSession();
 
   const [unreadCount, setUnreadCount] = useState(0);
-  const authenticated = profile !== null;
+  /**
+   * Only sessions that belong to an operator have notifications to count.
+   *
+   * <p>A platform administrator runs the network and has no tenant of its own, so the
+   * tenant-scoped endpoint refuses it — correctly. The badge swallowed the refusal and the user
+   * saw nothing, but it asked again every sixty seconds and filled the server log with denials
+   * that looked like an authorisation problem and were a client asking a question that does not
+   * apply to it. Not asking is the fix; suppressing the log line would have been the bug.
+   */
+  const hasNotifications = profile?.tenantId != null;
 
   // Polled rather than pushed. A websocket for a number that changes a few times a day is a
   // connection to keep alive, reconnect and authorise for very little gain.
   useEffect(() => {
-    if (!authenticated) return;
+    if (!hasNotifications) return;
 
     let cancelled = false;
     const refresh = async () => {
@@ -42,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [authenticated, pathname]);
+  }, [hasNotifications, pathname]);
 
   const displayName =
     profile?.name ?? profile?.preferredUsername ?? profile?.email ?? "";
