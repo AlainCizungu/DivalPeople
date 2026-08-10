@@ -35,39 +35,53 @@ require_docker() {
 }
 
 # ---------------------------------------------------------------------------
-# A container squatting on the application's port, which this script does not start.
+# Whatever is holding the application's port, which this script does not start.
 #
-# Written after losing an afternoon to it. A container called dival_api, up for four days from an
-# older build, held 8080. Every `./gradlew bootRun` failed to bind and exited — one line that
-# scrolls past in a hundred lines of Spring startup — while the container went on answering every
-# request. So the API was reachable, the frontend worked, and the code actually running was four
-# commits behind the checkout. Three separate defects were investigated before anybody looked at
-# the port, including a refusal message that no longer existed in the source.
+# Written after losing an afternoon to it twice over. First a container called dival_api, up for
+# four days from an older build, held 8080; then an orphaned bootRun JVM from an earlier session
+# held it. Both times `./gradlew bootRun` failed to bind and exited — one line that scrolls past in
+# a hundred lines of Spring startup — while the squatter went on answering every request. So the
+# API was reachable, the frontend worked, and the code actually running was several commits behind
+# the checkout. Defects were investigated that did not exist, including a refusal message that had
+# been deleted from the source.
 #
-# Only a *container* is reported. A local process holding 8080 is almost always the backend the
-# developer just started, and warning about that would make this noise to be scrolled past — which
-# is how the original message was missed.
+# The first version of this reported only containers, reasoning that a local process on 8080 is
+# almost always the backend the developer just started. That reasoning cost another round trip the
+# next day, because an orphaned JVM looks exactly like a backend you just started.
+#
+# So everything is reported, and the discriminator is age rather than kind: a process that has been
+# up for eleven seconds is the one you meant to start, and one up since yesterday is not.
 #
 # Kept out of check_ports() deliberately: that function returns early when our own compose stack is
-# up, which is exactly the situation where a stray container hides.
+# up, which is exactly the situation where a squatter hides.
 # ---------------------------------------------------------------------------
-container_on_app_port() {
+warn_about_app_port() {
     local port="${API_HOST_PORT:-8080}"
+    local pid
+    pid="$(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -1)" || return 0
+    [ -n "$pid" ] || return 0
+
     # Asked of Docker rather than read from lsof, which reports the publishing proxy
     # ("com.docke") and never the container behind it.
-    docker ps --format '{{.Names}}\t{{.Ports}}' 2>/dev/null \
-        | awk -F'\t' -v needle=":$port->" 'index($2, needle) { print $1; exit }' \
-        | grep . || return 1
-}
-
-warn_about_app_port() {
     local container
-    container="$(container_on_app_port)" || return 0
+    container="$(docker ps --format '{{.Names}}\t{{.Ports}}' 2>/dev/null \
+        | awk -F'\t' -v needle=":$port->" 'index($2, needle) { print $1; exit }')"
 
-    fail "The Docker container \"$container\" is holding port ${API_HOST_PORT:-8080}."
-    echo "    ./gradlew bootRun will fail to bind and exit, while that container keeps" >&2
+    # Elapsed time, not start time: "up 2 days" answers the question, "started Tuesday" needs
+    # arithmetic from whoever is reading it at the end of a long afternoon.
+    local age
+    age="$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ')"
+
+    if [ -n "$container" ]; then
+        fail "Port $port is held by the Docker container \"$container\" (up ${age:-unknown})."
+        echo "    Stop it first:  docker stop $container" >&2
+    else
+        fail "Port $port is held by process $pid ($(ps -o comm= -p "$pid" 2>/dev/null | xargs), up ${age:-unknown})."
+        echo "    If that is not the backend you just started, it is an orphan from an earlier" >&2
+        echo "    session running older code.  Stop it:  kill $pid" >&2
+    fi
+    echo "    Until it is gone, ./gradlew bootRun fails to bind and exits, while that keeps" >&2
     echo "    answering — so the API you reach is whatever it is running, at whatever age." >&2
-    echo "    Stop it first:  docker stop $container" >&2
     echo >&2
 }
 
