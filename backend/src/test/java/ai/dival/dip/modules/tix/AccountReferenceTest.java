@@ -42,6 +42,8 @@ class AccountReferenceTest extends AbstractIntegrationTest {
     private DebtRecordService debtRecords;
     @Autowired
     private SubjectIdentifierRepository identifiers;
+    @Autowired
+    private SubjectResolver resolver;
 
     private UUID vodacom;
     private UUID airtel;
@@ -116,17 +118,25 @@ class AccountReferenceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("the same operator declaring its own account number twice adds to one file")
+    @DisplayName("an operator seeing its own account number again is looking at the same company")
     void anOperatorResolvesItsOwnAccountNumber() {
+        // Through the resolver rather than through a second declaration, and the reason is worth
+        // recording because the first version of this test got it wrong. Declaring twice against
+        // one subject is refused — one open record per operator, deliberately — so the assertion
+        // never reached the question it was asking. That refusal is itself evidence the account
+        // number resolved to the same company, but evidence by exception type is a poor way to
+        // assert an identity rule. This calls the unit that decides identity and nothing else.
         String account = "V0190001";
-        UUID first = debtRecords.declare(onAccount(account, "Kin Logistique SARL"), null)
-                .record().getSubject().getId();
+        SubjectResolver.Resolution first =
+                resolver.resolve(onAccount(account, "Kin Logistique SARL"));
+        SubjectResolver.Resolution again =
+                resolver.resolve(onAccount(account, "Kin Logistique SARL"));
 
-        DebtRecordService.Declaration again =
-                debtRecords.declare(onAccount(account, "Kin Logistique SARL"), null);
-
-        assertThat(again.record().getSubject().getId()).isEqualTo(first);
-        assertThat(again.subjectWasCreated()).isFalse();
+        assertThat(again.subject().getId()).isEqualTo(first.subject().getId());
+        assertThat(again.created()).isFalse();
+        assertThat(again.identifiersLearned())
+                .as("the number was already known; nothing new was learned about them")
+                .isZero();
     }
 
     @Test
