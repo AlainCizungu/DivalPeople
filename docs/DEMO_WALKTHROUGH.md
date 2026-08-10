@@ -29,6 +29,10 @@ of any age. It has cost this project an afternoon twice.
 Seeding runs on first start and is skipped afterwards, so a restart against an existing database
 changes nothing. To start clean, drop the database and let Flyway rebuild it.
 
+*If `./gradlew test` warns that tests were skipped, Docker was not running and nothing touching
+the database was executed. Green means very little in that state, which is why the build now says
+so out loud.*
+
 **Sign-ins** (from `infra/keycloak/realm-dip.json`):
 
 | User | What it is | Sees |

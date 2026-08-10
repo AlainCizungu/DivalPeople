@@ -42,6 +42,52 @@ tasks.withType<Test> {
     testLogging {
         events("passed", "skipped", "failed")
     }
+
+    // ---------------------------------------------------------------------
+    // A green build that ran almost nothing must not look like a green build.
+    //
+    // Everything touching the database is @RequiresDocker and skips when no container runtime is
+    // available, so a developer without Docker still gets useful signal from the unit tests. That
+    // is deliberate and stays. What was missing is that it said nothing: a run where 85% of the
+    // suite never executed printed BUILD SUCCESSFUL, and the account-reference work was reported
+    // as passing when not one of its tests had run.
+    //
+    // Locally this warns, because the developer chose to run without Docker and knows it.
+    // On CI it fails, because there Docker is always present — so a skip means the container
+    // runtime broke, and a build that quietly stops testing the database is worse than a red one.
+    // ---------------------------------------------------------------------
+    // Read off the root suite rather than counted per test: one callback, two numbers Gradle
+    // has already totalled, and nothing to get wrong in the arithmetic.
+    var skipped = 0L
+    var total = 0L
+
+    afterSuite(KotlinClosure2<TestDescriptor, TestResult, Unit>({ suite, result ->
+        if (suite.parent == null) {
+            skipped = result.skippedTestCount
+            total = result.testCount
+        }
+    }))
+
+    doLast {
+        if (skipped == 0L) return@doLast
+
+        val message = "$skipped of $total tests were SKIPPED. " +
+                "Almost all of them need Docker; without it nothing that touches the database ran."
+
+        if (System.getenv("CI") != null) {
+            throw GradleException(
+                "$message\n" +
+                        "    On CI this is a failure rather than a warning: Docker is always " +
+                        "present here, so a skip means the container runtime is broken and this " +
+                        "build proved far less than it appears to.")
+        }
+        logger.warn("")
+        logger.warn("=".repeat(78))
+        logger.warn("  WARNING: $message")
+        logger.warn("  Start Docker and run again before trusting this result.")
+        logger.warn("=".repeat(78))
+        logger.warn("")
+    }
 }
 
 // `./gradlew bootRun` is only ever local development, so activate that profile by default
