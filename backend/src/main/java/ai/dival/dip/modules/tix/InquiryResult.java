@@ -20,15 +20,29 @@ import java.util.UUID;
  * at the exact moment the system says it is <em>not</em> confident is the wrong trade. An operator
  * who needs an answer should submit a stronger identifier.
  *
- * @param outcome      overall finding, which is the whole answer
- * @param subjectId    resolved subject; {@code null} unless the match was confirmed
- * @param statuses     distinct statuses held against the subject by any participating operator
- * @param fraudSignals advisory indicators requiring human review, never findings of misconduct
+ * <p>{@code institutionCount} is the one number here that is deliberately disclosed, and the line
+ * between it and everything else is the product. An operator learns <em>how many</em> participants
+ * report an obligation against this subject — itself included — and never which, never how much,
+ * never since when. That is enough to price risk and not enough to reconstruct a rival's book,
+ * which is the trade that makes joining the exchange rational for a competitor.
+ *
+ * <p>It exists because the screen was showing {@code statuses.size()} under a label promising a
+ * count of institutions. Two operators both reporting an outstanding debt collapse to one status,
+ * so the most valuable answer the exchange can give — more than one of us is owed money by this
+ * company — was being reported as one. The number was wrong in the direction that understates
+ * risk, which is the worse direction for a credit decision.
+ *
+ * @param outcome          overall finding, which is the whole answer
+ * @param subjectId        resolved subject; {@code null} unless the match was confirmed
+ * @param statuses         distinct statuses held against the subject by any participating operator
+ * @param institutionCount how many operators hold a record that counts; never which
+ * @param fraudSignals     advisory indicators requiring human review, never findings of misconduct
  */
 public record InquiryResult(
         Outcome outcome,
         UUID subjectId,
         List<DebtStatus> statuses,
+        int institutionCount,
         List<String> fraudSignals) {
 
     public enum Outcome {
@@ -43,7 +57,7 @@ public record InquiryResult(
     }
 
     public static InquiryResult noMatch() {
-        return new InquiryResult(Outcome.NO_MATCH, null, List.of(), List.of());
+        return new InquiryResult(Outcome.NO_MATCH, null, List.of(), 0, List.of());
     }
 
     /**
@@ -51,6 +65,6 @@ public record InquiryResult(
      * exchange is not confident, and that is the entire content of the answer.
      */
     public static InquiryResult reviewRequired() {
-        return new InquiryResult(Outcome.REVIEW_REQUIRED, null, List.of(), List.of());
+        return new InquiryResult(Outcome.REVIEW_REQUIRED, null, List.of(), 0, List.of());
     }
 }

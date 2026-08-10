@@ -146,6 +146,10 @@ public class ExchangeService {
         List<DebtRecord> records =
                 debtRecords.findAcrossOperators(subject.getId(), EXCHANGEABLE_STATUSES, today);
         Set<DebtStatus> statuses = new LinkedHashSet<>();
+        // How many operators, not how many records and not how many statuses. Counted from the
+        // same filtered pass so that a record excluded from the answer is excluded from the count
+        // — a suppressed dispute must not raise the number any more than it may show its status.
+        Set<UUID> institutions = new LinkedHashSet<>();
         boolean outstanding = false;
         for (DebtRecord record : records) {
             // Defence in depth: disputed or investigated records must never leak through.
@@ -153,6 +157,7 @@ public class ExchangeService {
                 continue;
             }
             statuses.add(record.getStatus());
+            institutions.add(record.getTenantId());
             if (record.getStatus() == DebtStatus.OUTSTANDING) {
                 outstanding = true;
             }
@@ -166,6 +171,7 @@ public class ExchangeService {
                 outcome,
                 subject.getId(),
                 List.copyOf(statuses),
+                institutions.size(),
                 detectFraudSignals(subject, tenantId));
     }
 

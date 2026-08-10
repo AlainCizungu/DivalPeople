@@ -231,15 +231,14 @@ rather than trying to type them: two businesses sharing a name return "review re
 a list, and a personal name never resolves on its own. The second matters — the profiled Vodacom
 export had 48 names sitting on more than one account inside a single operator's book.
 
-**The line to deliver on the second row:** operator A now knows another institution reports a debt
-against this company, and does not know the amount, does not know which institution, and never
-will. That is why a competitor would join.
+**The line to deliver on the second row:** the card reads **2**. Operator A now knows that two
+institutions report a debt against this company, and does not know the amount, does not know which
+institutions, and never will. That is why a competitor would join.
 
-> **Do not say "two institutions" while pointing at the card.** The number beside *Participating
-> institutions holding a record* is currently a count of distinct statuses, not of institutions, so
-> two operators both reporting an outstanding debt show as **1**. The count the sentence needs is
-> not in the API at all. Known, recorded, and not yet fixed — say the sentence without the number,
-> or fix it before the meeting.
+*That number was wrong until recently — it showed the count of distinct statuses, so two operators
+both reporting an outstanding debt displayed as one. Understated risk, on the one figure the whole
+argument rests on.*
+
 
 **And on the third:** the business is disputing that record, so it stopped being reported the day
 the dispute was raised — before anybody decided who is right. The harm of being wrongly listed

@@ -25,6 +25,14 @@ export type InquiryResult = {
   outcome: InquiryOutcome;
   subjectId: string | null;
   statuses: DebtStatus[];
+  /**
+   * How many participating operators hold a record that counts — never which.
+   *
+   * The one number the exchange discloses. It is not statuses.length, which is what this screen
+   * used to show under a label promising institutions: two operators both reporting an
+   * outstanding debt collapse to a single status.
+   */
+  institutionCount: number;
   fraudSignals: string[];
 };
 

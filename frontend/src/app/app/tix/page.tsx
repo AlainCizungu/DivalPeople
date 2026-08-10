@@ -177,7 +177,7 @@ export default function CreditCheckPage() {
                 <div>
                   <dt className="text-xs text-muted">{t.reportedBy}</dt>
                   <dd className="mt-0.5 text-2xl font-bold tabular-nums text-navy">
-                    {result.statuses.length}
+                    {result.institutionCount}
                   </dd>
                   <dd className="text-xs text-muted">{t.reportedByNote}</dd>
                 </div>
