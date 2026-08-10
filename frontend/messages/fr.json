@@ -571,6 +571,7 @@
         "Déclaration d’un défaut, avec un seuil en deçà duquel rien n’entre au registre",
         "Interrogation inter-opérateurs restituant le seul statut, plafonnée et tracée avec sa finalité",
         "Import CSV et Excel, stockage brut immuable et traçabilité de chaque ligne",
+        "La transformation des lignes importées en enregistrements, via une correspondance définie et versionnée par l’opérateur",
         "Conservation, expiration et effacement qui supprime au lieu de masquer",
         "Demandes d’accès, de contestation et d’effacement par la personne concernée",
         "Une vue des encours de l’opérateur, par ancienneté et par devise"
@@ -579,7 +580,6 @@
       "designed": [
         "La recherche universelle et les profils d’entités consolidés",
         "Le score de risque DIP et ses motifs",
-        "La création d’enregistrements de créance à partir d’un fichier importé",
         "L’analyste IA",
         "Les API temps réel et les flux programmés"
       ],
@@ -884,7 +884,7 @@
     "provenanceTitle": "Origine de ces enregistrements",
     "provenanceDeclared": "Déclarés via l’API ou cette application",
     "provenanceImported": "Issus d’un fichier importé",
-    "provenanceNote": "Publier un lot d’import ne crée pas encore d’enregistrements. Tant que la correspondance des colonnes n’est pas construite, un fichier déposé est conservé et traçable mais ne compte pas dans les chiffres ci-dessus.",
+    "provenanceNote": "Enregistrements issus d’un fichier déposé, comptés séparément de ceux déclarés via l’API. Les deux sont de véritables enregistrements soumis aux mêmes règles ; la distinction porte sur la provenance, afin qu’un auditeur demandant d’où vient un chiffre obtienne une réponse à l’écran.",
     "empty": "Votre organisation n’a encore rien déclaré : il n’y a donc rien à classer.",
     "noAccess": "Votre compte peut interroger l’échange mais pas déclarer d’enregistrements ; il n’y a donc pas d’encours à afficher."
   },

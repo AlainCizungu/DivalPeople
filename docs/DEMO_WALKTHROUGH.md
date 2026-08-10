@@ -5,11 +5,26 @@ profile only; every business named here is invented and every figure is seeded.
 
 ## Before starting
 
+**Three terminals, one command each.** Written out separately because pasting them as a block
+sends the comments to Gradle as task names.
+
 ```
-infra/dev.sh up            # Postgres, Redis, Keycloak
-cd backend  && ./gradlew bootRun
+./infra/dev.sh up
+```
+
+```
+cd backend && ./gradlew bootRun
+```
+
+```
 cd frontend && npm run dev
 ```
+
+Wait for `Started DipApplication` in the second one. If instead it says **"Port 8080 was already in
+use"**, something else is answering as the API — an old container, or an orphaned run from
+yesterday — and `dev.sh up` will now name it and tell you how to stop it. Worth knowing why this
+matters: the backend exits, the squatter keeps serving, and every screen works while running code
+of any age. It has cost this project an afternoon twice.
 
 Seeding runs on first start and is skipped afterwards, so a restart against an existing database
 changes nothing. To start clean, drop the database and let Flyway rebuild it.
@@ -19,7 +34,7 @@ changes nothing. To start clean, drop the database and let Flyway rebuild it.
 | User | What it is | Sees |
 |---|---|---|
 | `operator-a` | A telecom, declarant + inquirer + compliance officer | Everything except participants |
-| `operator-b` | A second telecom | The same, over its own book |
+| `operator-b` | A second telecom — use this one for the Orange import | Its own book. **No compliance officer role**, which is the point of the separation-of-duties step in section 7 |
 | `platform-admin` | Runs the network, no tenant of its own | Participants only |
 | `no-roles` | A signed-in account with nothing granted | The refusals |
 
@@ -46,16 +61,18 @@ Use a business that is not already seeded, so it is visibly created in front of 
 |---|---|
 | Identifier type | RCCM |
 | Identifier | `CD/KIN/RCCM/22-B-8800` |
-| Legal name | `Nouvelle Société Démo SARL` |
-| Amount | `1500` USD |
+| Name | `Nouvelle Société Démo SARL` |
+| Amount outstanding | `1500` USD |
 | Service | `POSTPAID` |
-| Default date | any date in the past |
+| Date the obligation fell due | any date in the past |
 | Dunning evidence | tick it |
 
 Two things to show deliberately:
 
-- **Untick dunning evidence** and submit. It is refused, in a sentence. A default cannot be
-  reported without evidence that the contractual chase happened first.
+- **Untick dunning evidence.** The submit button disables and the form says *Required before you
+  can declare* — the refusal happens in front of the operator rather than after a round trip. The
+  server refuses it too, and says so in a sentence, but you will not see that by clicking: nothing
+  is sent.
 - **Enter `50` as the amount.** Refused: below the 100 USD reporting threshold. That floor is the
   whole proportionality argument for the scheme — a national bad-payer registry that accepts a
   two-dollar dispute is a punishment, not a credit instrument.
@@ -65,16 +82,29 @@ distinction — adding to a file versus opening one — is worth pointing at.
 
 ### 3. Reporting by spreadsheet — `operator-a` → **Data imports**
 
-Register a source, then upload a file. The real Vodacom export works: XLSX, header on row 4 under a
-blank row and an unlabelled total, 4,290 rows.
+Register a source, then upload a file. **Both real telecom exports work**, and they are worth
+showing in that order because they are not alike:
+
+| | Vodacom | Orange |
+|---|---|---|
+| Rows | 4,290 | 342 |
+| `Balance` total | 12,383,011.42 | 9,645,928.64 |
+| Header | row 4, under a blank row and a totals line | row 1 |
+| Identifies customers by | `BPR_0`, its own account reference | nothing but the name |
+| Write-offs | every row | 9 rows, against `ok` and blank |
+| Unlabelled columns | none | three, two of them holding data |
+
+Both figures above were checked against the files themselves. The counts of records created and
+refused below are estimates from the same analysis and depend on the reporting threshold, so read
+them off the screen rather than repeating them from here.
 
 What to show:
 
 - The batch carries a **SHA-256 of the bytes as received**, so an auditor holding the operator's
   copy can ask "is this the file you sent us".
-- The rows are shown **exactly as stored** — nothing is mapped, no amount is parsed. Point at this
-  rather than around it: publishing the batch does not create exposures yet, and the exposure
-  screen says so out loud.
+- The rows are shown **exactly as stored** — nothing is mapped, no amount is parsed. Publishing
+  accepts a delivery and stops there; a separate step turns rows into records, and the gap between
+  the two is deliberate rather than unfinished.
 - **Press "Profile the delivery".** This is the moment worth pausing on with a telecom in the room.
   The hand analysis in `TIX_SOURCE_PROFILE.md` took an afternoon; the screen does it on their file
   while they watch. Expect it to say what that document says: `BPR_0` unique on every row and
@@ -112,7 +142,7 @@ What to show:
   if the members bring an RCCM or a tax number alongside their account numbers. The product shows
   the gap instead of covering it with a match nobody could defend.
 
-- **Validate, publish, then create the records.** Deriving is a separate button from publishing on
+- **Mark validated, publish, then create the records.** Deriving is a separate button from publishing on
   purpose: publishing accepts the delivery, deriving makes the people in it visible to every other
   operator. Tick the dunning confirmation — a typed declaration carries that assertion per record,
   so an import has to carry it too, and it is recorded against whoever clicked.
@@ -122,7 +152,47 @@ What to show:
   their own data. Then open **Exposure** — the provenance panel that has said zero imported records
   all session now says otherwise.
 
-- Upload the same file twice. Refused, naming the batch that already holds it.
+- Upload the same file twice. Refused, naming the batch that already holds it — **once the first
+  one is published**. The check is against live batches, so re-sending a file that was uploaded and
+  not yet published is not a duplicate of anything.
+
+### 3b. The second operator's file, which is a different animal — `operator-b`
+
+Sign in as `operator-b` and import the Orange export the same way. It is worth doing live, because
+almost everything that made the Vodacom file easy is missing here and the platform has to say so
+rather than cope silently.
+
+- **Its header is on row 1** and three of its columns have no heading at all. One of those is empty
+  from top to bottom and is dropped as padding; two hold real content — a write-off flag on nine
+  rows and a note on one — and come back as `Column U` and `Column V`. A position is the only true
+  thing available, so that is what they are named, and the profile shows what is in them.
+
+  Worth saying: the platform refused this file outright until recently, for one missing heading.
+  That was the parser being right about its own rule and useless about a real export.
+
+- **It identifies nobody.** Its first column is a row number and its second is the customer name
+  under a heading that reads `0`. No account number, no RCCM, no tax number, no usable phone
+  number. So tick **This file has no identifier column** and map the name as the name.
+
+  Read the note that appears. Identity then comes from the name, **inside Orange's book only**, and
+  if two rows shared a name the whole delivery would be refused rather than recording two companies
+  as one. All 342 names here are distinct, so it imports.
+
+- **Then say the uncomfortable part out loud, with both books on the screen.** Vodacom's customers
+  are identified by Vodacom's account numbers. Orange's are identified by their names. Nothing in
+  either file says that a company in one is the company in the other, so the exchange cannot join
+  them — and it does not pretend to.
+
+  That is not a limitation to apologise for. It is the finding, produced from their own data in an
+  afternoon, and it is exactly the conversation to have with both of them: **an exchange is worth
+  joining only if its members bring a national identifier.** An RCCM or a tax number alongside what
+  they already send is all it takes, and until then each operator gets a private book and no
+  exchange at all.
+
+*Also settled by comparing the two: whether a write-off is a status or a different kind of record.
+Vodacom's file reads `Write off` on all 4,290 rows, which makes it look like a property of the
+delivery. Orange's has nine, against `ok` and blank — so it is a per-account state one operator
+tracks and the other does not, which is a status.*
 
 *Timing: the console logs `Received N rows from … in X ms`. If that number is large, say so and
 move on — it is measured rather than hidden.*
@@ -153,14 +223,23 @@ where a rival can list its defaulters.
 A purpose is required before the button enables. Every inquiry is recorded with it.
 
 **Leave the identifier blank and type the exact registered name instead.** It resolves a business
-when precisely one in the registry carries that name. Three refusals are worth demonstrating: a
-*prefix* finds nothing (`Atlas` will not match `Atlas Distribution SARL`), two businesses sharing a
-name return "review required" rather than a list, and a *personal* name never resolves on its own —
-the profiled export had 48 names on more than one account inside a single operator's book.
+when precisely one in the registry carries that name, and a *prefix* finds nothing — `Atlas` will
+not match `Atlas Distribution SARL`, so the name box cannot be walked one letter at a time.
 
-**The line to deliver on the second row:** operator A now knows two institutions report a debt
-against this company, and does not know the amount, does not know which institutions, and never
+Two further refusals are real in the code and **have no seed data behind them**, so describe them
+rather than trying to type them: two businesses sharing a name return "review required" instead of
+a list, and a personal name never resolves on its own. The second matters — the profiled Vodacom
+export had 48 names sitting on more than one account inside a single operator's book.
+
+**The line to deliver on the second row:** operator A now knows another institution reports a debt
+against this company, and does not know the amount, does not know which institution, and never
 will. That is why a competitor would join.
+
+> **Do not say "two institutions" while pointing at the card.** The number beside *Participating
+> institutions holding a record* is currently a count of distinct statuses, not of institutions, so
+> two operators both reporting an outstanding debt show as **1**. The count the sentence needs is
+> not in the API at all. Known, recorded, and not yet fixed — say the sentence without the number,
+> or fix it before the meeting.
 
 **And on the third:** the business is disputing that record, so it stopped being reported the day
 the dispute was raised — before anybody decided who is right. The harm of being wrongly listed
@@ -182,8 +261,10 @@ Real records, aged from the date each obligation fell due.
   somebody is arguing about it.
 - **Awaiting erasure should read zero.** If it does not, the nightly purge has stopped, and nothing
   else in the product would say so.
-- The provenance panel at the bottom says how many of these records came from an imported file.
-  It says **zero**, and it is on the screen rather than in a document nobody opens.
+- The provenance panel at the bottom says how many of these records came from an imported file
+  rather than from the API. After the imports above it is most of them, and the point is that the
+  screen answers the question at all — an operator asking "where did this come from" gets a number
+  rather than a promise.
 
 ### 7. Somebody comes forward — `operator-a` → **Subject requests**
 
@@ -229,8 +310,12 @@ single part of the platform, so it does not depend on the part that knows who pe
 
 ### 9. The refusals — sign in as `no-roles`
 
-Every TIX screen refuses, in a sentence explaining which permission is missing rather than an error
-code. Worth thirty seconds: an authorisation boundary that has never been demonstrated is a claim.
+Worth thirty seconds: an authorisation boundary that has never been demonstrated is a claim.
+
+Open **Inquiries**, **Exposure**, **Search**, **Subject requests** or **Audit trail** — each
+refuses in a sentence naming the permission that is missing. **Data imports** and **Declare** also
+refuse, but with the platform's generic wording, which names no permission. Show one of the first
+five; the difference is a rough edge worth knowing about rather than discovering on stage.
 
 ## What to say when asked "is this live?"
 
@@ -247,6 +332,9 @@ promised a launch date before that is settled.
 ## Things that will not work, so do not open them
 
 - **A risk score** — not built. Only the clearly-marked mock.
-- **Publishing an import to create records** — the batch publishes, and derives nothing.
 - **Withdrawing a case** — the status exists and nothing sets it. A person who stops pursuing a
   case leaves it open until somebody decides it.
+- **Matching a company across the two operators.** Not a defect and not a gap in the code: Vodacom
+  identifies customers by its own account numbers and Orange by name alone, so there is nothing in
+  either file that says a company in one is the company in the other. Section 3b is where to say
+  this, and it is the most useful thing in the demo.

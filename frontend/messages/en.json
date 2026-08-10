@@ -571,6 +571,7 @@
         "Declaring a default, with a reporting threshold below which nothing enters the registry",
         "Cross-operator inquiry returning status only, rate-limited and audited with a stated purpose",
         "CSV and Excel import with immutable raw storage and provenance for every row",
+        "Turning imported rows into records, through a mapping the operator defines and versions",
         "Retention, expiry, and erasure that deletes rather than hides",
         "Subject access, dispute, and erasure requests",
         "An operator exposure view, aged, per currency"
@@ -579,7 +580,6 @@
       "designed": [
         "Universal search and consolidated entity profiles",
         "The DIP risk score and its reason codes",
-        "Deriving debt records from an imported file",
         "The AI analyst",
         "Real-time APIs and scheduled feeds"
       ],
@@ -884,7 +884,7 @@
     "provenanceTitle": "Where these records came from",
     "provenanceDeclared": "Declared through the API or this application",
     "provenanceImported": "Derived from an imported file",
-    "provenanceNote": "Publishing an import batch does not create records yet. Until the column mapping is built, an uploaded file is stored and traceable but contributes nothing to the figures above.",
+    "provenanceNote": "Records derived from an uploaded file, counted separately from those declared through the API. Both are real records held to the same rules; the distinction is provenance, so an auditor asking where a figure came from gets an answer on the screen.",
     "empty": "Your organisation has not declared anything yet, so there is nothing to age.",
     "noAccess": "Your account can make inquiries but not declare records, so there is no portfolio to show."
   },
