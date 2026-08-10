@@ -151,7 +151,11 @@ class WithdrawalTest extends AbstractIntegrationTest {
     private void declare() {
         TenantContext.runAs(operator, () -> debtRecords.declare(new DeclarationRequest(
                 List.of(new DeclarationRequest.SubmittedIdentifier(IdentifierType.RCCM, rccm)),
-                "Trans-Congo Négoce", Subject.SubjectType.BUSINESS, null, "CD",
+                // Suffixed because subjects are shared and these tests are not transactional:
+                // an unsuffixed fixture name stays in the registry and can resolve somebody
+                // else's inquiry test.
+                "Trans-Congo Négoce " + rccm.substring(rccm.length() - 8),
+                Subject.SubjectType.BUSINESS, null, "CD",
                 new BigDecimal("500.00"), "USD", "POSTPAID",
                 LocalDate.now().minusDays(30), true), null));
     }

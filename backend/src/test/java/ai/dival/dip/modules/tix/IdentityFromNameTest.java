@@ -52,6 +52,14 @@ class IdentityFromNameTest extends AbstractIntegrationTest {
 
     private UUID orange;
     private UUID vodacom;
+    /**
+     * Appended to every customer name.
+     *
+     * <p>Subjects are shared across the exchange and this class is not transactional, so its
+     * fixtures outlive it. A name-identified subject called plainly {@code CENI} would sit in the
+     * registry answering other classes' name inquiries.
+     */
+    private String suffix;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +67,7 @@ class IdentityFromNameTest extends AbstractIntegrationTest {
                 Tenant.Edition.TELECOM, "fr")).getId();
         vodacom = tenants.save(new Tenant("Vodacom", "voda-" + UUID.randomUUID(),
                 Tenant.Edition.TELECOM, "fr")).getId();
+        suffix = UUID.randomUUID().toString().substring(0, 8);
         TenantContext.set(orange);
     }
 
@@ -71,24 +80,24 @@ class IdentityFromNameTest extends AbstractIntegrationTest {
     @DisplayName("a delivery with no identifier column imports, keyed on the name")
     void aFileWithNoIdentifierImports() {
         UUID batch = deliver(List.of(
-                row("DMARK DRC SARL", "930925.82"),
-                row("CENI", "174568.92")));
+                row("DMARK DRC SARL " + suffix, "930925.82"),
+                row("CENI " + suffix, "174568.92")));
 
         ImportDeriver.Report report = deriver.derive(batch, true, null);
 
         assertThat(report.created()).isEqualTo(2);
         assertThat(report.refused()).isZero();
         assertThat(identifiers.locate(IdentifierType.REPORTED_NAME,
-                SubjectIdentifier.normalizeValue("DMARK DRC SARL"), orange)).isPresent();
+                SubjectIdentifier.normalizeValue("DMARK DRC SARL " + suffix), orange)).isPresent();
     }
 
     @Test
     @DisplayName("two rows sharing a name refuse the whole delivery, before anything is written")
     void twoRowsWithOneNameRefuseEverything() {
         UUID batch = deliver(List.of(
-                row("DMARK DRC SARL", "930925.82"),
-                row("CENI", "174568.92"),
-                row("DMARK DRC SARL", "120000.00")));
+                row("DMARK DRC SARL " + suffix, "930925.82"),
+                row("CENI " + suffix, "174568.92"),
+                row("DMARK DRC SARL " + suffix, "120000.00")));
 
         // Refused whole rather than importing two and reporting one refusal. Two different
         // companies resolving to one subject is worse than importing nothing: the debts of one
@@ -98,10 +107,10 @@ class IdentityFromNameTest extends AbstractIntegrationTest {
                 // Rows 1 and 3 of the data, which is how RawRecord numbers them — the first row
                 // of data is row 1, so a refusal names a line the operator can go and look at.
                 .hasMessageContaining("Rows 1 and 3")
-                .hasMessageContaining("DMARK DRC SARL");
+                .hasMessageContaining("DMARK DRC SARL " + suffix);
 
         assertThat(identifiers.locate(IdentifierType.REPORTED_NAME,
-                SubjectIdentifier.normalizeValue("CENI"), orange))
+                SubjectIdentifier.normalizeValue("CENI " + suffix), orange))
                 .as("the row before the clash was not imported either")
                 .isEmpty();
     }
@@ -109,18 +118,18 @@ class IdentityFromNameTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("the same company name at two operators stays two companies")
     void namesDoNotJoinOperators() {
-        deriver.derive(deliver(List.of(row("CENI", "174568.92"))), true, null);
+        deriver.derive(deliver(List.of(row("CENI " + suffix, "174568.92"))), true, null);
 
         UUID vodacomSubject = TenantContext.runAsResult(vodacom, () -> {
-            UUID batch = deliver(List.of(row("CENI", "301000.00")));
+            UUID batch = deliver(List.of(row("CENI " + suffix, "301000.00")));
             deriver.derive(batch, true, null);
             return identifiers.locate(IdentifierType.REPORTED_NAME,
-                    SubjectIdentifier.normalizeValue("CENI"), vodacom)
+                    SubjectIdentifier.normalizeValue("CENI " + suffix), vodacom)
                     .orElseThrow().getSubject().getId();
         });
 
         UUID orangeSubject = identifiers.locate(IdentifierType.REPORTED_NAME,
-                SubjectIdentifier.normalizeValue("CENI"), orange)
+                SubjectIdentifier.normalizeValue("CENI " + suffix), orange)
                 .orElseThrow().getSubject().getId();
 
         // Nothing in either file says whether these are one company or two, so the exchange does
@@ -131,11 +140,11 @@ class IdentityFromNameTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("one operator's name-identified customer is invisible to another")
     void nameIdentitiesDoNotLeak() {
-        deriver.derive(deliver(List.of(row("DMARK DRC SARL", "930925.82"))), true, null);
+        deriver.derive(deliver(List.of(row("DMARK DRC SARL " + suffix, "930925.82"))), true, null);
 
         assertThat(TenantContext.runAsResult(vodacom, () -> identifiers.locate(
                 IdentifierType.REPORTED_NAME,
-                SubjectIdentifier.normalizeValue("DMARK DRC SARL"), vodacom)))
+                SubjectIdentifier.normalizeValue("DMARK DRC SARL " + suffix), vodacom)))
                 .isEmpty();
     }
 

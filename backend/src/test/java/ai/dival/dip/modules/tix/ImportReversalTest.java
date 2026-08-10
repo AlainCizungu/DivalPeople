@@ -171,6 +171,12 @@ class ImportReversalTest extends AbstractIntegrationTest {
     }
 
     // --- fixtures -----------------------------------------------------------
+    //
+    // Every subject name carries the suffix, and that is not tidiness. Subjects are shared across
+    // the whole exchange and these tests are not transactional, so a fixture named "Atlas
+    // Distribution" stays in the registry — and NameInquiryTest asserts that exact string resolves
+    // to nothing, because a prefix must never match. This class shipped with unsuffixed names and
+    // broke that test from three files away.
 
     private Map<String, String> row(String rccm, String name, String balance) {
         Map<String, String> cells = new LinkedHashMap<>();
@@ -189,8 +195,9 @@ class ImportReversalTest extends AbstractIntegrationTest {
 
         UUID batchId = ingest.receive(sourceId, "export-" + UUID.randomUUID() + ".xlsx",
                 UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8),
-                List.of(row("CD/KIN/RCCM/" + suffix + "-1", "Grand Horizon SARL", "18400.50"),
-                        row("CD/KIN/RCCM/" + suffix + "-2", "Atlas Distribution", "9620.25")),
+                List.of(row("CD/KIN/RCCM/" + suffix + "-1", "Grand Horizon " + suffix, "18400.50"),
+                        row("CD/KIN/RCCM/" + suffix + "-2", "Atlas Distribution " + suffix,
+                                "9620.25")),
                 LocalDate.now().minusDays(1), null).getId();
         ingest.validate(batchId, null);
         ingest.publish(batchId, null);
@@ -201,7 +208,7 @@ class ImportReversalTest extends AbstractIntegrationTest {
     private void declareByHand(String rccm) {
         debtRecords.declare(new DeclarationRequest(
                 List.of(new DeclarationRequest.SubmittedIdentifier(IdentifierType.RCCM, rccm)),
-                "Grand Horizon SARL", Subject.SubjectType.BUSINESS, null, "CD",
+                "Grand Horizon " + suffix, Subject.SubjectType.BUSINESS, null, "CD",
                 new java.math.BigDecimal("500.00"), "USD", "POSTPAID",
                 LocalDate.now().minusDays(30), true), null);
     }
