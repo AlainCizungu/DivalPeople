@@ -84,7 +84,13 @@ class BatchResponseOutsideTransactionTest extends AbstractIntegrationTest {
 
         // Asserted because "does not throw" would also pass if the code came back null. What the
         // screen needs is the operator's own name for the source, beside the file it delivered.
-        assertThat(response.sourceCode()).isEqualTo(code);
+        //
+        // Compared against the normalised form rather than the string passed in: a source code is
+        // upper-cased when it is registered, so "vodacom-postpaid" and "VODACOM_POSTPAID " cannot
+        // become two sources. The response carries what was stored, which is what the operator
+        // sees on the screen — and the first version of this assertion compared against the raw
+        // fixture and failed for that reason rather than for the reason it was written.
+        assertThat(response.sourceCode()).isEqualTo(SourceDataset.normalizeCode(code));
     }
 
     @Test
