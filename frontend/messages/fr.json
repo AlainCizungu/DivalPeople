@@ -809,7 +809,9 @@
     "deriveMappingVersion": "Via la correspondance version",
     "deriveRefusalsTitle": "Ce qui a été refusé, et pourquoi",
     "deriveTruncated": "Seuls les premiers refus sont listés. Les compteurs ci-dessus sont complets.",
-    "colReason": "Motif"
+    "colReason": "Motif",
+    "mappingNoIdentifier": "Ce fichier n’a pas de colonne d’identifiant",
+    "mappingNoIdentifierNote": "Cette livraison n’identifie personne par un numéro : la colonne du nom identifie donc le sujet. Cela ne vaut qu’au sein de votre propre organisation — un autre opérateur interrogeant la même entreprise ne trouvera rien, car rien dans le fichier ne dit qu’il s’agit de la même entreprise. Si deux lignes portent le même nom, la livraison entière est refusée : les importer reviendrait à enregistrer deux entreprises comme une seule."
   },
   "participants": {
     "title": "Organisations participantes",

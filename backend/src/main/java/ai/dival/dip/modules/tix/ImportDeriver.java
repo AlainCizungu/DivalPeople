@@ -10,6 +10,7 @@ import ai.dival.dip.modules.ingest.SourceMapping;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -110,6 +111,10 @@ public class ImportDeriver {
                                 + "column is the amount. Define one and derive again."));
 
         List<RawRecord> rows = ingest.rowsOf(batchId);
+        if (mapping.identifiesByName()) {
+            refuseIfNamesRepeat(mapping, rows);
+        }
+
         List<Refusal> refusals = new ArrayList<>();
         int created = 0;
 
@@ -149,16 +154,29 @@ public class ImportDeriver {
      */
     private DeclarationRequest buildRequest(SourceMapping mapping, Map<String, String> cells,
                                             LocalDate asAt) {
-        String identifier = mapping.identifierIn(cells);
-        if (identifier.isBlank()) {
-            throw new PolicyRefusedException(
-                    "No value in \"" + mapping.getIdentifierColumn() + "\", so there is nothing to "
-                            + "resolve this row to a subject.");
-        }
         String name = mapping.nameIn(cells);
         if (name.isBlank()) {
             throw new PolicyRefusedException(
                     "No value in \"" + mapping.getNameColumn() + "\".");
+        }
+
+        // Either the operator named a column holding an identifier, or they said this delivery
+        // has none and the name is what identifies somebody. In the second case the name is used
+        // twice — once as the subject's name and once as the operator-scoped key — which is
+        // exactly what identifying by name means, rather than an accident worth hiding.
+        IdentifierType type;
+        String identifier;
+        if (mapping.identifiesByName()) {
+            type = IdentifierType.REPORTED_NAME;
+            identifier = name;
+        } else {
+            type = IdentifierType.valueOf(mapping.getIdentifierType());
+            identifier = mapping.identifierIn(cells);
+            if (identifier.isBlank()) {
+                throw new PolicyRefusedException(
+                        "No value in \"" + mapping.getIdentifierColumn() + "\", so there is "
+                                + "nothing to resolve this row to a subject.");
+            }
         }
 
         String rawAmount = mapping.rawAmountIn(cells);
@@ -181,8 +199,7 @@ public class ImportDeriver {
         }
 
         return new DeclarationRequest(
-                List.of(new DeclarationRequest.SubmittedIdentifier(
-                        IdentifierType.valueOf(mapping.getIdentifierType()), identifier)),
+                List.of(new DeclarationRequest.SubmittedIdentifier(type, identifier)),
                 name,
                 Subject.SubjectType.valueOf(mapping.getSubjectType()),
                 null,
@@ -193,6 +210,47 @@ public class ImportDeriver {
                 // The whole reason the operator was asked for a date on upload.
                 asAt,
                 true);
+    }
+
+    /**
+     * Refuses the whole delivery when two of its rows carry the same name.
+     *
+     * <p>The one guard that makes identifying by name defensible, and it has to refuse everything
+     * rather than skip the offending rows. Two different companies resolving to one subject is the
+     * worst outcome this system has — worse than importing nothing, because the debts of one land
+     * on the other and every screen goes on working. Importing the rest and reporting two refusals
+     * would leave the operator believing the delivery succeeded.
+     *
+     * <p>Checked before a single record is written, so nothing is half-imported and there is
+     * nothing to undo.
+     *
+     * <p>Compared on the same normalisation the identifier itself uses, because that is what will
+     * decide whether two rows collide once they are stored. Comparing the raw text would pass a
+     * file that the database then merges.
+     *
+     * <p><strong>The limit this does not cover</strong>, said plainly rather than left to be
+     * discovered: it sees one delivery. Two companies of the same name arriving in two deliveries
+     * months apart resolve to one subject and nothing here notices. Only an identifier fixes that,
+     * which is the argument for asking the operator for one.
+     */
+    private void refuseIfNamesRepeat(SourceMapping mapping, List<RawRecord> rows) {
+        Map<String, Integer> seen = new HashMap<>();
+        for (RawRecord row : rows) {
+            String name = mapping.nameIn(ingest.cellsOf(row));
+            if (name.isBlank()) {
+                continue;
+            }
+            Integer first = seen.putIfAbsent(SubjectIdentifier.normalizeValue(name), row.getRowNumber());
+            if (first != null) {
+                throw new PolicyRefusedException(
+                        "Rows " + first + " and " + row.getRowNumber() + " both read \"" + name
+                                + "\" in \"" + mapping.getNameColumn() + "\". This mapping "
+                                + "identifies subjects by name, so importing both would record "
+                                + "two companies as one. Nothing has been imported. Either they "
+                                + "are the same customer twice, or this delivery needs a column "
+                                + "that tells them apart.");
+            }
+        }
     }
 
     /** Enough for somebody to see the pattern; the counts beside them are complete. */

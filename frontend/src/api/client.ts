@@ -512,8 +512,9 @@ export type BatchIssues = {
 export type SourceMappingView = {
   id: string;
   versionNumber: number;
-  identifierColumn: string;
-  identifierType: IdentifierType;
+  /** Null when the delivery carries no identifier and the name column identifies the subject. */
+  identifierColumn: string | null;
+  identifierType: IdentifierType | null;
   nameColumn: string;
   amountColumn: string;
   currency: string;
@@ -609,8 +610,8 @@ export const ingestApi = {
   defineMapping(
     sourceId: string,
     body: {
-      identifierColumn: string;
-      identifierType: IdentifierType;
+      identifierColumn: string | null;
+      identifierType: IdentifierType | null;
       nameColumn: string;
       amountColumn: string;
       currency: string;

@@ -287,9 +287,17 @@ public class IngestController {
      * carries neither and a mapping pointing at a column that does not exist is worse than one
      * that admits the file does not say.
      */
+    /**
+     * @param identifierColumn the column holding an identifier, or absent when the delivery
+     *                         carries none. Not {@code @NotBlank}, and the omission is the point:
+     *                         a validation annotation here would refuse the Orange export before
+     *                         any code could explain why. The two identifier fields must be
+     *                         present or absent together, which {@link SourceMapping} enforces in
+     *                         a sentence rather than as a field-level violation
+     */
     public record DefineMappingRequest(
-            @NotBlank @Size(max = 200) String identifierColumn,
-            @NotBlank @Size(max = 30) String identifierType,
+            @Size(max = 200) String identifierColumn,
+            @Size(max = 30) String identifierType,
             @NotBlank @Size(max = 200) String nameColumn,
             @NotBlank @Size(max = 200) String amountColumn,
             @NotBlank @Size(min = 3, max = 3) String currency,

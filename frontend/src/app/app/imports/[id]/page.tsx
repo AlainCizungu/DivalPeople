@@ -76,6 +76,14 @@ export default function BatchPage() {
   // mapping with three empty columns.
   const [identifierColumn, setIdentifierColumn] = useState("");
   const [identifierType, setIdentifierType] = useState<IdentifierType>("RCCM");
+  /**
+   * Whether this delivery identifies anybody by number at all.
+   *
+   * <p>The Orange export does not: its first column is a row number and its second is the
+   * customer name. Held as an explicit choice rather than inferred from an empty box, so the
+   * operator is stating something about their file instead of leaving a field blank.
+   */
+  const [noIdentifier, setNoIdentifier] = useState(false);
   const [nameColumn, setNameColumn] = useState("");
   const [amountColumn, setAmountColumn] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -100,8 +108,9 @@ export default function BatchPage() {
         setMapping(current);
         setHistory(versions);
         if (current) {
-          setIdentifierColumn(current.identifierColumn);
-          setIdentifierType(current.identifierType);
+          setIdentifierColumn(current.identifierColumn ?? "");
+          setIdentifierType(current.identifierType ?? "RCCM");
+          setNoIdentifier(current.identifierColumn === null);
           setNameColumn(current.nameColumn);
           setAmountColumn(current.amountColumn);
           setCurrency(current.currency);
@@ -483,8 +492,11 @@ export default function BatchPage() {
               if (!batch) return;
               void run(() =>
                 ingestApi.defineMapping(batch.sourceId, {
-                  identifierColumn: identifierColumn.trim(),
-                  identifierType,
+                  // Both or neither. The server says the same thing and the database says it
+                  // again; sending half of a pair from here would only turn a clear choice into
+                  // a validation error.
+                  identifierColumn: noIdentifier ? null : identifierColumn.trim(),
+                  identifierType: noIdentifier ? null : identifierType,
                   nameColumn: nameColumn.trim(),
                   amountColumn: amountColumn.trim(),
                   currency: currency.trim(),
@@ -494,21 +506,41 @@ export default function BatchPage() {
               );
             }}
           >
-            <Field
-              label={t.mappingIdentifier}
-              htmlFor="identifierColumn"
-              hint={t.mappingIdentifierHint}
-            >
+            <label className="flex items-start gap-2 sm:col-span-2">
               <input
-                id="identifierColumn"
-                list="batch-columns"
-                className={inputClass}
-                value={identifierColumn}
-                onChange={(e) => setIdentifierColumn(e.target.value)}
-                required
+                type="checkbox"
+                className="mt-1"
+                checked={noIdentifier}
+                onChange={(e) => setNoIdentifier(e.target.checked)}
               />
-            </Field>
+              <span>
+                <span className="font-semibold text-ink">{t.mappingNoIdentifier}</span>
+                {noIdentifier && (
+                  <span className="mt-1 block text-sm text-muted">
+                    {t.mappingNoIdentifierNote}
+                  </span>
+                )}
+              </span>
+            </label>
 
+            {!noIdentifier && (
+              <Field
+                label={t.mappingIdentifier}
+                htmlFor="identifierColumn"
+                hint={t.mappingIdentifierHint}
+              >
+                <input
+                  id="identifierColumn"
+                  list="batch-columns"
+                  className={inputClass}
+                  value={identifierColumn}
+                  onChange={(e) => setIdentifierColumn(e.target.value)}
+                  required
+                />
+              </Field>
+            )}
+
+            {!noIdentifier && (
             <Field label={t.mappingIdentifierType} htmlFor="identifierType">
               <select
                 id="identifierType"
@@ -530,6 +562,7 @@ export default function BatchPage() {
                 <p className="mt-2 text-sm text-muted">{messages.tix.accountReferenceNote}</p>
               )}
             </Field>
+            )}
 
             <Field label={t.mappingName} htmlFor="nameColumn">
               <input

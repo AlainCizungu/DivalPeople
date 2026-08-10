@@ -36,11 +36,41 @@ public enum IdentifierType {
      * number, and the honest thing is for the product to show that gap rather than paper over it
      * with a match nobody can justify.
      */
-    ACCOUNT_REFERENCE;
+    ACCOUNT_REFERENCE,
 
-    /** Strong identifiers support a deterministic match on their own. */
+    /**
+     * The name an operator files a customer under, when the delivery carries nothing else.
+     *
+     * <p>The weakest identity in the system, and the only one nobody issued. It exists because the
+     * Orange export has 342 rows and no identifier of any kind — its first column is a row number
+     * and its second is the customer name — and a file the platform cannot describe is a file the
+     * platform cannot help with.
+     *
+     * <p><strong>Nobody chooses this on a form.</strong> It is not among the types a mapping may
+     * name, and it comes into being only as the consequence of a mapping that declares identity
+     * by name. One way in, so there is one place to look when asking how a subject came to be
+     * identified this way.
+     *
+     * <p>Operator-scoped for the same reason as an account reference and a sharper one: two
+     * companies in different operators' books may carry the same registered name, and nothing in
+     * either file says whether they are one company or two. Not strong, so it never carries an
+     * automatic match on the read path.
+     *
+     * <p>The limit, stated rather than solved: two <em>different</em> companies in one operator's
+     * book under one name resolve to one subject. A delivery containing both is refused whole, so
+     * it cannot happen inside a single file. Across two deliveries months apart, nothing catches
+     * it.
+     */
+    REPORTED_NAME;
+
+    /**
+     * Strong identifiers support a deterministic match on their own.
+     *
+     * <p>A phone number is reassigned; a name was never issued to anybody. Neither is enough on
+     * its own to say two records are about the same person.
+     */
     public boolean isStrong() {
-        return this != MSISDN;
+        return this != MSISDN && this != REPORTED_NAME;
     }
 
     /**
@@ -51,6 +81,6 @@ public enum IdentifierType {
      * operator and collides with every other operator's numbering by construction.
      */
     public boolean isOperatorScoped() {
-        return this == ACCOUNT_REFERENCE;
+        return this == ACCOUNT_REFERENCE || this == REPORTED_NAME;
     }
 }

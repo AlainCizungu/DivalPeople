@@ -100,7 +100,9 @@ public class IngestService {
         audit.record("INGEST_MAPPING_DEFINED", "SourceMapping", saved.getId().toString(),
                 AuditService.OUTCOME_SUCCESS, actorId,
                 "v" + nextVersion + " for " + source.getCode() + ": identifier="
-                        + saved.getIdentifierColumn() + ", name=" + saved.getNameColumn()
+                        + (saved.identifiesByName()
+                                ? "from the name column" : saved.getIdentifierColumn())
+                        + ", name=" + saved.getNameColumn()
                         + ", amount=" + saved.getAmountColumn());
         return saved;
     }

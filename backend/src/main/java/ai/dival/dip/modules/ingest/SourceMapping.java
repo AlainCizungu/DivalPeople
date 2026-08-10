@@ -47,10 +47,17 @@ public class SourceMapping {
     @JoinColumn(name = "data_source_id", nullable = false, updatable = false)
     private SourceDataset dataSource;
 
-    @Column(name = "identifier_column", nullable = false, updatable = false, length = 200)
+    /**
+     * Null when the delivery carries no identifier and identity comes from the name instead.
+     *
+     * <p>Nullable together with {@link #identifierType}, and V27 holds them to that: a column with
+     * no type cannot be applied, and a type with no column is a setting that does nothing. Either
+     * would be a mapping that looks complete on the screen and fails at derivation.
+     */
+    @Column(name = "identifier_column", updatable = false, length = 200)
     private String identifierColumn;
 
-    @Column(name = "identifier_type", nullable = false, updatable = false, length = 30)
+    @Column(name = "identifier_type", updatable = false, length = 30)
     private String identifierType;
 
     @Column(name = "name_column", nullable = false, updatable = false, length = 200)
@@ -98,8 +105,19 @@ public class SourceMapping {
                          UUID definedBy) {
         this.tenantId = TenantContext.require();
         this.dataSource = dataSource;
-        this.identifierColumn = required(identifierColumn, "identifier column");
-        this.identifierType = required(identifierType, "identifier type");
+        // Both or neither. Blank is treated as absent because a form submits an empty string
+        // where a caller would pass null, and the two mean the same thing to an operator who
+        // cleared the box.
+        boolean hasColumn = identifierColumn != null && !identifierColumn.isBlank();
+        boolean hasType = identifierType != null && !identifierType.isBlank();
+        if (hasColumn != hasType) {
+            throw new PolicyRefusedException(
+                    "Say both which column holds the identifier and what kind of identifier it "
+                            + "is, or neither — in which case the name column identifies the "
+                            + "subject, inside this organisation only.");
+        }
+        this.identifierColumn = hasColumn ? identifierColumn.trim() : null;
+        this.identifierType = hasType ? identifierType.trim() : null;
         this.nameColumn = required(nameColumn, "name column");
         this.amountColumn = required(amountColumn, "amount column");
         this.currency = required(currency, "currency").toUpperCase(java.util.Locale.ROOT);
@@ -113,9 +131,9 @@ public class SourceMapping {
         // Checked here and again by V25. A mapping naming one column as both the identifier and
         // the amount would derive records that look entirely plausible and are nonsense — and
         // finding that out from a constraint name at flush time helps nobody.
-        if (this.identifierColumn.equals(this.nameColumn)
-                || this.identifierColumn.equals(this.amountColumn)
-                || this.nameColumn.equals(this.amountColumn)) {
+        if (this.nameColumn.equals(this.amountColumn)
+                || this.nameColumn.equals(this.identifierColumn)
+                || this.amountColumn.equals(this.identifierColumn)) {
             throw new PolicyRefusedException(
                     "The identifier, name and amount must be three different columns. "
                             + "One column cannot be all of them.");
@@ -130,7 +148,17 @@ public class SourceMapping {
     }
 
     /**
-     * The three values this mapping defines, read out of a delivered row.
+     * Whether this mapping describes a delivery that identifies nobody by number.
+     *
+     * <p>Asked rather than inferred from a null, so the question reads the way the operator
+     * answered it on the form.
+     */
+    public boolean identifiesByName() {
+        return identifierColumn == null;
+    }
+
+    /**
+     * The values this mapping defines, read out of a delivered row.
      *
      * <p>Public and specific, rather than a general "read column X". A caller cannot ask this
      * mapping for a column the mapping does not define, which is the point: the deriver in
@@ -140,8 +168,16 @@ public class SourceMapping {
      * <p>They were briefly a single package-private {@code cell(row, column)}, written when the
      * derivation was expected to live in this package. It does not — {@code tix} decides what
      * enters the registry — and the compiler said so.
+     *
+     * @throws IllegalStateException when this mapping identifies by name and has no such column.
+     *         A caller that reached here without asking {@link #identifiesByName()} has a bug, and
+     *         a null return would push it somewhere harder to find
      */
     public String identifierIn(Map<String, String> row) {
+        if (identifierColumn == null) {
+            throw new IllegalStateException(
+                    "This mapping identifies subjects by name and names no identifier column.");
+        }
         return cell(row, identifierColumn);
     }
 
