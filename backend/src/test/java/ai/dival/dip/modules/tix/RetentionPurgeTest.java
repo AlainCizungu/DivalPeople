@@ -102,7 +102,7 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
         // somebody while keeping their name, date of birth and national ID number leaves personal
         // data with no lawful basis and nothing left explaining why it is held.
         assertThat(subjects.findById(subjectId)).isEmpty();
-        assertThat(subjects.findByIdentifier(IdentifierType.NATIONAL_ID,
+        assertThat(subjects.findByNationalIdentifier(IdentifierType.NATIONAL_ID,
                 SubjectIdentifier.normalizeValue(document)))
                 .as("the identity document goes with the person")
                 .isEmpty();

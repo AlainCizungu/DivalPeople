@@ -9,9 +9,20 @@ import org.springframework.data.repository.query.Param;
 
 public interface SubjectRepository extends JpaRepository<Subject, UUID> {
 
+    /**
+     * The subject holding a national document.
+     *
+     * <p>Named for what it does now that identifiers have scopes. It used to be
+     * {@code findByIdentifier} and to match any identifier at all, which quietly became wrong the
+     * day an operator's own account number became a kind of identifier: the same call would have
+     * resolved a rival's customer to whoever asked. Operator-scoped lookups go through
+     * {@link SubjectIdentifierRepository#locate}, which requires the operator asking.
+     */
     @Query("select distinct i.subject from SubjectIdentifier i "
-            + "where i.identifierType = :type and i.normalizedValue = :value")
-    Optional<Subject> findByIdentifier(@Param("type") IdentifierType type, @Param("value") String value);
+            + "where i.identifierType = :type and i.normalizedValue = :value "
+            + "and i.ownerTenantId is null")
+    Optional<Subject> findByNationalIdentifier(
+            @Param("type") IdentifierType type, @Param("value") String value);
 
     List<Subject> findByNormalizedName(String normalizedName);
 

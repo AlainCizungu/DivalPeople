@@ -6,7 +6,8 @@ export type IdentifierType =
   | "DRIVER_LICENSE"
   | "VOTER_CARD"
   | "RCCM"
-  | "TAX_NUMBER";
+  | "TAX_NUMBER"
+  | "ACCOUNT_REFERENCE";
 
 export type DebtStatus =
   "OUTSTANDING" | "SETTLED" | "DISPUTED" | "UNDER_INVESTIGATION" | "CLEARED";

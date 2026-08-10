@@ -51,7 +51,7 @@ class TenantIsolationTest extends AbstractIntegrationTest {
 
         Subject subject = new Subject(Subject.SubjectType.INDIVIDUAL, "Jean Kabila",
                 LocalDate.of(1990, 5, 12), "CD");
-        subject.addIdentifier(new SubjectIdentifier(IdentifierType.NATIONAL_ID, "CD-1234-5678"));
+        subject.addIdentifier(new SubjectIdentifier(IdentifierType.NATIONAL_ID, "CD-1234-5678", null));
         sharedSubject = subjects.save(subject);
     }
 

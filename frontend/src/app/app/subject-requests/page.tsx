@@ -57,6 +57,7 @@ const IDENTIFIER_TYPES: IdentifierType[] = [
   "MSISDN",
   "RCCM",
   "TAX_NUMBER",
+  "ACCOUNT_REFERENCE",
   "VOTER_CARD",
   "DRIVER_LICENSE",
 ];

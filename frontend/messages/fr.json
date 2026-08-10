@@ -75,7 +75,8 @@
       "DRIVER_LICENSE": "Permis de conduire",
       "VOTER_CARD": "Carte d’électeur",
       "RCCM": "RCCM (registre du commerce)",
-      "TAX_NUMBER": "Numéro d’impôt"
+      "TAX_NUMBER": "Numéro d’impôt",
+      "ACCOUNT_REFERENCE": "Numéro de compte (cet opérateur)"
     },
     "statuses": {
       "OUTSTANDING": "Impayé",
@@ -165,7 +166,8 @@
     "mockFactorAging": "Ancienneté de la dette",
     "mockFactorIdentity": "Identité",
     "mockFactorFraud": "Signaux de fraude",
-    "mockFootnote": "Une fois développé, chaque score s’accompagnera de ses codes de motif, des données utilisées, de leur fraîcheur et de la version du modèle — conformément à UI_DESIGN_SYSTEM.md, un score n’est jamais affiché seul."
+    "mockFootnote": "Une fois développé, chaque score s’accompagnera de ses codes de motif, des données utilisées, de leur fraîcheur et de la version du modèle — conformément à UI_DESIGN_SYSTEM.md, un score n’est jamais affiché seul.",
+    "accountReferenceNote": "Seule votre organisation peut l’utiliser pour un rapprochement. Chaque opérateur numérote ses comptes à partir de un, si bien qu’un même numéro désigne une autre entreprise chez chaque opérateur : les enregistrements identifiés ainsi restent visibles pour vous et invisibles pour l’échange. Faites aussi correspondre un RCCM ou un numéro d’impôt si le fichier en contient un."
   },
   "auth": {
     "signIn": "Se connecter",

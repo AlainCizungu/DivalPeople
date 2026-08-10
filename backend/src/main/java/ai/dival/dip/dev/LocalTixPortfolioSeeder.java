@@ -126,7 +126,7 @@ public class LocalTixPortfolioSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (identifiers.findByIdentifierTypeAndNormalizedValue(
+        if (identifiers.findByIdentifierTypeAndNormalizedValueAndOwnerTenantIdIsNull(
                 IdentifierType.RCCM, SubjectIdentifier.normalizeValue(MARKER_RCCM)).isPresent()) {
             return;
         }

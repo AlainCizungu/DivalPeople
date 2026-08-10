@@ -96,6 +96,22 @@ What to show:
   Saving does not edit a mapping, it supersedes it. A delivery already derived keeps the rules it
   was derived under, and the earlier versions stay listed.
 
+- **Choose `Account number (this operator)` as the identifier type, and read the note under it.**
+  `BPR_0` holds values like `V0172109`. That is Vodacom's own customer reference, not an RCCM and
+  not any document a registry issued, and the type exists because until it did the only way to
+  import this file was to declare those numbers to be business registrations.
+
+  The consequence is worth saying to a telecom rather than hiding: operators number their
+  customers from one upwards, so account 100234 exists at every one of them and means a different
+  company at each. An account reference therefore identifies a subject **inside one operator and
+  nowhere else**, and records imported with nothing but one are visible to their own operator and
+  invisible to the exchange. Another operator asking about the same company finds nothing, and is
+  right to — nothing in the file says who that company is in any national register.
+
+  That is the argument for the pilot, made with their own data: the exchange is worth joining only
+  if the members bring an RCCM or a tax number alongside their account numbers. The product shows
+  the gap instead of covering it with a match nobody could defend.
+
 - **Validate, publish, then create the records.** Deriving is a separate button from publishing on
   purpose: publishing accepts the delivery, deriving makes the people in it visible to every other
   operator. Tick the dunning confirmation — a typed declaration carries that assertion per record,

@@ -75,7 +75,8 @@
       "DRIVER_LICENSE": "Driving licence",
       "VOTER_CARD": "Voter card",
       "RCCM": "RCCM (business register)",
-      "TAX_NUMBER": "Tax number"
+      "TAX_NUMBER": "Tax number",
+      "ACCOUNT_REFERENCE": "Account number (this operator)"
     },
     "statuses": {
       "OUTSTANDING": "Outstanding",
@@ -165,7 +166,8 @@
     "mockFactorAging": "Debt aging",
     "mockFactorIdentity": "Identity",
     "mockFactorFraud": "Fraud signals",
-    "mockFootnote": "When this is built, every score will carry its reason codes, the data it used, how recent that data is, and the model version — per UI_DESIGN_SYSTEM.md, a score is never shown on its own."
+    "mockFootnote": "When this is built, every score will carry its reason codes, the data it used, how recent that data is, and the model version — per UI_DESIGN_SYSTEM.md, a score is never shown on its own.",
+    "accountReferenceNote": "Only this organisation can match on it. Account numbers are assigned by each operator from one upwards, so the same number belongs to a different company at every operator — records identified this way stay visible to you and invisible to the exchange. Map an RCCM or tax number as well when the file has one."
   },
   "auth": {
     "signIn": "Sign in",

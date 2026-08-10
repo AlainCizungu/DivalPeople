@@ -60,7 +60,7 @@ public class LocalTixSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         String normalized = SubjectIdentifier.normalizeValue(DEMO_NATIONAL_ID);
-        if (identifiers.findByIdentifierTypeAndNormalizedValue(IdentifierType.NATIONAL_ID, normalized)
+        if (identifiers.findByIdentifierTypeAndNormalizedValueAndOwnerTenantIdIsNull(IdentifierType.NATIONAL_ID, normalized)
                 .isPresent()) {
             return;
         }

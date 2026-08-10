@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.tix;
 
 import ai.dival.dip.common.error.ConflictException;
+import ai.dival.dip.common.tenancy.TenantContext;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -57,9 +58,12 @@ public class SubjectResolver {
         Set<UUID> matchedSubjectIds = new LinkedHashSet<>();
         Map<IdentifierType, String> unknown = new LinkedHashMap<>();
 
+        // The operator doing the declaring, which is part of the identity of anything it
+        // numbered itself. Read once: a declaration is one operator's statement throughout.
+        UUID declaring = TenantContext.require();
+
         submitted.forEach((type, value) -> {
-            Optional<SubjectIdentifier> existing =
-                    identifiers.findByIdentifierTypeAndNormalizedValue(type, value);
+            Optional<SubjectIdentifier> existing = identifiers.locate(type, value, declaring);
             if (existing.isPresent()) {
                 matchedSubjectIds.add(existing.get().getSubject().getId());
             } else {
@@ -80,7 +84,7 @@ public class SubjectResolver {
             Subject created = new Subject(request.subjectTypeOrDefault(), request.fullName(),
                     request.dateOfBirth(), request.nationality());
             unknown.forEach((type, value) ->
-                    created.addIdentifier(new SubjectIdentifier(type, value)));
+                    created.addIdentifier(newIdentifier(type, value, declaring)));
             return new Resolution(subjects.save(created), true, unknown.size());
         }
 
@@ -96,7 +100,8 @@ public class SubjectResolver {
         // assertion that these documents belong to the same person, and that assertion then
         // affects every other operator's matches. Nothing here verifies it and nothing records
         // who made it. Provenance per identifier is the fix and it is not built.
-        unknown.forEach((type, value) -> known.addIdentifier(new SubjectIdentifier(type, value)));
+        unknown.forEach((type, value) ->
+                known.addIdentifier(newIdentifier(type, value, declaring)));
 
         return new Resolution(known, false, unknown.size());
     }
@@ -112,8 +117,22 @@ public class SubjectResolver {
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
     public Optional<Subject> locate(IdentifierType type, String value) {
         return identifiers
-                .findByIdentifierTypeAndNormalizedValue(type, SubjectIdentifier.normalizeValue(value))
+                .locate(type, SubjectIdentifier.normalizeValue(value), TenantContext.require())
                 .map(SubjectIdentifier::getSubject);
+    }
+
+    /**
+     * Attaches the issuing operator to an identifier that has one, and to no other.
+     *
+     * <p>One line, in one place, because the alternative is every call site deciding — and a call
+     * site that passes the tenant where it should pass null buries a national document inside a
+     * single operator, where no other operator can ever match it. The constructor refuses both
+     * mistakes; this is what stops them being made.
+     */
+    private static SubjectIdentifier newIdentifier(
+            IdentifierType type, String value, UUID declaringTenantId) {
+        return new SubjectIdentifier(
+                type, value, type.isOperatorScoped() ? declaringTenantId : null);
     }
 
     /**

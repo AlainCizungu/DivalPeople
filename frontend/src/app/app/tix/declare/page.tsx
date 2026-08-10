@@ -28,6 +28,7 @@ const IDENTIFIER_TYPES: IdentifierType[] = [
   "VOTER_CARD",
   "RCCM",
   "TAX_NUMBER",
+  "ACCOUNT_REFERENCE",
 ];
 
 /**

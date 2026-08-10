@@ -119,7 +119,7 @@ class DeclarationTest extends AbstractIntegrationTest {
 
         assertThat(second.identifiersLearned()).isEqualTo(1);
         assertThat(second.record().getSubject().getId()).isEqualTo(subjectId);
-        assertThat(subjects.findByIdentifier(IdentifierType.PASSPORT,
+        assertThat(subjects.findByNationalIdentifier(IdentifierType.PASSPORT,
                 SubjectIdentifier.normalizeValue(passport)))
                 .get()
                 .extracting(Subject::getId)
@@ -194,7 +194,7 @@ class DeclarationTest extends AbstractIntegrationTest {
         // The point of the ordering in declare(). If resolution ran first, a refused declaration
         // would still have written this person into the registry's shared spine — a way to
         // populate a national database with names using requests you know will fail.
-        assertThat(subjects.findByIdentifier(IdentifierType.NATIONAL_ID,
+        assertThat(subjects.findByNationalIdentifier(IdentifierType.NATIONAL_ID,
                 SubjectIdentifier.normalizeValue(document)))
                 .as("a refused declaration leaves no trace of the person")
                 .isEmpty();

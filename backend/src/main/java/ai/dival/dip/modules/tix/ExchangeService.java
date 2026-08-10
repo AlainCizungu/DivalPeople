@@ -213,8 +213,14 @@ public class ExchangeService {
         ordered.sort((a, b) -> Boolean.compare(b.type().isStrong(), a.type().isStrong()));
 
         for (InquiryRequest.SubmittedIdentifier submitted : ordered) {
-            Optional<Subject> found = subjects.findByIdentifier(
-                    submitted.type(), SubjectIdentifier.normalizeValue(submitted.value()));
+            // Through the identifier repository rather than a subject query, so that an account
+            // reference is matched only against the asking operator's own numbering. Asked by
+            // anybody else it finds nothing, which is the correct answer: their account 100234 is
+            // not this account 100234.
+            Optional<Subject> found = identifiers.locate(
+                    submitted.type(), SubjectIdentifier.normalizeValue(submitted.value()),
+                    TenantContext.require())
+                    .map(SubjectIdentifier::getSubject);
             if (found.isPresent()) {
                 return new Resolution(found.get(), submitted, false);
             }
@@ -241,8 +247,8 @@ public class ExchangeService {
     private List<String> detectFraudSignals(Subject subject, UUID tenantId) {
         List<String> signals = new ArrayList<>();
         for (SubjectIdentifier identifier : subject.getIdentifiers()) {
-            List<SubjectIdentifier> sharing = identifiers.findAllByIdentifierTypeAndNormalizedValue(
-                    identifier.getIdentifierType(), identifier.getNormalizedValue());
+            List<SubjectIdentifier> sharing = identifiers.reuses(
+                    identifier.getIdentifierType(), identifier.getNormalizedValue(), tenantId);
             boolean sharedAcrossSubjects = sharing.stream()
                     .anyMatch(other -> !other.getSubject().getId().equals(subject.getId()));
             if (sharedAcrossSubjects) {

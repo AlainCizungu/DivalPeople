@@ -35,7 +35,11 @@ import {
  * failure mode is somebody screenshotting a plausible number and circulating it as output.
  */
 
-const BUSINESS_IDENTIFIERS: IdentifierType[] = ["RCCM", "TAX_NUMBER", "NATIONAL_ID", "MSISDN"];
+// ACCOUNT_REFERENCE last, and deliberately not first: an inquiry by your own account
+// number resolves your own customer and then asks the exchange about them, which is
+// useful — but it can never find a company you have not reported yourself.
+const BUSINESS_IDENTIFIERS: IdentifierType[] =
+  ["RCCM", "TAX_NUMBER", "NATIONAL_ID", "MSISDN", "ACCOUNT_REFERENCE"];
 
 const OUTCOME_TONE: Record<InquiryOutcome, Tone> = {
   NO_MATCH: "neutral",

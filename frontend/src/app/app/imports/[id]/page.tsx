@@ -522,6 +522,13 @@ export default function BatchPage() {
                   </option>
                 ))}
               </select>
+              {identifierType === "ACCOUNT_REFERENCE" && (
+                // Said here rather than in a document, because here is where the choice is made
+                // and the consequence is not obvious from the label. Mapping a file this way is
+                // the right answer when the export carries nothing else, and it does mean the
+                // resulting records cannot be matched by any other operator.
+                <p className="mt-2 text-sm text-muted">{messages.tix.accountReferenceNote}</p>
+              )}
             </Field>
 
             <Field label={t.mappingName} htmlFor="nameColumn">
