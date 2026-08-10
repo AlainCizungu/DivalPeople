@@ -27,6 +27,20 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
     List<DebtRecord> findByTenantIdAndSuppressedByRequestId(UUID tenantId, UUID requestId);
 
     /**
+     * The records this operator derived from a given set of delivered rows.
+     *
+     * <p>Takes row ids rather than a batch id, and the awkwardness is deliberate. A debt record
+     * remembers the row it came from and nothing about the batch that row belonged to; joining
+     * from here to {@code import_batch} would mean this module reaching into {@code ingest}'s
+     * tables, which is the boundary the whole design rests on. The caller in {@code tix} asks
+     * ingest for the rows and passes their ids, which keeps the join in Java where it can be seen.
+     *
+     * <p>Callers chunk the ids. A delivery of four thousand rows in one IN clause is a statement
+     * that works and should not be relied on to keep working.
+     */
+    List<DebtRecord> findByTenantIdAndRawRecordIdIn(UUID tenantId, java.util.Collection<UUID> rawRecordIds);
+
+    /**
      * Exchange query: records held by <em>any</em> operator for a subject.
      *
      * <p>This deliberately crosses the tenant boundary and must only be called from

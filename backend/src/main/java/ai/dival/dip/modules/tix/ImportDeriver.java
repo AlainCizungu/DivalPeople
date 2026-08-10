@@ -48,6 +48,7 @@ public class ImportDeriver {
 
     private final IngestService ingest;
     private final DebtRecordService debtRecords;
+    private final DebtRecordRepository records;
     private final AuditService audit;
 
     /**
@@ -66,10 +67,12 @@ public class ImportDeriver {
      */
     private final TransactionTemplate perRow;
 
-    public ImportDeriver(IngestService ingest, DebtRecordService debtRecords, AuditService audit,
+    public ImportDeriver(IngestService ingest, DebtRecordService debtRecords,
+                         DebtRecordRepository records, AuditService audit,
                          PlatformTransactionManager transactionManager) {
         this.ingest = ingest;
         this.debtRecords = debtRecords;
+        this.records = records;
         this.audit = audit;
         this.perRow = new TransactionTemplate(transactionManager);
         this.perRow.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -251,6 +254,73 @@ public class ImportDeriver {
                                 + "that tells them apart.");
             }
         }
+    }
+
+    /**
+     * Withdraws a delivery and takes back the records it created.
+     *
+     * <p>{@code IngestService.revert} used to be the whole of this, and its javadoc said plainly
+     * that removing derived records "belongs here" once anything was derived from a batch. That
+     * day arrived and the note did not. In between, withdrawing a delivery retracted the file and
+     * left every record it had produced live in the exchange — a company still reported as in
+     * default from a file its operator had formally taken back.
+     *
+     * <p>Lives in {@code tix} for the same reason the derivation does: ingest accepts and
+     * remembers, tix decides what enters the registry, and the module that put records in is the
+     * one that can take them out. Ingest cannot reach this way round without making the two
+     * mutually dependent.
+     *
+     * <p><strong>Refused while anything derived is contested.</strong> A record somebody has
+     * disputed is evidence in an open case with a statutory deadline, and deleting it because the
+     * operator withdrew the file would resolve that case by making it disappear. The dispute is
+     * decided first, and then the delivery can go.
+     *
+     * <p>The raw rows stay, and so does the batch. That this file was once live is part of the
+     * history, and the checksum is what an auditor compares against the operator's own copy.
+     * Subjects left holding no records at all are erased by the nightly purge, which is where that
+     * has always belonged.
+     */
+    public Reversal revert(UUID batchId, String reason, UUID actorId) {
+        UUID tenantId = TenantContext.require();
+
+        List<UUID> rowIds = ingest.rowsOf(batchId).stream().map(RawRecord::getId).toList();
+        List<DebtRecord> derived = new ArrayList<>();
+        // Chunked because a delivery is four thousand rows and an IN clause of four thousand ids
+        // is a statement that happens to work rather than one anybody designed.
+        for (int from = 0; from < rowIds.size(); from += LOOKUP_CHUNK) {
+            derived.addAll(records.findByTenantIdAndRawRecordIdIn(
+                    tenantId, rowIds.subList(from, Math.min(from + LOOKUP_CHUNK, rowIds.size()))));
+        }
+
+        List<DebtRecord> contested = derived.stream()
+                .filter(record -> !record.isVisibleToOtherOperators())
+                .toList();
+        if (!contested.isEmpty()) {
+            throw new PolicyRefusedException(
+                    contested.size() + " record(s) from this delivery are being disputed or "
+                            + "investigated. They are evidence in cases that are still open, and "
+                            + "withdrawing the file would close those cases by deleting what they "
+                            + "are about. Decide them first, then withdraw the delivery.");
+        }
+
+        records.deleteAll(derived);
+        ingest.revert(batchId, reason, actorId);
+
+        audit.record("TIX_BATCH_REVERTED", "ImportBatch", batchId.toString(),
+                AuditService.OUTCOME_SUCCESS, actorId,
+                derived.size() + " derived record(s) removed; " + reason);
+
+        return new Reversal(rowIds.size(), derived.size());
+    }
+
+    /** How many ids to ask about at once. Chosen to be unremarkable rather than optimal. */
+    private static final int LOOKUP_CHUNK = 500;
+
+    /**
+     * @param rows           delivered rows, all of which stay
+     * @param recordsRemoved records that had been derived from them, all of which do not
+     */
+    public record Reversal(int rows, int recordsRemoved) {
     }
 
     /** Enough for somebody to see the pattern; the counts beside them are complete. */

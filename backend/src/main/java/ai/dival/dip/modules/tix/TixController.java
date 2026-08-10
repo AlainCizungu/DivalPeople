@@ -152,6 +152,26 @@ public class TixController {
     }
 
     /**
+     * Withdraws a delivery, and the records it created with it.
+     *
+     * <p>Beside the derivation deliberately. The operation that put thousands of records into the
+     * registry and the one that takes them out belong at the same address and behind the same
+     * role, or somebody will find one without the other.
+     */
+    @PostMapping("/imports/{batchId}/revert")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public ImportDeriver.Reversal revertImport(@PathVariable UUID batchId,
+                                               @Valid @RequestBody RevertRequest request) {
+        return imports.revert(batchId, request.reason(), actorId());
+    }
+
+    /** @param reason why the delivery is being taken back; recorded against whoever clicked */
+    public record RevertRequest(
+            @jakarta.validation.constraints.NotBlank
+            @jakarta.validation.constraints.Size(max = 1000) String reason) {
+    }
+
+    /**
      * @param dunningEvidence the operator asserting that the contractual chase ran for these
      *                        accounts. A typed declaration carries this per record; an import has
      *                        to carry it too, or thousands of records enter the registry with a

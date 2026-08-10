@@ -160,6 +160,15 @@ What to show:
   one is published**. The check is against live batches, so re-sending a file that was uploaded and
   not yet published is not a duplicate of anything.
 
+- **Withdraw the delivery**, and watch the exposure figures go back to what they were. This is the
+  answer to "what if we sent you the wrong file", which a telecom will ask, and the honest one:
+  the records it created are deleted, the rows and the checksum stay because the file having been
+  live is part of the history, and the delivery can be corrected and sent again.
+
+  It refuses while any of those records is under dispute. Worth saying why: a disputed record is
+  evidence in an open case with a statutory deadline, and deleting it because the operator
+  withdrew the file would settle that case by making it disappear.
+
 ### 3b. The second operator's file, which is a different animal — `operator-b`
 
 Sign in as `operator-b` and import the Orange export the same way. It is worth doing live, because

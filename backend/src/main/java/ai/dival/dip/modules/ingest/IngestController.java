@@ -207,11 +207,11 @@ public class IngestController {
         return BatchResponse.from(ingest.reject(id, request.reason(), actorId()));
     }
 
-    @PostMapping("/batches/{id}/revert")
-    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
-    public BatchResponse revert(@PathVariable UUID id, @Valid @RequestBody ReasonRequest request) {
-        return BatchResponse.from(ingest.revert(id, request.reason(), actorId()));
-    }
+    // Withdrawing a published delivery is POST /api/v1/tix/imports/{batchId}/revert, not here.
+    // It has to remove the records the delivery created, and this module cannot see them: ingest
+    // accepts and remembers, tix decides what enters the registry. An endpoint here would offer a
+    // second door that retracts the file and leaves the records — which is exactly what this one
+    // did until it was removed.
 
     private UUID actorId() {
         return currentUser.currentUserIdOrNull();

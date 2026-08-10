@@ -252,12 +252,19 @@ public class IngestService {
     }
 
     /**
-     * Withdraws a published batch.
+     * Withdraws a published batch, and nothing more.
      *
-     * <p>Does not yet remove anything derived, because nothing is derived from a batch yet — the
-     * mapping that would create exposures from these rows is Phase 2's next piece and needs the
-     * real file. When it exists, deletion of the derived records belongs here, and the raw rows
-     * still stay: that this file was once live is part of the history.
+     * <p><strong>Not the whole of withdrawing a delivery.</strong> Records derived from these rows
+     * are removed by {@code ImportDeriver.revert}, which calls this after taking them back, and
+     * that is the only way this should be reached from outside. Ingest accepts and remembers; it
+     * cannot see into the registry to know what its rows became, and giving it that view would
+     * make the two modules mutually dependent.
+     *
+     * <p>This javadoc used to say deletion "belongs here" once anything was derived from a batch.
+     * That day came and the note stayed, so for a while withdrawing a delivery retracted the file
+     * and left every record it produced live in the exchange.
+     *
+     * <p>The raw rows stay either way: that this file was once live is part of the history.
      */
     @Transactional
     public ImportBatch revert(UUID batchId, String reason, UUID actorId) {

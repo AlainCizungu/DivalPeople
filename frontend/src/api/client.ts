@@ -648,12 +648,6 @@ export const ingestApi = {
     });
   },
 
-  revert(batchId: string, reason: string): Promise<ImportBatch> {
-    return request<ImportBatch>(`/api/v1/ingest/batches/${batchId}/revert`, {
-      method: "POST",
-      body: JSON.stringify({ reason }),
-    });
-  },
 };
 
 export const tixApi = {
@@ -707,6 +701,23 @@ export const tixApi = {
     return request<DerivationReport>(`/api/v1/tix/imports/${batchId}/derive`, {
       method: "POST",
       body: JSON.stringify({ dunningEvidence }),
+    });
+  },
+
+  /**
+   * Withdraws a delivery and removes the records it created.
+   *
+   * <p>On the tix side rather than beside the other batch actions, because it is the undo of
+   * deriveImport rather than a change to the file: the batch is retracted and every record it
+   * produced is deleted. Refused while any of those records is under dispute.
+   */
+  revertImport(batchId: string, reason: string): Promise<{
+    rows: number;
+    recordsRemoved: number;
+  }> {
+    return request(`/api/v1/tix/imports/${batchId}/revert`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
     });
   },
 

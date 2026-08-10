@@ -242,7 +242,7 @@ export default function BatchPage() {
                   <Button
                     variant="secondary"
                     disabled={busy || reason.trim() === ""}
-                    onClick={() => run(() => ingestApi.revert(batch.id, reason.trim()))}
+                    onClick={() => run(() => tixApi.revertImport(batch.id, reason.trim()))}
                   >
                     {t.revert}
                   </Button>
