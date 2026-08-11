@@ -109,6 +109,9 @@ class ImportDeriverTest extends AbstractIntegrationTest {
         ImportDeriver.Report report = deriver.derive(batch.getId(), true, null);
 
         assertThat(report.rows()).isEqualTo(3);
+        // Asserted loosely on purpose: this is a clock, and pinning it to a range would make the
+        // suite fail on a slow machine for a reason that has nothing to do with correctness.
+        assertThat(report.elapsedMs()).isNotNegative();
         assertThat(report.created()).isEqualTo(3);
         assertThat(report.refused()).isZero();
         assertThat(records.findByTenantId(operator)).hasSize(3);

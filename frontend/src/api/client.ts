@@ -542,6 +542,8 @@ export type DerivationReport = {
   complete: boolean;
   asAt: string;
   mappingVersion: number;
+  /** How long the derivation took. Shown, because whoever waited for it is owed the number. */
+  elapsedMs: number;
 };
 
 export type BatchProfile = {

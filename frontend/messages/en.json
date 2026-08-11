@@ -811,7 +811,8 @@
     "deriveTruncated": "Only the first refusals are listed. The counts above are complete.",
     "colReason": "Reason",
     "mappingNoIdentifier": "This file has no identifier column",
-    "mappingNoIdentifierNote": "This delivery identifies nobody by number, so the name column identifies the subject. It works only inside your own organisation — another operator asking about the same company finds nothing, because nothing in the file says it is the same company. If two rows carry the same name the whole delivery is refused, since importing both would record two companies as one."
+    "mappingNoIdentifierNote": "This delivery identifies nobody by number, so the name column identifies the subject. It works only inside your own organisation — another operator asking about the same company finds nothing, because nothing in the file says it is the same company. If two rows carry the same name the whole delivery is refused, since importing both would record two companies as one.",
+    "deriveTook": "Took"
   },
   "participants": {
     "title": "Participating organisations",

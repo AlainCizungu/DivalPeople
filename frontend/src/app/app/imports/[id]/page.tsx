@@ -706,7 +706,13 @@ export default function BatchPage() {
                 </div>
 
                 <p className="mt-4 text-sm text-muted">
-                  {t.deriveAsAt} <span className="tabular-nums text-ink">{report.asAt}</span> ·{" "}
+                  {t.deriveTook}{" "}
+                  <span className="tabular-nums text-ink">
+                    {report.elapsedMs < 1000
+                      ? `${report.elapsedMs} ms`
+                      : `${(report.elapsedMs / 1000).toFixed(1)} s`}
+                  </span>{" "}
+                  · {t.deriveAsAt} <span className="tabular-nums text-ink">{report.asAt}</span> ·{" "}
                   {t.deriveMappingVersion}{" "}
                   <span className="tabular-nums text-ink">{report.mappingVersion}</span>
                 </p>

@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -45,6 +47,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Service
 public class ImportDeriver {
+
+    private static final Logger log = LoggerFactory.getLogger(ImportDeriver.class);
 
     private final IngestService ingest;
     private final DebtRecordService debtRecords;
@@ -121,8 +125,24 @@ public class ImportDeriver {
         List<Refusal> refusals = new ArrayList<>();
         int created = 0;
 
+        // Measured rather than estimated, and split in two, because the two halves would be fixed
+        // in completely different ways. Reading a row is JSON parsing in this process; writing one
+        // is a transaction of its own — a connection checkout that re-binds the tenant, several
+        // queries, two inserts and a commit. If the time is in the second half, batching the
+        // writes is the answer; if it is in the first, batching would buy nothing at all.
+        //
+        // Written before any attempt to make this faster, so the attempt can be judged against a
+        // number instead of a feeling.
+        long startedAt = System.nanoTime();
+        long readingNanos = 0;
+        long writingNanos = 0;
+
         for (RawRecord row : rows) {
+            long beforeRead = System.nanoTime();
             Map<String, String> cells = ingest.cellsOf(row);
+            readingNanos += System.nanoTime() - beforeRead;
+
+            long beforeWrite = System.nanoTime();
             try {
                 UUID rawRecordId = row.getId();
                 DeclarationRequest request = buildRequest(mapping, cells, asAt);
@@ -135,17 +155,31 @@ public class ImportDeriver {
                 // ninety-four and say which six it did not — the alternative is an operator
                 // deleting rows from a spreadsheet by trial and error.
                 refusals.add(new Refusal(row.getRowNumber(), refused.getMessage()));
+            } finally {
+                // In a finally block: a refused row costs a transaction too — it opens, does the
+                // work that discovers the problem, and rolls back. Counting only the successes
+                // would understate the cost of a delivery that is mostly refusals.
+                writingNanos += System.nanoTime() - beforeWrite;
             }
         }
 
+        long elapsedMs = (System.nanoTime() - startedAt) / 1_000_000;
+        log.info("Derived {} record(s) from {} row(s) in {} ms ({} refused) — "
+                        + "reading rows {} ms, writing records {} ms, {} ms per row",
+                created, rows.size(), elapsedMs, refusals.size(),
+                readingNanos / 1_000_000, writingNanos / 1_000_000,
+                rows.isEmpty() ? 0 : elapsedMs / rows.size());
+
         audit.record("TIX_BATCH_DERIVED", "ImportBatch", batchId.toString(),
                 AuditService.OUTCOME_SUCCESS, actorId,
-                created + " record(s) created, " + refusals.size() + " refused; mapping v"
-                        + mapping.getVersionNumber() + "; dates derived from " + asAt);
+                created + " record(s) created, " + refusals.size() + " refused in " + elapsedMs
+                        + " ms; mapping v" + mapping.getVersionNumber()
+                        + "; dates derived from " + asAt);
 
         return new Report(rows.size(), created, refusals.size(),
                 List.copyOf(refusals.stream().limit(MAX_REPORTED_REFUSALS).toList()),
-                refusals.size() <= MAX_REPORTED_REFUSALS, asAt, mapping.getVersionNumber());
+                refusals.size() <= MAX_REPORTED_REFUSALS, asAt, mapping.getVersionNumber(),
+                elapsedMs);
     }
 
     /**
@@ -329,13 +363,16 @@ public class ImportDeriver {
     /**
      * What the derivation did.
      *
-     * @param complete false when there were more refusals than {@code refusals} lists. The counts
-     *                 stay exact; only the listing is truncated
-     * @param asAt     the date every derived record's clock starts from, repeated back so nobody
-     *                 has to go and look it up to understand the result
+     * @param complete  false when there were more refusals than {@code refusals} lists. The counts
+     *                  stay exact; only the listing is truncated
+     * @param asAt      the date every derived record's clock starts from, repeated back so nobody
+     *                  has to go and look it up to understand the result
+     * @param elapsedMs how long the whole derivation took. On the screen rather than only in the
+     *                  log because an operator who has just waited for it is owed the number, and
+     *                  because a figure somebody sees is a figure somebody complains about
      */
     public record Report(int rows, int created, int refused, List<Refusal> refusals,
-                         boolean complete, LocalDate asAt, int mappingVersion) {
+                         boolean complete, LocalDate asAt, int mappingVersion, long elapsedMs) {
     }
 
     public record Refusal(int rowNumber, String reason) {
