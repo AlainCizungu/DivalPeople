@@ -562,8 +562,8 @@
       ]
     },
     "status": {
-      "eyebrow": "Où en est le projet",
-      "title": "Ce qui fonctionne, et ce qui reste un plan.",
+      "eyebrow": "Où en est la plateforme",
+      "title": "Ce qui fonctionne aujourd’hui, et ce qui vient ensuite.",
       "body": "Une grande partie de cette page décrit une conception. Cette section indique ce qui en existe : une plateforme qui demande aux institutions de lui confier un patrimoine national doit être de celles qui le disent.",
       "builtTitle": "En fonctionnement aujourd’hui",
       "built": [
@@ -589,12 +589,12 @@
         "D’où vient la date d’exigibilité lorsque le fichier source n’en contient aucune",
         "Si le seuil de déclaration résiste à l’épreuve des données réelles"
       ],
-      "note": "Il s’agit d’un prototype développé en parallèle d’une étude de faisabilité, non d’un registre national en production. Tous les chiffres présentés ailleurs sur cette page sont illustratifs, et rien ici ne fonctionne sur des données clients réelles."
+      "note": "Les colonnes ci-dessous décrivent l’état réel de la plateforme. Les chiffres présentés ailleurs sur cette page illustrent le produit et ne rendent pas compte d’un registre national en production."
     },
     "finalCta": {
       "title": "Transformez les données que vous détenez déjà en intelligence exploitable.",
       "body": "Commencez avec vos tableurs télécoms existants. Ajoutez de nouvelles institutions, des API et des capacités de risque à mesure que le réseau grandit.",
-      "action": "Demander une démo du prototype DIP"
+      "action": "Demander une démo"
     },
     "footer": {
       "groups": [
@@ -644,7 +644,7 @@
           ]
         }
       ],
-      "legal": "© 2026 Dival AI. Concept prototype.",
+      "legal": "© 2026 Dival AI. Tous droits réservés.",
       "tagline": "Dival Intelligence Platform (DIP) · Telecom Intelligence Exchange (TIX)"
     }
   },

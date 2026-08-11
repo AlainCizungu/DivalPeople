@@ -12,8 +12,11 @@ export function Eyebrow({
   children: React.ReactNode;
   tone?: "blue" | "light" | "pale";
 }) {
+  // Two lighter blues for use on the navy sections, where text-blue disappears. Named here
+  // rather than repeated at each call site, which is how three slightly different blues got onto
+  // the page in the first place.
   const colour =
-    tone === "blue" ? "text-blue" : tone === "light" ? "text-[#5bb4ff]" : "text-[#b8e1ff]";
+    tone === "blue" ? "text-blue" : tone === "light" ? "text-sky-300" : "text-sky-200";
   return (
     <div className={`mb-3.5 text-[13px] font-extrabold tracking-[0.12em] uppercase ${colour}`}>
       {children}
@@ -62,7 +65,7 @@ export function FeatureCard({
   more: string;
 }) {
   return (
-    <article className="flex min-h-80 flex-col border border-line bg-white transition hover:-translate-y-1 hover:shadow-lg">
+    <article className="flex min-h-80 flex-col overflow-hidden rounded-xl border border-line bg-white transition hover:-translate-y-1 hover:shadow-lg">
       <div
         className={`flex min-h-36 items-end p-6 text-[38px] leading-none font-extrabold text-white ${gradient}`}
       >
@@ -85,7 +88,7 @@ export function CheckList({
   className?: string;
 }) {
   return (
-    <ul className={`flex flex-wrap gap-4.5 text-sm text-[#334155] ${className}`}>
+    <ul className={`flex flex-wrap gap-4.5 text-sm text-ink ${className}`}>
       {items.map((item) => (
         <li key={item}>
           <span aria-hidden="true" className="mr-1.5 font-extrabold text-green">

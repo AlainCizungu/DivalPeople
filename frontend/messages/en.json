@@ -563,7 +563,7 @@
     },
     "status": {
       "eyebrow": "Where This Is Today",
-      "title": "What runs, and what is still a drawing.",
+      "title": "What runs today, and what comes next.",
       "body": "Much of this page describes a design. This section says which parts of it exist, because a platform asking institutions to trust it with a national dataset should be the kind that tells them.",
       "builtTitle": "Running today",
       "built": [
@@ -589,12 +589,12 @@
         "Where a default date comes from when the source file carries none",
         "Whether the reporting threshold survives contact with real data"
       ],
-      "note": "This is a prototype built alongside a feasibility study, not a live national registry. Every figure elsewhere on this page is illustrative, and nothing here runs against real customer data."
+      "note": "The columns below are the honest state of the platform. Figures shown elsewhere on this page illustrate the product rather than report a live national registry."
     },
     "finalCta": {
       "title": "Turn the data you already have into intelligence you can act on.",
       "body": "Start with existing telecom spreadsheets. Add new institutions, APIs, and risk capabilities as the network grows.",
-      "action": "Request a DIP prototype demo"
+      "action": "Request a demo"
     },
     "footer": {
       "groups": [
@@ -644,7 +644,7 @@
           ]
         }
       ],
-      "legal": "© 2026 Dival AI. Prototype concept.",
+      "legal": "© 2026 Dival AI. All rights reserved.",
       "tagline": "Dival Intelligence Platform (DIP) · Telecom Intelligence Exchange (TIX)"
     }
   },

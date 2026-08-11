@@ -31,7 +31,7 @@ export function PlatformSection() {
   const messages = useMessages();
   const { platform } = messages.landing;
   return (
-    <section id="platform" className="mx-auto max-w-7xl px-6 py-20">
+    <section id="platform" className="mx-auto max-w-7xl px-6 py-14 md:py-20">
       <SectionHeading eyebrow={platform.eyebrow} title={platform.title} body={platform.body} />
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {platform.cards.map((card, index) => (
@@ -55,7 +55,7 @@ export function ExchangeSection() {
   const { exchange } = messages.landing;
   return (
     <section id="exchange" className="bg-soft">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
         <SectionHeading eyebrow={exchange.eyebrow} title={exchange.title} body={exchange.body} />
         <ol className="grid gap-6 md:grid-cols-3 xl:grid-cols-5">
           {exchange.steps.map((step, index) => (
@@ -80,7 +80,8 @@ export function RiskSection() {
   const messages = useMessages();
   const { risk, actions } = messages.landing;
   return (
-    <section id="risk" className="mx-auto max-w-7xl px-6 py-20">
+    <section id="risk" className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
       <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.9fr]">
         <div>
           <SectionHeading eyebrow={risk.eyebrow} title={risk.title} body={risk.body} />
@@ -142,6 +143,7 @@ export function RiskSection() {
           </div>
         </div>
       </div>
+      </div>
     </section>
   );
 }
@@ -150,8 +152,8 @@ export function EntitySection() {
   const messages = useMessages();
   const { entity } = messages.landing;
   return (
-    <section className="bg-soft">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+    <section className="bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
         <SectionHeading eyebrow={entity.eyebrow} title={entity.title} body={entity.body} />
         <div className="grid gap-6 md:grid-cols-3">
           {entity.cards.map((card, index) => (
@@ -176,7 +178,7 @@ export function NationalTrustSection() {
   const { trust } = messages.landing;
   return (
     <section id="national-trust" className="bg-navy">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
         <SectionHeading
           eyebrow={trust.eyebrow}
           title={trust.title}
@@ -204,7 +206,7 @@ export function IndustriesSection() {
   const messages = useMessages();
   const { industries } = messages.landing;
   return (
-    <section id="industries" className="mx-auto max-w-7xl px-6 py-20">
+    <section id="industries" className="mx-auto max-w-7xl px-6 py-14 md:py-20">
       <SectionHeading
         eyebrow={industries.eyebrow}
         title={industries.title}
@@ -232,7 +234,7 @@ export function PortfolioSection() {
   const columns = portfolio.columns;
   return (
     <section className="bg-soft">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
         <SectionHeading
           eyebrow={portfolio.eyebrow}
           title={portfolio.title}
@@ -279,7 +281,7 @@ export function AiSection() {
   const messages = useMessages();
   const { ai } = messages.landing;
   return (
-    <section id="ai" className="mx-auto max-w-7xl px-6 py-20">
+    <section id="ai" className="mx-auto max-w-7xl px-6 py-14 md:py-20">
       <SectionHeading eyebrow={ai.eyebrow} title={ai.title} body={ai.body} />
       <div className="grid gap-6 md:grid-cols-2">
         {ai.exchanges.map((item) => (
@@ -301,8 +303,8 @@ export function GovernanceSection() {
   const messages = useMessages();
   const { governance } = messages.landing;
   return (
-    <section className="bg-soft">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+    <section className="bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
         <SectionHeading
           eyebrow={governance.eyebrow}
           title={governance.title}
@@ -328,7 +330,7 @@ export function FinalCta() {
   const { finalCta, actions } = messages.landing;
   return (
     <section id="demo" className="bg-navy">
-      <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+      <div className="mx-auto max-w-4xl px-6 py-14 md:py-20 text-center">
         <h2 className="mb-4 text-[clamp(2rem,4vw,3rem)] leading-tight font-bold text-white">
           {finalCta.title}
         </h2>
@@ -367,8 +369,8 @@ export function BoundarySection() {
   const messages = useMessages();
   const { boundary } = messages.landing;
   return (
-    <section id="boundary" className="bg-soft">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+    <section id="boundary" className="bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
         <SectionHeading
           eyebrow={boundary.eyebrow}
           title={boundary.title}
@@ -433,7 +435,8 @@ export function SubjectRightsSection() {
   const messages = useMessages();
   const { subjects } = messages.landing;
   return (
-    <section id="subjects" className="mx-auto max-w-7xl px-6 py-20">
+    <section id="subjects" className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
       <SectionHeading eyebrow={subjects.eyebrow} title={subjects.title} body={subjects.body} />
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -448,9 +451,12 @@ export function SubjectRightsSection() {
         ))}
       </div>
 
-      <p className="mt-6 rounded-lg border border-line bg-soft px-5 py-4 text-sm text-muted">
+      {/* White on soft now that the section itself is soft; the note has to sit apart from
+          the surface it is written on or it stops reading as an aside. */}
+      <p className="mt-6 rounded-xl border border-line bg-white px-5 py-4 text-sm text-muted">
         {subjects.note}
       </p>
+      </div>
     </section>
   );
 }
@@ -476,7 +482,7 @@ export function StatusSection() {
 
   return (
     <section id="status" className="bg-soft">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
         <SectionHeading eyebrow={status.eyebrow} title={status.title} body={status.body} />
 
         <div className="grid gap-6 lg:grid-cols-3">

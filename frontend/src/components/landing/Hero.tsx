@@ -23,7 +23,7 @@ export function Hero() {
       id="search"
       className="bg-[radial-gradient(circle_at_85%_20%,rgba(0,103,184,0.23),transparent_28%),linear-gradient(120deg,#eef6ff_0%,#fff_52%,#eefbf7_100%)]"
     >
-      <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-14 md:py-20 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
           <Eyebrow>{hero.eyebrow}</Eyebrow>
           <h1 className="mb-6 text-[clamp(2.75rem,6vw,4.5rem)] leading-[1.03] font-bold tracking-[-0.04em] text-navy">
