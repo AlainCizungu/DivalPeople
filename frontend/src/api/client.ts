@@ -652,6 +652,37 @@ export const ingestApi = {
 
 };
 
+/**
+ * What is waiting on somebody, counted on the server.
+ *
+ * A section is `null` when the caller's roles do not cover it — deliberately not zero, because
+ * "no overdue cases" and "you may not see the overdue cases" are different statements and only
+ * one of them is reassuring.
+ */
+export type Overview = {
+  asOf: string;
+  register: {
+    total: number;
+    outstanding: number;
+    contested: number;
+    settled: number;
+    expiringSoon: number;
+    awaitingErasure: number;
+  } | null;
+  rights: { open: number; overdue: number; dueSoon: number } | null;
+  deliveries: {
+    awaitingValidation: number;
+    awaitingPublication: number;
+    published: number;
+  } | null;
+};
+
+export const overviewApi = {
+  load(): Promise<Overview> {
+    return request<Overview>("/api/v1/overview");
+  },
+};
+
 export const tixApi = {
   inquire(body: InquiryRequest): Promise<InquiryResult> {
     return request<InquiryResult>("/api/v1/tix/inquiries", {

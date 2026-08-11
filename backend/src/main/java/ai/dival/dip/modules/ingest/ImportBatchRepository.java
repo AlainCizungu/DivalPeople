@@ -32,6 +32,16 @@ public interface ImportBatchRepository extends JpaRepository<ImportBatch, UUID> 
     Optional<ImportBatch> findByIdAndTenantId(@Param("id") UUID id, @Param("tenantId") UUID tenantId);
 
     /**
+     * Deliveries sitting in a given state, counted rather than listed.
+     *
+     * <p>The overview uses this to say what is waiting on somebody: a file received and not yet
+     * validated, or validated and not yet published, is a delivery somebody started and did not
+     * finish. Those are the ones worth surfacing — a published one is done until somebody derives
+     * from it, and a rejected one is a decision rather than a task.
+     */
+    long countByTenantIdAndStatus(UUID tenantId, BatchStatus status);
+
+    /**
      * Whether this exact file is already live for this operator.
      *
      * <p>Checked before publishing so a duplicate upload gets a sentence it can act on rather

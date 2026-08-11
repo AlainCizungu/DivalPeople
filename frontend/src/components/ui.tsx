@@ -71,14 +71,27 @@ export function Metric({
   label: string;
   value: string;
   note?: string;
-  tone?: "plain" | "warning";
+  /**
+   * Three levels, because two were not enough to be honest with.
+   *
+   * `warning` is "worth a look". `serious` is for the two figures that mean something is wrong
+   * rather than merely notable: a rights case past a statutory deadline, and records still here
+   * after their retention period ended. Pill has carried the same word for a while; the metric
+   * simply had no way to say it, so those numbers were rendering as amber alongside a delivery
+   * somebody had not got round to.
+   */
+  tone?: "plain" | "warning" | "serious";
 }) {
   return (
     <div className="rounded-lg border border-line bg-white p-5">
       <p className="text-sm text-muted">{label}</p>
       <p
         className={`mt-1 text-3xl font-bold tabular-nums ${
-          tone === "warning" ? "text-[#b45309]" : "text-navy"
+          tone === "serious"
+            ? "text-[#b91c1c]"
+            : tone === "warning"
+              ? "text-[#b45309]"
+              : "text-navy"
         }`}
       >
         {value}

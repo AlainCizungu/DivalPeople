@@ -18,6 +18,20 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
 
     List<DebtRecord> findByTenantIdAndSubjectId(UUID tenantId, UUID subjectId);
 
+    long countByTenantId(UUID tenantId);
+
+    long countByTenantIdAndStatus(UUID tenantId, DebtStatus status);
+
+    /**
+     * Records whose retention period ends inside a window.
+     *
+     * <p>Counted here rather than by pulling every record into the browser and comparing dates in
+     * JavaScript, which is what the overview screen did. At a dozen records that was invisible; at
+     * four thousand it is the page's whole payload.
+     */
+    long countByTenantIdAndRetentionUntilBetween(
+            UUID tenantId, java.time.LocalDate from, java.time.LocalDate to);
+
     Optional<DebtRecord> findByIdAndTenantId(UUID id, UUID tenantId);
 
     /** This operator's records about one subject, whatever their status. */
