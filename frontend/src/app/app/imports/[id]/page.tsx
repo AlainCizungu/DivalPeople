@@ -55,6 +55,10 @@ export default function BatchPage() {
   const [batch, setBatch] = useState<ImportBatch | null>(null);
   const [rows, setRows] = useState<RawRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Named separately so a failure says which question went unanswered rather than blanking
+  // the page and leaving somebody to guess between five calls.
+  const [rowsError, setRowsError] = useState<string | null>(null);
+  const [mappingError, setMappingError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [reason, setReason] = useState("");
   /**
@@ -90,37 +94,76 @@ export default function BatchPage() {
   const [serviceCategory, setServiceCategory] = useState("POSTPAID");
   const [subjectType, setSubjectType] = useState<SubjectType>("BUSINESS");
 
+  /**
+   * Each part of the page loads and fails on its own.
+   *
+   * <p>This used to be one try block around a Promise.all of five calls. Any one of them failing
+   * emptied the whole screen and printed a single sentence that named none of them — so a broken
+   * profile query and a broken row query were indistinguishable, and the buttons that would have
+   * moved the delivery forward disappeared along with them.
+   *
+   * <p>A page assembled from five independent questions should answer the four it can. Whichever
+   * one failed says so where it would have been, which is also how somebody finds out what broke
+   * without opening a terminal.
+   */
   const load = useCallback(async () => {
-    try {
-      const [batches, loadedRows] = await Promise.all([
-        ingestApi.listBatches(),
-        ingestApi.rows(batchId),
-      ]);
-      const found = batches.find((candidate) => candidate.id === batchId) ?? null;
-      setBatch(found);
-      setRows(loadedRows);
+    const reason = (caught: unknown) =>
+      caught instanceof ApiError ? caught.message : messages.common.unexpectedError;
 
-      if (found) {
-        const [current, versions] = await Promise.all([
-          ingestApi.currentMapping(found.sourceId),
-          ingestApi.mappingHistory(found.sourceId),
-        ]);
-        setMapping(current);
-        setHistory(versions);
-        if (current) {
-          setIdentifierColumn(current.identifierColumn ?? "");
-          setIdentifierType(current.identifierType ?? "RCCM");
-          setNoIdentifier(current.identifierColumn === null);
-          setNameColumn(current.nameColumn);
-          setAmountColumn(current.amountColumn);
-          setCurrency(current.currency);
-          setServiceCategory(current.serviceCategory);
-          setSubjectType(current.subjectType);
-        }
-      }
-    } catch (caught) {
+    const [batchesResult, rowsResult] = await Promise.allSettled([
+      ingestApi.listBatches(),
+      ingestApi.rows(batchId),
+    ]);
+
+    // The batch itself is the page. Without it there is nothing to show and the banner is right.
+    if (batchesResult.status === "fulfilled") {
+      setBatch(batchesResult.value.find((candidate) => candidate.id === batchId) ?? null);
+      setError(null);
+    } else {
+      setError(reason(batchesResult.reason));
+    }
+
+    if (rowsResult.status === "fulfilled") {
+      setRows(rowsResult.value);
+      setRowsError(null);
+    } else {
       setRows([]);
-      setError(caught instanceof ApiError ? caught.message : messages.common.unexpectedError);
+      setRowsError(reason(rowsResult.reason));
+    }
+
+    const found =
+      batchesResult.status === "fulfilled"
+        ? batchesResult.value.find((candidate) => candidate.id === batchId) ?? null
+        : null;
+    if (!found) {
+      return;
+    }
+
+    const [currentResult, historyResult] = await Promise.allSettled([
+      ingestApi.currentMapping(found.sourceId),
+      ingestApi.mappingHistory(found.sourceId),
+    ]);
+
+    if (currentResult.status === "fulfilled") {
+      const current = currentResult.value;
+      setMapping(current);
+      setMappingError(null);
+      if (current) {
+        setIdentifierColumn(current.identifierColumn ?? "");
+        setIdentifierType(current.identifierType ?? "RCCM");
+        setNoIdentifier(current.identifierColumn === null);
+        setNameColumn(current.nameColumn);
+        setAmountColumn(current.amountColumn);
+        setCurrency(current.currency);
+        setServiceCategory(current.serviceCategory);
+        setSubjectType(current.subjectType);
+      }
+    } else {
+      setMappingError(reason(currentResult.reason));
+    }
+
+    if (historyResult.status === "fulfilled") {
+      setHistory(historyResult.value);
     }
   }, [batchId, messages.common.unexpectedError]);
 
@@ -460,7 +503,11 @@ export default function BatchPage() {
             </p>
           ) : (
             <div className="mb-4">
-              <EmptyState>{t.mappingNone}</EmptyState>
+              {mappingError ? (
+                <ErrorNotice>{`${t.mappingFailed} ${mappingError}`}</ErrorNotice>
+              ) : (
+                <EmptyState>{t.mappingNone}</EmptyState>
+              )}
             </div>
           )}
 
@@ -755,7 +802,12 @@ export default function BatchPage() {
       )}
 
       <Card title={t.rowsTitle} description={t.rowsDescription}>
-        {rows === null ? (
+        {rowsError ? (
+          // Said here rather than as a banner at the top of the page. "The rows could not be
+          // loaded" names the question that went unanswered; "Internal Server Error" above five
+          // sections names nothing and hides which four still work.
+          <ErrorNotice>{`${t.rowsFailed} ${rowsError}`}</ErrorNotice>
+        ) : rows === null ? (
           <EmptyState>{messages.common.loading}</EmptyState>
         ) : parsed.length === 0 ? (
           <EmptyState>{t.noRows}</EmptyState>

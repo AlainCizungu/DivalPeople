@@ -834,7 +834,9 @@
     "colReason": "Reason",
     "mappingNoIdentifier": "This file has no identifier column",
     "mappingNoIdentifierNote": "This delivery identifies nobody by number, so the name column identifies the subject. It works only inside your own organisation — another operator asking about the same company finds nothing, because nothing in the file says it is the same company. If two rows carry the same name the whole delivery is refused, since importing both would record two companies as one.",
-    "deriveTook": "Took"
+    "deriveTook": "Took",
+    "rowsFailed": "The stored rows could not be loaded.",
+    "mappingFailed": "The mapping for this source could not be loaded."
   },
   "participants": {
     "title": "Participating organisations",
