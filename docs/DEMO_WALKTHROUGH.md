@@ -257,8 +257,23 @@ argument rests on.*
 the dispute was raised — before anybody decided who is right. The harm of being wrongly listed
 accrues daily.
 
-The illustrative score panel below the result is marked as a mock in heavy amber. Say plainly that
-there is no risk model yet and that the panel is what one would look like.
+Below the verdict is the **DIP Risk Indicator**: a figure out of 100, the band it falls in, and
+every factor that produced it. This used to be a mock in heavy amber; it is now computed.
+
+Three things are worth saying out loud here, because they are the difference between this and a
+score off a slide:
+
+- **It is an indicator, not a credit score, and the scale runs the risk way up.** Zero is no
+  adverse information; 100 is the most the platform can observe. A credit score is a statistical
+  claim about repayment, and making one needs outcome data, a validation sample and a regulatory
+  position. None of those exist yet. Say so before a banker asks.
+- **Two factors are listed and deliberately not assessed.** Outstanding exposure, because the
+  amount columns in both operator deliveries carry no stated currency — weight them and every
+  assessment could be wrong by a factor of 2,800 while looking entirely reasonable. And dispute
+  history, because a contested record is already withheld from every answer the exchange gives,
+  and reporting the dispute itself would put it back by another route.
+- **The model version is on the panel.** Somebody declined for credit this year can ask why in
+  three, by which time the weights will have moved.
 
 ### 6. The operator's own book — `operator-a` → **Exposure**
 
@@ -349,7 +364,8 @@ promised a launch date before that is settled.
 
 ## Things that will not work, so do not open them
 
-- **A risk score** — not built. Only the clearly-marked mock.
+- **A ranked risk view of your own book.** The indicator is computed per inquiry; there is no
+  screen yet that lists your customers worst-first. Ask about one company at a time.
 - **Matching a company across the two operators.** Not a defect and not a gap in the code: Vodacom
   identifies customers by its own account numbers and Orange by name alone, so there is nothing in
   either file that says a company in one is the company in the other. Section 3b is where to say

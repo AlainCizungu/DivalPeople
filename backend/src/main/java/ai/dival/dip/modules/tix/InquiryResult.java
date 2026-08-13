@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.tix;
 
+import ai.dival.dip.modules.risk.RiskIndicator;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,18 +33,29 @@ import java.util.UUID;
  * company — was being reported as one. The number was wrong in the direction that understates
  * risk, which is the worse direction for a credit decision.
  *
+ * <p>{@code indicator} is the one thing here that is computed rather than reported, and it obeys
+ * the same line. Every input it rests on is a fact this response already carries, or a band too
+ * coarse to be differenced back into one — because a number that moves is a number a competitor
+ * can watch over time, and an indicator built from anything private would leak that private thing
+ * one reading at a time. It is null for every outcome except a confirmed match, for the same
+ * reason the subject id is: an answer the exchange is not confident about carries a verdict and
+ * nothing else.
+ *
  * @param outcome          overall finding, which is the whole answer
  * @param subjectId        resolved subject; {@code null} unless the match was confirmed
  * @param statuses         distinct statuses held against the subject by any participating operator
  * @param institutionCount how many operators hold a record that counts; never which
  * @param fraudSignals     advisory indicators requiring human review, never findings of misconduct
+ * @param indicator        the DIP Risk Indicator and every factor behind it; null without a
+ *                         confirmed match
  */
 public record InquiryResult(
         Outcome outcome,
         UUID subjectId,
         List<DebtStatus> statuses,
         int institutionCount,
-        List<String> fraudSignals) {
+        List<String> fraudSignals,
+        RiskIndicator indicator) {
 
     public enum Outcome {
         /** No subject matched the submitted identifiers. */
@@ -57,7 +69,7 @@ public record InquiryResult(
     }
 
     public static InquiryResult noMatch() {
-        return new InquiryResult(Outcome.NO_MATCH, null, List.of(), 0, List.of());
+        return new InquiryResult(Outcome.NO_MATCH, null, List.of(), 0, List.of(), null);
     }
 
     /**
@@ -65,6 +77,6 @@ public record InquiryResult(
      * exchange is not confident, and that is the entire content of the answer.
      */
     public static InquiryResult reviewRequired() {
-        return new InquiryResult(Outcome.REVIEW_REQUIRED, null, List.of(), 0, List.of());
+        return new InquiryResult(Outcome.REVIEW_REQUIRED, null, List.of(), 0, List.of(), null);
     }
 }

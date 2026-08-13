@@ -1,16 +1,12 @@
 package ai.dival.dip.modules.overview;
 
-import ai.dival.dip.common.tenancy.TenantContext;
-import ai.dival.dip.modules.ingest.BatchStatus;
-import ai.dival.dip.modules.ingest.ImportBatchRepository;
-import ai.dival.dip.modules.tix.DebtRecordRepository;
-import ai.dival.dip.modules.tix.DebtStatus;
-import ai.dival.dip.modules.tix.SubjectRequestRepository;
+import ai.dival.dip.modules.ingest.IngestService;
+import ai.dival.dip.modules.tix.DebtRecordService;
+import ai.dival.dip.modules.tix.SubjectRightsService;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +30,12 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Lives in its own module rather than in {@code tix}, because the platform is what has a front
  * door. TIX is one thing an operator does here; the deliveries, the rights queue and the audit
  * trail are not telecom concepts and should not be reached through a telecom package.
+ *
+ * <p><strong>It counts nothing itself.</strong> The first version of this class reached straight
+ * into three other modules' repositories and wrote the queries here, which the architecture check
+ * had been catching all along on a run nobody had done. Each module now answers for its own
+ * figures and this one decides who may see them and over what horizon — which is the only thing a
+ * front door should know.
  */
 @Service
 public class OverviewService {
@@ -48,16 +50,16 @@ public class OverviewService {
     private static final int RIGHTS_HORIZON_DAYS = 7;
     private static final int RETENTION_HORIZON_DAYS = 90;
 
-    private final DebtRecordRepository debtRecords;
-    private final SubjectRequestRepository requests;
-    private final ImportBatchRepository batches;
+    private final DebtRecordService debtRecords;
+    private final SubjectRightsService rights;
+    private final IngestService ingest;
     private final Clock clock;
 
-    public OverviewService(DebtRecordRepository debtRecords, SubjectRequestRepository requests,
-                           ImportBatchRepository batches, Clock clock) {
+    public OverviewService(DebtRecordService debtRecords, SubjectRightsService rights,
+                           IngestService ingest, Clock clock) {
         this.debtRecords = debtRecords;
-        this.requests = requests;
-        this.batches = batches;
+        this.rights = rights;
+        this.ingest = ingest;
         this.clock = clock;
     }
 
@@ -67,7 +69,6 @@ public class OverviewService {
      */
     @Transactional(readOnly = true)
     public Overview forCaller(boolean canDeclare, boolean canSeeCases) {
-        UUID tenantId = TenantContext.require();
         Instant now = clock.instant();
         LocalDate today = LocalDate.now(clock);
 
@@ -75,63 +76,29 @@ public class OverviewService {
         // pedantic. Nought overdue cases is a fact somebody can act on; nought because you are not
         // allowed to know is a different statement, and showing the first when you mean the second
         // tells the reader something false in the most reassuring possible direction.
-        Register register = canDeclare ? new Register(
-                debtRecords.countByTenantId(tenantId),
-                debtRecords.countByTenantIdAndStatus(tenantId, DebtStatus.OUTSTANDING),
-                debtRecords.countByTenantIdAndStatus(tenantId, DebtStatus.DISPUTED),
-                debtRecords.countByTenantIdAndStatus(tenantId, DebtStatus.SETTLED),
-                debtRecords.countByTenantIdAndRetentionUntilBetween(
-                        tenantId, today, today.plusDays(RETENTION_HORIZON_DAYS)),
-                // Past its retention date and still here. Should be nought every morning; if it
-                // is not, the nightly purge has stopped and nothing else in the product says so.
-                debtRecords.countByTenantIdAndRetentionUntilBetween(
-                        tenantId, LocalDate.EPOCH, today.minusDays(1)))
-                : null;
-
-        Rights rights = canSeeCases ? new Rights(
-                requests.countOpen(tenantId),
-                requests.countOverdue(tenantId, now),
-                requests.countDueBefore(tenantId, now,
-                        now.plus(RIGHTS_HORIZON_DAYS, ChronoUnit.DAYS)))
-                : null;
-
-        Deliveries deliveries = canDeclare ? new Deliveries(
-                batches.countByTenantIdAndStatus(tenantId, BatchStatus.RECEIVED),
-                batches.countByTenantIdAndStatus(tenantId, BatchStatus.VALIDATED),
-                batches.countByTenantIdAndStatus(tenantId, BatchStatus.PUBLISHED))
-                : null;
-
-        return new Overview(today, register, rights, deliveries);
+        //
+        // The short-circuit matters as much as the null: a section the caller cannot see is never
+        // queried, so the refusal costs nothing and leaves no trace of the question.
+        return new Overview(
+                today,
+                canDeclare
+                        ? debtRecords.register(today, today.plusDays(RETENTION_HORIZON_DAYS))
+                        : null,
+                canSeeCases
+                        ? rights.queue(now, now.plus(RIGHTS_HORIZON_DAYS, ChronoUnit.DAYS))
+                        : null,
+                canDeclare ? ingest.deliverySummary() : null);
     }
 
     /**
-     * @param asOf        the date the figures were counted on, so a stale tab is obvious
-     * @param register    null when the caller may not see the operator's own records
-     * @param rights      null when the caller may not see the rights queue
-     * @param deliveries  null when the caller may not see imports
+     * @param asOf       the date the figures were counted on, so a stale tab is obvious
+     * @param register   null when the caller may not see the operator's own records
+     * @param rights     null when the caller may not see the rights queue
+     * @param deliveries null when the caller may not see imports
      */
-    public record Overview(LocalDate asOf, Register register, Rights rights,
-                           Deliveries deliveries) {
-    }
-
-    /**
-     * @param expiringSoon   inside the retention horizon and still live
-     * @param awaitingErasure past retention and not yet purged. Nought every morning, or the
-     *                        nightly sweep has stopped
-     */
-    public record Register(long total, long outstanding, long contested, long settled,
-                           long expiringSoon, long awaitingErasure) {
-    }
-
-    /** @param overdue past a statutory deadline, which is itself grounds for a complaint */
-    public record Rights(long open, long overdue, long dueSoon) {
-    }
-
-    /**
-     * @param awaitingValidation received and not yet looked at
-     * @param awaitingPublication validated and not yet accepted — somebody started and stopped
-     * @param published          accepted, and possibly not yet turned into records
-     */
-    public record Deliveries(long awaitingValidation, long awaitingPublication, long published) {
+    public record Overview(LocalDate asOf,
+                           DebtRecordService.RegisterSummary register,
+                           SubjectRightsService.RightsQueue rights,
+                           IngestService.DeliverySummary deliveries) {
     }
 }

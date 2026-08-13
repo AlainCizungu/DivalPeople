@@ -34,6 +34,58 @@ export type InquiryResult = {
    */
   institutionCount: number;
   fraudSignals: string[];
+  /**
+   * The DIP Risk Indicator, or null when the exchange had nothing to assess.
+   *
+   * Null for a no-match and for a match the platform is not confident about, for the same reason
+   * the subject id is withheld: an answer the exchange will not stand behind carries a verdict
+   * and nothing else.
+   */
+  indicator: RiskIndicator | null;
+};
+
+export type RiskFactorCode =
+  | "PAYMENT_BEHAVIOUR"
+  | "DEBT_AGING"
+  | "REPORTING_INSTITUTIONS"
+  | "IDENTITY_CONFIDENCE"
+  | "FRAUD_INDICATORS"
+  | "OUTSTANDING_EXPOSURE"
+  | "DISPUTE_HISTORY";
+
+export type RiskRating = "NOT_ASSESSED" | "LOW" | "MODERATE" | "HIGH";
+
+export type RiskBand = "LOW" | "MODERATE" | "ELEVATED" | "HIGH";
+
+export type NotAssessedReason =
+  | "CURRENCY_UNCONFIRMED"
+  | "DISPUTES_ARE_NOT_DISCLOSED";
+
+export type RiskFactor = {
+  code: RiskFactorCode;
+  rating: RiskRating;
+  points: number;
+  /** Why this factor was left out, and null when it was not. */
+  reason: NotAssessedReason | null;
+};
+
+/**
+ * A risk indicator and everything behind it.
+ *
+ * The scale runs the risk way up: 0 is no adverse information and 100 is the most the platform
+ * can observe. That is the opposite of a credit score, which is the point — anybody who mistakes
+ * it for one reads it backwards immediately and finds out.
+ *
+ * Codes travel on the wire and the words live in the message catalogue, so a factor can be
+ * reworded in either language without touching the model a lending decision was made with.
+ */
+export type RiskIndicator = {
+  score: number;
+  band: RiskBand;
+  factors: RiskFactor[];
+  /** The one or two factors that produced most of the score. Empty when nothing did. */
+  principalDrivers: RiskFactorCode[];
+  modelVersion: string;
 };
 
 /** Thrown for any non-2xx response, carrying the status so callers can distinguish 403 from 500. */

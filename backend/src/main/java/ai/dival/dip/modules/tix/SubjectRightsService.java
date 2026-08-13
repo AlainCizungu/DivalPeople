@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -561,6 +562,30 @@ public class SubjectRightsService {
      */
     public record Disclosure(String operator, DebtStatus status, String amount,
                              String defaultDate, String retainedUntil) {
+    }
+
+    /**
+     * How much of the queue is waiting on somebody.
+     *
+     * <p>Exposed from here rather than counted by whoever draws the dashboard, because the
+     * definition of "open" is this class's to own — it is the same three statuses that end a case
+     * everywhere else in the file, and a second copy of that list in another module would drift
+     * the first time a status was added and nobody would notice which screen was wrong.
+     *
+     * @param now     the instant deadlines are measured against
+     * @param dueBy   the end of the "worth doing today" window
+     */
+    @Transactional(readOnly = true)
+    public RightsQueue queue(Instant now, Instant dueBy) {
+        UUID tenantId = TenantContext.require();
+        return new RightsQueue(
+                requests.countOpen(tenantId),
+                requests.countOverdue(tenantId, now),
+                requests.countDueBefore(tenantId, now, dueBy));
+    }
+
+    /** @param overdue past a statutory deadline, which is itself grounds for a complaint */
+    public record RightsQueue(long open, long overdue, long dueSoon) {
     }
 
     /**

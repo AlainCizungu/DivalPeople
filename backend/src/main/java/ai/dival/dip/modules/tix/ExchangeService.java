@@ -3,9 +3,13 @@ package ai.dival.dip.modules.tix;
 import ai.dival.dip.common.audit.AuditService;
 import ai.dival.dip.common.error.RateLimitExceededException;
 import ai.dival.dip.common.tenancy.TenantContext;
+import ai.dival.dip.modules.risk.IdentityStrength;
+import ai.dival.dip.modules.risk.RiskIndicatorService;
+import ai.dival.dip.modules.risk.RiskInputs;
 import jakarta.persistence.EntityManager;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,6 +42,7 @@ public class ExchangeService {
     private final AuditService audit;
     private final EntityManager entityManager;
     private final InquiryRateLimiter rateLimiter;
+    private final RiskIndicatorService riskIndicator;
     private final Clock clock;
 
     public ExchangeService(SubjectRepository subjects,
@@ -47,6 +52,7 @@ public class ExchangeService {
                            AuditService audit,
                            EntityManager entityManager,
                            InquiryRateLimiter rateLimiter,
+                           RiskIndicatorService riskIndicator,
                            Clock clock) {
         this.subjects = subjects;
         this.identifiers = identifiers;
@@ -55,6 +61,7 @@ public class ExchangeService {
         this.audit = audit;
         this.entityManager = entityManager;
         this.rateLimiter = rateLimiter;
+        this.riskIndicator = riskIndicator;
         this.clock = clock;
     }
 
@@ -150,7 +157,13 @@ public class ExchangeService {
         // same filtered pass so that a record excluded from the answer is excluded from the count
         // — a suppressed dispute must not raise the number any more than it may show its status.
         Set<UUID> institutions = new LinkedHashSet<>();
+        // Counted separately from the institutions above, because the indicator asks a narrower
+        // question: how many participants are owed money now. An operator whose only record here
+        // was settled belongs in the disclosed count and not in this one.
+        Set<UUID> institutionsOwed = new LinkedHashSet<>();
         boolean outstanding = false;
+        boolean settled = false;
+        long longestOverdueDays = -1;
         for (DebtRecord record : records) {
             // Defence in depth: disputed or investigated records must never leak through.
             if (!record.isVisibleToOtherOperators()) {
@@ -160,6 +173,14 @@ public class ExchangeService {
             institutions.add(record.getTenantId());
             if (record.getStatus() == DebtStatus.OUTSTANDING) {
                 outstanding = true;
+                institutionsOwed.add(record.getTenantId());
+                // The age of the oldest unpaid obligation, and only of unpaid ones. A settled
+                // record keeps its default date and that date can be years old; weighing it would
+                // report a company that fell behind in 2023 and paid in 2023 as still behind.
+                longestOverdueDays = Math.max(longestOverdueDays,
+                        ChronoUnit.DAYS.between(record.getDefaultDate(), today));
+            } else {
+                settled = true;
             }
         }
 
@@ -167,12 +188,24 @@ public class ExchangeService {
                 ? InquiryResult.Outcome.OUTSTANDING_DEBT
                 : InquiryResult.Outcome.CLEAR;
 
+        List<String> fraudSignals = detectFraudSignals(subject, tenantId);
+
         return new InquiryResult(
                 outcome,
                 subject.getId(),
                 List.copyOf(statuses),
                 institutions.size(),
-                detectFraudSignals(subject, tenantId));
+                fraudSignals,
+                riskIndicator.assess(new RiskInputs(
+                        outstanding,
+                        settled,
+                        institutionsOwed.size(),
+                        longestOverdueDays,
+                        // How the subject was found, not how strong the identifiers it happens to
+                        // carry are. A company with an RCCM on file that was matched on its name
+                        // was still matched on its name.
+                        strengthOf(resolution.identifier()),
+                        fraudSignals.size())));
     }
 
     /**
@@ -245,6 +278,35 @@ public class ExchangeService {
             return Resolution.tooMany();
         }
         return new Resolution(byName.get(0), null, false);
+    }
+
+    /**
+     * The nine identifier types, collapsed onto the three the risk model reasons about.
+     *
+     * <p>The mapping lives here rather than in the risk module, and that is the boundary the whole
+     * arrangement rests on: {@code risk} knows nothing about RCCMs or MSISDNs, so it can be handed
+     * to somebody as one self-contained thing. What travels across is a judgement about strength,
+     * made by the module that knows what these documents are.
+     *
+     * <p>A null identifier means the name resolved the subject, which is the weakest answer the
+     * exchange gives — and {@code REPORTED_NAME} is the same answer arriving by the other route,
+     * through a delivery that named its customers and numbered none of them. Both are NAME_ONLY,
+     * because in both cases nothing but a name says who this is.
+     */
+    private static IdentityStrength strengthOf(
+            InquiryRequest.SubmittedIdentifier matched) {
+        if (matched == null || matched.type() == IdentifierType.REPORTED_NAME) {
+            return IdentityStrength.NAME_ONLY;
+        }
+        // Scoped before strong, and the order is the whole correctness of this method.
+        // ACCOUNT_REFERENCE answers isStrong() with true — it deterministically identifies one
+        // customer, which is what that flag is about — and it is issued by the operator, so
+        // account 100234 exists at every participant and means a different company at each.
+        // Testing strength first would have graded the entire Vodacom book as firmly identified.
+        if (matched.type().isOperatorScoped() || !matched.type().isStrong()) {
+            return IdentityStrength.PARTIAL;
+        }
+        return IdentityStrength.STRONG;
     }
 
     /**

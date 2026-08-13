@@ -202,17 +202,6 @@
       "OUTSTANDING_DEBT": "Au moins une institution signale une obligation impayée.",
       "REVIEW_REQUIRED": "L’identifiant correspond, mais pas assez sûrement pour agir. Vérifiez manuellement."
     },
-    "mockWarning": "⚠ ILLUSTRATION UNIQUEMENT — aucun des chiffres ci-dessous n’est réel",
-    "mockTitle": "Évaluation du risque (pas encore développée)",
-    "mockDescription": "Voici à quoi une évaluation notée est destinée à ressembler. DIP ne dispose d’aucun modèle de risque ; ces nombres sont des esquisses fixes, non des calculs. Rien ici ne provient de l’entreprise que vous venez de rechercher.",
-    "mockScore": "Score de risque DIP",
-    "mockExposure": "Exposition totale",
-    "mockConfidence": "Confiance dans l’identité",
-    "mockFactorPayment": "Historique de paiement",
-    "mockFactorAging": "Ancienneté de la dette",
-    "mockFactorIdentity": "Identité",
-    "mockFactorFraud": "Signaux de fraude",
-    "mockFootnote": "Une fois développé, chaque score s’accompagnera de ses codes de motif, des données utilisées, de leur fraîcheur et de la version du modèle — conformément à UI_DESIGN_SYSTEM.md, un score n’est jamais affiché seul.",
     "accountReferenceNote": "Seule votre organisation peut l’utiliser pour un rapprochement. Chaque opérateur numérote ses comptes à partir de un, si bien qu’un même numéro désigne une autre entreprise chez chaque opérateur : les enregistrements identifiés ainsi restent visibles pour vous et invisibles pour l’échange. Faites aussi correspondre un RCCM ou un numéro d’impôt si le fichier en contient un."
   },
   "auth": {
@@ -1083,5 +1072,60 @@
     },
     "actorNote": "Les comptes sont affichés par identifiant et non par nom. Le journal n’appartient à aucune partie de la plateforme en particulier : il ne dépend donc délibérément pas de celle qui connaît le nom des personnes.",
     "immutableNote": "Les lignes sont ajoutées et jamais modifiées. Une correction est un nouvel événement, jamais une retouche — c’est pourquoi une tentative refusée y figure toujours."
+  },
+  "risk": {
+    "title": "Indicateur de risque DIP",
+    "outOf": "sur 100",
+    "scaleNote": "0 signifie aucune information défavorable. 100 est le maximum que cette plateforme peut observer. Il s'agit d'un indicateur, non d'un score de crédit.",
+    "bands": {
+      "LOW": "Risque faible",
+      "MODERATE": "Risque modéré",
+      "ELEVATED": "Risque élevé",
+      "HIGH": "Risque très élevé"
+    },
+    "factorsTitle": "Facteurs pris en compte",
+    "factorHeader": "Facteur",
+    "assessmentHeader": "Évaluation",
+    "factors": {
+      "PAYMENT_BEHAVIOUR": "Comportement de paiement",
+      "DEBT_AGING": "Ancienneté des impayés",
+      "REPORTING_INSTITUTIONS": "Nombre d'institutions déclarantes",
+      "IDENTITY_CONFIDENCE": "Fiabilité de l'identification",
+      "FRAUD_INDICATORS": "Indicateurs de fraude",
+      "OUTSTANDING_EXPOSURE": "Encours dû",
+      "DISPUTE_HISTORY": "Historique des contestations"
+    },
+    "ratings": {
+      "LOW": "Faible",
+      "MODERATE": "Modéré",
+      "HIGH": "Risque élevé",
+      "NOT_ASSESSED": "Non évalué"
+    },
+    "identityRatings": {
+      "LOW": "Forte",
+      "MODERATE": "Partielle",
+      "HIGH": "Faible",
+      "NOT_ASSESSED": "Non évaluée"
+    },
+    "whyTitle": "Pourquoi cette évaluation ?",
+    "whyOne": "{band} s'explique principalement par {first}.",
+    "whyTwo": "{band} s'explique principalement par {first} et par {second}.",
+    "whyNothing": "Aucune information défavorable n'est déclarée sur ce sujet par une institution participante.",
+    "drivers": {
+      "PAYMENT_BEHAVIOUR": "des obligations déclarées impayées",
+      "DEBT_AGING": "l'ancienneté de l'impayé le plus ancien",
+      "REPORTING_INSTITUTIONS": "plusieurs institutions participantes déclarant un impayé",
+      "IDENTITY_CONFIDENCE": "une correspondance reposant sur un nom et rien d'autre",
+      "FRAUD_INDICATORS": "un identifiant apparaissant sous plusieurs sujets",
+      "OUTSTANDING_EXPOSURE": "l'encours dû",
+      "DISPUTE_HISTORY": "l'historique des contestations"
+    },
+    "notAssessedTitle": "Délibérément non évalué",
+    "notAssessedReasons": {
+      "CURRENCY_UNCONFIRMED": "Les colonnes de montant des livraisons opérateurs n'indiquent aucune devise. Les pondérer risquerait une erreur d'un facteur d'environ 2 800 tout en paraissant parfaitement plausible ; l'encours est donc exclu tant qu'un opérateur ne l'a pas confirmé.",
+      "DISPUTES_ARE_NOT_DISCLOSED": "Un enregistrement contesté est déjà retiré de toutes les réponses de l'échange, avant même que quiconque ne tranche. Déclarer la contestation elle-même rétablirait cette divulgation par un autre chemin et ferait de l'exercice d'un droit une chose qui coûte à celui qui l'exerce."
+    },
+    "modelNote": "Évalué selon le modèle {version}. Chaque facteur et sa pondération sont publiés ci-dessus ; rien ici n'est une boîte noire.",
+    "noIndicator": "Aucune évaluation : l'échange n'a pas confirmé de correspondance, il n'y a donc rien à évaluer."
   }
 }

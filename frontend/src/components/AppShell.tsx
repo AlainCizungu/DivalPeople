@@ -105,7 +105,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     {
       heading: t.groupRisk,
       items: [
-        { label: t.riskIntelligence },
+        // Where risk is actually assessed today: submit an identifier and the DIP Risk Indicator
+        // comes back with the verdict. It will grow its own screen — a ranked view of an
+        // operator's own book — and until it does, pointing this at the assessment that exists
+        // is truer than marking it unbuilt.
+        { href: "/app/tix", label: t.riskIntelligence },
         { href: "/app/tix/portfolio", label: t.portfolio },
         { label: t.fraud },
         { label: t.watchlists },

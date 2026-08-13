@@ -395,6 +395,32 @@ public class IngestService {
         }
     }
 
+    /**
+     * How many deliveries are sitting at each stage.
+     *
+     * <p>Counted here rather than by the module that draws the dashboard, which had been importing
+     * this module's repository directly. Batch statuses are this module's vocabulary; a screen
+     * elsewhere that knows RECEIVED means "nobody has looked at it" is a screen that has to change
+     * when the workflow does.
+     */
+    @Transactional(readOnly = true)
+    public DeliverySummary deliverySummary() {
+        UUID tenantId = TenantContext.require();
+        return new DeliverySummary(
+                batches.countByTenantIdAndStatus(tenantId, BatchStatus.RECEIVED),
+                batches.countByTenantIdAndStatus(tenantId, BatchStatus.VALIDATED),
+                batches.countByTenantIdAndStatus(tenantId, BatchStatus.PUBLISHED));
+    }
+
+    /**
+     * @param awaitingValidation  received and not yet looked at
+     * @param awaitingPublication validated and not yet accepted — somebody started and stopped
+     * @param published           accepted, and possibly not yet turned into records
+     */
+    public record DeliverySummary(long awaitingValidation, long awaitingPublication,
+                                  long published) {
+    }
+
     /** Deliberately does not reveal whether the batch exists under another operator. */
     public static class BatchNotFoundException extends ResourceNotFoundException {
         public BatchNotFoundException(UUID id) {

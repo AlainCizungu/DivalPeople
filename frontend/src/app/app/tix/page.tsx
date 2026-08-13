@@ -12,6 +12,7 @@ import {
 import {
   Button,
   Card,
+  EmptyState,
   ErrorNotice,
   Field,
   PageHeader,
@@ -19,6 +20,7 @@ import {
   inputClass,
   type Tone,
 } from "@/components/ui";
+import { RiskIndicatorPanel } from "@/components/RiskIndicatorPanel";
 
 /**
  * Check a business before extending credit.
@@ -27,12 +29,10 @@ import {
  * data is keyed on a business register number or an operator account reference. A credit officer
  * assessing a company has the RCCM in front of them, not the director's identity card.
  *
- * <p><strong>The illustrative panel is a mock and says so, loudly.</strong> Nothing behind it is
- * computed — there is no risk model in this system, and DIP has no score to give. It is here
- * because a screen has to be shown to banks and regulators before the scoring exists, and
- * showing a real outcome next to a clearly-marked sketch of the intended one is more honest than
- * a slide deck. It is separated by a heavy border and a warning, not a subtle tag, because the
- * failure mode is somebody screenshotting a plausible number and circulating it as output.
+ * <p><strong>The panel under the verdict used to be a mock</strong> — 72 out of 100 over four
+ * invented bars, inside a dashed amber border that said so. That was the honest thing to show
+ * while there was no model. There is one now, so the sketch is gone and the figure below is
+ * computed from the same records that produced the verdict above it.
  */
 
 // ACCOUNT_REFERENCE last, and deliberately not first: an inquiry by your own account
@@ -215,53 +215,15 @@ export default function CreditCheckPage() {
             </div>
           </Card>
 
-          {/* Deliberately hard to mistake for the panel above: its own heavy amber border, a
-              warning as the first thing inside it, and every figure marked. */}
-          <section className="rounded-lg border-4 border-dashed border-warning bg-warning/5 p-5">
-            <p className="mb-4 rounded bg-warning/20 px-4 py-3 text-sm font-bold text-[#7c4a03]">
-              {t.mockWarning}
-            </p>
-
-            <h2 className="mb-1 font-bold text-navy">{t.mockTitle}</h2>
-            <p className="mb-5 text-sm text-muted">{t.mockDescription}</p>
-
-            <dl className="mb-5 grid gap-4 sm:grid-cols-3">
-              {[
-                [t.mockScore, "72 / 100"],
-                [t.mockExposure, "$184K"],
-                [t.mockConfidence, "96%"],
-              ].map(([label, figure]) => (
-                <div key={label} className="rounded-lg border border-warning/40 bg-white p-3">
-                  <dt className="text-xs text-muted">{label}</dt>
-                  <dd className="mt-1 text-xl font-bold tabular-nums text-[#b45309]">{figure}</dd>
-                </div>
-              ))}
-            </dl>
-
-            <div className="flex flex-col gap-3">
-              {[
-                [t.mockFactorPayment, 58],
-                [t.mockFactorAging, 79],
-                [t.mockFactorIdentity, 96],
-                [t.mockFactorFraud, 18],
-              ].map(([label, value]) => (
-                <div key={label as string}>
-                  <div className="mb-1.5 flex justify-between text-sm">
-                    <span className="text-ink">{label}</span>
-                    <span className="font-bold tabular-nums text-[#b45309]">{value}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white">
-                    <div
-                      className="h-full rounded-full bg-warning"
-                      style={{ width: `${value as number}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-5 text-xs text-muted">{t.mockFootnote}</p>
-          </section>
+          {result.indicator ? (
+            <RiskIndicatorPanel indicator={result.indicator} />
+          ) : (
+            // Withheld rather than zero. An indicator of nought over an unconfirmed match would
+            // read as a clean company, which is the one thing the exchange did not say.
+            <Card title={messages.risk.title}>
+              <EmptyState>{messages.risk.noIndicator}</EmptyState>
+            </Card>
+          )}
         </div>
       )}
     </div>

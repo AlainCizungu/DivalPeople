@@ -202,17 +202,6 @@
       "OUTSTANDING_DEBT": "At least one institution reports an unpaid obligation.",
       "REVIEW_REQUIRED": "The identifier matched, but not confidently enough to act on. Check by hand."
     },
-    "mockWarning": "⚠ ILLUSTRATION ONLY — none of the figures below are real",
-    "mockTitle": "Risk assessment (not yet built)",
-    "mockDescription": "This is what a scored assessment is intended to look like. DIP has no risk model, and these numbers are fixed sketches rather than calculations. Nothing here is derived from the business you just searched.",
-    "mockScore": "DIP risk score",
-    "mockExposure": "Total exposure",
-    "mockConfidence": "Identity confidence",
-    "mockFactorPayment": "Payment history",
-    "mockFactorAging": "Debt aging",
-    "mockFactorIdentity": "Identity",
-    "mockFactorFraud": "Fraud signals",
-    "mockFootnote": "When this is built, every score will carry its reason codes, the data it used, how recent that data is, and the model version — per UI_DESIGN_SYSTEM.md, a score is never shown on its own.",
     "accountReferenceNote": "Only this organisation can match on it. Account numbers are assigned by each operator from one upwards, so the same number belongs to a different company at every operator — records identified this way stay visible to you and invisible to the exchange. Map an RCCM or tax number as well when the file has one."
   },
   "auth": {
@@ -1083,5 +1072,60 @@
     },
     "actorNote": "Accounts are shown by identifier rather than by name. The trail belongs to no single part of the platform, so it deliberately does not depend on the part that knows people's names.",
     "immutableNote": "Rows are appended and never changed. A correction is a further event, never an edit — which is why a refused attempt is still here."
+  },
+  "risk": {
+    "title": "DIP Risk Indicator",
+    "outOf": "of 100",
+    "scaleNote": "0 is no adverse information. 100 is the most this platform can observe. This is an indicator, not a credit score.",
+    "bands": {
+      "LOW": "Low risk",
+      "MODERATE": "Moderate risk",
+      "ELEVATED": "Elevated risk",
+      "HIGH": "High risk"
+    },
+    "factorsTitle": "Factors influencing assessment",
+    "factorHeader": "Factor",
+    "assessmentHeader": "Assessment",
+    "factors": {
+      "PAYMENT_BEHAVIOUR": "Payment behaviour",
+      "DEBT_AGING": "Debt aging",
+      "REPORTING_INSTITUTIONS": "Number of reporting institutions",
+      "IDENTITY_CONFIDENCE": "Identity confidence",
+      "FRAUD_INDICATORS": "Fraud indicators",
+      "OUTSTANDING_EXPOSURE": "Outstanding exposure",
+      "DISPUTE_HISTORY": "Dispute history"
+    },
+    "ratings": {
+      "LOW": "Low",
+      "MODERATE": "Moderate",
+      "HIGH": "High risk",
+      "NOT_ASSESSED": "Not assessed"
+    },
+    "identityRatings": {
+      "LOW": "Strong",
+      "MODERATE": "Partial",
+      "HIGH": "Weak",
+      "NOT_ASSESSED": "Not assessed"
+    },
+    "whyTitle": "Why this assessment?",
+    "whyOne": "{band} is driven primarily by {first}.",
+    "whyTwo": "{band} is driven primarily by {first} and by {second}.",
+    "whyNothing": "Nothing adverse is reported against this subject by any participating institution.",
+    "drivers": {
+      "PAYMENT_BEHAVIOUR": "obligations reported as unpaid",
+      "DEBT_AGING": "how long the oldest unpaid obligation has been overdue",
+      "REPORTING_INSTITUTIONS": "more than one participating institution reporting an unpaid obligation",
+      "IDENTITY_CONFIDENCE": "a match resting on a name and nothing else",
+      "FRAUD_INDICATORS": "one identifier appearing under more than one subject",
+      "OUTSTANDING_EXPOSURE": "outstanding exposure",
+      "DISPUTE_HISTORY": "dispute history"
+    },
+    "notAssessedTitle": "Deliberately not assessed",
+    "notAssessedReasons": {
+      "CURRENCY_UNCONFIRMED": "The amount columns in the operator deliveries carry no stated currency. Weighting them would risk being wrong by a factor of about 2,800 while looking entirely reasonable, so exposure is excluded until an operator confirms it.",
+      "DISPUTES_ARE_NOT_DISCLOSED": "A record under dispute is already withheld from every answer the exchange gives, before anybody decides who is right. Reporting the dispute itself would restore that disclosure by another route and make contesting a record something that costs the person who contests it."
+    },
+    "modelNote": "Assessed under model {version}. Every factor and its weight is published above; nothing here is a black box.",
+    "noIndicator": "No assessment: the exchange did not confirm a match, so there is nothing to assess."
   }
 }

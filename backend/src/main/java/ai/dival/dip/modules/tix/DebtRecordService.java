@@ -189,6 +189,45 @@ public class DebtRecordService {
         return record;
     }
 
+    /**
+     * The operator's own register, counted in the database.
+     *
+     * <p>Here rather than in the module that draws the front door, and the reason is a rule the
+     * architecture check enforces: a module reaches another module through its service, never
+     * through its repository. The overview module had been importing {@code DebtRecordRepository}
+     * directly, which made every column added to this table a change in a module that has nothing
+     * to do with debt.
+     *
+     * <p>Dates are passed in rather than read from a clock, like everything else that has to be
+     * askable about a day that is not today.
+     *
+     * @param today            the day the figures are as at
+     * @param retentionHorizon how far ahead to look for records approaching erasure
+     */
+    @Transactional(readOnly = true)
+    public RegisterSummary register(LocalDate today, LocalDate retentionHorizon) {
+        UUID tenantId = TenantContext.require();
+        return new RegisterSummary(
+                debtRecords.countByTenantId(tenantId),
+                debtRecords.countByTenantIdAndStatus(tenantId, DebtStatus.OUTSTANDING),
+                debtRecords.countByTenantIdAndStatus(tenantId, DebtStatus.DISPUTED),
+                debtRecords.countByTenantIdAndStatus(tenantId, DebtStatus.SETTLED),
+                debtRecords.countByTenantIdAndRetentionUntilBetween(
+                        tenantId, today, retentionHorizon),
+                // Past its retention date and still here. Should be nought every morning; if it
+                // is not, the nightly purge has stopped and nothing else in the product says so.
+                debtRecords.countByTenantIdAndRetentionUntilBetween(
+                        tenantId, LocalDate.EPOCH, today.minusDays(1)));
+    }
+
+    /**
+     * @param expiringSoon    inside the retention horizon and still live
+     * @param awaitingErasure past retention and not yet purged
+     */
+    public record RegisterSummary(long total, long outstanding, long contested, long settled,
+                                  long expiringSoon, long awaitingErasure) {
+    }
+
     /** Deliberately does not reveal whether the record exists under another tenant. */
     public static class DebtRecordNotFoundException extends ResourceNotFoundException {
         public DebtRecordNotFoundException(UUID id) {
