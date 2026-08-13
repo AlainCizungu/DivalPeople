@@ -215,6 +215,19 @@ EOF
         fetch_token "${2:-operator-a}"
         ;;
 
+    # The one word to type when bootRun says "Port 8080 was already in use".
+    #
+    # The check already existed and was reachable only through `up` and `check`, neither of which
+    # anybody runs at that moment — the natural next move after a failed bootRun is another
+    # bootRun, which fails the same way. Twice now the answer has been an orphaned JVM from an
+    # earlier session, still answering on 8080 and serving whatever code it started with, which is
+    # why a screen can report a 404 for an endpoint that exists in the source tree.
+    port)
+        if warn_about_app_port; then
+            ok "Nothing is listening on port ${API_HOST_PORT:-8080}."
+        fi
+        ;;
+
     check)
         warn_about_app_port
         info "Fetching a token for operator-a..."
