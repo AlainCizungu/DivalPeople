@@ -17,6 +17,7 @@ import ai.dival.dip.modules.tix.SubjectRequestType;
 import ai.dival.dip.modules.tix.SubjectRightsService;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,9 @@ class OverviewServiceTest extends AbstractIntegrationTest {
     private SubjectRightsService rights;
     @Autowired
     private IngestService ingest;
+    /** The same clock the service stamps its figures with, which is the only fair comparison. */
+    @Autowired
+    private Clock clock;
 
     private UUID operator;
     private UUID other;
@@ -164,7 +168,13 @@ class OverviewServiceTest extends AbstractIntegrationTest {
     @DisplayName("the figures carry the date they were counted on")
     void theOverviewSaysWhenItWasCounted() {
         // So a tab left open overnight is visibly stale rather than quietly wrong.
-        assertThat(overview.forCaller(false, false).asOf()).isEqualTo(LocalDate.now());
+        //
+        // Compared against the platform's own clock, not LocalDate.now(). The application runs on
+        // UTC — TimeConfig hands out Clock.systemUTC() — and a developer's machine does not.
+        // Asserting the machine's date meant this test passed or failed depending on the hour it
+        // was run at and which side of midnight UTC the runner happened to be, which is a test
+        // that reports the tester's timezone rather than the code's behaviour.
+        assertThat(overview.forCaller(false, false).asOf()).isEqualTo(LocalDate.now(clock));
     }
 
     private String rccm(String n) {
