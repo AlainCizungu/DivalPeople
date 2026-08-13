@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useMessages } from "@/i18n/LocaleProvider";
-import { settingsApi, type Setting, type Settings } from "@/api/client";
+import { ApiError, settingsApi, type Setting, type Settings } from "@/api/client";
 import { Card, EmptyState, ErrorNotice, PageHeader, Pill, type Tone } from "@/components/ui";
 
 /**
@@ -26,7 +26,15 @@ export default function SettingsPage() {
   const t = messages.settings;
 
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [failed, setFailed] = useState(false);
+  /**
+   * What went wrong, in the server's own words.
+   *
+   * <p>A boolean here cost a round trip the first time this page failed: it said "could not load
+   * the configuration" and nothing else, which is true of a 404 from a backend that has not been
+   * restarted, a 403, and a 500 from a bean that would not start — three problems with three
+   * different fixes. The page is the only witness to its own failure, so it says what it saw.
+   */
+  const [failure, setFailure] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,8 +42,13 @@ export default function SettingsPage() {
       try {
         const loaded = await settingsApi.load();
         if (!cancelled) setSettings(loaded);
-      } catch {
-        if (!cancelled) setFailed(true);
+      } catch (caught) {
+        if (cancelled) return;
+        setFailure(
+          caught instanceof ApiError
+            ? `${caught.status} ${caught.code} — ${caught.message}`
+            : String(caught),
+        );
       }
     })();
     return () => {
@@ -60,8 +73,13 @@ export default function SettingsPage() {
         {t.readOnly}
       </p>
 
-      {failed && <ErrorNotice>{t.loadFailed}</ErrorNotice>}
-      {!failed && settings === null && <EmptyState>{messages.common.loading}</EmptyState>}
+      {failure && (
+        <ErrorNotice>
+          {t.loadFailed}
+          <span className="mt-1 block font-mono text-xs">{failure}</span>
+        </ErrorNotice>
+      )}
+      {!failure && settings === null && <EmptyState>{messages.common.loading}</EmptyState>}
 
       <div className="flex flex-col gap-6">
         {sections.map((section) => (
