@@ -134,7 +134,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         // sources are a card on this one, and quality is the column profile inside a delivery,
         // which cannot be reached without a batch to ask about. Two menu entries for one screen
         // and one for a thing that is not a screen at all — both gone rather than promised.
-        { label: t.entityResolution },
+        //
+        // Entity resolution is built and belongs to the registry alone: each case puts one
+        // operator's record beside another's with both names visible. Hidden rather than
+        // shown-and-refused, like Participants, because a menu item that always 403s teaches
+        // people to ignore refusals.
+        ...(isPlatformAdmin
+          ? [{ href: "/app/resolution", label: t.entityResolution }]
+          : [{ label: t.entityResolution }]),
       ],
     },
     {

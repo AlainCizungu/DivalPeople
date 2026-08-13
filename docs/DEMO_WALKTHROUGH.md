@@ -366,6 +366,11 @@ promised a launch date before that is settled.
 
 - **A ranked risk view of your own book.** The indicator is computed per inquiry; there is no
   screen yet that lists your customers worst-first. Ask about one company at a time.
+- **Identity resolution as an operator.** The Identity Resolution Center is real and is signed in
+  to as the platform administrator, not as Vodacom or Orange. That is the demonstration rather than
+  a limitation: a case puts one operator's record beside the other's with both names visible, so a
+  participant holding that queue would be reading a rival's customer file. Say it out loud — it is
+  the same argument as the institution count, applied to the thing a bureau is actually for.
 - **Matching a company across the two operators.** Not a defect and not a gap in the code: Vodacom
   identifies customers by its own account numbers and Orange by name alone, so there is nothing in
   either file that says a company in one is the company in the other. Section 3b is where to say

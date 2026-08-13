@@ -795,6 +795,84 @@ export type Access = {
   members: AccessMember[] | null;
 };
 
+export type MatchSignalCode =
+  | "EXACT_NAME"
+  | "SIMILAR_NAME"
+  | "SHARED_NATIONAL_IDENTIFIER"
+  | "SAME_SUBJECT_TYPE"
+  | "SAME_NATIONALITY"
+  | "SAME_DATE_OF_BIRTH"
+  | "DIFFERENT_ACCOUNT_REFERENCES"
+  | "SAME_SECONDARY_PHONE"
+  | "SAME_CITY"
+  | "SIMILAR_ADDRESS";
+
+/**
+ * What one signal said.
+ *
+ * UNAVAILABLE is not CONFLICTS. "City did not match" and "no delivery carries a city" lead a
+ * reviewer to opposite conclusions, and only one of them is true.
+ */
+export type MatchVerdict = "AGREES" | "CONFLICTS" | "NEUTRAL" | "UNAVAILABLE";
+
+export type MatchSignal = {
+  code: MatchSignalCode;
+  verdict: MatchVerdict;
+  weight: number;
+};
+
+export type MatchStatus = "OPEN" | "CONFIRMED" | "REJECTED" | "INVESTIGATING";
+
+export type RegistrySubject = {
+  id: string;
+  business: boolean;
+  fullName: string;
+  normalizedName: string;
+  nationality: string | null;
+  dateOfBirth: string | null;
+  nationalIdentifiers: Record<string, string>;
+  hasAccountReference: boolean;
+};
+
+export type MatchCase = {
+  id: string;
+  /** The older record, which a confirmation keeps. */
+  left: RegistrySubject;
+  right: RegistrySubject;
+  confidence: number;
+  signals: MatchSignal[];
+  status: MatchStatus;
+  modelVersion: string;
+  detectedAt: string;
+  note: string | null;
+};
+
+export type ResolutionScan = { subjects: number; compared: number; opened: number };
+
+export type ResolutionDecision = {
+  caseId: string;
+  outcome: MatchStatus;
+  survivor: string | null;
+  moved: number;
+};
+
+export const resolutionApi = {
+  open(): Promise<MatchCase[]> {
+    return request<MatchCase[]>("/api/v1/resolution/candidates");
+  },
+
+  scan(): Promise<ResolutionScan> {
+    return request<ResolutionScan>("/api/v1/resolution/scan", { method: "POST" });
+  },
+
+  decide(id: string, outcome: MatchStatus, note: string): Promise<ResolutionDecision> {
+    return request<ResolutionDecision>(`/api/v1/resolution/candidates/${id}/decision`, {
+      method: "POST",
+      body: JSON.stringify({ outcome, note }),
+    });
+  },
+};
+
 export const accessApi = {
   load(): Promise<Access> {
     return request<Access>("/api/v1/access");
