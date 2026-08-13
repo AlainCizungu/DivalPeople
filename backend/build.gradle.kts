@@ -1,3 +1,10 @@
+// Imported rather than written as java.net.ServerSocket below, because inside the Kotlin DSL
+// `java` resolves to the Java plugin's extension and shadows the package of the same name — so a
+// fully-qualified reference reads as a property access and fails to compile.
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+
 plugins {
     java
     id("org.springframework.boot") version "3.4.2"
@@ -116,12 +123,12 @@ tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     doFirst {
         val port = (System.getProperty("server.port") ?: "8080").toInt()
         val free = try {
-            java.net.ServerSocket().use { socket ->
+            ServerSocket().use { socket ->
                 socket.reuseAddress = false
-                socket.bind(java.net.InetSocketAddress("127.0.0.1", port))
+                socket.bind(InetSocketAddress("127.0.0.1", port))
                 true
             }
-        } catch (refused: java.io.IOException) {
+        } catch (refused: IOException) {
             false
         }
 
