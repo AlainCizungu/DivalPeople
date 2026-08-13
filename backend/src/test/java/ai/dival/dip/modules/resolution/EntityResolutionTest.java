@@ -206,14 +206,26 @@ class EntityResolutionTest extends AbstractIntegrationTest {
         declarePerson(vodacom, "Jean-Pierre Kabamba " + suffix);
         declarePerson(orange, "Jean Pierre Kabamba " + suffix);
         resolution.scan(REVIEWER);
-        UUID caseId = mine().get(0).id();
+        EntityResolutionService.Case pending = mine().get(0);
+        UUID caseId = pending.id();
         resolution.decide(caseId, MatchStatus.REJECTED, "Different dates of birth.", REVIEWER);
 
-        // Otherwise a confirmation could be quietly turned into a rejection with nothing left to
-        // say anything had ever been confirmed — and the records would already have moved.
+        // Refused before anything is written, which is not where the first version put the check.
+        // It merged first and refused afterwards — and the merge is one transaction per operator,
+        // so those had already committed by the time the refusal arrived. The case came back as a
+        // constraint violation over a half-finished merge instead of a clean refusal, which is how
+        // this test found the ordering bug rather than the rule it was written for.
         assertThatThrownBy(() -> resolution.decide(caseId, MatchStatus.CONFIRMED,
                 "Changed my mind.", REVIEWER))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(PolicyRefusedException.class)
+                .hasMessageContaining("already been decided");
+
+        assertThat(resolution.get(caseId).status())
+                .as("and the first decision stands")
+                .isEqualTo(MatchStatus.REJECTED);
+        assertThat(stillSeparate(pending))
+                .as("nothing moved on the way to the refusal")
+                .isTrue();
     }
 
     @Test

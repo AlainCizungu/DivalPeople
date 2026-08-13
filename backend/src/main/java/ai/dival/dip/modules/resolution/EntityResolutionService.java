@@ -158,16 +158,36 @@ public class EntityResolutionService {
         MatchCandidate candidate = candidates.findById(caseId)
                 .orElseThrow(() -> new CaseNotFoundException(caseId));
 
+        // Refused here, before anything is written, and the ordering is the whole correctness of
+        // this method.
+        //
+        // The first version merged first and let the entity's own guard refuse afterwards. It does
+        // refuse — and by then the merge has run, and the merge is not a single transaction. It is
+        // one per operator, deliberately, because row-level security scopes writes to the current
+        // tenant. Those inner transactions commit as they go, so a refusal at the end rolls back
+        // the outer work and leaves theirs standing: records repointed onto a survivor that no
+        // subject is marked as having been merged into. A second decision on a decided case
+        // produced exactly that, and surfaced as a constraint violation rather than as the clean
+        // refusal it was supposed to be.
+        if (candidate.getStatus() == MatchStatus.CONFIRMED
+                || candidate.getStatus() == MatchStatus.REJECTED) {
+            throw new PolicyRefusedException(
+                    "This case has already been decided. Re-deciding it would let a confirmation "
+                            + "be turned into a rejection with nothing left to say anything had "
+                            + "been confirmed — and the records have already moved.");
+        }
+
+        // Written before the merge for the same reason, back to front. If the registry refuses —
+        // one of the two absorbed by something else since the scan — nothing has been committed
+        // by anybody, because that check happens before its per-tenant loop begins.
+        candidate.decide(outcome, note, actorId, clock.instant());
+
         SubjectRegistryService.Merge merge = null;
         if (outcome == MatchStatus.CONFIRMED) {
-            // Merged before the decision is written, so a refusal from the registry — one of the
-            // two already absorbed by something else — leaves the case open rather than closed
-            // over a merge that never happened.
             merge = registry.merge(candidate.getSubjectLowId(), candidate.getSubjectHighId(),
                     actorId);
         }
 
-        candidate.decide(outcome, note, actorId, clock.instant());
         audit.record("RESOLUTION_DECIDED", "MatchCandidate", caseId.toString(),
                 AuditService.OUTCOME_SUCCESS, actorId, outcome + ": " + note);
 
