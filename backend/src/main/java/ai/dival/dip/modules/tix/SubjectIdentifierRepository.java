@@ -18,6 +18,23 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SubjectIdentifierRepository extends JpaRepository<SubjectIdentifier, UUID> {
 
     /**
+     * One operator's own references attached to a subject.
+     *
+     * <p>Used by an identity merge, which has to move them inside that operator's own transaction:
+     * an account reference is only writable by the operator that issued it, which is exactly the
+     * scoping V26 introduced.
+     */
+    List<SubjectIdentifier> findBySubjectIdAndOwnerTenantId(UUID subjectId, UUID ownerTenantId);
+
+    /**
+     * National documents attached to a subject.
+     *
+     * <p>They belong to no operator, so they move outside any tenant's boundary — and they are the
+     * ones that make two records resolvable to each other in the first place.
+     */
+    List<SubjectIdentifier> findBySubjectIdAndOwnerTenantIdIsNull(UUID subjectId);
+
+    /**
      * The one lookup. Which of the two queries below runs is decided by the identifier's own
      * nature, not by the caller's intent, because a caller who could choose could choose wrong.
      *

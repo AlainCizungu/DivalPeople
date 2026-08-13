@@ -173,6 +173,18 @@ public class DebtRecord extends TenantOwnedEntity {
         this.retentionUntil = expiry;
     }
 
+    /**
+     * Points this record at the subject that absorbed the one it was declared against.
+     *
+     * <p>Package-private and used only by a confirmed identity merge. Nothing about the obligation
+     * changes — the amount, the dates and the operator are untouched — it is the same debt, now
+     * filed against the registry's single answer for who owes it.
+     */
+    void reassignTo(Subject survivor) {
+        this.subject = survivor;
+        this.updatedAt = Instant.now();
+    }
+
     /** Marks the obligation resolved. Only the declaring operator may call this. */
     public void settle() {
         if (status == DebtStatus.SETTLED) {

@@ -5,8 +5,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -48,6 +51,18 @@ public class Subject {
     @Column(name = "nationality", length = 2)
     private String nationality;
 
+    /**
+     * The subject this one turned out to be, once somebody decided they were the same.
+     *
+     * <p>A pointer rather than a delete. Erasing the absorbed row would erase the candidate case
+     * that recorded the decision — the one action most in need of an audit trail destroying its
+     * own — would stop the old identifiers resolving to anything, and would make a merge decided
+     * in error unrecoverable. The row survives, keeps its history, and stops being an answer.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "merged_into_subject_id")
+    private Subject mergedInto;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -84,6 +99,35 @@ public class Subject {
                 .normalize(value, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "");
         return withoutAccents.trim().replaceAll("\\s+", " ").toLowerCase(java.util.Locale.ROOT);
+    }
+
+    /**
+     * Records that this subject is the same as another.
+     *
+     * <p>Package-private: merging is {@code SubjectRegistryService}'s to perform, because it also
+     * has to move the records and the identifiers, and a subject that points at a survivor while
+     * still holding its own records is a worse state than either end of the operation.
+     */
+    void mergeInto(Subject survivor) {
+        if (survivor == null || survivor.getId().equals(this.id)) {
+            throw new IllegalArgumentException("A subject cannot be merged into itself");
+        }
+        this.mergedInto = survivor;
+    }
+
+    /** The subject that answers for this one, following the chain to its end. */
+    public Subject surviving() {
+        Subject current = this;
+        // Bounded rather than while(true): a cycle here would hang a request thread, and the
+        // constraint that forbids self-reference does not forbid A -> B -> A across two merges.
+        for (int hops = 0; hops < 10 && current.mergedInto != null; hops++) {
+            current = current.mergedInto;
+        }
+        return current;
+    }
+
+    public boolean isMerged() {
+        return mergedInto != null;
     }
 
     public void addIdentifier(SubjectIdentifier identifier) {

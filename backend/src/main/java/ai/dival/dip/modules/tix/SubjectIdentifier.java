@@ -86,6 +86,16 @@ public class SubjectIdentifier {
         return rawValue.replaceAll("[\\s\\-./]", "").toUpperCase(Locale.ROOT);
     }
 
+    /**
+     * Moves this identifier onto the subject that absorbed its owner.
+     *
+     * <p>Cannot collide. Both unique indexes are on the value and its scope rather than on the
+     * subject, so an identifier that exists once continues to exist once wherever it is filed.
+     */
+    void reassignTo(Subject survivor) {
+        this.subject = survivor;
+    }
+
     void attachTo(Subject owner) {
         this.subject = owner;
     }
