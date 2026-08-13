@@ -11,7 +11,18 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 
 /**
  * Application shell: left navigation, top utility bar, main content area.
- * Structure follows docs/UI_DESIGN_SYSTEM.md.
+ *
+ * <p>The navigation used to be a flat list of the eleven screens that happened to exist, in the
+ * order they were built. It read as a changelog. This is the platform's actual shape — eight
+ * areas of work, and an item sits in the area it belongs to whether or not it has been built.
+ *
+ * <p><strong>The unbuilt items are shown, and shown as unbuilt.</strong> That is a deliberate
+ * reversal of the note that used to stand here, which said a nav full of links to nothing makes
+ * it impossible to tell a missing feature from a bug. It does — if they look like links. Marked
+ * plainly and not clickable, they do the opposite: somebody looking for fraud monitoring finds
+ * out in one second that it is coming rather than hunting three menus for it, and nobody can
+ * mistake it for something broken. The rule the old note was really protecting is intact: no
+ * entry here ever navigates to a page that is not there.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const messages = useMessages();
@@ -58,31 +69,104 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Read from the session on the server and enforced there too; shown so it is obvious which
   // operator the current session is acting as.
   const tenantId = profile?.tenantId;
+  const t = messages.nav;
 
-  // Only routes that exist. A nav full of links to nothing makes the product feel broken and
-  // makes it impossible to tell a missing feature from a bug; entries are added as they ship.
-  const navigation = [
-    { href: "/app", label: messages.nav.home, badge: 0 },
-    { href: "/app/search", label: messages.nav.search, badge: 0 },
-    { href: "/app/tix", label: messages.nav.inquiries, badge: 0 },
-    { href: "/app/tix/declare", label: messages.nav.declare, badge: 0 },
-    { href: "/app/tix/records", label: messages.nav.records, badge: 0 },
-    { href: "/app/tix/portfolio", label: messages.nav.portfolio, badge: 0 },
-    { href: "/app/subject-requests", label: messages.nav.subjectRequests, badge: 0 },
-    { href: "/app/imports", label: messages.nav.imports, badge: 0 },
-    // Platform administration. Hidden rather than shown-and-refused, because a menu item
-    // that always 403s teaches people to ignore refusals.
-    ...(profile?.roles.includes("PLATFORM_ADMIN")
-      ? [{ href: "/app/participants", label: messages.nav.participants, badge: 0 }]
-      : []),
-    { href: "/app/organization", label: messages.nav.organization, badge: 0 },
-    { href: "/app/audit", label: messages.nav.audit, badge: 0 },
+  const isPlatformAdmin = profile?.roles.includes("PLATFORM_ADMIN") ?? false;
+
+  /**
+   * The platform's shape.
+   *
+   * <p>An item with no href is designed and not built. Two items may share an href — Exposure
+   * and Portfolio intelligence are one screen today, as are Subject requests and Disputes &
+   * corrections — and that is recorded here rather than hidden, because the day either one grows
+   * its own screen this is the list that has to change.
+   */
+  const groups: NavGroup[] = [
     {
-      href: "/app/notifications",
-      label: messages.nav.notifications,
-      badge: unreadCount,
+      heading: t.groupIntelligence,
+      items: [
+        { href: "/app", label: t.home },
+        { href: "/app/search", label: t.search },
+        { label: t.executive },
+        { href: "/app/tix/portfolio", label: t.portfolioIntelligence },
+      ],
+    },
+    {
+      heading: t.groupSubjects,
+      items: [
+        { label: t.businesses },
+        { label: t.individuals },
+        { href: "/app/tix/records", label: t.records },
+        { href: "/app/tix", label: t.inquiries },
+        { href: "/app/tix/declare", label: t.declare },
+        { href: "/app/subject-requests", label: t.subjectRequests },
+      ],
+    },
+    {
+      heading: t.groupRisk,
+      items: [
+        { label: t.riskIntelligence },
+        { href: "/app/tix/portfolio", label: t.portfolio },
+        { label: t.fraud },
+        { label: t.watchlists },
+      ],
+    },
+    {
+      heading: t.groupNetwork,
+      items: [
+        { label: t.tix },
+        // Platform administration. Hidden rather than shown-and-refused, because a menu item
+        // that always 403s teaches people to ignore refusals.
+        ...(isPlatformAdmin
+          ? [{ href: "/app/participants", label: t.participants }]
+          : []),
+        // Sources are a card inside a delivery screen, not a screen. Linking here would send
+        // somebody who asked for sources to a page headed imports and let them wonder whether
+        // they had mis-clicked.
+        { label: t.sources },
+      ],
+    },
+    {
+      heading: t.groupData,
+      items: [
+        { href: "/app/imports", label: t.imports },
+        { label: t.entityResolution },
+        // Reachable today only from inside a delivery, which means it cannot be a link from
+        // here: there is no such thing as data quality without a batch to ask about.
+        { label: t.dataQuality },
+      ],
+    },
+    {
+      heading: t.groupAi,
+      items: [{ label: t.aiAnalyst }],
+    },
+    {
+      heading: t.groupGovernance,
+      items: [
+        { href: "/app/audit", label: t.audit },
+        { label: t.access },
+        { href: "/app/subject-requests", label: t.disputes },
+      ],
+    },
+    {
+      heading: t.groupSystem,
+      items: [
+        { href: "/app/notifications", label: t.notifications, badge: unreadCount },
+        { href: "/app/organization", label: t.organization },
+        { label: t.settings },
+      ],
     },
   ];
+
+  const current = activeHref(
+    pathname,
+    groups.flatMap((group) => group.items.map((item) => item.href)),
+  );
+
+  // Two entries can share a route, so the highlight goes to the first of them and no other.
+  // Lighting both would read as a rendering fault rather than as the deliberate duplication it
+  // is, and the reader has no way to tell those apart from the outside.
+  const currentKey = keyOfFirst(groups, current);
 
   return (
     <div className="flex min-h-screen">
@@ -100,31 +184,61 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
 
-        <ul className="flex-1 space-y-0.5 p-3">
-          {navigation.map((item) => {
-            const active = pathname === item.href;
+        {/* Twenty-seven entries do not fit on a laptop, so the list scrolls and the brand and
+            the footer stay put. */}
+        <div className="flex-1 overflow-y-auto p-3">
+          {groups.map((group) => {
+            // A group can empty out entirely — Network does, for anybody who is not a platform
+            // administrator, once its unbuilt items are gone. Printing the heading over nothing
+            // would be worse than printing neither.
+            if (group.items.length === 0) return null;
             return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={
-                    active
-                      ? "flex items-center justify-between gap-2 rounded border-l-2 border-blue bg-soft px-3 py-2 text-sm font-semibold text-blue"
-                      : "flex items-center justify-between gap-2 rounded px-3 py-2 text-sm text-ink transition hover:bg-soft"
-                  }
-                >
-                  <span>{item.label}</span>
-                  {item.badge > 0 && (
-                    <span className="rounded-full bg-blue px-2 py-0.5 text-xs font-bold text-white tabular-nums">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              </li>
+              <div key={group.heading} className="mb-4 last:mb-0">
+                <p className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-muted">
+                  {group.heading}
+                </p>
+                <ul className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const key = itemKey(group, item);
+                    const active = key === currentKey;
+                    return (
+                      <li key={key}>
+                        {item.href ? (
+                          <Link
+                            href={item.href}
+                            aria-current={active ? "page" : undefined}
+                            className={
+                              active
+                                ? "flex items-center justify-between gap-2 rounded border-l-2 border-blue bg-soft px-3 py-2 text-sm font-semibold text-blue"
+                                : "flex items-center justify-between gap-2 rounded px-3 py-2 text-sm text-ink transition hover:bg-soft"
+                            }
+                          >
+                            <span>{item.label}</span>
+                            {(item.badge ?? 0) > 0 && (
+                              <span className="rounded-full bg-blue px-2 py-0.5 text-xs font-bold text-white tabular-nums">
+                                {item.badge}
+                              </span>
+                            )}
+                          </Link>
+                        ) : (
+                          <span
+                            title={t.soonTitle}
+                            className="flex cursor-default items-center justify-between gap-2 rounded px-3 py-2 text-sm text-muted"
+                          >
+                            <span>{item.label}</span>
+                            <span className="rounded border border-line px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                              {t.soon}
+                            </span>
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             );
           })}
-        </ul>
+        </div>
 
         <p className="border-t border-line px-5 py-3 text-xs text-muted">
           {messages.app.platform}
@@ -164,4 +278,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
+}
+
+/** An item with no href is designed and not built, and the nav says so rather than linking. */
+type NavItem = { href?: string; label: string; badge?: number };
+
+type NavGroup = { heading: string; items: NavItem[] };
+
+/** Unique per entry rather than per route, because a route can appear twice. */
+function itemKey(group: NavGroup, item: NavItem): string {
+  return `${group.heading}/${item.label}`;
+}
+
+/** The first entry pointing at this route, reading down the menu as somebody reads it. */
+function keyOfFirst(
+  groups: NavGroup[],
+  href: string | undefined,
+): string | undefined {
+  if (!href) return undefined;
+  for (const group of groups) {
+    for (const item of group.items) {
+      if (item.href === href) return itemKey(group, item);
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Which entry the current URL belongs to.
+ *
+ * <p>Exact matching left every nested page with nothing selected: open a delivery and the whole
+ * menu went dark, so the one screen where somebody is deepest in a task was the one screen that
+ * stopped telling them where they were.
+ *
+ * <p>Longest prefix rather than first match, and the difference is the whole function. Both
+ * {@code /app/tix} and {@code /app/tix/declare} are prefixes of the declaration page, and only
+ * the longer one is the right answer. {@code /app} is a prefix of everything, which is why the
+ * boundary check matters: {@code /app/imports} must not be treated as living under it by
+ * accident of string length alone.
+ */
+function activeHref(
+  pathname: string,
+  hrefs: (string | undefined)[],
+): string | undefined {
+  let best: string | undefined;
+  for (const href of hrefs) {
+    if (!href) continue;
+    const matches =
+      pathname === href ||
+      // The slash is what stops /app/tix matching a future /app/tixture.
+      pathname.startsWith(href.endsWith("/") ? href : `${href}/`);
+    if (matches && (best === undefined || href.length > best.length)) {
+      best = href;
+    }
+  }
+  return best;
 }
