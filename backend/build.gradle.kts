@@ -94,4 +94,64 @@ tasks.withType<Test> {
 // rather than making every developer remember an environment variable.
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
     systemProperty("spring.profiles.active", System.getProperty("spring.profiles.active", "local"))
+
+    // ---------------------------------------------------------------------
+    // Refuse to start when something else already holds the port.
+    //
+    // Spring says "Port 8080 was already in use" and stops, which sounds like the whole story and
+    // is the least useful half of it. The application exits; the squatter keeps answering. Every
+    // screen then works, against whatever code that process started with — so a controller added
+    // this afternoon returns 404 from an API that authenticates correctly and looks entirely
+    // healthy. Three afternoons have gone to that here, the last one to a JVM that had been
+    // running for a day and eighteen hours.
+    //
+    // The check itself has existed in infra/dev.sh for two of those three, and never helped: the
+    // natural move after a failed bootRun is another bootRun, not a script nobody thinks to run
+    // at that moment. So it belongs where the failure happens.
+    //
+    // This does not close a race — something can take the port between the probe and the bind.
+    // It is not trying to. It turns the common case from a five-word message into the name, age
+    // and process id of whatever is squatting, and the command to stop it.
+    // ---------------------------------------------------------------------
+    doFirst {
+        val port = (System.getProperty("server.port") ?: "8080").toInt()
+        val free = try {
+            java.net.ServerSocket().use { socket ->
+                socket.reuseAddress = false
+                socket.bind(java.net.InetSocketAddress("127.0.0.1", port))
+                true
+            }
+        } catch (refused: java.io.IOException) {
+            false
+        }
+
+        if (!free) {
+            // Best effort, and quiet when it fails: this runs on whatever machine a developer
+            // has, and a missing lsof must not turn a helpful message into a build script crash.
+            fun probe(vararg command: String): String = try {
+                val process = ProcessBuilder(*command).redirectErrorStream(true).start()
+                process.inputStream.bufferedReader().readText().trim()
+                    .also { process.waitFor() }
+            } catch (unavailable: Exception) {
+                ""
+            }
+
+            val pid = probe("lsof", "-nP", "-iTCP:$port", "-sTCP:LISTEN", "-t")
+                .lineSequence().firstOrNull().orEmpty()
+            val who = if (pid.isBlank()) "" else {
+                val name = probe("ps", "-o", "comm=", "-p", pid)
+                val age = probe("ps", "-o", "etime=", "-p", pid)
+                "\n  Held by process $pid ($name), up ${age.ifBlank { "unknown" }}."
+            }
+
+            throw GradleException(
+                "Port $port is already in use, so this application would exit while whatever " +
+                    "holds it kept answering — and every screen would work against code of " +
+                    "whatever age that process started with.$who\n" +
+                    (if (pid.isBlank()) "  Find it:  lsof -nP -iTCP:$port -sTCP:LISTEN\n"
+                     else "  Stop it:  kill $pid\n") +
+                    "  Or:       ./infra/dev.sh port",
+            )
+        }
+    }
 }

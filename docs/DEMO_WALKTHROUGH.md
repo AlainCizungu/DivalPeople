@@ -20,11 +20,17 @@ cd backend && ./gradlew bootRun
 cd frontend && npm run dev
 ```
 
-Wait for `Started DipApplication` in the second one. If instead it says **"Port 8080 was already in
-use"**, something else is answering as the API — an old container, or an orphaned run from
-yesterday — and `dev.sh up` will now name it and tell you how to stop it. Worth knowing why this
-matters: the backend exits, the squatter keeps serving, and every screen works while running code
-of any age. It has cost this project an afternoon twice.
+Wait for `Started DipApplication` in the second one. If instead the build fails before Spring
+starts at all, saying the port is in use and naming the process holding it with its age, that is
+`bootRun` refusing rather than Spring giving up — stop what it names and run it again.
+
+Worth knowing why the check exists: when the port is taken the backend exits and the squatter keeps
+serving, so every screen works against code of whatever age that process started with. A controller
+written this afternoon returns 404 from an API that authenticates perfectly. It cost this project
+three afternoons, the last to a JVM that had been up for a day and eighteen hours, before the
+refusal moved into the build.
+
+`./infra/dev.sh port` answers the same question on its own.
 
 Seeding runs on first start and is skipped afterwards, so a restart against an existing database
 changes nothing. To start clean, drop the database and let Flyway rebuild it.
