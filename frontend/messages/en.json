@@ -368,7 +368,7 @@
       "bandLabel": "Assessment",
       "bandValue": "Elevated risk",
       "modelLabel": "Model",
-      "modelValue": "DIP-RI-1",
+      "modelValue": "DIP-RI-2",
       "rowsTitle": "Factors influencing assessment",
       "rows": [
         {
@@ -393,8 +393,8 @@
         },
         {
           "label": "Fraud indicators",
-          "rating": "Low",
-          "tone": "positive"
+          "rating": "Not assessed",
+          "tone": "neutral"
         },
         {
           "label": "Outstanding exposure",
@@ -407,7 +407,7 @@
           "tone": "neutral"
         }
       ],
-      "notAssessedNote": "Two factors are deliberately never weighed, and the reason for each is printed beside the assessment: amounts whose currency an operator has not confirmed, and disputes, which are already withheld from every answer the exchange gives."
+      "notAssessedNote": "Three factors are deliberately never weighed, and the reason for each is printed beside the assessment: amounts whose currency an operator has not confirmed, disputes, which are already withheld from every answer the exchange gives, and fraud indicators, whose signal the registry's own uniqueness rules make impossible."
     },
     "entity": {
       "eyebrow": "Entity Intelligence",
@@ -1150,7 +1150,8 @@
     "notAssessedTitle": "Deliberately not assessed",
     "notAssessedReasons": {
       "CURRENCY_UNCONFIRMED": "The amount columns in the operator deliveries carry no stated currency. Weighting them would risk being wrong by a factor of about 2,800 while looking entirely reasonable, so exposure is excluded until an operator confirms it.",
-      "DISPUTES_ARE_NOT_DISCLOSED": "A record under dispute is already withheld from every answer the exchange gives, before anybody decides who is right. Reporting the dispute itself would restore that disclosure by another route and make contesting a record something that costs the person who contests it."
+      "DISPUTES_ARE_NOT_DISCLOSED": "A record under dispute is already withheld from every answer the exchange gives, before anybody decides who is right. Reporting the dispute itself would restore that disclosure by another route and make contesting a record something that costs the person who contests it.",
+      "NO_FRAUD_SIGNAL_IS_COMPUTABLE": "The signal this factor rested on — one identifier held by two different subjects — cannot occur: both unique indexes on the identifier table forbid it, which is exactly how a business register number resolves to one company. So the factor reported Low on every assessment ever made, which is the most reassuring possible way to report having looked at nothing."
     },
     "modelNote": "Assessed under model {version}. Every factor and its weight is published above; nothing here is a black box.",
     "noIndicator": "No assessment: the exchange did not confirm a match, so there is nothing to assess."
@@ -1302,5 +1303,32 @@
     "mixedCurrency": "Several currencies",
     "openProfile": "Open",
     "searchInstead": "Search by name or identifier"
+  },
+  "anomalies": {
+    "title": "Fraud and anomalies",
+    "subtitle": "How your own people have been using the exchange.",
+    "why": "Everything else in DIP checks whether a record is right. This checks whether the asking is right — the one question an institution cannot answer for itself, and the reason every inquiry has been recorded with its actor, its outcome and a stated purpose since the rate limiter went in. Nothing had ever read those rows back.",
+    "notAccusation": "None of these is an accusation. Every one has an innocent explanation that is usually the true one: a collections team working a list, an integration retrying, somebody new mistyping. The figures are here so you can ask.",
+    "cannotDetect": "What this cannot tell you, and will not pretend to: one identifier under two customers, one phone on two accounts, one document under two names. The registry's uniqueness rules make all three impossible, which is how a business register number resolves to one company. An alert that can never fire is a permanently green light, and a permanently green light is worse than none.",
+    "loadFailed": "Could not load the report.",
+    "forbidden": "Reading how colleagues have used the exchange is a supervisory function. It needs the compliance officer or tenant administrator role.",
+    "empty": "Nobody at your institution has used the exchange in the last {days} days.",
+    "windowNote": "Last {days} days. Compared against your institution's own median of {median} inquiries per person — a relative measure, because a call centre and a two-person office have nothing in common and any fixed number would be wrong for both.",
+    "nothingUnusual": "Nothing unusual. Everybody's figures are shown so the absence of a flag means somebody looked, rather than that nothing was checked.",
+    "inquiries": "inquiries",
+    "noMatch": "found nobody",
+    "refused": "refused by the limit",
+    "lastAsked": "Last used",
+    "unknownActor": "Before local user records existed",
+    "flags": {
+      "HIGH_VOLUME": "Far busier than colleagues",
+      "MOSTLY_NO_MATCH": "Almost nothing found",
+      "HIT_THE_RATE_LIMIT": "Hit the hourly limit"
+    },
+    "flagNotes": {
+      "HIGH_VOLUME": "More than four times the institution's median, and above the floor below which one busy afternoon is not a pattern.",
+      "MOSTLY_NO_MATCH": "The strongest of the three and the hardest to explain away. Somebody checking customers finds them; somebody walking an identifier format to see which values exist finds almost nobody.",
+      "HIT_THE_RATE_LIMIT": "A person doing their job reaches an hourly cap approximately never. Something automated reaches it immediately."
+    }
   }
 }

@@ -59,7 +59,8 @@ export type RiskBand = "LOW" | "MODERATE" | "ELEVATED" | "HIGH";
 
 export type NotAssessedReason =
   | "CURRENCY_UNCONFIRMED"
-  | "DISPUTES_ARE_NOT_DISCLOSED";
+  | "DISPUTES_ARE_NOT_DISCLOSED"
+  | "NO_FRAUD_SIGNAL_IS_COMPUTABLE";
 
 export type RiskFactor = {
   code: RiskFactorCode;
@@ -870,6 +871,30 @@ export const resolutionApi = {
       method: "POST",
       body: JSON.stringify({ outcome, note }),
     });
+  },
+};
+
+export type BehaviourFlag = "HIGH_VOLUME" | "MOSTLY_NO_MATCH" | "HIT_THE_RATE_LIMIT";
+
+export type InquiryBehaviour = {
+  actorId: string | null;
+  inquiries: number;
+  noMatch: number;
+  refused: number;
+  lastAsked: string;
+  flags: BehaviourFlag[];
+};
+
+/** @param medianInquiries published so a reader can see what "unusual" was measured against. */
+export type BehaviourReport = {
+  windowDays: number;
+  medianInquiries: number;
+  people: InquiryBehaviour[];
+};
+
+export const anomaliesApi = {
+  behaviour(): Promise<BehaviourReport> {
+    return request<BehaviourReport>("/api/v1/anomalies/behaviour");
   },
 };
 

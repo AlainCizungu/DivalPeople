@@ -50,8 +50,16 @@ public enum RiskFactorCode {
      */
     IDENTITY_CONFIDENCE(15),
 
-    /** Advisory indicators such as one identifier appearing under two different subjects. */
-    FRAUD_INDICATORS(10),
+    /**
+     * Advisory indicators. <strong>Not assessed.</strong>
+     *
+     * <p>It was assessed, at ten points, on a signal that cannot fire: one identifier under two
+     * subjects is forbidden by both unique indexes on the identifier table, so the factor reported
+     * LOW on every assessment DIP has ever produced. A permanently reassuring number resting on a
+     * check that never runs is worse than no number, and worse than the two factors below it,
+     * which at least say why they are silent.
+     */
+    FRAUD_INDICATORS(0),
 
     /**
      * The size of what is owed. <strong>Not assessed.</strong>

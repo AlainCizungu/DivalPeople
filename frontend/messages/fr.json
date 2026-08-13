@@ -368,7 +368,7 @@
       "bandLabel": "Évaluation",
       "bandValue": "Risque élevé",
       "modelLabel": "Modèle",
-      "modelValue": "DIP-RI-1",
+      "modelValue": "DIP-RI-2",
       "rowsTitle": "Facteurs pris en compte",
       "rows": [
         {
@@ -393,8 +393,8 @@
         },
         {
           "label": "Indicateurs de fraude",
-          "rating": "Faible",
-          "tone": "positive"
+          "rating": "Non évalué",
+          "tone": "neutral"
         },
         {
           "label": "Encours dû",
@@ -407,7 +407,7 @@
           "tone": "neutral"
         }
       ],
-      "notAssessedNote": "Deux facteurs ne sont délibérément jamais pondérés, et la raison de chacun est imprimée à côté de l'évaluation : des montants dont aucun opérateur n'a confirmé la devise, et les contestations, déjà retirées de toutes les réponses de l'échange."
+      "notAssessedNote": "Trois facteurs ne sont délibérément jamais pondérés, et la raison de chacun est imprimée à côté de l'évaluation : des montants dont aucun opérateur n'a confirmé la devise, les contestations, déjà retirées de toutes les réponses de l'échange, et les indicateurs de fraude, dont le signal est rendu impossible par les règles d'unicité du registre."
     },
     "entity": {
       "eyebrow": "Intelligence sur les entités",
@@ -1150,7 +1150,8 @@
     "notAssessedTitle": "Délibérément non évalué",
     "notAssessedReasons": {
       "CURRENCY_UNCONFIRMED": "Les colonnes de montant des livraisons opérateurs n'indiquent aucune devise. Les pondérer risquerait une erreur d'un facteur d'environ 2 800 tout en paraissant parfaitement plausible ; l'encours est donc exclu tant qu'un opérateur ne l'a pas confirmé.",
-      "DISPUTES_ARE_NOT_DISCLOSED": "Un enregistrement contesté est déjà retiré de toutes les réponses de l'échange, avant même que quiconque ne tranche. Déclarer la contestation elle-même rétablirait cette divulgation par un autre chemin et ferait de l'exercice d'un droit une chose qui coûte à celui qui l'exerce."
+      "DISPUTES_ARE_NOT_DISCLOSED": "Un enregistrement contesté est déjà retiré de toutes les réponses de l'échange, avant même que quiconque ne tranche. Déclarer la contestation elle-même rétablirait cette divulgation par un autre chemin et ferait de l'exercice d'un droit une chose qui coûte à celui qui l'exerce.",
+      "NO_FRAUD_SIGNAL_IS_COMPUTABLE": "Le signal sur lequel reposait ce facteur — un identifiant détenu par deux sujets différents — ne peut pas se produire : les deux index uniques de la table des identifiants l'interdisent, ce qui est précisément ce qui fait qu'un numéro RCCM désigne une seule société. Le facteur a donc indiqué « Faible » sur chaque évaluation jamais produite, soit la façon la plus rassurante possible de dire qu'on n'a rien regardé."
     },
     "modelNote": "Évalué selon le modèle {version}. Chaque facteur et sa pondération sont publiés ci-dessus ; rien ici n'est une boîte noire.",
     "noIndicator": "Aucune évaluation : l'échange n'a pas confirmé de correspondance, il n'y a donc rien à évaluer."
@@ -1302,5 +1303,32 @@
     "mixedCurrency": "Plusieurs devises",
     "openProfile": "Ouvrir",
     "searchInstead": "Rechercher par nom ou identifiant"
+  },
+  "anomalies": {
+    "title": "Fraude et anomalies",
+    "subtitle": "Comment vos propres collaborateurs utilisent l'échange.",
+    "why": "Tout le reste de DIP vérifie si un enregistrement est juste. Ceci vérifie si la consultation l'est — la seule question qu'une institution ne peut pas se poser à elle-même, et la raison pour laquelle chaque consultation est enregistrée avec son auteur, son résultat et une finalité déclarée depuis la mise en place de la limite de débit. Personne n'avait jamais relu ces lignes.",
+    "notAccusation": "Aucun de ces signaux n'est une accusation. Chacun a une explication innocente, généralement la bonne : une équipe de recouvrement traitant une liste, une intégration qui réessaie, un nouveau collaborateur qui se trompe de saisie. Les chiffres sont là pour que vous puissiez demander.",
+    "cannotDetect": "Ce que ceci ne peut pas vous dire, et ne prétendra pas dire : un identifiant porté par deux clients, un téléphone sur deux comptes, un document sous deux noms. Les règles d'unicité du registre rendent les trois impossibles, ce qui est précisément ce qui fait qu'un numéro RCCM désigne une seule société. Une alerte qui ne peut jamais se déclencher est un voyant vert permanent, et un voyant vert permanent vaut moins que rien.",
+    "loadFailed": "Impossible de charger le rapport.",
+    "forbidden": "Consulter l'usage fait par des collègues relève de la supervision. Cela requiert le rôle de responsable conformité ou d'administrateur.",
+    "empty": "Personne dans votre institution n'a utilisé l'échange ces {days} derniers jours.",
+    "windowNote": "{days} derniers jours. Comparé à la médiane propre à votre institution de {median} consultations par personne — une mesure relative, car un centre d'appels et un bureau de deux personnes n'ont rien de commun et tout chiffre fixe serait faux pour les deux.",
+    "nothingUnusual": "Rien d'inhabituel. Les chiffres de chacun sont affichés afin que l'absence de signal signifie que quelqu'un a regardé, et non que rien n'a été vérifié.",
+    "inquiries": "consultations",
+    "noMatch": "sans résultat",
+    "refused": "refusées par la limite",
+    "lastAsked": "Dernière utilisation",
+    "unknownActor": "Avant l'existence des comptes locaux",
+    "flags": {
+      "HIGH_VOLUME": "Bien plus actif que ses collègues",
+      "MOSTLY_NO_MATCH": "Presque rien trouvé",
+      "HIT_THE_RATE_LIMIT": "Limite horaire atteinte"
+    },
+    "flagNotes": {
+      "HIGH_VOLUME": "Plus de quatre fois la médiane de l'institution, et au-dessus du seuil en deçà duquel un après-midi chargé n'est pas une tendance.",
+      "MOSTLY_NO_MATCH": "Le plus fort des trois et le plus difficile à écarter. Qui vérifie ses clients les trouve ; qui parcourt un format d'identifiant pour voir quelles valeurs existent ne trouve presque personne.",
+      "HIT_THE_RATE_LIMIT": "Une personne faisant son travail n'atteint pour ainsi dire jamais un plafond horaire. Un traitement automatisé l'atteint aussitôt."
+    }
   }
 }

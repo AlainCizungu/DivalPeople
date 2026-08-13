@@ -114,7 +114,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         // is truer than marking it unbuilt.
         { href: "/app/tix", label: t.riskIntelligence },
         { href: "/app/tix/portfolio", label: t.portfolio },
-        { label: t.fraud },
+        // Compliance officer or tenant administrator only, and shown to everybody like entity
+        // resolution: the page explains that reading colleagues' behaviour is a supervisory
+        // function rather than leaving a built screen looking unbuilt.
+        { href: "/app/anomalies", label: t.fraud },
         { label: t.watchlists },
       ],
     },

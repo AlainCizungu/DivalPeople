@@ -86,8 +86,12 @@ public class ExchangeService {
      * {@link SubjectRightsService} finds those people by looking for audit rows carrying this
      * action. Two spellings of the same string in two files would not fail a build, would not fail
      * a test that only checks writing, and would silently mean nobody is ever notified.
+     *
+     * <p>Public since the anomaly module began reading the same rows to find inquiry behaviour
+     * that looks like enumeration. That module must not spell the string itself: two spellings
+     * would not fail a build, would not fail a test, and would silently mean it watches nothing.
      */
-    static final String INQUIRY_ACTION = "TIX_INQUIRY";
+    public static final String INQUIRY_ACTION = "TIX_INQUIRY";
 
     /**
      * Resolves the submitted identifiers to a subject and reports the statuses held against it.

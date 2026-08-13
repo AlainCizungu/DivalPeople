@@ -35,7 +35,7 @@ public class RiskIndicatorService {
      * changes whenever any weight or threshold in this file changes — that is the rule, and it is
      * the whole reason the constant is here rather than a literal at the bottom of the method.
      */
-    public static final String MODEL_VERSION = "DIP-RI-1";
+    public static final String MODEL_VERSION = "DIP-RI-2";
 
     /**
      * How many factors the narrative names.
@@ -55,8 +55,12 @@ public class RiskIndicatorService {
                 debtAging(inputs),
                 reportingInstitutions(inputs),
                 identityConfidence(inputs),
-                fraudIndicators(inputs),
-                // Both permanently zero, both listed, and each says which kind of silence it is.
+                // Three permanently zero now, all listed, and each says which kind of silence it
+                // is. Fraud joined the other two when it turned out the signal behind it could
+                // never fire — see NO_FRAUD_SIGNAL_IS_COMPUTABLE. The ceiling is therefore 90
+                // rather than 100, which is why this is DIP-RI-2 and not a tweak to DIP-RI-1.
+                RiskFactor.notAssessed(RiskFactorCode.FRAUD_INDICATORS,
+                        NotAssessedReason.NO_FRAUD_SIGNAL_IS_COMPUTABLE),
                 RiskFactor.notAssessed(RiskFactorCode.OUTSTANDING_EXPOSURE,
                         NotAssessedReason.CURRENCY_UNCONFIRMED),
                 RiskFactor.notAssessed(RiskFactorCode.DISPUTE_HISTORY,
@@ -168,19 +172,6 @@ public class RiskIndicatorService {
             case NAME_ONLY -> RiskFactor.assessed(
                     RiskFactorCode.IDENTITY_CONFIDENCE, RiskRating.HIGH, 15);
         };
-    }
-
-    /**
-     * Advisory indicators, and advisory is the operative word.
-     *
-     * <p>One identifier appearing under two subjects is usually a data entry mistake and
-     * occasionally something else. It is weighted lightest of the five for that reason, and it is
-     * never a finding of misconduct in this response or anywhere else.
-     */
-    private RiskFactor fraudIndicators(RiskInputs inputs) {
-        return inputs.fraudSignalCount() > 0
-                ? RiskFactor.assessed(RiskFactorCode.FRAUD_INDICATORS, RiskRating.HIGH, 10)
-                : RiskFactor.assessed(RiskFactorCode.FRAUD_INDICATORS, RiskRating.LOW, 0);
     }
 
     /**

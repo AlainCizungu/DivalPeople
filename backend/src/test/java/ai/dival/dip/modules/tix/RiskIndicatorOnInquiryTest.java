@@ -75,7 +75,7 @@ class RiskIndicatorOnInquiryTest extends AbstractIntegrationTest {
         InquiryResult result = ask();
 
         assertThat(result.indicator()).isNotNull();
-        assertThat(result.indicator().modelVersion()).isEqualTo("DIP-RI-1");
+        assertThat(result.indicator().modelVersion()).isEqualTo("DIP-RI-2");
         assertThat(result.indicator().factors())
                 .as("every factor, every time, so two assessments can be compared")
                 .hasSize(RiskFactorCode.values().length);
@@ -167,6 +167,9 @@ class RiskIndicatorOnInquiryTest extends AbstractIntegrationTest {
         // somebody confirms it, weighting it would make every assessment potentially wrong by a
         // factor of about 2,800 while looking entirely reasonable.
         assertThat(factor(ask(), RiskFactorCode.OUTSTANDING_EXPOSURE).rating())
+                .isEqualTo(RiskRating.NOT_ASSESSED);
+        assertThat(factor(ask(), RiskFactorCode.FRAUD_INDICATORS).rating())
+                .as("and fraud with it, since the signal behind that one cannot fire either")
                 .isEqualTo(RiskRating.NOT_ASSESSED);
     }
 

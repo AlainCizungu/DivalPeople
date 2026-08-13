@@ -34,6 +34,30 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID> {
                                 Pageable page);
 
     /** How many of each action a tenant has recorded, most frequent first. */
+    /**
+     * How each of an operator's own users has been using the exchange, since a moment.
+     *
+     * <p>Four numbers per person: how many inquiries, how many resolved to nobody, how many the
+     * rate limiter refused, and when they last asked. That is enough to tell somebody doing their
+     * job from somebody walking an identifier space, and it is the only place in the platform
+     * where the question can be asked at all — the audit trail was built to make a sweep legible
+     * after the fact, and nothing has ever read it back.
+     *
+     * <p>A null resource id is the tell. The exchange records the subject when it confirms a match
+     * and null when it does not, so a caller guessing identifiers produces a long row of nulls.
+     */
+    @Query("select e.actorId, count(e), "
+            + "sum(case when e.resourceId is null then 1 else 0 end), "
+            + "sum(case when e.outcome = :denied then 1 else 0 end), "
+            + "max(e.occurredAt) "
+            + "from AuditEvent e "
+            + "where e.tenantId = :tenantId and e.action = :action and e.occurredAt >= :since "
+            + "group by e.actorId")
+    List<Object[]> inquiryBehaviourSince(@Param("tenantId") UUID tenantId,
+                                         @Param("action") String action,
+                                         @Param("denied") String denied,
+                                         @Param("since") java.time.Instant since);
+
     @Query("select e.action, count(e) from AuditEvent e where e.tenantId = :tenantId "
             + "group by e.action order by count(e) desc")
     List<Object[]> countByAction(@Param("tenantId") UUID tenantId);

@@ -273,11 +273,15 @@ score off a slide:
   adverse information; 100 is the most the platform can observe. A credit score is a statistical
   claim about repayment, and making one needs outcome data, a validation sample and a regulatory
   position. None of those exist yet. Say so before a banker asks.
-- **Two factors are listed and deliberately not assessed.** Outstanding exposure, because the
+- **Three factors are listed and deliberately not assessed.** Outstanding exposure, because the
   amount columns in both operator deliveries carry no stated currency — weight them and every
-  assessment could be wrong by a factor of 2,800 while looking entirely reasonable. And dispute
+  assessment could be wrong by a factor of 2,800 while looking entirely reasonable. Dispute
   history, because a contested record is already withheld from every answer the exchange gives,
-  and reporting the dispute itself would put it back by another route.
+  and reporting the dispute itself would put it back by another route. And fraud indicators, which
+  is the one worth telling a banker about: the signal behind it — one identifier held by two
+  subjects — is forbidden by the registry's own uniqueness rules, which is exactly what makes an
+  RCCM resolve to one company. It reported "low" on every assessment DIP ever produced until
+  somebody checked. The ceiling is therefore 90 rather than 100, and the model version says so.
 - **The model version is on the panel.** Somebody declined for credit this year can ask why in
   three, by which time the weights will have moved.
 

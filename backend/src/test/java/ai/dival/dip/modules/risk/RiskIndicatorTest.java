@@ -35,9 +35,11 @@ class RiskIndicatorTest {
                 .sum();
 
         assertThat(declared)
-                .as("five assessed factors and two that are never assessed, summing to the "
-                        + "ceiling the screen prints beside the figure")
-                .isEqualTo(100);
+                .as("four assessed factors and three that are never assessed. The ceiling was 100 "
+                        + "until fraud joined the unassessable: the signal behind it — one "
+                        + "identifier under two subjects — is forbidden by both unique indexes on "
+                        + "the identifier table, so it reported LOW on every assessment ever made")
+                .isEqualTo(90);
     }
 
     @Test
@@ -49,7 +51,7 @@ class RiskIndicatorTest {
         RiskIndicator worst = model.assess(new RiskInputs(
                 true, false, 3, 400, IdentityStrength.NAME_ONLY, 1));
 
-        assertThat(worst.score()).isEqualTo(100);
+        assertThat(worst.score()).isEqualTo(90);
         assertThat(worst.band()).isEqualTo(RiskBand.HIGH);
     }
 
@@ -94,6 +96,24 @@ class RiskIndicatorTest {
         // one that loses a bank money.
         assertThat(model.assess(sameFactsWeaklyMatched).score())
                 .isGreaterThan(model.assess(onFacts).score());
+    }
+
+    @Test
+    @DisplayName("fraud is never assessed, because the signal behind it cannot fire")
+    void fraudIsRefusedBecauseNothingCanTriggerIt() {
+        // A fraud signal count is still accepted as an input and still ignored. Both unique
+        // indexes on tix_subject_identifier make one identifier under two subjects impossible —
+        // which is not a defect, it is how an RCCM resolves to one company — so the factor spent
+        // its whole life reporting LOW. A permanently reassuring number resting on a check that
+        // never runs is worse than no number at all.
+        RiskIndicator withSignals = model.assess(new RiskInputs(
+                true, false, 2, 400, IdentityStrength.STRONG, 3));
+
+        RiskFactor fraud = factor(withSignals, RiskFactorCode.FRAUD_INDICATORS);
+        assertThat(fraud.rating()).isEqualTo(RiskRating.NOT_ASSESSED);
+        assertThat(fraud.points()).isZero();
+        assertThat(fraud.reason())
+                .isEqualTo(NotAssessedReason.NO_FRAUD_SIGNAL_IS_COMPUTABLE);
     }
 
     @Test
@@ -203,7 +223,7 @@ class RiskIndicatorTest {
         // now, which is not what happened.
         assertThat(model.assess(new RiskInputs(
                 false, false, 0, -1, IdentityStrength.STRONG, 0)).modelVersion())
-                .isEqualTo("DIP-RI-1");
+                .isEqualTo("DIP-RI-2");
     }
 
     @Test
