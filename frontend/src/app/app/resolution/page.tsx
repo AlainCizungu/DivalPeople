@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useMessages } from "@/i18n/LocaleProvider";
+import { useSession } from "@/auth/SessionProvider";
 import { interpolate } from "@/i18n/interpolate";
 import {
   ApiError,
@@ -46,6 +47,7 @@ import {
 export default function ResolutionPage() {
   const messages = useMessages();
   const t = messages.resolution;
+  const { profile } = useSession();
 
   const [cases, setCases] = useState<MatchCase[] | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
@@ -130,6 +132,16 @@ export default function ResolutionPage() {
       {forbidden && (
         <Card title={t.title}>
           <EmptyState>{t.forbidden}</EmptyState>
+          {/* The refusal explains the policy; this says which account is being refused.
+              Without it the page is a wall — correct, and no help at all to somebody trying to
+              work out whether they signed in as the wrong user or whether the role never
+              arrived. Two different problems, one screen, and the screen is the only witness. */}
+          <p className="mt-3 border-t border-line pt-3 text-xs text-muted">
+            {interpolate(t.whoYouAre, t.whoYouAre, {
+              name: profile?.preferredUsername ?? profile?.email ?? "—",
+              roles: (profile?.roles ?? []).join(", ") || t.noRoles,
+            })}
+          </p>
         </Card>
       )}
 

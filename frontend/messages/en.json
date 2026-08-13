@@ -1279,6 +1279,8 @@
     "decided": "Recorded. {moved} record(s) and identifier(s) moved.",
     "decidedNoMove": "Recorded. Nothing was moved.",
     "modelNote": "Compared under model {version}. Every signal and its weight is published above.",
-    "forbidden": "This queue belongs to the registry. Each case shows one institution's record beside another's, with both names — so a participant holding it would be reading a competitor's customer file, which is the disclosure the exchange exists to prevent. Sign in as a platform administrator to review. Participants receive the result as a better match, never as the queue."
+    "forbidden": "This queue belongs to the registry. Each case shows one institution's record beside another's, with both names — so a participant holding it would be reading a competitor's customer file, which is the disclosure the exchange exists to prevent. Sign in as a platform administrator to review. Participants receive the result as a better match, never as the queue.",
+    "whoYouAre": "Signed in as {name}, holding: {roles}. If PLATFORM_ADMIN is not in that list, this session is not a registry account — and if it is, the refusal came from the API rather than from this page, which is a different problem.",
+    "noRoles": "no roles at all"
   }
 }
