@@ -145,7 +145,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       heading: t.groupGovernance,
       items: [
         { href: "/app/audit", label: t.audit },
-        { label: t.access },
+        // Reachable by anybody signed in, not only an administrator. Its more useful half is
+        // the answer to "why can I not open that screen", and refusing that question to the
+        // people who have it would be the wrong way round.
+        { href: "/app/access", label: t.access },
         { href: "/app/subject-requests", label: t.disputes },
       ],
     },

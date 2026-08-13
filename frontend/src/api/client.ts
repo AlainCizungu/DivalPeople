@@ -762,6 +762,45 @@ export type Settings = {
   models: Setting[];
 };
 
+export type RoleArea = { name: string; endpoints: number };
+
+/**
+ * One role and what it unlocks.
+ *
+ * `endpoints` can be zero, and that is information rather than an empty state: the role exists,
+ * can be assigned, and grants nothing.
+ *
+ * `heldBy` is null when the caller may not see who is in their organisation — which is not the
+ * same as nobody holding it.
+ */
+export type RoleAccess = {
+  role: string;
+  endpoints: number;
+  areas: RoleArea[];
+  heldBy: number | null;
+  held: boolean;
+};
+
+export type AccessMember = {
+  email: string;
+  displayName: string;
+  roles: string[];
+  active: boolean;
+  lastSeenAt: string | null;
+};
+
+export type Access = {
+  roles: RoleAccess[];
+  /** Null, not empty, when the caller lacks the tenant administrator role. */
+  members: AccessMember[] | null;
+};
+
+export const accessApi = {
+  load(): Promise<Access> {
+    return request<Access>("/api/v1/access");
+  },
+};
+
 export const settingsApi = {
   load(): Promise<Settings> {
     return request<Settings>("/api/v1/settings");

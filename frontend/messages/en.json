@@ -1204,5 +1204,27 @@
       "UNVERIFIED_PLACEHOLDER": "A plausible figure nobody has checked against the law. It will hold until somebody decides it, and it should not be quoted as though somebody had.",
       "NOT_SET": "Nothing is configured, so this is refused rather than defaulted."
     }
+  },
+  "access": {
+    "title": "Access and permissions",
+    "subtitle": "Who holds which role here, and what holding it actually permits.",
+    "loadFailed": "Could not load access and permissions.",
+    "derivedNote": "This list is read from the guards the application enforces, every time the page loads. It is not a description maintained alongside the code, so it cannot drift from it.",
+    "readOnlyNote": "Read-only. Roles are held in the identity provider; granting one there is where the decision is recorded.",
+    "rolesTitle": "What each role permits",
+    "rolesDescription": "Counted in endpoints, grouped by the part of the product they belong to.",
+    "membersTitle": "People in your organisation",
+    "membersDescription": "Roles as recorded when each person last signed in.",
+    "noMembers": "Seeing who is in your organisation needs the tenant administrator role.",
+    "membersEmpty": "Nobody has signed in yet.",
+    "yours": "Yours",
+    "heldBy": "{count} here",
+    "heldByNobody": "Nobody here",
+    "endpoints": "{count} endpoints",
+    "grantsNothing": "Grants nothing. This role can be assigned and will change nothing for the person who receives it.",
+    "authenticatedRole": "Anybody signed in",
+    "authenticatedNote": "Not a role. Endpoints open to every signed-in account, each one a deliberate decision, listed so the catalogue does not silently omit them.",
+    "never": "Never",
+    "inactive": "Inactive"
   }
 }

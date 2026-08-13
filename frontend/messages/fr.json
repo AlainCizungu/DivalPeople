@@ -1204,5 +1204,27 @@
       "UNVERIFIED_PLACEHOLDER": "Un chiffre plausible que personne n'a vérifié au regard de la loi. Il tiendra jusqu'à ce que quelqu'un le décide, et ne devrait pas être cité comme si quelqu'un l'avait fait.",
       "NOT_SET": "Rien n'est configuré, ce qui entraîne un refus plutôt qu'une valeur par défaut."
     }
+  },
+  "access": {
+    "title": "Accès et permissions",
+    "subtitle": "Qui détient quel rôle ici, et ce que ce rôle permet réellement.",
+    "loadFailed": "Impossible de charger les accès et permissions.",
+    "derivedNote": "Cette liste est lue à chaque chargement à partir des contrôles que l'application applique. Ce n'est pas une description entretenue à côté du code : elle ne peut donc pas s'en écarter.",
+    "readOnlyNote": "Lecture seule. Les rôles sont détenus par le fournisseur d'identité ; c'est là qu'une attribution est enregistrée.",
+    "rolesTitle": "Ce que permet chaque rôle",
+    "rolesDescription": "Compté en points d'accès, regroupés par partie du produit.",
+    "membersTitle": "Personnes de votre organisation",
+    "membersDescription": "Rôles tels qu'enregistrés lors de la dernière connexion de chacun.",
+    "noMembers": "Voir les personnes de votre organisation requiert le rôle d'administrateur.",
+    "membersEmpty": "Personne ne s'est encore connecté.",
+    "yours": "Le vôtre",
+    "heldBy": "{count} ici",
+    "heldByNobody": "Personne ici",
+    "endpoints": "{count} points d'accès",
+    "grantsNothing": "N'accorde rien. Ce rôle peut être attribué et ne changera rien pour la personne qui le reçoit.",
+    "authenticatedRole": "Toute personne connectée",
+    "authenticatedNote": "Ce n'est pas un rôle. Points d'accès ouverts à tout compte connecté, chacun étant une décision délibérée, listés pour que le catalogue ne les omette pas en silence.",
+    "never": "Jamais",
+    "inactive": "Inactif"
   }
 }
