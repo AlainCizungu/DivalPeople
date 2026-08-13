@@ -124,20 +124,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ...(isPlatformAdmin
           ? [{ href: "/app/participants", label: t.participants }]
           : []),
-        // Sources are a card inside a delivery screen, not a screen. Linking here would send
-        // somebody who asked for sources to a page headed imports and let them wonder whether
-        // they had mis-clicked.
-        { label: t.sources },
       ],
     },
     {
       heading: t.groupData,
       items: [
         { href: "/app/imports", label: t.imports },
+        // Data sources and Data quality used to sit here and next door. Neither was a screen:
+        // sources are a card on this one, and quality is the column profile inside a delivery,
+        // which cannot be reached without a batch to ask about. Two menu entries for one screen
+        // and one for a thing that is not a screen at all — both gone rather than promised.
         { label: t.entityResolution },
-        // Reachable today only from inside a delivery, which means it cannot be a link from
-        // here: there is no such thing as data quality without a batch to ask about.
-        { label: t.dataQuality },
       ],
     },
     {
@@ -188,7 +185,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
 
-        {/* Twenty-seven entries do not fit on a laptop, so the list scrolls and the brand and
+        {/* Twenty-five entries do not fit on a laptop, so the list scrolls and the brand and
             the footer stay put. */}
         <div className="flex-1 overflow-y-auto p-3">
           {groups.map((group) => {
