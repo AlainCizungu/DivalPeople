@@ -58,12 +58,21 @@ class AccessServiceTest extends AbstractIntegrationTest {
     void platformAdministrationIsNotAMasterKey() {
         AccessService.RoleAccess admin = role(Roles.PLATFORM_ADMIN);
 
-        // Running the network is not the same as reading what is on it. This role admits
-        // participants — the guard sits on TenantController as a whole, under /api/v1/platform —
-        // and it opens nobody's records. If a future endpoint quietly hands it one, a second area
-        // appears here and this fails.
+        // This did read containsExactly("platform"), with a note saying that if a future endpoint
+        // quietly handed this role a second area the test would fail. One did, and it did — which
+        // is the test working rather than the test being wrong, and the widening is worth naming
+        // rather than waving through.
+        //
+        // Identity resolution puts one operator's record beside another's, both names visible, so
+        // it cannot belong to a participant: the exchange spends its whole design making sure an
+        // inquiry discloses a count and a status and nothing else. The registry resolves. That is
+        // a real increase in what PLATFORM_ADMIN can see — from tenant administration, which
+        // touches no subject, to subject names across operators — and it is the bureau model
+        // rather than an oversight.
+        //
+        // A third area appearing without a decision behind it fails here, as this one did.
         assertThat(admin.areas().stream().map(AccessService.Area::name))
-                .containsExactly("platform");
+                .containsExactlyInAnyOrder("platform", "resolution");
     }
 
     @Test

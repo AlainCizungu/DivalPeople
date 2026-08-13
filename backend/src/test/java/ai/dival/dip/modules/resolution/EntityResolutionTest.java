@@ -63,7 +63,17 @@ class EntityResolutionTest extends AbstractIntegrationTest {
                 Tenant.Edition.TELECOM, "fr")).getId();
         orange = tenants.save(new Tenant("Res B", "res-b-" + UUID.randomUUID(),
                 Tenant.Edition.TELECOM, "fr")).getId();
-        suffix = UUID.randomUUID().toString().substring(0, 8);
+        // The whole UUID, not the eight characters other tests in this repository use.
+        //
+        // Every fixture here is a Kabamba, so they all land in the same block and every one is
+        // compared against every other. Two eight-character hex suffixes sharing three leading
+        // characters score 0.857 against each other — over the 0.82 threshold — so a pair from one
+        // test would open a case with a pair from another, and which tests failed depended on what
+        // UUID.randomUUID happened to produce. It looked like a defect in the scan.
+        //
+        // A full UUID brings the same comparison to 0.46. The suffixes also carry hyphens, which
+        // the scorer flattens to spaces, so the names no longer share three tokens out of four.
+        suffix = UUID.randomUUID().toString();
     }
 
     @AfterEach
@@ -252,6 +262,15 @@ class EntityResolutionTest extends AbstractIntegrationTest {
         declarePerson(orange, "Jean Pierre Kabamba " + suffix);
         resolution.scan(REVIEWER);
         UUID subject = mine().get(0).left().id();
+
+        // Its records go first, as the purge does it: a subject is erased once nobody holds
+        // anything against them, and tix_debt_record.subject_id would refuse the delete otherwise.
+        // The first version of this test deleted the subject out from under two live records and
+        // blamed the candidate table for the refusal.
+        for (UUID operator : List.of(vodacom, orange)) {
+            TenantContext.runAs(operator, () ->
+                    records.deleteAll(records.findByTenantIdAndSubjectId(operator, subject)));
+        }
 
         // The right to erasure is not a review queue's to veto, and V28 gave it one by accident:
         // plain foreign keys default to NO ACTION, so a subject anybody had ever been compared
