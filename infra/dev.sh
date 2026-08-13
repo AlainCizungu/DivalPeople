@@ -284,8 +284,13 @@ EOF
         # three explanations that produce the same red box: 404 means the running process does not
         # have these routes and is older than the source tree; 403 means the account is missing
         # TIX_DECLARANT; 200 means the API is fine and the problem is in front of it.
-        info "Probing the ingest routes the imports screen calls..."
-        for ROUTE in /api/v1/ingest/sources /api/v1/ingest/batches; do
+        # Every route a screen calls on load, not just the ingest pair this block was written
+        # for. The settings page shipped and reported "could not load the configuration" on a
+        # backend still serving the previous build, which is exactly the 404 this loop was already
+        # designed to catch — it just did not know about the route.
+        info "Probing the routes the screens call on load..."
+        for ROUTE in /api/v1/ingest/sources /api/v1/ingest/batches /api/v1/overview \
+                     /api/v1/settings /api/v1/tix/portfolio; do
             STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
                 -H "Authorization: Bearer $TOKEN" "$API_URL$ROUTE")"
             if [ "$STATUS" = "200" ]; then
