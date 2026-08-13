@@ -1278,6 +1278,7 @@
     "confirmWarning": "Confirming moves both institutions' records onto one subject. The absorbed record is kept, pointing at the survivor, so this can be traced and undone.",
     "decided": "Recorded. {moved} record(s) and identifier(s) moved.",
     "decidedNoMove": "Recorded. Nothing was moved.",
-    "modelNote": "Compared under model {version}. Every signal and its weight is published above."
+    "modelNote": "Compared under model {version}. Every signal and its weight is published above.",
+    "forbidden": "This queue belongs to the registry. Each case shows one institution's record beside another's, with both names — so a participant holding it would be reading a competitor's customer file, which is the disclosure the exchange exists to prevent. Sign in as a platform administrator to review. Participants receive the result as a better match, never as the queue."
   }
 }

@@ -33,8 +33,12 @@ import {
  * <p><strong>It belongs to the registry and to nobody else.</strong> Each case shows one operator's
  * record beside another's with both names visible; a participant with this queue would be reading a
  * competitor's customer file one review at a time, which is the disclosure the whole exchange is
- * built to prevent. Hence PLATFORM_ADMIN on every endpoint behind it, and hidden from the menu for
- * everybody else rather than shown and refused.
+ * built to prevent. Hence PLATFORM_ADMIN on every endpoint behind it.
+ *
+ * <p>The menu entry, however, is shown to everybody, which reverses how this shipped. Hiding it
+ * meant a built feature read as unbuilt — a "Soon" chip for something that exists — and that is a
+ * worse thing to tell somebody than a refusal. So the page opens for anybody and says whose work
+ * this is, and the API's 403 is rendered as the explanation above rather than as a fault.
  *
  * <p>Nothing here decides on its own at any confidence. The number decides whether somebody is
  * asked to look.
@@ -45,6 +49,15 @@ export default function ResolutionPage() {
 
   const [cases, setCases] = useState<MatchCase[] | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  /**
+   * Refused rather than broken.
+   *
+   * <p>Kept apart from {@code failure} because the two want different words. A 403 here is the
+   * design working — the registry resolves and a participant does not — and printing it as
+   * "could not load the review queue, 403" would read as a fault in a screen that is behaving
+   * exactly as intended.
+   */
+  const [forbidden, setForbidden] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [outcomeMessage, setOutcomeMessage] = useState<string | null>(null);
 
@@ -57,7 +70,13 @@ export default function ResolutionPage() {
     try {
       setCases(await resolutionApi.open());
       setFailure(null);
+      setForbidden(false);
     } catch (caught) {
+      if (caught instanceof ApiError && caught.status === 403) {
+        setForbidden(true);
+        setCases([]);
+        return;
+      }
       setFailure(describe(caught));
     }
   }, []);
@@ -108,7 +127,13 @@ export default function ResolutionPage() {
         {t.why}
       </p>
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      {forbidden && (
+        <Card title={t.title}>
+          <EmptyState>{t.forbidden}</EmptyState>
+        </Card>
+      )}
+
+      <div className={forbidden ? "hidden" : "mb-6 flex flex-wrap items-center gap-3"}>
         <Button type="button" onClick={() => void onScan()} disabled={scanning}>
           {scanning ? t.scanning : t.scan}
         </Button>
@@ -123,7 +148,7 @@ export default function ResolutionPage() {
       )}
       {!failure && cases === null && <EmptyState>{messages.common.loading}</EmptyState>}
 
-      {cases !== null && cases.length === 0 && (
+      {!forbidden && cases !== null && cases.length === 0 && (
         <Card title={t.empty} description={t.emptyHint}>
           <EmptyState>{t.empty}</EmptyState>
         </Card>

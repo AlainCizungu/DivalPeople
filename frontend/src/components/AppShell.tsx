@@ -135,13 +135,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         // which cannot be reached without a batch to ask about. Two menu entries for one screen
         // and one for a thing that is not a screen at all — both gone rather than promised.
         //
-        // Entity resolution is built and belongs to the registry alone: each case puts one
-        // operator's record beside another's with both names visible. Hidden rather than
-        // shown-and-refused, like Participants, because a menu item that always 403s teaches
-        // people to ignore refusals.
-        ...(isPlatformAdmin
-          ? [{ href: "/app/resolution", label: t.entityResolution }]
-          : [{ label: t.entityResolution }]),
+        // Entity resolution is shown to everybody, unlike Participants, and the two are treated
+        // differently on purpose. Participants is administration: an operator has no reason to
+        // want it and hiding it costs them nothing. Entity resolution is the product — a
+        // participant asking where it went is asking a fair question, and answering with a "Soon"
+        // chip tells them a built feature does not exist yet. That is a worse lie than a refusal.
+        //
+        // So the page opens for anybody and says whose work this is: the registry resolves,
+        // because a case puts one operator's record beside another's with both names visible.
+        // The API still refuses everybody else, and the screen shows that refusal rather than an
+        // empty queue.
+        { href: "/app/resolution", label: t.entityResolution },
       ],
     },
     {
