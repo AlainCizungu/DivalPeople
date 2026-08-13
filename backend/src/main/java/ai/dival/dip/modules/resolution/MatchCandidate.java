@@ -86,13 +86,36 @@ public class MatchCandidate {
         // Ordered here rather than by the caller. Every call site would otherwise have to remember,
         // and the one that forgot would create the duplicate case the unique index exists to stop
         // — as a constraint violation at flush time, a long way from the mistake.
-        boolean ascending = first.compareTo(second) < 0;
+        boolean ascending = compareAsDatabase(first, second) < 0;
         this.subjectLowId = ascending ? first : second;
         this.subjectHighId = ascending ? second : first;
         this.confidence = BigDecimal.valueOf(confidence).setScale(3, java.math.RoundingMode.HALF_UP);
         this.signals = signals;
         this.modelVersion = modelVersion;
         this.detectedAt = detectedAt;
+    }
+
+    /**
+     * Orders two ids the way PostgreSQL does, which is not the way Java does.
+     *
+     * <p>{@code UUID.compareTo} compares the most significant bits as a <strong>signed</strong>
+     * long, so any id with the top bit set sorts before every id without one. PostgreSQL compares
+     * {@code uuid} as unsigned bytes. The two disagree on almost exactly half of all random pairs,
+     * which is what {@code subject_low_id &lt; subject_high_id} caught: rows ordered correctly by
+     * Java arrived at a CHECK constraint that read them the other way round and refused them.
+     *
+     * <p>Half is the worst possible failure rate for noticing. A tenth would have looked like a
+     * flake and been retried; everything failing would have been found in the first run. Half
+     * looked like a feature that worked in some tests and not others, and sent me hunting the
+     * differences between the tests.
+     *
+     * <p>The database's ordering wins, because the database is where the constraint lives.
+     */
+    static int compareAsDatabase(UUID left, UUID right) {
+        int high = Long.compareUnsigned(
+                left.getMostSignificantBits(), right.getMostSignificantBits());
+        return high != 0 ? high : Long.compareUnsigned(
+                left.getLeastSignificantBits(), right.getLeastSignificantBits());
     }
 
     /**

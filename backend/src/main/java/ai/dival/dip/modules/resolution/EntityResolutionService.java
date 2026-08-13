@@ -197,7 +197,10 @@ public class EntityResolutionService {
     }
 
     private boolean alreadyKnown(UUID first, UUID second) {
-        UUID low = first.compareTo(second) < 0 ? first : second;
+        // The same ordering the row was written with, which is the database's rather than Java's.
+        // Using UUID.compareTo here would look up the pair the wrong way round half the time, find
+        // nothing, and open a duplicate case — the failure the unique index exists to catch.
+        UUID low = MatchCandidate.compareAsDatabase(first, second) < 0 ? first : second;
         UUID high = low.equals(first) ? second : first;
         for (MatchStatus status : MatchStatus.values()) {
             if (candidates.findBySubjectLowIdAndSubjectHighIdAndStatus(low, high, status)
