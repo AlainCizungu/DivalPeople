@@ -735,6 +735,39 @@ export const overviewApi = {
   },
 };
 
+export type SettingProvenance =
+  | "TERMS_OF_REFERENCE"
+  | "UNVERIFIED_PLACEHOLDER"
+  | "OPERATIONAL_DEFAULT"
+  | "COMPILED"
+  | "NOT_SET";
+
+/**
+ * One configured value and where it came from.
+ *
+ * `value` is null when nothing is configured, which for the reporting floor is itself the answer:
+ * a currency with no floor is refused rather than defaulted.
+ */
+export type Setting = {
+  key: string;
+  value: string | null;
+  unit: string | null;
+  provenance: SettingProvenance;
+};
+
+export type Settings = {
+  retention: Setting[];
+  reporting: Setting[];
+  exchange: Setting[];
+  models: Setting[];
+};
+
+export const settingsApi = {
+  load(): Promise<Settings> {
+    return request<Settings>("/api/v1/settings");
+  },
+};
+
 export const tixApi = {
   inquire(body: InquiryRequest): Promise<InquiryResult> {
     return request<InquiryResult>("/api/v1/tix/inquiries", {

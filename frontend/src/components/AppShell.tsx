@@ -154,7 +154,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/app/notifications", label: t.notifications, badge: unreadCount },
         { href: "/app/organization", label: t.organization },
-        { label: t.settings },
+        // The last System entry to get a screen, and the one with the most already behind it:
+        // every value it shows existed in a yaml file that only a deployer could read.
+        { href: "/app/settings", label: t.settings },
       ],
     },
   ];

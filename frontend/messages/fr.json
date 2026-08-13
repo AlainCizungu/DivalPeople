@@ -1154,5 +1154,55 @@
     },
     "modelNote": "Évalué selon le modèle {version}. Chaque facteur et sa pondération sont publiés ci-dessus ; rien ici n'est une boîte noire.",
     "noIndicator": "Aucune évaluation : l'échange n'a pas confirmé de correspondance, il n'y a donc rien à évaluer."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Ce que cette installation est configurée pour faire, et d'où vient chaque valeur.",
+    "loadFailed": "Impossible de charger la configuration.",
+    "readOnly": "Lecture seule. Raccourcir une durée de conservation rendrait des enregistrements immédiatement échus ; modifier ces valeurs est une décision assortie d'une trace d'audit, pas un champ de saisie sur une page.",
+    "valueHeader": "Valeur",
+    "sourceHeader": "Source",
+    "notSet": "Non défini",
+    "groups": {
+      "retention": "Durée de conservation des enregistrements",
+      "reporting": "Ce qui peut être déclaré",
+      "exchange": "Limites de consultation",
+      "models": "Seuils des modèles publiés"
+    },
+    "groupNotes": {
+      "retention": "Ce sont des durées légales et non des constantes techniques. Les trois proviennent des chiffres indicatifs des termes de référence et aucune n'a été vérifiée au regard du Code du numérique.",
+      "reporting": "Une devise absente de cette liste est refusée et non pondérée par défaut : la ligne manquante est elle-même un paramètre. Le CDF n'est délibérément pas défini, car le fixer suppose de choisir un taux USD/CDF qui évolue et dont quelqu'un doit répondre.",
+      "exchange": "L'échange contient les enregistrements de concurrents et chaque requête est individuellement légitime. La limite ne rend pas un balayage impossible ; elle le ralentit assez pour que la piste d'audit soit lue.",
+      "models": "Fixés par une version plutôt que par la configuration, et affichés parce qu'un seuil que l'on ne peut pas voir est un seuil qu'il faut croire sur parole."
+    },
+    "keys": {
+      "RETENTION_SIMPLE_YEARS": "Un premier impayé non régularisé",
+      "RETENTION_REPEAT_YEARS": "Un impayé d'une personne déjà défaillante",
+      "RETENTION_SETTLED_DAYS": "Durée de survie d'une créance après régularisation",
+      "RETENTION_PURGE_SCHEDULE": "Heure d'exécution du balayage d'effacement",
+      "MINIMUM_DECLARABLE": "Rien en deçà n'entre au registre",
+      "INQUIRIES_PER_HOUR": "Consultations qu'une institution peut faire en une heure",
+      "RISK_MODEL_VERSION": "Quelles règles ont produit une évaluation",
+      "MATCH_REVIEW_THRESHOLD": "Confiance à partir de laquelle une paire est soumise à un examen",
+      "MATCH_STRONG_CONFIDENCE": "Confiance au-delà de laquelle un examinateur approuvera probablement"
+    },
+    "units": {
+      "YEARS": "ans",
+      "DAYS": "jours",
+      "CRON": "",
+      "PER_TENANT_PER_HOUR": "par institution et par heure",
+      "CONFIDENCE": ""
+    },
+    "provenance": {
+      "TERMS_OF_REFERENCE": "Termes de référence",
+      "UNVERIFIED_PLACEHOLDER": "Valeur provisoire non vérifiée",
+      "OPERATIONAL_DEFAULT": "Valeur d'exploitation par défaut",
+      "COMPILED": "Fixé par la version",
+      "NOT_SET": "Non configuré"
+    },
+    "provenanceNote": {
+      "UNVERIFIED_PLACEHOLDER": "Un chiffre plausible que personne n'a vérifié au regard de la loi. Il tiendra jusqu'à ce que quelqu'un le décide, et ne devrait pas être cité comme si quelqu'un l'avait fait.",
+      "NOT_SET": "Rien n'est configuré, ce qui entraîne un refus plutôt qu'une valeur par défaut."
+    }
   }
 }

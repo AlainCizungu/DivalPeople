@@ -1154,5 +1154,55 @@
     },
     "modelNote": "Assessed under model {version}. Every factor and its weight is published above; nothing here is a black box.",
     "noIndicator": "No assessment: the exchange did not confirm a match, so there is nothing to assess."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "What this deployment is configured to do, and where each value came from.",
+    "loadFailed": "Could not load the configuration.",
+    "readOnly": "Read-only. Shortening a retention period would put records past due the moment it was saved, so changing these is a decision with an audit entry behind it rather than a text box on a page.",
+    "valueHeader": "Value",
+    "sourceHeader": "Source",
+    "notSet": "Not set",
+    "groups": {
+      "retention": "How long records are kept",
+      "reporting": "What may be declared",
+      "exchange": "Limits on asking",
+      "models": "Published model thresholds"
+    },
+    "groupNotes": {
+      "retention": "These are legal periods rather than engineering constants. All three are the terms of reference's illustrative figures and none has been checked against the Code du numérique.",
+      "reporting": "A currency absent from this list is refused rather than defaulted, so the row that is missing is itself a setting. CDF is deliberately unset: choosing it means choosing a USD/CDF rate that moves and that somebody has to own.",
+      "exchange": "The exchange holds competitors' records and every request is individually legitimate. The limit does not make a bulk sweep impossible; it makes it slow enough for the audit trail to be read.",
+      "models": "Compiled into a release rather than configured, and shown because a threshold you cannot see is a threshold you have to take on trust."
+    },
+    "keys": {
+      "RETENTION_SIMPLE_YEARS": "A first, unsettled default",
+      "RETENTION_REPEAT_YEARS": "A default by somebody who has defaulted before",
+      "RETENTION_SETTLED_DAYS": "A debt survives this long after it is settled",
+      "RETENTION_PURGE_SCHEDULE": "When the erasure sweep runs",
+      "MINIMUM_DECLARABLE": "Nothing below this enters the registry",
+      "INQUIRIES_PER_HOUR": "Inquiries one institution may make in an hour",
+      "RISK_MODEL_VERSION": "Which rules produced an assessment",
+      "MATCH_REVIEW_THRESHOLD": "Confidence at which a candidate pair reaches a reviewer",
+      "MATCH_STRONG_CONFIDENCE": "Confidence above which a reviewer will probably agree"
+    },
+    "units": {
+      "YEARS": "years",
+      "DAYS": "days",
+      "CRON": "",
+      "PER_TENANT_PER_HOUR": "per institution, per hour",
+      "CONFIDENCE": ""
+    },
+    "provenance": {
+      "TERMS_OF_REFERENCE": "Terms of reference",
+      "UNVERIFIED_PLACEHOLDER": "Unverified placeholder",
+      "OPERATIONAL_DEFAULT": "Operational default",
+      "COMPILED": "Set by release",
+      "NOT_SET": "Not configured"
+    },
+    "provenanceNote": {
+      "UNVERIFIED_PLACEHOLDER": "A plausible figure nobody has checked against the law. It will hold until somebody decides it, and it should not be quoted as though somebody had.",
+      "NOT_SET": "Nothing is configured, so this is refused rather than defaulted."
+    }
   }
 }
