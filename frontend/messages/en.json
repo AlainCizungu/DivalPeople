@@ -1282,5 +1282,25 @@
     "forbidden": "This queue belongs to the registry. Each case shows one institution's record beside another's, with both names — so a participant holding it would be reading a competitor's customer file, which is the disclosure the exchange exists to prevent. Sign in as a platform administrator to review. Participants receive the result as a better match, never as the queue.",
     "whoYouAre": "Signed in as {name}, holding: {roles}. If PLATFORM_ADMIN is not in that list, this session is not a registry account — and if it is, the refusal came from the API rather than from this page, which is a different problem.",
     "noRoles": "no roles at all"
+  },
+  "directory": {
+    "businessesTitle": "Businesses",
+    "businessesSubtitle": "Companies your institution has reported, in name order.",
+    "individualsTitle": "Individuals",
+    "individualsSubtitle": "People your institution has reported, in name order.",
+    "ownBookNote": "Your own book only. An institution can browse the people it has itself reported and nobody else's — the difference between a directory of your records and a directory of the country.",
+    "loadFailed": "Could not load the list.",
+    "forbidden": "Browsing the book needs the declarant role. An account that may only enquire submits an identifier and receives a verdict, rather than a list.",
+    "empty": "Nothing here yet.",
+    "emptyBusinesses": "You have not reported any company, or every record has passed its retention date and been erased.",
+    "emptyIndividuals": "You have not reported any individual. Both real operator deliveries are business portfolios, so this stays empty until somebody sends a subscriber file — and a subscriber file with a date of birth is what would make identity resolution work for people.",
+    "truncated": "Showing the first {count}. Narrow it with search rather than scrolling.",
+    "count": "{count} on file",
+    "records": "records",
+    "open": "open",
+    "oldest": "Oldest",
+    "mixedCurrency": "Several currencies",
+    "openProfile": "Open",
+    "searchInstead": "Search by name or identifier"
   }
 }

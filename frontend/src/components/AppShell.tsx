@@ -94,8 +94,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     {
       heading: t.groupSubjects,
       items: [
-        { label: t.businesses },
-        { label: t.individuals },
+        // Two entries, one screen behind them, differing in a query parameter and in what an
+        // empty list means. Individuals is empty on the data that exists and says why — an empty
+        // list that names what would fill it makes the ask concrete in a way a roadmap does not.
+        { href: "/app/businesses", label: t.businesses },
+        { href: "/app/individuals", label: t.individuals },
         { href: "/app/tix/records", label: t.records },
         { href: "/app/tix", label: t.inquiries },
         { href: "/app/tix/declare", label: t.declare },

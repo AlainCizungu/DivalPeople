@@ -309,7 +309,8 @@ EOF
         # designed to catch — it just did not know about the route.
         info "Probing the routes the screens call on load..."
         for ROUTE in /api/v1/ingest/sources /api/v1/ingest/batches /api/v1/overview \
-                     /api/v1/settings /api/v1/tix/portfolio /api/v1/access; do
+                     /api/v1/settings /api/v1/tix/portfolio /api/v1/access \
+                     '/api/v1/tix/subjects?type=BUSINESS'; do
             STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
                 -H "Authorization: Bearer $TOKEN" "$API_URL$ROUTE")"
             if [ "$STATUS" = "200" ]; then

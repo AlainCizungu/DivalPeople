@@ -916,6 +916,18 @@ export const tixApi = {
    * would let any participant enumerate what its competitors have reported — the server scopes
    * this to records the caller declared, and there is no parameter that could widen it.
    */
+  /**
+   * The operator's own book, by kind.
+   *
+   * Truncated is carried rather than inferred from the length: a list that stops at a round
+   * number without saying so reads as the whole book.
+   */
+  browse(type: SubjectType): Promise<{ subjects: SearchResult[]; truncated: boolean }> {
+    return request<{ subjects: SearchResult[]; truncated: boolean }>(
+      `/api/v1/tix/subjects?type=${type}`,
+    );
+  },
+
   search(query: string): Promise<SearchResult[]> {
     return request<SearchResult[]>(
       `/api/v1/tix/search?q=${encodeURIComponent(query)}`,

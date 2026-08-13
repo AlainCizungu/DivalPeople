@@ -114,6 +114,20 @@ public class TixController {
     }
 
     /** Everything the calling operator holds about one subject. Refuses subjects it does not. */
+    /**
+     * The operator's own book, by kind.
+     *
+     * <p>Guarded by the declarant role like the search beside it, and the reason is the same: this
+     * lists people the operator has reported, which is a bulk read of its own personal data.
+     * Somebody who may only enquire submits an identifier and gets a verdict; they do not get a
+     * directory.
+     */
+    @GetMapping("/subjects")
+    @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
+    public SearchService.Browse browse(@RequestParam("type") Subject.SubjectType type) {
+        return search.browseOwn(type, actorId());
+    }
+
     @GetMapping("/subjects/{id}")
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
     public SearchService.Profile profile(@PathVariable UUID id) {

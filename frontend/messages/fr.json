@@ -1282,5 +1282,25 @@
     "forbidden": "Cette file appartient au registre. Chaque dossier présente l'enregistrement d'une institution à côté de celui d'une autre, avec les deux noms : un participant qui la détiendrait lirait le fichier client d'un concurrent, ce que l'échange existe précisément pour empêcher. Connectez-vous en tant qu'administrateur de la plateforme pour examiner. Les participants en reçoivent le résultat sous forme d'une meilleure correspondance, jamais la file elle-même.",
     "whoYouAre": "Connecté en tant que {name}, avec les rôles : {roles}. Si PLATFORM_ADMIN n'y figure pas, cette session n'est pas un compte du registre — et s'il y figure, le refus vient de l'API et non de cette page, ce qui est un autre problème.",
     "noRoles": "aucun rôle"
+  },
+  "directory": {
+    "businessesTitle": "Entreprises",
+    "businessesSubtitle": "Sociétés déclarées par votre institution, par ordre alphabétique.",
+    "individualsTitle": "Particuliers",
+    "individualsSubtitle": "Personnes déclarées par votre institution, par ordre alphabétique.",
+    "ownBookNote": "Votre portefeuille uniquement. Une institution peut parcourir les personnes qu'elle a elle-même déclarées et aucune autre — la différence entre un répertoire de vos enregistrements et un répertoire du pays.",
+    "loadFailed": "Impossible de charger la liste.",
+    "forbidden": "Parcourir le portefeuille requiert le rôle de déclarant. Un compte qui ne peut que consulter soumet un identifiant et reçoit un verdict, pas une liste.",
+    "empty": "Rien pour l'instant.",
+    "emptyBusinesses": "Vous n'avez déclaré aucune société, ou tous les enregistrements ont dépassé leur durée de conservation et ont été effacés.",
+    "emptyIndividuals": "Vous n'avez déclaré aucun particulier. Les deux livraisons opérateurs réelles sont des portefeuilles d'entreprises : cette liste restera vide jusqu'à l'envoi d'un fichier d'abonnés — et un fichier d'abonnés comportant une date de naissance est ce qui ferait fonctionner la résolution d'identité pour les personnes.",
+    "truncated": "Affichage des {count} premiers. Affinez par la recherche plutôt qu'en faisant défiler.",
+    "count": "{count} au dossier",
+    "records": "enregistrements",
+    "open": "ouverts",
+    "oldest": "Le plus ancien",
+    "mixedCurrency": "Plusieurs devises",
+    "openProfile": "Ouvrir",
+    "searchInstead": "Rechercher par nom ou identifiant"
   }
 }

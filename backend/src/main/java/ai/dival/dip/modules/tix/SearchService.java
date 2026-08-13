@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,6 +84,49 @@ public class SearchService {
         audit.record("TIX_SEARCH", "Subject", null, AuditService.OUTCOME_SUCCESS, actorId,
                 results.size() + " result(s)");
         return List.copyOf(results);
+    }
+
+    /**
+     * The operator's own book, listed rather than searched.
+     *
+     * <p>Search answers a question somebody already knew how to ask. This answers the one they
+     * ask first — <em>who is in here?</em> — which until now had no answer at all: the only way
+     * to reach a subject was to guess enough of its name to clear the three-character minimum.
+     *
+     * <p><strong>Name order, not risk order.</strong> A directory is for finding somebody, and
+     * the worst-first view already exists on the exposure screen. Two screens ranking the same
+     * book by different rules would be two answers to one question.
+     *
+     * <p>Audited like the search, and for the same reason: reading a list of everybody the
+     * operator has reported is a bulk read of personal data, even when it is the operator's own.
+     */
+    @Transactional(readOnly = true)
+    public Browse browseOwn(Subject.SubjectType type, UUID actorId) {
+        UUID tenantId = TenantContext.require();
+        LocalDate today = LocalDate.now();
+
+        // One more than the page, so the screen can say the list is cut short rather than end
+        // silently at a round number and let somebody believe they have seen the whole book.
+        List<Subject> found = debtRecords.listOwnByType(
+                tenantId, type, today, Limit.of(MAX_RESULTS + 1));
+        boolean more = found.size() > MAX_RESULTS;
+
+        List<Result> results = new ArrayList<>();
+        for (Subject subject : found.stream().limit(MAX_RESULTS).toList()) {
+            results.add(summarise(subject, tenantId, today));
+        }
+
+        audit.record("TIX_BROWSE", "Subject", null, AuditService.OUTCOME_SUCCESS, actorId,
+                type + ": " + results.size() + " subject(s)" + (more ? ", truncated" : ""));
+        return new Browse(List.copyOf(results), more);
+    }
+
+    /**
+     * @param truncated the operator holds more of this kind than the page shows. Said plainly,
+     *                  because a list that stops at a round number without saying so reads as the
+     *                  whole book
+     */
+    public record Browse(List<Result> subjects, boolean truncated) {
     }
 
     /**

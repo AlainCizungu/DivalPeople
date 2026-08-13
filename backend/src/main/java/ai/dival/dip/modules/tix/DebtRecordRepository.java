@@ -91,6 +91,29 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
                             @Param("today") LocalDate today);
 
     /**
+     * The subjects of one kind this operator holds a live record against, in name order.
+     *
+     * <p>The browse counterpart to {@link #searchOwn}, and tenant-scoped for the same reason and
+     * more strongly: search at least requires somebody to type a name they already knew, and a
+     * list does not. Starting from {@code tix_debt_record} means an operator can only browse
+     * people it has itself reported, which is the difference between a directory of your own book
+     * and a directory of the country.
+     *
+     * <p>Expired records are excluded, so a subject whose last record has run out of retention
+     * disappears from the list as it disappears from everything else. Merged subjects are excluded
+     * too — they hold nothing after a merge, so this is belt and braces rather than a filter that
+     * does work.
+     */
+    @Query("select distinct d.subject from DebtRecord d "
+            + "where d.tenantId = :tenantId and d.retentionUntil >= :today "
+            + "and d.subject.subjectType = :type and d.subject.mergedInto is null "
+            + "order by d.subject.normalizedName")
+    List<Subject> listOwnByType(@Param("tenantId") UUID tenantId,
+                                @Param("type") Subject.SubjectType type,
+                                @Param("today") LocalDate today,
+                                org.springframework.data.domain.Limit limit);
+
+    /**
      * Records whose retention period has run out, for the calling tenant only.
      *
      * <p>Tenant-scoped on purpose, even though erasure is a system-wide obligation. Deleting
