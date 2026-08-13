@@ -223,9 +223,15 @@ EOF
     # earlier session, still answering on 8080 and serving whatever code it started with, which is
     # why a screen can report a 404 for an endpoint that exists in the source tree.
     port)
-        if warn_about_app_port; then
-            ok "Nothing is listening on port ${API_HOST_PORT:-8080}."
+        # Detected here rather than by reading warn_about_app_port's exit status, which is always
+        # zero — deliberately, because `up` and `check` warn and carry on under `set -e` and a
+        # non-zero return would abort them. Trusting it here printed the fault and then "nothing
+        # is listening" directly underneath it, which is worse than either sentence alone.
+        if [ -n "$(lsof -nP -iTCP:"${API_HOST_PORT:-8080}" -sTCP:LISTEN -t 2>/dev/null)" ]; then
+            warn_about_app_port
+            exit 1
         fi
+        ok "Nothing is listening on port ${API_HOST_PORT:-8080}."
         ;;
 
     check)
