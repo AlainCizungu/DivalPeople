@@ -1,6 +1,7 @@
 package ai.dival.dip.modules.resolution;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ai.dival.dip.AbstractIntegrationTest;
@@ -14,6 +15,7 @@ import ai.dival.dip.modules.tix.DebtRecordService;
 import ai.dival.dip.modules.tix.DeclarationRequest;
 import ai.dival.dip.modules.tix.IdentifierType;
 import ai.dival.dip.modules.tix.Subject;
+import ai.dival.dip.modules.tix.SubjectRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -48,6 +50,8 @@ class EntityResolutionTest extends AbstractIntegrationTest {
     private DebtRecordRepository records;
     @Autowired
     private EntityResolutionService resolution;
+    @Autowired
+    private SubjectRepository subjects;
 
     private UUID vodacom;
     private UUID orange;
@@ -239,6 +243,25 @@ class EntityResolutionTest extends AbstractIntegrationTest {
         // A review queue nobody can empty is a review queue nobody opens. These two share no
         // block, so they are never even compared.
         assertThat(mine()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("a case in the queue does not make somebody impossible to erase")
+    void theQueueDoesNotVetoErasure() {
+        declarePerson(vodacom, "Jean-Pierre Kabamba " + suffix);
+        declarePerson(orange, "Jean Pierre Kabamba " + suffix);
+        resolution.scan(REVIEWER);
+        UUID subject = mine().get(0).left().id();
+
+        // The right to erasure is not a review queue's to veto, and V28 gave it one by accident:
+        // plain foreign keys default to NO ACTION, so a subject anybody had ever been compared
+        // against could no longer be deleted. Five retention tests and a rights test found it.
+        //
+        // Asserted here as well, next to the feature that caused it, because the purge tests will
+        // report it as a purge problem and this is the only file that says why.
+        assertThatCode(() -> subjects.deleteById(subject))
+                .as("the open case goes with the person; the decision stays in the audit trail")
+                .doesNotThrowAnyException();
     }
 
     /** Cases about this test's own subjects, so a shared registry does not make it flaky. */
