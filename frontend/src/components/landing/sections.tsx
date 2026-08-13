@@ -2,6 +2,7 @@
 
 import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
+import { Pill, type Tone } from "@/components/ui";
 import { Eyebrow, FeatureCard, SectionHeading, gradientFor } from "./primitives";
 
 /**
@@ -112,34 +113,41 @@ export function RiskSection() {
             <dl className="mb-5 grid grid-cols-3 gap-3">
               {[
                 [risk.scoreLabel, risk.scoreValue],
-                [risk.exposureLabel, risk.exposureValue],
-                [risk.confidenceLabel, risk.confidenceValue],
+                [risk.bandLabel, risk.bandValue],
+                [risk.modelLabel, risk.modelValue],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-[#e8edf3] bg-[#f7f9fc] p-3">
                   <dt className="text-xs text-[#64748b]">{label}</dt>
-                  <dd className="mt-1 text-xl font-bold tabular-nums text-navy">{value}</dd>
+                  <dd className="mt-1 text-lg font-bold text-navy">{value}</dd>
                 </div>
               ))}
             </dl>
 
-            <div className="flex flex-col gap-3.5">
-              {risk.bars.map((bar) => (
-                <div key={bar.label}>
-                  <div className="mb-1.5 flex justify-between text-sm">
-                    <span className="text-ink">{bar.label}</span>
-                    <span className="font-bold tabular-nums text-navy">{bar.value}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-[#eef2f6]">
-                    {/* Inline width because the value is data, not a design token — Tailwind
-                        cannot generate a class for a number it never sees at build time. */}
-                    <div
-                      className="h-full rounded-full bg-blue"
-                      style={{ width: `${Number(bar.value)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Ratings, not percentage bars, because ratings are what the product produces.
+                What stood here showed "Total exposure — $184K" beside four invented bars, and
+                exposure is the one figure the model refuses to compute: the currency of the
+                amount column in both operator deliveries is unconfirmed. A marketing page
+                promising a number the product declines to give is the stale copy a buyer
+                notices. */}
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#64748b]">
+              {risk.rowsTitle}
+            </p>
+            <table className="w-full text-sm">
+              <tbody>
+                {risk.rows.map((row) => (
+                  <tr key={row.label} className="border-b border-line/60 last:border-0">
+                    <td className="py-2 text-ink">{row.label}</td>
+                    <td className="py-2 text-right">
+                      <Pill tone={row.tone as Tone}>{row.rating}</Pill>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <p className="mt-4 rounded border border-line bg-soft px-3 py-2.5 text-xs text-muted">
+              {risk.notAssessedNote}
+            </p>
           </div>
         </div>
       </div>

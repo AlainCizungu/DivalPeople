@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
+import { BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 /**
@@ -27,8 +28,14 @@ export function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-3.5">
-        <Link href="/" className="text-lg font-bold tracking-tight text-navy">
-          Dival <span className="text-blue">Intelligence</span>
+        {/* The mark has existed as a component since the rebuild and the marketing header was
+            the one place that never used it, so the product had a logo and the front page had a
+            line of text. */}
+        <Link href="/" className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-navy">
+          <BrandMark size={30} />
+          <span>
+            Dival <span className="text-blue">Intelligence</span>
+          </span>
         </Link>
 
         <div className="hidden gap-6 text-sm md:flex">

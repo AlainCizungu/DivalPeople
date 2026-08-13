@@ -354,41 +354,62 @@
     },
     "risk": {
       "eyebrow": "Intelligence du risque",
-      "title": "Un profil de risque fondé sur des preuves, pas sur une boîte noire.",
-      "body": "DIP peut présenter un score ou une notation transparente accompagné des facteurs qui l’ont influencé, afin que banques, télécoms, assureurs et entreprises décident par eux-mêmes.",
+      "title": "Un profil de risque fondé sur des preuves, pas une boîte noire.",
+      "body": "L'indicateur de risque DIP est la somme de facteurs déclarés, chacun publié avec sa pondération. C'est un indicateur et non un score de crédit, et il le dit : 0 signifie aucune information défavorable, 100 le maximum que la plateforme peut observer.",
       "factors": [
-        "Historique de paiement",
-        "Ancienneté et exposition",
-        "Confiance dans l’identité",
-        "Signaux inter-sources",
+        "Comportement de paiement",
+        "Ancienneté des impayés",
+        "Institutions déclarantes",
+        "Fiabilité de l'identification",
         "Indicateurs de fraude"
       ],
-      "panelTitle": "Vue d’ensemble du risque entreprise",
+      "panelTitle": "Indicateur de risque DIP",
       "panelTag": "Illustratif",
-      "scoreLabel": "Score de risque DIP",
-      "scoreValue": "72 / 100",
-      "exposureLabel": "Exposition totale",
-      "exposureValue": "184 k$",
-      "confidenceLabel": "Confiance dans l’identité",
-      "confidenceValue": "96 %",
-      "bars": [
+      "scoreLabel": "Indicateur",
+      "scoreValue": "67 / 100",
+      "bandLabel": "Évaluation",
+      "bandValue": "Risque élevé",
+      "modelLabel": "Modèle",
+      "modelValue": "DIP-RI-1",
+      "rowsTitle": "Facteurs pris en compte",
+      "rows": [
         {
-          "label": "Historique de paiement",
-          "value": "58"
+          "label": "Comportement de paiement",
+          "rating": "Risque élevé",
+          "tone": "serious"
         },
         {
-          "label": "Ancienneté de la dette",
-          "value": "79"
+          "label": "Ancienneté des impayés",
+          "rating": "Risque élevé",
+          "tone": "serious"
         },
         {
-          "label": "Identité",
-          "value": "96"
+          "label": "Institutions déclarantes",
+          "rating": "Modéré",
+          "tone": "review"
         },
         {
-          "label": "Signaux de fraude",
-          "value": "18"
+          "label": "Fiabilité de l'identification",
+          "rating": "Forte",
+          "tone": "positive"
+        },
+        {
+          "label": "Indicateurs de fraude",
+          "rating": "Faible",
+          "tone": "positive"
+        },
+        {
+          "label": "Encours dû",
+          "rating": "Non évalué",
+          "tone": "neutral"
+        },
+        {
+          "label": "Historique des contestations",
+          "rating": "Non évalué",
+          "tone": "neutral"
         }
-      ]
+      ],
+      "notAssessedNote": "Deux facteurs ne sont délibérément jamais pondérés, et la raison de chacun est imprimée à côté de l'évaluation : des montants dont aucun opérateur n'a confirmé la devise, et les contestations, déjà retirées de toutes les réponses de l'échange."
     },
     "entity": {
       "eyebrow": "Intelligence sur les entités",
@@ -602,27 +623,34 @@
       "body": "Une grande partie de cette page décrit une conception. Cette section indique ce qui en existe : une plateforme qui demande aux institutions de lui confier un patrimoine national doit être de celles qui le disent.",
       "builtTitle": "En fonctionnement aujourd’hui",
       "built": [
-        "Plateforme bilingue, authentification, rôles et cloisonnement des participants appliqué par la base de données",
-        "Déclaration d’un défaut, avec un seuil en deçà duquel rien n’entre au registre",
-        "Interrogation inter-opérateurs restituant le seul statut, plafonnée et tracée avec sa finalité",
-        "Import CSV et Excel, stockage brut immuable et traçabilité de chaque ligne",
-        "La transformation des lignes importées en enregistrements, via une correspondance définie et versionnée par l’opérateur",
+        "Plateforme bilingue, authentification, rôles et isolation des locataires imposée par la base de données",
+        "Déclaration d'un impayé, avec un seuil en deçà duquel rien n'entre au registre",
+        "Consultation inter-opérateurs ne renvoyant qu'un statut, limitée en débit et auditée avec une finalité déclarée",
+        "Combien d'institutions déclarent un sujet — jamais lesquelles, jamais combien, jamais depuis quand",
+        "Import CSV et Excel avec stockage brut immuable et provenance pour chaque ligne",
+        "Transformation des lignes importées en enregistrements, via une correspondance que l'opérateur définit et versionne",
+        "Import d'une livraison identifiée par les numéros de compte de l'opérateur, ou par le seul nom",
+        "Retrait d'une livraison publiée, et de tous les enregistrements qui en découlent",
+        "L'indicateur de risque DIP, chaque facteur et sa pondération publiés à côté du chiffre",
+        "Recherche dans votre propre portefeuille par nom ou identifiant",
         "Conservation, expiration et effacement qui supprime au lieu de masquer",
-        "Demandes d’accès, de contestation et d’effacement par la personne concernée",
-        "Une vue des encours de l’opérateur, par ancienneté et par devise"
+        "Demandes d'accès, de contestation, de retrait et d'effacement, avec délais légaux",
+        "Une vue d'exposition par opérateur, par ancienneté et par devise"
       ],
       "designedTitle": "Conçu, non construit",
       "designed": [
-        "La recherche universelle et les profils d’entités consolidés",
-        "Le score de risque DIP et ses motifs",
-        "L’analyste IA",
-        "Les API temps réel et les flux programmés"
+        "La file de résolution d'identité : correspondances candidates examinées et tranchées par une personne",
+        "Profils consolidés pour les entreprises et les particuliers",
+        "Listes de surveillance et suivi de portefeuille",
+        "L'analyste IA",
+        "API temps réel et flux planifiés"
       ],
       "openTitle": "Non encore tranché",
       "open": [
-        "Si une créance passée en perte est un statut ou un enregistrement d’une autre nature",
-        "D’où vient la date d’exigibilité lorsque le fichier source n’en contient aucune",
-        "Si le seuil de déclaration résiste à l’épreuve des données réelles"
+        "La devise de la colonne des montants dans les livraisons opérateurs, qu'aucun des deux fichiers n'indique",
+        "Si une créance passée en perte est un statut ou un autre type d'enregistrement",
+        "Si le seuil de déclaration résiste au contact des données réelles",
+        "Quelle base légale au titre de l'article 192 fonde l'échange"
       ],
       "note": "Les colonnes ci-dessous décrivent l’état réel de la plateforme. Les chiffres présentés ailleurs sur cette page illustrent le produit et ne rendent pas compte d’un registre national en production."
     },
@@ -681,7 +709,8 @@
       ],
       "legal": "© 2026 Dival AI. Tous droits réservés.",
       "tagline": "Dival Intelligence Platform (DIP) · Telecom Intelligence Exchange (TIX)"
-    }
+    },
+    "announce": "Dival Intelligence Platform — Construire une intelligence nationale de confiance pour de meilleures décisions."
   },
   "org": {
     "title": "Structure organisationnelle",

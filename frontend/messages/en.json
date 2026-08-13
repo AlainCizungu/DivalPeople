@@ -355,40 +355,61 @@
     "risk": {
       "eyebrow": "Risk Intelligence",
       "title": "A risk profile built from evidence, not a black box.",
-      "body": "DIP can present a transparent score or rating alongside the factors that influenced it, so banks, telecoms, insurers, and enterprises can make their own decisions.",
+      "body": "The DIP Risk Indicator is a sum of stated factors, each published with its weight. It is an indicator rather than a credit score, and it says so: 0 is no adverse information and 100 is the most the platform can observe.",
       "factors": [
-        "Payment history",
-        "Aging and exposure",
+        "Payment behaviour",
+        "Debt aging",
+        "Reporting institutions",
         "Identity confidence",
-        "Cross-source signals",
         "Fraud indicators"
       ],
-      "panelTitle": "Business Risk Overview",
+      "panelTitle": "DIP Risk Indicator",
       "panelTag": "Illustrative",
-      "scoreLabel": "DIP risk score",
-      "scoreValue": "72 / 100",
-      "exposureLabel": "Total exposure",
-      "exposureValue": "$184K",
-      "confidenceLabel": "Identity confidence",
-      "confidenceValue": "96%",
-      "bars": [
+      "scoreLabel": "Indicator",
+      "scoreValue": "67 / 100",
+      "bandLabel": "Assessment",
+      "bandValue": "Elevated risk",
+      "modelLabel": "Model",
+      "modelValue": "DIP-RI-1",
+      "rowsTitle": "Factors influencing assessment",
+      "rows": [
         {
-          "label": "Payment history",
-          "value": "58"
+          "label": "Payment behaviour",
+          "rating": "High risk",
+          "tone": "serious"
         },
         {
           "label": "Debt aging",
-          "value": "79"
+          "rating": "High risk",
+          "tone": "serious"
         },
         {
-          "label": "Identity",
-          "value": "96"
+          "label": "Reporting institutions",
+          "rating": "Moderate",
+          "tone": "review"
         },
         {
-          "label": "Fraud signals",
-          "value": "18"
+          "label": "Identity confidence",
+          "rating": "Strong",
+          "tone": "positive"
+        },
+        {
+          "label": "Fraud indicators",
+          "rating": "Low",
+          "tone": "positive"
+        },
+        {
+          "label": "Outstanding exposure",
+          "rating": "Not assessed",
+          "tone": "neutral"
+        },
+        {
+          "label": "Dispute history",
+          "rating": "Not assessed",
+          "tone": "neutral"
         }
-      ]
+      ],
+      "notAssessedNote": "Two factors are deliberately never weighed, and the reason for each is printed beside the assessment: amounts whose currency an operator has not confirmed, and disputes, which are already withheld from every answer the exchange gives."
     },
     "entity": {
       "eyebrow": "Entity Intelligence",
@@ -605,24 +626,31 @@
         "Bilingual platform, sign-in, roles, and tenant isolation enforced by the database",
         "Declaring a default, with a reporting threshold below which nothing enters the registry",
         "Cross-operator inquiry returning status only, rate-limited and audited with a stated purpose",
+        "How many institutions report a subject — never which, never how much, never since when",
         "CSV and Excel import with immutable raw storage and provenance for every row",
         "Turning imported rows into records, through a mapping the operator defines and versions",
+        "Importing a delivery keyed on the operator's own account numbers, or on nothing but a name",
+        "Taking a published delivery back, and taking back every record derived from it",
+        "The DIP Risk Indicator, with every factor and weight published beside the figure",
+        "Searching your own book by name or identifier",
         "Retention, expiry, and erasure that deletes rather than hides",
-        "Subject access, dispute, and erasure requests",
+        "Subject access, dispute, withdrawal, and erasure requests, on statutory deadlines",
         "An operator exposure view, aged, per currency"
       ],
       "designedTitle": "Designed, not built",
       "designed": [
-        "Universal search and consolidated entity profiles",
-        "The DIP risk score and its reason codes",
+        "The identity resolution queue: candidate matches reviewed and decided by a person",
+        "Consolidated entity profiles for businesses and individuals",
+        "Watchlists and portfolio monitoring",
         "The AI analyst",
         "Real-time APIs and scheduled feeds"
       ],
       "openTitle": "Not yet decided",
       "open": [
+        "The currency of the amount column in the operator deliveries, which nothing in either file states",
         "Whether a written-off debt is a status or a different kind of record",
-        "Where a default date comes from when the source file carries none",
-        "Whether the reporting threshold survives contact with real data"
+        "Whether the reporting threshold survives contact with real data",
+        "What lawful basis under article 192 the exchange operates on"
       ],
       "note": "The columns below are the honest state of the platform. Figures shown elsewhere on this page illustrate the product rather than report a live national registry."
     },
@@ -681,7 +709,8 @@
       ],
       "legal": "© 2026 Dival AI. All rights reserved.",
       "tagline": "Dival Intelligence Platform (DIP) · Telecom Intelligence Exchange (TIX)"
-    }
+    },
+    "announce": "Dival Intelligence Platform — Building trusted national intelligence for better decisions."
   },
   "org": {
     "title": "Organization structure",

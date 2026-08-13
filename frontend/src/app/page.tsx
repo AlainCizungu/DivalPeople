@@ -1,5 +1,6 @@
 "use client";
 
+import { AnnounceBar } from "@/components/landing/AnnounceBar";
 import { AuthErrorNotice } from "@/components/landing/AuthErrorNotice";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Hero } from "@/components/landing/Hero";
@@ -41,6 +42,7 @@ export default function LandingPage() {
       {/* Above the header, because a failed sign-in is the most important thing on the page to
           somebody who has just been silently returned to it. */}
       <AuthErrorNotice />
+      <AnnounceBar />
       <LandingHeader />
 
       <main>
