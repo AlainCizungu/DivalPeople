@@ -249,7 +249,7 @@
     },
     "board": {
       "title": "Recherche universelle",
-      "illustrative": "Prototype illustratif",
+      "illustrative": "Illustratif",
       "secure": "Sécurisé",
       "tabBusiness": "Entreprise",
       "tabIndividual": "Particulier",
@@ -257,20 +257,20 @@
       "searchAction": "Recherche",
       "resultName": "Grand Horizon SARL",
       "resultMeta": "Entreprise · Kinshasa · Plusieurs enregistrements correspondants",
-      "score": "72",
-      "scoreLabel": "Niveau de risque",
-      "scoreValue": "Modéré",
-      "exposureLabel": "Exposition connue",
-      "exposureValue": "184 k$",
+      "score": "67",
+      "scoreLabel": "Indicateur de risque DIP",
+      "scoreValue": "Élevé",
+      "exposureLabel": "Institutions déclarantes",
+      "exposureValue": "2",
       "sourcesLabel": "Sources de données",
       "sourcesValue": "2",
-      "signal": "Signal de risque : créance télécom ancienne détectée. La confiance dans l’identité est élevée ; examinez l’historique de paiement avant d’accorder un crédit supplémentaire."
+      "signal": "Expliqué par des obligations impayées depuis plus d'un an, déclarées par plusieurs institutions participantes. Les montants ne sont pas pondérés : aucune livraison n'indique sa devise."
     },
     "quick": [
       "Recherche universelle",
-      "Score de risque DIP",
+      "Indicateur de risque DIP",
       "Échange de données",
-      "Banque et télécoms",
+      "Banques et télécoms",
       "Intelligence IA"
     ],
     "platform": {

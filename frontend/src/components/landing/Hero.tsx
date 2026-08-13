@@ -5,7 +5,7 @@ import { useMessages } from "@/i18n/LocaleProvider";
 import { CheckList, Eyebrow } from "./primitives";
 
 /**
- * Hero, with the universal-search panel from the prototype.
+ * Hero, with the universal-search panel.
  *
  * <p>The panel is a <strong>mock</strong>: the tabs move, nothing is queried, and no request
  * leaves the page. It is labelled as illustrative in both languages rather than only in the

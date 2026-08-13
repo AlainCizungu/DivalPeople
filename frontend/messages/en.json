@@ -249,7 +249,7 @@
     },
     "board": {
       "title": "Universal Intelligence Search",
-      "illustrative": "Illustrative prototype",
+      "illustrative": "Illustrative",
       "secure": "Secure",
       "tabBusiness": "Business",
       "tabIndividual": "Individual",
@@ -257,18 +257,18 @@
       "searchAction": "Search",
       "resultName": "Grand Horizon SARL",
       "resultMeta": "Business · Kinshasa · Multiple matched records",
-      "score": "72",
-      "scoreLabel": "Risk level",
-      "scoreValue": "Moderate",
-      "exposureLabel": "Known exposure",
-      "exposureValue": "$184K",
+      "score": "67",
+      "scoreLabel": "DIP Risk Indicator",
+      "scoreValue": "Elevated",
+      "exposureLabel": "Institutions reporting",
+      "exposureValue": "2",
       "sourcesLabel": "Data sources",
       "sourcesValue": "2",
-      "signal": "Risk signal: aged telecom receivable detected. Identity confidence is high; review payment history before extending additional credit."
+      "signal": "Driven by obligations over a year overdue, reported by more than one participating institution. Amounts are not weighed: no delivery states its currency."
     },
     "quick": [
       "Universal Search",
-      "DIP Risk Score",
+      "DIP Risk Indicator",
       "Data Exchange",
       "Bank and Telecom",
       "AI Intelligence"
