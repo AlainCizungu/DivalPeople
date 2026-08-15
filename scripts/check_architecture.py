@@ -562,6 +562,74 @@ def check_every_table_is_granted_to_the_app() -> None:
               "fails with SQLSTATE 42501, which no test can see because tests run as the owner.")
 
 
+def _declaration_annotations(source: str):
+    """
+    Annotation names at declaration level, and where each declaration ends.
+
+    Yields ``("@", name, line)`` for an annotation written at depth zero and ``("end", None, line)``
+    where a declaration finishes. Everything inside parentheses is skipped, which is what keeps a
+    parameter list out of it — ``@Param`` legitimately repeats once per parameter and is not the
+    thing being looked for.
+    """
+    source = re.sub(r"/\*.*?\*/", "", source, flags=re.S)
+    source = re.sub(r"//[^\n]*", "", source)
+    # Strings can hold parentheses — a JPQL query is full of them — so they go before depth counting.
+    source = re.sub(r'"(?:\\.|[^"\\])*"', '""', source)
+
+    depth = 0
+    line = 1
+    index = 0
+    while index < len(source):
+        char = source[index]
+        if char == "\n":
+            line += 1
+        elif char in "([":
+            depth += 1
+        elif char in ")]":
+            depth -= 1
+        elif depth == 0 and char == "@":
+            match = re.match(r"@(\w+)", source[index:])
+            if match:
+                yield "@", match.group(1), line
+                index += match.end()
+                continue
+        elif depth == 0 and char in ";{":
+            yield "end", None, line
+        index += 1
+
+
+def check_no_repeated_annotation() -> None:
+    """
+    The same annotation twice on one declaration.
+
+    Added in August 2026 after the second time an edit landed between an annotation and the thing
+    it annotates. The comment rule above catches one shape of that mistake; it cannot see this one,
+    because what separated them was a javadoc block and a second @Query, and two annotations in a
+    row is ordinary Java right up until the compiler decides the type is not repeatable.
+
+    The symptom is a compile failure rather than a silent defect, so this prevents a round trip
+    rather than a bug. Working without a compiler, the round trip is the expensive part.
+    """
+    problems = []
+    tests = sorted((REPO / "backend/src/test/java").rglob("*.java"))
+    for path in java_sources() + tests:
+        seen: dict[str, int] = {}
+        for kind, name, line in _declaration_annotations(path.read_text(encoding="utf-8")):
+            if kind == "end":
+                seen = {}
+            elif name in seen:
+                problems.append(
+                    f"    {path.relative_to(REPO)}:{line} — @{name} again, first at line "
+                    f"{seen[name]}")
+            else:
+                seen[name] = line
+
+    if problems:
+        raise Failure("\n".join(problems)
+                      + "\n  Something was almost certainly inserted between an annotation and "
+                        "the declaration it belongs to.")
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
     ("annotations are attached to a declaration", check_annotations_are_attached),
@@ -572,6 +640,7 @@ CHECKS = [
     ("every endpoint declares authorization", check_every_endpoint_declares_authorization),
     ("raw INSERTs name every required column", check_raw_inserts_name_required_columns),
     ("every table is granted to the application role", check_every_table_is_granted_to_the_app),
+    ("no annotation is repeated on one declaration", check_no_repeated_annotation),
 ]
 
 

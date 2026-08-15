@@ -45,6 +45,9 @@ public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, 
             + "and r.status not in (ai.dival.dip.modules.tix.SubjectRequestStatus.UPHELD, "
             + "ai.dival.dip.modules.tix.SubjectRequestStatus.REFUSED, "
             + "ai.dival.dip.modules.tix.SubjectRequestStatus.WITHDRAWN)")
+    long countDueBefore(@Param("tenantId") UUID tenantId,
+                        @Param("now") Instant now, @Param("until") Instant until);
+
     /**
      * Cases decided, split by whether the decision landed inside the statutory deadline.
      *
@@ -63,7 +66,4 @@ public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, 
 
     /** Everything ever raised here, however it ended. The denominator for the two above. */
     long countByTenantId(UUID tenantId);
-
-    long countDueBefore(@Param("tenantId") UUID tenantId,
-                        @Param("now") Instant now, @Param("until") Instant until);
 }
