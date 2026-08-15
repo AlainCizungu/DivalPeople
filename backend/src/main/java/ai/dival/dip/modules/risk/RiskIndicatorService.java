@@ -72,7 +72,6 @@ public class RiskIndicatorService {
                 debtAging(inputs),
                 reportingInstitutions(inputs),
                 identityConfidence(inputs),
-                outstandingExposure(inputs),
                 // Two permanently zero, both listed, and each says which kind of silence it is.
                 // Exposure left this group in DIP-RI-3 when the currency question was answered,
                 // which puts the ceiling back at 100 — the reason this is a new version and not a
@@ -80,6 +79,11 @@ public class RiskIndicatorService {
                 // DIP-RI-2, and that is exactly what a version stamp is for.
                 RiskFactor.notAssessed(RiskFactorCode.FRAUD_INDICATORS,
                         NotAssessedReason.NO_FRAUD_SIGNAL_IS_COMPUTABLE),
+                // Sits here, between fraud and disputes, because that is where the enum declares
+                // it — and the enum's order is the order of the table a bank reads. Emitting it
+                // one row earlier passed every arithmetic test and silently reordered the screen,
+                // which is what theTableIsAlwaysTheSameLength caught.
+                outstandingExposure(inputs),
                 RiskFactor.notAssessed(RiskFactorCode.DISPUTE_HISTORY,
                         NotAssessedReason.DISPUTES_ARE_NOT_DISCLOSED));
 

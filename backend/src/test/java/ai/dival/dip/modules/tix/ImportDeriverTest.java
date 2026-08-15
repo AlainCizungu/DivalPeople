@@ -143,10 +143,11 @@ class ImportDeriverTest extends AbstractIntegrationTest {
         ImportBatch batch = upload(threeGoodRows(), AS_AT);
         deriver.derive(batch.getId(), true, null);
 
-        // Three years for a first default, from the default date. Running it from today would
-        // keep somebody listed for however long the operator took to send the file.
+        // Five years for a first default, from the default date — counsel's figure since August
+        // 2026, three before that. Running the clock from today instead would keep somebody
+        // listed for however long the operator took to send the file.
         assertThat(records.findByTenantId(operator)).allSatisfy(record ->
-                assertThat(record.getRetentionUntil()).isEqualTo(AS_AT.plusYears(3)));
+                assertThat(record.getRetentionUntil()).isEqualTo(AS_AT.plusYears(5)));
     }
 
     // --- the rules still apply ----------------------------------------------

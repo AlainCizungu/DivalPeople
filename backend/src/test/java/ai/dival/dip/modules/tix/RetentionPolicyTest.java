@@ -95,15 +95,20 @@ class RetentionPolicyTest {
     }
 
     @Test
-    @DisplayName("absent configuration falls back to the terms of reference, not to zero")
+    @DisplayName("absent configuration falls back to the advised period, not to zero")
     void unconfiguredRetentionUsesTheDocumentedDefaults() {
         TixProperties bare = new TixProperties(Map.of("USD", new BigDecimal("100")), null);
         RetentionPolicy fallback = new RetentionPolicy(bare,
                 Clock.fixed(Instant.parse("2026-08-08T00:00:00Z"), ZoneOffset.UTC));
 
         // Failing to zero would erase the entire registry on the first nightly sweep.
+        //
+        // Both are five now, so a repeat default falls on the same day as a first one. That the
+        // two lines below are identical is the finding, not a copy-paste: counsel answered "five
+        // years" without distinguishing them, and until somebody asks whether he meant to, the
+        // repeat period earns its existence only as a place to put a different answer.
         assertThat(fallback.expiryFor(LocalDate.of(2026, 1, 1), false))
-                .isEqualTo(LocalDate.of(2029, 1, 1));
+                .isEqualTo(LocalDate.of(2031, 1, 1));
         assertThat(fallback.expiryFor(LocalDate.of(2026, 1, 1), true))
                 .isEqualTo(LocalDate.of(2031, 1, 1));
     }

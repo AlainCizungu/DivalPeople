@@ -193,7 +193,7 @@ class Article214Test extends AbstractIntegrationTest {
                 "What do you hold?", STAFF));
 
         long days = ChronoUnit.DAYS.between(access.getRaisedAt(), access.getDueAt());
-        assertThat(days).isEqualTo(60);
+        assertThat(days).isEqualTo(10);
     }
 
     @Test

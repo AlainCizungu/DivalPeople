@@ -230,9 +230,9 @@ class PortfolioTest extends AbstractIntegrationTest {
     void expiredRecordsAreNotExposure() {
         declare(operatorA, "500.00", "USD", 30);
 
-        // Four years on: past the three-year period for a first default, and the nightly purge
-        // has not yet run.
-        PortfolioService.Summary later = summaryFor(operatorA, LocalDate.now().plusYears(4));
+        // Six years on: past the five-year period for a first default, and the nightly purge has
+        // not yet run. Four years used to be enough and stopped being so when the period moved.
+        PortfolioService.Summary later = summaryFor(operatorA, LocalDate.now().plusYears(6));
 
         assertThat(later.recordCount()).isZero();
         assertThat(later.exposure()).isEmpty();

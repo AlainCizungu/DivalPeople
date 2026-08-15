@@ -156,14 +156,14 @@ class SearchTest extends AbstractIntegrationTest {
         declare(operatorA, "Périmé SARL " + suffix, "CD/KIN/RCCM/27-B-" + suffix, "500.00", 30);
         assertThat(searchAs(operatorA, "périmé")).hasSize(1);
 
-        // The retention clock is three years for a first default. Nothing purges here — the
+        // The retention clock is five years for a first default. Nothing purges here — the
         // query excludes expired records on its own, because the difference between erasure and
         // concealment is that erasure applies to the operator that declared it as well.
         //
         // Asserted by moving the record rather than the clock: declaring it far enough in the
         // past that its retention has already run out.
         String old = "CD/KIN/RCCM/28-B-" + suffix;
-        declare(operatorA, "Ancien SARL " + suffix, old, "500.00", 365 * 4);
+        declare(operatorA, "Ancien SARL " + suffix, old, "500.00", 365 * 6);
         assertThat(searchAs(operatorA, "ancien")).isEmpty();
     }
 
