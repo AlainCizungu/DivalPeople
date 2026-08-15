@@ -298,3 +298,15 @@ A secure bilingual MVP capable of ingesting the existing telecom dataset, valida
 
 ## 12-Month Target
 A production TIX network with multiple telecom participants, governed cross-source intelligence, APIs, risk intelligence, portfolio monitoring, operational support, and a credible path to bank participation.
+
+## The import template
+
+`docs/MODELE_IMPORT_DIP.xlsx`, published August 2026 at counsel's request and taken to the operators
+by AJF, who report both telecoms have agreed to adapt their exports to it.
+
+It inverts the problem the import pipeline was built for. The profiler, the operator-defined
+mapping, identity-from-name and operator-scoped account references all exist because files arrive in
+whatever shape a billing system produces; none of that becomes useless, but the next file can carry
+the fields the platform cannot currently ask for. Two of them — sector and operating address — are
+the ones the resolution screen has reported as *never available* since it was built, and the ones
+counsel's answer on matching names. See `docs/IMPORT_TEMPLATE.md`.

@@ -104,7 +104,7 @@ screen's own admission are the same finding arrived at from two directions.
 | **Write-off status** | Accounting only; **the debt remains recoverable** | Closes an open question on the roadmap. Declaring the Vodacom write-offs is legitimate, and all 4,290 rows stand. |
 | **Prior authorisation** | Not required, in his estimation | Note the hedge — *j'estime*. Not a clearance. |
 | **Legal persons** | **B2B first, individuals later** | The pilot is businesses. Individuals stays built and empty, which is now the right state rather than a gap. The person-weighted half of the match scorer is for later. |
-| **Aged balance** | Use the **+360 day** line | Needs confirming against the file: it may mean the >360 bucket is the figure to report rather than `Balance`. If so, every imported amount is wrong. **Check before the next import.** |
+| **Aged balance** | Use the **+360 day** line | Still needs confirming for the files already imported — if it means the >360 bucket rather than `Balance`, every imported amount is wrong, and exposure now carries risk weight resting on those amounts. **Check before the next import.** For files that arrive on the new template the question is moot: it asks for the amount and the due date, and DIP ages it. |
 
 ---
 
@@ -126,8 +126,17 @@ The template should carry, at minimum: legal name, sector, operational address, 
 the operator's own account reference, amount, currency, the date the obligation fell due, the
 as-at date of the export, and dunning evidence.
 
-**This is the highest-leverage thing on the list.** It is a document rather than code, and it
-decides what every future import can do.
+**Done — `docs/MODELE_IMPORT_DIP.xlsx`**, with the reasoning in `docs/IMPORT_TEMPLATE.md`. Twenty-
+three columns in French, of which seventeen are used today and six are marked *Bientôt* on the
+notice sheet, which says plainly that they are not yet exploited and their contents are not
+retained. Asking for a field and silently dropping it would be worse than not asking.
+
+Three sheets: the table to fill in with two example rows, a column-by-column notice, and the list of
+what DIP refuses and whether the refusal costs a row or the whole file.
+
+It asks for the **date the obligation fell due** and no aging-bucket columns at all, because DIP
+computes the ageing itself — which makes the open `+360` question below stop existing rather than
+needing an answer.
 
 ---
 
