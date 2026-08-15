@@ -1260,6 +1260,7 @@
     "signals": {
       "EXACT_NAME": "Nom complet identique",
       "SIMILAR_NAME": "Nom complet similaire",
+      "SHARED_REGISTER_NUMBER": "Même numéro d'immatriculation (RCCM)",
       "SHARED_NATIONAL_IDENTIFIER": "Même identifiant national",
       "SAME_SUBJECT_TYPE": "Même type de sujet",
       "SAME_NATIONALITY": "Même nationalité",
@@ -1289,7 +1290,8 @@
     "modelNote": "Comparé selon le modèle {version}. Chaque signal et sa pondération sont publiés ci-dessus.",
     "forbidden": "Cette file appartient au registre. Chaque dossier présente l'enregistrement d'une institution à côté de celui d'une autre, avec les deux noms : un participant qui la détiendrait lirait le fichier client d'un concurrent, ce que l'échange existe précisément pour empêcher. Connectez-vous en tant qu'administrateur de la plateforme pour examiner. Les participants en reçoivent le résultat sous forme d'une meilleure correspondance, jamais la file elle-même.",
     "whoYouAre": "Connecté en tant que {name}, avec les rôles : {roles}. Si PLATFORM_ADMIN n'y figure pas, cette session n'est pas un compte du registre — et s'il y figure, le refus vient de l'API et non de cette page, ce qui est un autre problème.",
-    "noRoles": "aucun rôle"
+    "noRoles": "aucun rôle",
+    "registerNumberNote": "Un numéro d'immatriculation différent pèse beaucoup moins contre un rapprochement qu'un numéro identique ne pèse en sa faveur. Le RCCM est réattribué lorsqu'une entreprise modifie ses statuts ou augmente son capital : deux numéros distincts peuvent donc désigner deux entreprises ou une seule, avant et après une modification — et rien dans les deux dossiers ne permet de trancher. Un numéro d'impôt divergent, lui, tranche toujours."
   },
   "directory": {
     "businessesTitle": "Entreprises",

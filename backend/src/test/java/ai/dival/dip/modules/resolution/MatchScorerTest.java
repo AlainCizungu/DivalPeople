@@ -102,16 +102,75 @@ class MatchScorerTest {
     }
 
     @Test
-    @DisplayName("two companies with two different RCCM numbers are two companies")
-    void conflictingRegistrationsAreDecisive() {
+    @DisplayName("a company whose RCCM changed is shown to a reviewer rather than hidden from one")
+    void aChangedRegistrationIsAdvisoryRatherThanDecisive() {
         MatchAssessment assessment = scorer.compare(
                 business("grand horizon sarl", Map.of("RCCM", "CD/KIN/RCCM/14-B-4001")),
                 business("grand horizon sarl", Map.of("RCCM", "CD/KIN/RCCM/19-B-7788")));
 
+        // Counsel, August 2026: an RCCM is reissued when a company amends its statutes or adds
+        // capital. Until then this conflict outweighed any agreement, so an exact name plus two
+        // register numbers scored zero after clamping and the pair was invisible to the queue for
+        // ever. The rule written to prevent a false merge was reliably hiding the true one.
+        assertThat(signal(assessment, MatchSignalCode.SHARED_REGISTER_NUMBER).verdict())
+                .isEqualTo(MatchSignal.Verdict.CONFLICTS);
+        assertThat(assessment.worthReviewing())
+                .as("0.55 for the name, less 0.15, plus 0.05 for the type — a person looks")
+                .isTrue();
+        assertThat(assessment.confidence())
+                .as("and nowhere near enough to be treated as settled")
+                .isLessThan(MatchAssessment.STRONG_CONFIDENCE);
+    }
+
+    @Test
+    @DisplayName("but a conflicting tax number still ends the discussion")
+    void aConflictingTaxNumberIsStillDecisive() {
+        // The reason the register number had to be split out rather than softened in place. A tax
+        // number is not reissued because a company amended its statutes, so two different ones are
+        // two taxpayers — and softening every identifier together would have let two genuinely
+        // distinct businesses trading under one name sit in the queue for ever.
+        MatchAssessment assessment = scorer.compare(
+                business("grand horizon sarl",
+                        Map.of("RCCM", "CD/KIN/RCCM/14-B-4001", "TAX_NUMBER", "A0123456X")),
+                business("grand horizon sarl",
+                        Map.of("RCCM", "CD/KIN/RCCM/19-B-7788", "TAX_NUMBER", "A9876543Z")));
+
         assertThat(signal(assessment, MatchSignalCode.SHARED_NATIONAL_IDENTIFIER).verdict())
-                .as("one line for the attribute, read both ways")
                 .isEqualTo(MatchSignal.Verdict.CONFLICTS);
         assertThat(assessment.worthReviewing()).isFalse();
+    }
+
+    @Test
+    @DisplayName("a changed RCCM is survivable when a tax number carries the match")
+    void aTaxNumberCarriesAChangedRegistration() {
+        // Counsel's own prescription: match on the denomination, the sector, the address, and the
+        // RCCM *and/or* the tax number. This is the and/or doing its work — the company amended
+        // its statutes, took a new register number, and is still the same taxpayer.
+        MatchAssessment assessment = scorer.compare(
+                business("grand horizon sarl",
+                        Map.of("RCCM", "CD/KIN/RCCM/14-B-4001", "TAX_NUMBER", "A0123456X")),
+                business("grand horizon sarl",
+                        Map.of("RCCM", "CD/KIN/RCCM/19-B-7788", "TAX_NUMBER", "A0123456X")));
+
+        assertThat(assessment.confidence())
+                .isGreaterThanOrEqualTo(MatchAssessment.STRONG_CONFIDENCE);
+    }
+
+    @Test
+    @DisplayName("the two sides of a register number are deliberately not mirror images")
+    void agreementAndDisagreementWeighDifferently() {
+        MatchAssessment agreeing = scorer.compare(
+                business("alpha sarl", Map.of("RCCM", "CD/KIN/RCCM/14-B-4001")),
+                business("beta sprl", Map.of("RCCM", "CD/KIN/RCCM/14-B-4001")));
+        MatchAssessment conflicting = scorer.compare(
+                business("alpha sarl", Map.of("RCCM", "CD/KIN/RCCM/14-B-4001")),
+                business("alpha sarl", Map.of("RCCM", "CD/KIN/RCCM/19-B-7788")));
+
+        // The asymmetry is the finding, not an oversight. The same number on two records is one
+        // company; two different numbers might be two companies or one company either side of a
+        // change of statutes, and the model must not claim to know which. Two entirely different
+        // names sharing a register number therefore outweigh one identical name split across two.
+        assertThat(agreeing.confidence()).isGreaterThan(conflicting.confidence());
     }
 
     @Test
@@ -123,6 +182,7 @@ class MatchScorerTest {
 
         // National identifiers are globally unique in this registry, so two subjects holding one
         // is not a coincidence — it is a duplicate created before somebody supplied the number.
+        // Agreement kept its full weight when the conflict lost most of its own.
         assertThat(assessment.confidence())
                 .isGreaterThanOrEqualTo(MatchAssessment.STRONG_CONFIDENCE);
     }

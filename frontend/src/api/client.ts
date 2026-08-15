@@ -801,6 +801,7 @@ export type Access = {
 export type MatchSignalCode =
   | "EXACT_NAME"
   | "SIMILAR_NAME"
+  | "SHARED_REGISTER_NUMBER"
   | "SHARED_NATIONAL_IDENTIFIER"
   | "SAME_SUBJECT_TYPE"
   | "SAME_NATIONALITY"

@@ -256,6 +256,17 @@ class EntityResolutionTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("the register-number rule is wired to the identifier type it names")
+    void theRegisterNumberConstantMatchesTheEnum() {
+        // MatchScorer holds "RCCM" as a string, because the resolution module imports nothing from
+        // the telecom one and that constraint is what lets the scorer be read on its own. The cost
+        // of the string is this test: rename the enum constant and the softened rule silently
+        // stops applying, every RCCM conflict goes back to being decisive, and nothing else in the
+        // build says a word. Asserted here because this class already sits on both sides.
+        assertThat(MatchScorer.REGISTER_NUMBER_TYPE).isEqualTo(IdentifierType.RCCM.name());
+    }
+
+    @Test
     @DisplayName("a case in the queue does not make somebody impossible to erase")
     void theQueueDoesNotVetoErasure() {
         declarePerson(vodacom, "Jean-Pierre Kabamba " + suffix);

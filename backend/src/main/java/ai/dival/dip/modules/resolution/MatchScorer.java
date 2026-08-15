@@ -20,7 +20,8 @@ import org.springframework.stereotype.Component;
  * that cannot see each other, and the cost of being wrong is somebody refused credit for a debt
  * that is not theirs. A high number means a reviewer will probably agree with it.
  *
- * <p>Three of the twelve signals can never be evaluated today, and they are returned as
+ * <p>Ten signals are reported on every comparison — eleven codes, of which the two name codes are
+ * mutually exclusive. Three of the ten can never be evaluated today, and they are returned as
  * unavailable rather than left out. That is the honest report and it is also the product argument:
  * a delivery carrying a city and a second phone number would move a reviewer further than any
  * amount of cleverness about spelling, and the only way that ask gets made is if the gap is
@@ -65,12 +66,48 @@ public class MatchScorer {
     /**
      * Heavy, and heavier than any single agreement.
      *
-     * <p>Two companies holding two different RCCM numbers are two companies, whatever their names
+     * <p>Two taxpayers holding two different tax numbers are two taxpayers, whatever their names
      * look like. If a conflict weighed less than an exact name match, a pair of genuinely distinct
      * businesses trading under one name would sit in the queue at high confidence for ever.
+     *
+     * <p>The register number used to be weighed here and no longer is — see below.
      */
     private static final double CONFLICTING_NATIONAL_IDENTIFIER = -0.60;
     private static final double CONFLICTING_DATE_OF_BIRTH = -0.60;
+
+    /**
+     * The register number, agreeing and disagreeing, and the two are not mirror images.
+     *
+     * <p>Agreement is worth what any national identifier is worth: the same RCCM on two records is
+     * one company. <strong>Disagreement is worth a fifth of that</strong>, because counsel's answer
+     * of August 2026 is that an RCCM is reissued when a company amends its statutes or adds
+     * capital. A different number is therefore weak evidence of a different company and strong
+     * evidence of nothing.
+     *
+     * <p>The arithmetic this changes, on the case it was written for: two records, one exact
+     * business name, two different RCCMs and nothing else. At the old weight that scored
+     * 0.55 − 0.60 + 0.05 = zero after clamping, so the pair was invisible to the queue for ever —
+     * the rule written to prevent a false merge was reliably hiding the true one. At −0.15 it
+     * scores 0.45 and a person looks at it.
+     *
+     * <p>Two genuinely different companies trading under one name now land in that same queue,
+     * and that is the honest position rather than a regression: on a name and a register number
+     * alone the platform cannot tell those two cases apart, and pretending otherwise is what it
+     * was doing before. A conflicting <em>tax</em> number still ends the discussion — 0.55 − 0.15
+     * − 0.60 + 0.05 clamps back to zero — which is why splitting the two mattered.
+     */
+    private static final double SHARED_REGISTER_NUMBER = 0.50;
+    private static final double CONFLICTING_REGISTER_NUMBER = -0.15;
+
+    /**
+     * The identifier type that behaves this way, as a string.
+     *
+     * <p>A string rather than the telecom module's enum, because this module imports nothing from
+     * that one and that constraint is what lets the scorer be read on its own. Public so a test on
+     * the other side of the boundary can assert the two still agree — a rename over there would
+     * otherwise silently turn this rule off and every RCCM would go back to being decisive.
+     */
+    public static final String REGISTER_NUMBER_TYPE = "RCCM";
 
     /** How alike two names have to be before "similar" is claimed at all. */
     private static final double SIMILAR_NAME_THRESHOLD = 0.82;
@@ -84,19 +121,19 @@ public class MatchScorer {
         // Only types both records carry. One side holding an RCCM and the other holding none is a
         // gap, not a disagreement, and the whole country is full of gaps.
         Set<String> shared = left.identifierTypesSharedWith(right);
-        boolean anyIdentifierConflicts = shared.stream().anyMatch(type ->
-                !left.nationalIdentifiers().get(type).equals(right.nationalIdentifiers().get(type)));
 
-        // Conflict wins where both are true — same tax number, different RCCM. That pair is not a
-        // near-match with a caveat, it is a contradiction, and the number a reviewer sees should
-        // say so rather than averaging the two into something reassuring.
-        signals.add(shared.isEmpty()
-                ? MatchSignal.unavailable(MatchSignalCode.SHARED_NATIONAL_IDENTIFIER)
-                : anyIdentifierConflicts
-                        ? MatchSignal.conflicts(MatchSignalCode.SHARED_NATIONAL_IDENTIFIER,
-                                CONFLICTING_NATIONAL_IDENTIFIER)
-                        : MatchSignal.agrees(MatchSignalCode.SHARED_NATIONAL_IDENTIFIER,
-                                SHARED_NATIONAL_IDENTIFIER));
+        // The register number on its own row, because it agrees and disagrees with different
+        // force. Everything else keeps the old symmetric treatment.
+        signals.add(signalFor(left, right, shared.contains(REGISTER_NUMBER_TYPE)
+                        ? Set.of(REGISTER_NUMBER_TYPE) : Set.of(),
+                MatchSignalCode.SHARED_REGISTER_NUMBER,
+                SHARED_REGISTER_NUMBER, CONFLICTING_REGISTER_NUMBER));
+
+        Set<String> documents = new LinkedHashSet<>(shared);
+        documents.remove(REGISTER_NUMBER_TYPE);
+        signals.add(signalFor(left, right, documents,
+                MatchSignalCode.SHARED_NATIONAL_IDENTIFIER,
+                SHARED_NATIONAL_IDENTIFIER, CONFLICTING_NATIONAL_IDENTIFIER));
 
         signals.add(left.business() == right.business()
                 ? MatchSignal.agrees(MatchSignalCode.SAME_SUBJECT_TYPE, SAME_SUBJECT_TYPE)
@@ -131,6 +168,25 @@ public class MatchScorer {
 
         double confidence = signals.stream().mapToDouble(MatchSignal::weight).sum();
         return new MatchAssessment(clamp(confidence), signals);
+    }
+
+    /**
+     * One row for a group of identifier types both records carry.
+     *
+     * <p>Conflict wins where both are true — the same passport and a different tax number is not
+     * a near-match with a caveat, it is a contradiction, and the number a reviewer sees should say
+     * so rather than averaging the two into something reassuring.
+     */
+    private MatchSignal signalFor(SubjectFacts left, SubjectFacts right, Set<String> types,
+                                  MatchSignalCode code, double agrees, double conflicts) {
+        if (types.isEmpty()) {
+            return MatchSignal.unavailable(code);
+        }
+        boolean anyConflict = types.stream().anyMatch(type ->
+                !left.nationalIdentifiers().get(type).equals(right.nationalIdentifiers().get(type)));
+        return anyConflict
+                ? MatchSignal.conflicts(code, conflicts)
+                : MatchSignal.agrees(code, agrees);
     }
 
     private MatchSignal nameSignal(SubjectFacts left, SubjectFacts right, boolean business) {

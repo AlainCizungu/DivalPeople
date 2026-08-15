@@ -229,6 +229,13 @@ function CaseCard({
         </ul>
         <p className="mt-3 text-xs text-muted">{t.unavailableNote}</p>
         <p className="mt-1.5 text-xs text-muted">{t.neutralNote}</p>
+        {/* Shown only where it applies. A register number that differs is the one signal on this
+            card whose weight a reviewer would otherwise read as a bug — it looks far too light
+            beside the others until somebody explains that an RCCM gets reissued. */}
+        {pending.signals.some(
+          (signal) =>
+            signal.code === "SHARED_REGISTER_NUMBER" && signal.verdict === "CONFLICTS",
+        ) && <p className="mt-1.5 text-xs text-muted">{t.registerNumberNote}</p>}
       </div>
 
       <div className="mt-5">

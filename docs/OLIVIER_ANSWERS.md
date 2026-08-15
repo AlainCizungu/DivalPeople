@@ -74,9 +74,21 @@ they are the same two the resolution screen already reports as *never held* — 
 screen's own admission are the same finding arrived at from two directions.
 
 **Code changes needed:**
-- Soften a conflicting RCCM from decisive to advisory; keep a conflicting tax number heavier.
+- ~~Soften a conflicting RCCM from decisive to advisory; keep a conflicting tax number heavier.~~
+  **Done.** The register number is now its own signal and reads asymmetrically: agreement is worth
+  0.50 as before, disagreement only −0.15. The case it was written for — one exact business name,
+  two register numbers, nothing else — moved from 0.0 (invisible for ever) to 0.45 (a person
+  looks). A conflicting tax number still clamps the pair back to zero, which is why the two had to
+  be split rather than softened together.
 - Add sector and address to the subject, and to the import template below.
 - Add both as match signals, replacing two of the three that currently read *unavailable*.
+
+> Worth being plain about what the softening does and does not buy. It does not make the matcher
+> better at telling one company from two — on a name and a register number alone it cannot, and it
+> was previously resolving that uncertainty by always guessing "two". More pairs now reach the
+> queue, including pairs a reviewer will dismiss. The information that would actually separate the
+> two cases is sector and operating address, which is the next item and the reason for the
+> template.
 
 ---
 

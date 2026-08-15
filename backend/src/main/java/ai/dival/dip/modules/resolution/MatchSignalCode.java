@@ -37,17 +37,42 @@ public enum MatchSignalCode {
     SIMILAR_NAME,
 
     /**
-     * Both carry the same national identifier — an RCCM, a passport, a tax number.
+     * The register number — the RCCM — read on its own, and read asymmetrically.
+     *
+     * <p>Split out from the national identifiers below in August 2026, on counsel's advice: <em>"il
+     * arrive qu'une entreprise modifie son RCCM en cas de modification des statuts ou d'ajout du
+     * capital social"</em>. A registration number gets reissued when a company changes its
+     * statutes or its capital, which is a fact about Congolese company law rather than about the
+     * company.
+     *
+     * <p><strong>Agreement is strong; disagreement is weak, and the gap between them is the whole
+     * point.</strong> Two records carrying the same RCCM are almost certainly one company. Two
+     * records carrying different ones might be two companies or might be one company either side
+     * of a change of statutes, and until August 2026 the scorer treated that as decisive — heavier
+     * than any agreement — which meant the platform could <em>never</em> notice that a company
+     * whose RCCM had legitimately changed was the same company. The rule most likely to hide a
+     * genuine match was the one written to prevent a false one.
+     *
+     * <p>Softening it does not make the comparison cleverer. It makes it stop claiming a certainty
+     * it does not have, and it puts more pairs in front of a person. The information that would
+     * actually separate the two cases — sector and operating address — is the information no
+     * delivery carries, which is the argument for asking for it.
+     */
+    SHARED_REGISTER_NUMBER,
+
+    /**
+     * Both carry the same national identifier — a passport, a tax number, a national ID.
      *
      * <p>The strongest thing available, and it is worth being clear about why it can happen at
      * all: national identifiers are globally unique in this registry, so two subjects sharing one
      * is not a coincidence. It is a duplicate that got in before the identifier did.
      *
      * <p><strong>One line, read both ways.</strong> Agreement here is the strongest evidence for;
-     * disagreement is the strongest evidence against, and heavier, because two companies holding
-     * two different RCCM numbers are two companies whatever their names look like. An earlier
+     * disagreement is the strongest evidence against, and heavier — a tax number does not change
+     * because a company amended its statutes, so two different ones are two taxpayers. An earlier
      * draft had a second code for the conflict, which put one attribute on two rows and made a
-     * reviewer read both to learn one thing.
+     * reviewer read both to learn one thing; the register number above is a separate row because
+     * it is a separate attribute behaving differently, not the same one said twice.
      */
     SHARED_NATIONAL_IDENTIFIER,
 

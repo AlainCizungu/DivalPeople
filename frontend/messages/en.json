@@ -1260,6 +1260,7 @@
     "signals": {
       "EXACT_NAME": "Same full name",
       "SIMILAR_NAME": "Similar full name",
+      "SHARED_REGISTER_NUMBER": "Same register number (RCCM)",
       "SHARED_NATIONAL_IDENTIFIER": "Same national identifier",
       "SAME_SUBJECT_TYPE": "Same kind of subject",
       "SAME_NATIONALITY": "Same nationality",
@@ -1289,7 +1290,8 @@
     "modelNote": "Compared under model {version}. Every signal and its weight is published above.",
     "forbidden": "This queue belongs to the registry. Each case shows one institution's record beside another's, with both names — so a participant holding it would be reading a competitor's customer file, which is the disclosure the exchange exists to prevent. Sign in as a platform administrator to review. Participants receive the result as a better match, never as the queue.",
     "whoYouAre": "Signed in as {name}, holding: {roles}. If PLATFORM_ADMIN is not in that list, this session is not a registry account — and if it is, the refusal came from the API rather than from this page, which is a different problem.",
-    "noRoles": "no roles at all"
+    "noRoles": "no roles at all",
+    "registerNumberNote": "A register number that differs weighs much less against a match than one that agrees weighs for it. An RCCM is reissued when a company amends its statutes or adds capital, so two different numbers may be two companies or one company before and after a change — and nothing in either file says which. A conflicting tax number still settles it."
   },
   "directory": {
     "businessesTitle": "Businesses",
