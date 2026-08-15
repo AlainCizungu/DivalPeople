@@ -141,7 +141,8 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
      * operator took to send the file, sometimes by years, and a chart of activity that used the
      * second would be a chart of somebody's ageing rather than of what they did.
      */
-    @Query(value = "select date_trunc('month', created_at) as month, count(*) as total "
+    @Query(value = "select to_char(date_trunc('month', created_at at time zone 'UTC'), "
+            + "'YYYY-MM') as month, count(*) as total "
             + "from tix_debt_record where tenant_id = :tenantId and created_at >= :since "
             + "group by 1 order by 1", nativeQuery = true)
     List<Object[]> countByMonth(@Param("tenantId") UUID tenantId, @Param("since") Instant since);

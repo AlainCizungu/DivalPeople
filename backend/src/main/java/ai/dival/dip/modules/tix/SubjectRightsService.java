@@ -605,8 +605,8 @@ public class SubjectRightsService {
         UUID tenantId = TenantContext.require();
         return new RightsRecord(
                 requests.countByTenantId(tenantId),
-                requests.countDecided(tenantId, false),
-                requests.countDecided(tenantId, true));
+                requests.countDecidedInTime(tenantId),
+                requests.countDecidedLate(tenantId));
     }
 
     /**

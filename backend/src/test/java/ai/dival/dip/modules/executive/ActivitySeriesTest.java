@@ -2,8 +2,6 @@ package ai.dival.dip.modules.executive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.YearMonth;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -39,8 +37,8 @@ class ActivitySeriesTest {
     @DisplayName("a month in which nothing happened is a row of zeroes, not a missing row")
     void quietMonthsSurvive() {
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                rows(row("2025-09-01T00:00:00Z", 400), row("2026-08-01T00:00:00Z", 12)),
-                rows(row("2026-08-01T00:00:00Z", 31)),
+                rows(row("2025-09", 400), row("2026-08", 12)),
+                rows(row("2026-08", 31)),
                 List.of());
 
         // The defect this test exists to prevent. A series that dropped its silent months would
@@ -59,9 +57,9 @@ class ActivitySeriesTest {
     @DisplayName("the three series are independent: a busy month for one is not a busy month for all")
     void seriesDoNotContaminateEachOther() {
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                rows(row("2026-08-01T00:00:00Z", 5)),
-                rows(row("2026-07-01T00:00:00Z", 90)),
-                rows(row("2026-07-01T00:00:00Z", 40)));
+                rows(row("2026-08", 5)),
+                rows(row("2026-07", 90)),
+                rows(row("2026-07", 40)));
 
         ExecutiveService.Month july = series.get(11);
         ExecutiveService.Month august = series.get(12);
@@ -81,7 +79,7 @@ class ActivitySeriesTest {
     @DisplayName("anything older than the window is dropped rather than piled onto the first month")
     void olderRowsDoNotAccumulateOnTheEdge() {
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                rows(row("2019-01-01T00:00:00Z", 9_000), row("2025-08-01T00:00:00Z", 7)),
+                rows(row("2019-01", 9_000), row("2025-08", 7)),
                 List.of(), List.of());
 
         // The query already filters by date, so this row should never arrive — but if it ever did,
@@ -94,19 +92,27 @@ class ActivitySeriesTest {
     }
 
     @Test
-    @DisplayName("a month boundary is read in UTC, not in whatever zone the machine is set to")
-    void monthsAreBucketedInUtc() {
-        // 31 August, late evening UTC. Read in a zone ahead of UTC this instant is already
-        // September, and the last day of every month would land in the following bucket — a
-        // defect that appears once a month, in one cell, and is almost impossible to reproduce on
-        // the machine of whoever reports it. The application's clock is Clock.systemUTC(), so the
-        // bucketing has to agree with it.
+    @DisplayName("a month outside the window's end is dropped, not clamped onto the last row")
+    void newerRowsDoNotPileOntoTheEnd() {
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                rows(row("2026-08-31T23:30:00Z", 3)), List.of(), List.of());
+                rows(row("2026-08", 3), row("2026-12", 500)), List.of(), List.of());
 
-        assertThat(series.get(12).month()).isEqualTo("2026-08");
         assertThat(series.get(12).declared()).isEqualTo(3);
+        assertThat(series.stream().mapToLong(ExecutiveService.Month::declared).sum()).isEqualTo(3);
     }
+
+    // What is NOT tested here, said out loud rather than left as a gap.
+    //
+    // This class used to assert that the last evening of a month lands in that month rather than
+    // the next one. It cannot any more, and the reason is a fix rather than a regression: the
+    // bucketing moved into SQL, where "at time zone 'UTC'" makes date_trunc zone-free, because
+    // date_trunc over a timestamptz otherwise truncates in the *session* time zone. The old test
+    // asserted UTC bucketing performed in Java and passed while the query was doing something
+    // else — a test that is green for a reason unrelated to the thing it names is worse than no
+    // test, and this is the shape that produces one.
+    //
+    // Covering it now needs a real Postgres with a session zone deliberately set away from UTC.
+    // Worth having and not written; recorded here so the absence is a decision.
 
     @Test
     @DisplayName("two rows landing in one month are added rather than one replacing the other")
@@ -115,21 +121,23 @@ class ActivitySeriesTest {
         // because merge() and put() look identical at a glance and only one of them is right: the
         // wrong one silently reports the last row instead of the total.
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                rows(row("2026-08-01T00:00:00Z", 10), row("2026-08-01T00:00:00Z", 5)),
+                rows(row("2026-08", 10), row("2026-08", 5)),
                 List.of(), List.of());
 
         assertThat(series.get(12).declared()).isEqualTo(15);
     }
 
     /**
-     * One row as the driver returns it.
+     * One row as the query returns it: a {@code YYYY-MM} string and a count.
      *
-     * <p>{@code java.sql.Timestamp} rather than {@code Instant}, because that is what a native
-     * grouped query actually hands back. A fixture using the tidier type would be testing a
-     * conversion the production code never performs, and the cast that does run would go unchecked.
+     * <p>It used to build a {@code java.sql.Timestamp}, on the assumption that a native query over
+     * a truncated {@code timestamptz} hands one back. The assumption was wrong on a real request
+     * and the fixture could not tell, because a fixture supplies whatever type it chooses — which
+     * is the standing weakness of testing a driver boundary without the driver. The query now
+     * selects text, so there is nothing left to assume.
      */
-    private static Object[] row(String instant, long total) {
-        return new Object[] {Timestamp.from(Instant.parse(instant)), total};
+    private static Object[] row(String month, long total) {
+        return new Object[] {month, total};
     }
 
     /**

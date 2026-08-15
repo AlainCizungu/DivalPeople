@@ -49,20 +49,32 @@ public interface SubjectRequestRepository extends JpaRepository<SubjectRequest, 
                         @Param("now") Instant now, @Param("until") Instant until);
 
     /**
-     * Cases decided, split by whether the decision landed inside the statutory deadline.
+     * Cases decided on or before the deadline they carried.
      *
-     * <p>Compares {@code decidedAt} against {@code dueAt}, which is the deadline the case was given
-     * when it was raised rather than the one in force today. That is the only comparison that means
-     * anything: the periods moved from 60/30 to 10/20 in August 2026, and measuring last year's
-     * cases against this year's deadline would manufacture a compliance failure that never happened.
+     * <p>Compared against {@code dueAt}, which is the deadline written when the case was raised
+     * rather than the one in force today. That is the only comparison that means anything: the
+     * periods moved from 60/30 to 10/20 in August 2026, and judging last year's cases by this
+     * year's rule would manufacture a compliance failure that never happened.
      *
-     * @param late true for decisions after the deadline, false for decisions inside it
+     * <p>Two queries rather than one with a boolean flag. The single version read
+     * {@code (:late = true and ...) or (:late = false and ...)}, which asks Hibernate to infer a
+     * parameter's type from a comparison against a literal — and buys, in exchange for that risk,
+     * a method whose meaning depends on an argument the caller has to read the javadoc to
+     * understand. Two names say it instead.
      */
     @Query("select count(r) from SubjectRequest r where r.tenantId = :tenantId "
-            + "and r.decidedAt is not null "
-            + "and ((:late = true and r.decidedAt > r.dueAt) "
-            + "  or (:late = false and r.decidedAt <= r.dueAt))")
-    long countDecided(@Param("tenantId") UUID tenantId, @Param("late") boolean late);
+            + "and r.decidedAt is not null and r.decidedAt <= r.dueAt")
+    long countDecidedInTime(@Param("tenantId") UUID tenantId);
+
+    /**
+     * Cases decided after the deadline they carried.
+     *
+     * <p>Article 214 makes a missed deadline grounds in itself for a complaint, so this is not a
+     * service level — it counts occasions on which somebody could have complained and been right.
+     */
+    @Query("select count(r) from SubjectRequest r where r.tenantId = :tenantId "
+            + "and r.decidedAt is not null and r.decidedAt > r.dueAt")
+    long countDecidedLate(@Param("tenantId") UUID tenantId);
 
     /** Everything ever raised here, however it ended. The denominator for the two above. */
     long countByTenantId(UUID tenantId);

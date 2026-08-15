@@ -41,7 +41,8 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID> {
      * <em>is</em> recorded, every time, is that something happened and who did it. Counting those
      * rows is therefore the one trend line that rests on evidence rather than on reconstruction.
      */
-    @Query(value = "select date_trunc('month', occurred_at) as month, count(*) as total "
+    @Query(value = "select to_char(date_trunc('month', occurred_at at time zone 'UTC'), "
+            + "'YYYY-MM') as month, count(*) as total "
             + "from audit_event where tenant_id = :tenantId and action = :action "
             + "and outcome = :outcome and occurred_at >= :since group by 1 order by 1",
             nativeQuery = true)

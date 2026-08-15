@@ -140,18 +140,26 @@ public class ExecutiveService {
     /**
      * Turns a grouped query's rows into months.
      *
-     * <p>The first column is whatever the driver made of {@code date_trunc}, which is a timestamp
-     * type rather than anything this code chose. Read through {@link Instant} and pinned to UTC,
-     * because the application's clock is {@code Clock.systemUTC()} and a month boundary read in
-     * the machine's zone would put the last day of a month in the wrong bucket on a server that
-     * happened to be configured differently — a defect that would appear once a month, in one
-     * cell, and be almost impossible to reproduce.
+     * <p><strong>The month arrives as {@code YYYY-MM} text, and both halves of that are the fix for
+     * a defect this shipped with.</strong>
+     *
+     * <p>The first version selected {@code date_trunc} and cast the first column to
+     * {@code java.sql.Timestamp}. Two things wrong with it, and the unit tests could not see
+     * either, because a fixture supplies whatever type the fixture chooses. The driver's type for a
+     * truncated {@code timestamptz} is not this code's to assume, and casting to the wrong one is a
+     * {@code ClassCastException} on the first real request. And {@code date_trunc} over a
+     * {@code timestamptz} truncates <em>in the session time zone</em> — so a deployment whose
+     * database session was not UTC would have bucketed the last evening of every month into the
+     * next one, quietly, while a test asserting UTC bucketing passed.
+     *
+     * <p>{@code at time zone 'UTC'} makes the truncation zone-free and agrees with the
+     * application's {@code Clock.systemUTC()}. {@code to_char} then hands back a string, which has
+     * exactly one representation and needs no cast.
      */
     private static Map<YearMonth, Long> byMonth(List<Object[]> rows) {
         Map<YearMonth, Long> counted = new java.util.HashMap<>();
         for (Object[] row : rows) {
-            Instant month = ((java.sql.Timestamp) row[0]).toInstant();
-            counted.merge(YearMonth.from(month.atZone(ZoneOffset.UTC)),
+            counted.merge(YearMonth.parse((String) row[0]),
                     ((Number) row[1]).longValue(), Long::sum);
         }
         return counted;
