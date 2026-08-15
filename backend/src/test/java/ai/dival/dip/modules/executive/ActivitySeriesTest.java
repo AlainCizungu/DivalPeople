@@ -39,8 +39,8 @@ class ActivitySeriesTest {
     @DisplayName("a month in which nothing happened is a row of zeroes, not a missing row")
     void quietMonthsSurvive() {
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                List.of(row("2025-09-01T00:00:00Z", 400), row("2026-08-01T00:00:00Z", 12)),
-                List.of(row("2026-08-01T00:00:00Z", 31)),
+                rows(row("2025-09-01T00:00:00Z", 400), row("2026-08-01T00:00:00Z", 12)),
+                rows(row("2026-08-01T00:00:00Z", 31)),
                 List.of());
 
         // The defect this test exists to prevent. A series that dropped its silent months would
@@ -59,9 +59,9 @@ class ActivitySeriesTest {
     @DisplayName("the three series are independent: a busy month for one is not a busy month for all")
     void seriesDoNotContaminateEachOther() {
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                List.of(row("2026-08-01T00:00:00Z", 5)),
-                List.of(row("2026-07-01T00:00:00Z", 90)),
-                List.of(row("2026-07-01T00:00:00Z", 40)));
+                rows(row("2026-08-01T00:00:00Z", 5)),
+                rows(row("2026-07-01T00:00:00Z", 90)),
+                rows(row("2026-07-01T00:00:00Z", 40)));
 
         ExecutiveService.Month july = series.get(11);
         ExecutiveService.Month august = series.get(12);
@@ -81,7 +81,7 @@ class ActivitySeriesTest {
     @DisplayName("anything older than the window is dropped rather than piled onto the first month")
     void olderRowsDoNotAccumulateOnTheEdge() {
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                List.of(row("2019-01-01T00:00:00Z", 9_000), row("2025-08-01T00:00:00Z", 7)),
+                rows(row("2019-01-01T00:00:00Z", 9_000), row("2025-08-01T00:00:00Z", 7)),
                 List.of(), List.of());
 
         // The query already filters by date, so this row should never arrive — but if it ever did,
@@ -102,7 +102,7 @@ class ActivitySeriesTest {
         // the machine of whoever reports it. The application's clock is Clock.systemUTC(), so the
         // bucketing has to agree with it.
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                List.of(row("2026-08-31T23:30:00Z", 3)), List.of(), List.of());
+                rows(row("2026-08-31T23:30:00Z", 3)), List.of(), List.of());
 
         assertThat(series.get(12).month()).isEqualTo("2026-08");
         assertThat(series.get(12).declared()).isEqualTo(3);
@@ -115,7 +115,7 @@ class ActivitySeriesTest {
         // because merge() and put() look identical at a glance and only one of them is right: the
         // wrong one silently reports the last row instead of the total.
         List<ExecutiveService.Month> series = ExecutiveService.series(AUGUST_2026,
-                List.of(row("2026-08-01T00:00:00Z", 10), row("2026-08-01T00:00:00Z", 5)),
+                rows(row("2026-08-01T00:00:00Z", 10), row("2026-08-01T00:00:00Z", 5)),
                 List.of(), List.of());
 
         assertThat(series.get(12).declared()).isEqualTo(15);
@@ -130,5 +130,17 @@ class ActivitySeriesTest {
      */
     private static Object[] row(String instant, long total) {
         return new Object[] {Timestamp.from(Instant.parse(instant)), total};
+    }
+
+    /**
+     * A list of rows, typed.
+     *
+     * <p>{@code List.of(row(...))} does not compile: a single {@code Object[]} handed to a varargs
+     * method is spread rather than wrapped, so the inferred type is {@code List<Object>} and the
+     * call will not match. This exists so that mistake is made once, here, rather than at each of
+     * the five call sites.
+     */
+    private static List<Object[]> rows(Object[]... items) {
+        return List.of(items);
     }
 }
