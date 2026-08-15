@@ -33,6 +33,21 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, UUID> {
                                 @Param("action") String action,
                                 Pageable page);
 
+    /**
+     * How many times one action was recorded, per month, since a moment. Oldest first.
+     *
+     * <p>The only history the platform has. Nothing snapshots exposure or record counts, so a
+     * chart of "how much was owed last March" cannot be drawn honestly and is not drawn; what
+     * <em>is</em> recorded, every time, is that something happened and who did it. Counting those
+     * rows is therefore the one trend line that rests on evidence rather than on reconstruction.
+     */
+    @Query(value = "select date_trunc('month', occurred_at) as month, count(*) as total "
+            + "from audit_event where tenant_id = :tenantId and action = :action "
+            + "and outcome = :outcome and occurred_at >= :since group by 1 order by 1",
+            nativeQuery = true)
+    List<Object[]> countByMonth(@Param("tenantId") UUID tenantId, @Param("action") String action,
+                                @Param("outcome") String outcome, @Param("since") Instant since);
+
     /** How many of each action a tenant has recorded, most frequent first. */
     /**
      * How each of an operator's own users has been using the exchange, since a moment.

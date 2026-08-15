@@ -5,6 +5,7 @@ import ai.dival.dip.common.error.ConflictException;
 import ai.dival.dip.common.error.PolicyRefusedException;
 import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -218,6 +219,18 @@ public class DebtRecordService {
                 // is not, the nightly purge has stopped and nothing else in the product says so.
                 debtRecords.countByTenantIdAndRetentionUntilBetween(
                         tenantId, LocalDate.EPOCH, today.minusDays(1)));
+    }
+
+    /**
+     * Records this operator declared, per month, since a moment.
+     *
+     * <p>Counted on when the record entered the registry rather than on when the obligation fell
+     * due. The two differ by however long an operator took to send its file — sometimes by years —
+     * and a chart of activity drawn on the second would be a chart of somebody's ageing.
+     */
+    @Transactional(readOnly = true)
+    public List<Object[]> declarationsByMonth(Instant since) {
+        return debtRecords.countByMonth(TenantContext.require(), since);
     }
 
     /**

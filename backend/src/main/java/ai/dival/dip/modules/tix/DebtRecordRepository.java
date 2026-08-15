@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.tix;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -8,6 +9,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/**
+ * @implNote The monthly count below is grouped in SQL rather than by loading rows and bucketing
+ *           them in Java. One real import is 3,699 records for a single operator; a screen that
+ *           read them all to produce twelve numbers would be the front door's original mistake
+ *           repeated on a different page.
+ */
 public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
 
     /**
@@ -126,6 +133,19 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
 
     // A cross-operator count of prior defaults lived here briefly and was removed before it ran.
     // Récidive does need to be judged across operators, but reading across them requires exchange
+     /**
+     * How many records this operator declared in each month since a moment, oldest first.
+     *
+     * <p>Counted on {@code createdAt} — when the record entered the registry — and not on the
+     * default date, which is when the obligation fell due. The two differ by however long the
+     * operator took to send the file, sometimes by years, and a chart of activity that used the
+     * second would be a chart of somebody's ageing rather than of what they did.
+     */
+    @Query(value = "select date_trunc('month', created_at) as month, count(*) as total "
+            + "from tix_debt_record where tenant_id = :tenantId and created_at >= :since "
+            + "group by 1 order by 1", nativeQuery = true)
+    List<Object[]> countByMonth(@Param("tenantId") UUID tenantId, @Param("since") Instant since);
+
     // mode — and exchange mode appears in the policy's USING clause, which governs DELETE as well
     // as SELECT. Turning it on inside the write transaction that declares a debt would open a
     // window in which a cross-tenant delete was possible, to answer a question that has a purely

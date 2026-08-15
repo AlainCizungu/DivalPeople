@@ -749,6 +749,46 @@ export const overviewApi = {
   },
 };
 
+/**
+ * One month of what an institution did.
+ *
+ * `month` is ISO `2026-08`. Formatted where the words are rather than on the server, because a
+ * month name is language and the server sends none.
+ */
+export type ExecutiveMonth = {
+  month: string;
+  declared: number;
+  inquiries: number;
+  refused: number;
+};
+
+/**
+ * The briefing for somebody who does not work the queues.
+ *
+ * Same null-versus-zero rule as {@link Overview}. `activity` is thirteen months, oldest first,
+ * with the empty months present as zeroes — a series that skipped its quiet months would draw a
+ * straight line through a summer when nothing happened and read as steady work.
+ */
+export type ExecutiveBriefing = {
+  asOf: string;
+  book: {
+    total: number;
+    outstanding: number;
+    contested: number;
+    settled: number;
+    expiringSoon: number;
+    awaitingErasure: number;
+  } | null;
+  activity: ExecutiveMonth[] | null;
+  rights: { raised: number; inTime: number; late: number } | null;
+};
+
+export const executiveApi = {
+  load(): Promise<ExecutiveBriefing> {
+    return request<ExecutiveBriefing>("/api/v1/executive");
+  },
+};
+
 export type SettingProvenance =
   | "TERMS_OF_REFERENCE"
   | "LEGAL_ADVICE"

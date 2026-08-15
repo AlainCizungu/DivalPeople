@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/app", label: t.home },
         { href: "/app/search", label: t.search },
-        { label: t.executive },
+        { href: "/app/executive", label: t.executive },
         { href: "/app/tix/portfolio", label: t.portfolioIntelligence },
       ],
     },

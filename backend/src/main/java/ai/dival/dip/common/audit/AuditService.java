@@ -74,6 +74,27 @@ public class AuditService {
                 Instant.now()));
     }
 
+    /**
+     * How many times an action was recorded for the calling tenant, per month, since a moment.
+     *
+     * <p>Fronted here rather than letting a module reach the repository, which is rule 2 and is the
+     * reason this method exists at all: the executive briefing needs a count and has no business
+     * holding an audit repository.
+     *
+     * <p>Returns the raw grouped rows. Shaping them into months is the caller's problem, because
+     * the shape a screen wants — a fixed window with the empty months filled in — is a presentation
+     * decision and does not belong in the thing that owns the trail.
+     *
+     * <p>{@code readOnly}, and pointedly not {@code REQUIRES_NEW} like everything else here. The
+     * writes run in their own transaction so a trail survives the rollback of what it describes;
+     * a read has nothing to survive, and giving it a second connection for symmetry would take one
+     * from the pool for no reason.
+     */
+    @Transactional(readOnly = true)
+    public List<Object[]> countByMonth(String action, String outcome, Instant since) {
+        return repository.countByMonth(TenantContext.require(), action, outcome, since);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordSuccess(String action, String resourceType, String resourceId, UUID actorId) {
         record(action, resourceType, resourceId, OUTCOME_SUCCESS, actorId);

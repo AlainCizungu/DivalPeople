@@ -589,6 +589,37 @@ public class SubjectRightsService {
     }
 
     /**
+     * How well this operator has answered the people in its registry, over its whole history.
+     *
+     * <p>The queue above says what is waiting; this says what happened to everything that already
+     * went through. A board asks the second question and the front door cannot answer it, because
+     * a screen organised around what needs a person today is the wrong shape for a record of
+     * whether the obligation was met.
+     *
+     * <p>Each case is measured against the deadline <em>it</em> was given, not the one in force
+     * now. The periods moved from sixty and thirty days to ten and twenty in August 2026, and
+     * judging older cases by the newer rule would invent a failure that never happened.
+     */
+    @Transactional(readOnly = true)
+    public RightsRecord record() {
+        UUID tenantId = TenantContext.require();
+        return new RightsRecord(
+                requests.countByTenantId(tenantId),
+                requests.countDecided(tenantId, false),
+                requests.countDecided(tenantId, true));
+    }
+
+    /**
+     * @param raised    everything ever raised against this operator
+     * @param inTime    decided on or before the deadline that case carried
+     * @param late      decided after it. Article 214 makes a missed deadline grounds in itself for
+     *                  a complaint, so this is not a service-level metric — it is a count of
+     *                  occasions somebody could have complained and been right
+     */
+    public record RightsRecord(long raised, long inTime, long late) {
+    }
+
+    /**
      * Nobody by that identifier is in the registry.
      *
      * <p>Says so plainly rather than hiding behind a generic refusal. Everywhere else the exchange
