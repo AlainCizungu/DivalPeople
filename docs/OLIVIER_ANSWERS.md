@@ -142,7 +142,8 @@ needing an answer.
 
 ## Still unanswered
 
-Worth a second, much shorter email rather than assumed:
+Drafted as `docs/EMAIL_OLIVIER_TEMPLATE.md`, to travel with the template rather than a week after
+it. Four questions carried into that email, and the rest left for the operators:
 
 - **Consent withdrawal** while a debt is unpaid — see above.
 - **Dunning** — was the contractual reminder process actually run on all 4,290 accounts? The
