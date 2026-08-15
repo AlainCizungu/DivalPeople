@@ -584,6 +584,16 @@ export type SourceMappingView = {
   current: boolean;
   definedAt: string;
   supersededAt: string | null;
+  /**
+   * Sector, city and street, or null where the delivery carries none.
+   *
+   * All three optional and expected to be null for the two real deliveries, which predate the
+   * published template. An operator who adopts it names them here and the resolution queue gains
+   * three signals that have read "never available" on every case it has ever shown.
+   */
+  sectorColumn: string | null;
+  cityColumn: string | null;
+  addressColumn: string | null;
 };
 
 /** What the derivation did. `complete` is false when more rows were refused than are listed. */
@@ -680,6 +690,9 @@ export const ingestApi = {
       currency: string;
       serviceCategory: string;
       subjectType: SubjectType;
+      sectorColumn: string | null;
+      cityColumn: string | null;
+      addressColumn: string | null;
     },
   ): Promise<SourceMappingView> {
     return request<SourceMappingView>(`/api/v1/ingest/sources/${sourceId}/mapping`, {
@@ -808,6 +821,7 @@ export type MatchSignalCode =
   | "SAME_DATE_OF_BIRTH"
   | "DIFFERENT_ACCOUNT_REFERENCES"
   | "SAME_SECONDARY_PHONE"
+  | "SAME_SECTOR"
   | "SAME_CITY"
   | "SIMILAR_ADDRESS";
 

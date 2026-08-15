@@ -82,7 +82,7 @@ class ImportDeriverTest extends AbstractIntegrationTest {
 
     private void defineMapping() {
         ingest.defineMapping(sourceId, "BPR_0", "RCCM", "Bsr", "Balance",
-                "USD", "POSTPAID", "BUSINESS", null);
+                "USD", "POSTPAID", "BUSINESS", null, null, null, null);
     }
 
     private ImportBatch upload(List<Map<String, String>> rows, LocalDate asAt) {
@@ -281,7 +281,7 @@ class ImportDeriverTest extends AbstractIntegrationTest {
     @DisplayName("a mapping naming a column the delivery lacks says which one")
     void mappingAgainstTheWrongHeaderIsNamed() {
         ingest.defineMapping(sourceId, "ACCOUNT_REF", "RCCM", "Bsr", "Balance",
-                "USD", "POSTPAID", "BUSINESS", null);
+                "USD", "POSTPAID", "BUSINESS", null, null, null, null);
         ImportBatch batch = upload(threeGoodRows(), AS_AT);
 
         ImportDeriver.Report report = deriver.derive(batch.getId(), true, null);

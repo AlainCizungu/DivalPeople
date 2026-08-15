@@ -83,6 +83,7 @@ public class SubjectResolver {
         if (matchedSubjectIds.isEmpty()) {
             Subject created = new Subject(request.subjectTypeOrDefault(), request.fullName(),
                     request.dateOfBirth(), request.nationality());
+            learnProfile(created, request);
             unknown.forEach((type, value) ->
                     created.addIdentifier(newIdentifier(type, value, declaring)));
             return new Resolution(subjects.save(created), true, unknown.size());
@@ -102,6 +103,12 @@ public class SubjectResolver {
         // who made it. Provenance per identifier is the fix and it is not built.
         unknown.forEach((type, value) ->
                 known.addIdentifier(newIdentifier(type, value, declaring)));
+
+        // The case this actually matters in. One operator declares by RCCM and knows nothing but
+        // the name; a second declares the same company from a file prepared against the published
+        // template and supplies the sector and the address. The registry gains both without either
+        // operator learning that the other is there.
+        learnProfile(known, request);
 
         return new Resolution(known, false, unknown.size());
     }

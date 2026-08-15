@@ -111,9 +111,33 @@ public enum MatchSignalCode {
      */
     SAME_SECONDARY_PHONE,
 
-    /** City or commune held by both. <strong>Never available</strong> — no delivery carries one. */
+    /**
+     * The line of business, held by both.
+     *
+     * <p>Added August 2026 with the two below, on counsel's advice that a company should be matched
+     * on its dénomination, its secteur, its adresse and its RCCM and/or tax number. Light on its
+     * own — a great many Congolese companies are in general trade — and it earns its place by
+     * disagreeing: two "Grand Horizon SARL", one in transport and one in pharmaceuticals, are two
+     * companies.
+     */
+    SAME_SECTOR,
+
+    /**
+     * City or commune, held by both.
+     *
+     * <p>The one address component that compares as an equality. "Kinshasa" against "Goma" is a
+     * real disagreement; the street below is not, because two clerks write one address two ways.
+     */
     SAME_CITY,
 
-    /** Street address held by both. <strong>Never available</strong> — no delivery carries one. */
+    /**
+     * Street address, held by both and compared loosely.
+     *
+     * <p><strong>Agreement is worth a great deal; disagreement is worth nothing.</strong> Free-text
+     * addresses differ between two clerks at least as often as between two companies, and a company
+     * that moved keeps its identity. So a matching street is close to decisive alongside a name and
+     * a differing one is shown to the reviewer and weighed at zero — the same treatment as two
+     * different account references, and for the same reason.
+     */
     SIMILAR_ADDRESS
 }

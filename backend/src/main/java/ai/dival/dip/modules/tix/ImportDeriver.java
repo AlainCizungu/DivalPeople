@@ -235,6 +235,8 @@ public class ImportDeriver {
                             + ". A credit balance is not a debt.");
         }
 
+        SourceMapping.Profile profile = mapping.profileFrom(row);
+
         return new DeclarationRequest(
                 List.of(new DeclarationRequest.SubmittedIdentifier(type, identifier)),
                 name,
@@ -246,7 +248,11 @@ public class ImportDeriver {
                 mapping.getServiceCategory(),
                 // The whole reason the operator was asked for a date on upload.
                 asAt,
-                true);
+                true,
+                // Converted here rather than returned as a tix type, so that ingest does not have
+                // to import the module that imports it.
+                profile == null ? null : new DeclarationRequest.Profile(
+                        profile.sector(), profile.city(), profile.streetAddress()));
     }
 
     /**

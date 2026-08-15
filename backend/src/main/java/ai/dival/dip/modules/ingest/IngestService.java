@@ -73,7 +73,9 @@ public class IngestService {
     public SourceMapping defineMapping(UUID sourceId, String identifierColumn,
                                        String identifierType, String nameColumn,
                                        String amountColumn, String currency,
-                                       String serviceCategory, String subjectType, UUID actorId) {
+                                       String serviceCategory, String subjectType, UUID actorId,
+                                       String sectorColumn, String cityColumn,
+                                       String addressColumn) {
         UUID tenantId = TenantContext.require();
         SourceDataset source = sources.findByIdAndTenantId(sourceId, tenantId)
                 .orElseThrow(() -> new SourceNotFoundException(sourceId));
@@ -95,7 +97,8 @@ public class IngestService {
 
         SourceMapping saved = mappings.save(new SourceMapping(
                 source, identifierColumn, identifierType, nameColumn, amountColumn,
-                currency, serviceCategory, subjectType, nextVersion, actorId));
+                currency, serviceCategory, subjectType, nextVersion, actorId,
+                sectorColumn, cityColumn, addressColumn));
 
         audit.record("INGEST_MAPPING_DEFINED", "SourceMapping", saved.getId().toString(),
                 AuditService.OUTCOME_SUCCESS, actorId,
@@ -103,7 +106,16 @@ public class IngestService {
                         + (saved.identifiesByName()
                                 ? "from the name column" : saved.getIdentifierColumn())
                         + ", name=" + saved.getNameColumn()
-                        + ", amount=" + saved.getAmountColumn());
+                        + ", amount=" + saved.getAmountColumn()
+                        // Named in the audit line because a mapping that quietly stopped carrying
+                        // a sector between versions is otherwise invisible: the derive succeeds,
+                        // the records look right, and the review queue simply gets worse.
+                        + (saved.getSectorColumn() == null ? ""
+                                : ", sector=" + saved.getSectorColumn())
+                        + (saved.getCityColumn() == null ? ""
+                                : ", city=" + saved.getCityColumn())
+                        + (saved.getAddressColumn() == null ? ""
+                                : ", address=" + saved.getAddressColumn()));
         return saved;
     }
 

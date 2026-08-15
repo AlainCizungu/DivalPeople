@@ -95,7 +95,9 @@ public class IngestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(MappingResponse.from(
                 ingest.defineMapping(id, request.identifierColumn(), request.identifierType(),
                         request.nameColumn(), request.amountColumn(), request.currency(),
-                        request.serviceCategory(), request.subjectType(), actorId())));
+                        request.serviceCategory(), request.subjectType(), actorId(),
+                        request.sectorColumn(), request.cityColumn(),
+                        request.addressColumn())));
     }
 
     /** The mapping in force, or nothing when the operator has not defined one yet. */
@@ -302,14 +304,18 @@ public class IngestController {
             @NotBlank @Size(max = 200) String amountColumn,
             @NotBlank @Size(min = 3, max = 3) String currency,
             @NotBlank @Size(max = 60) String serviceCategory,
-            @NotBlank @Size(max = 20) String subjectType) {
+            @NotBlank @Size(max = 20) String subjectType,
+            @Size(max = 200) String sectorColumn,
+            @Size(max = 200) String cityColumn,
+            @Size(max = 200) String addressColumn) {
     }
 
     /** @param current false once a newer version has superseded this one */
     public record MappingResponse(UUID id, int versionNumber, String identifierColumn,
                                   String identifierType, String nameColumn, String amountColumn,
                                   String currency, String serviceCategory, String subjectType,
-                                  boolean current, Instant definedAt, Instant supersededAt) {
+                                  boolean current, Instant definedAt, Instant supersededAt,
+                                  String sectorColumn, String cityColumn, String addressColumn) {
 
         static MappingResponse from(SourceMapping mapping) {
             return new MappingResponse(
@@ -324,7 +330,10 @@ public class IngestController {
                     mapping.getSubjectType(),
                     mapping.isCurrent(),
                     mapping.getDefinedAt(),
-                    mapping.getSupersededAt());
+                    mapping.getSupersededAt(),
+                    mapping.getSectorColumn(),
+                    mapping.getCityColumn(),
+                    mapping.getAddressColumn());
         }
     }
 

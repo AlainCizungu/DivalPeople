@@ -854,6 +854,10 @@
     "mappingCurrencyHint": "Fixée pour cette source. Le fichier ne l’indique pas.",
     "mappingService": "Service",
     "mappingSubjectType": "Il s’agit de",
+    "mappingProfileNote": "Facultatif. Le secteur, la ville et la rue sont ce qui permet de distinguer deux entreprises portant le même nom d'une seule entreprise réimmatriculée — le cas que crée un RCCM modifié. Aucune des livraisons actuelles ne les contient ; un fichier préparé selon le modèle publié, si.",
+    "mappingSector": "Colonne du secteur d'activité (facultatif)",
+    "mappingCity": "Colonne de la ville (facultatif)",
+    "mappingAddress": "Colonne de l'adresse (facultatif)",
     "mappingSave": "Enregistrer la correspondance",
     "mappingReplace": "Remplacer la correspondance",
     "mappingReplaceNote": "Enregistrer ne modifie pas la correspondance en vigueur : elle est remplacée. Les livraisons déjà dérivées conservent les règles sous lesquelles elles l’ont été.",
@@ -1267,6 +1271,7 @@
       "SAME_DATE_OF_BIRTH": "Même date de naissance",
       "DIFFERENT_ACCOUNT_REFERENCES": "Numéros clients différents",
       "SAME_SECONDARY_PHONE": "Même numéro secondaire",
+      "SAME_SECTOR": "Même secteur d'activité",
       "SAME_CITY": "Même ville",
       "SIMILAR_ADDRESS": "Adresse similaire"
     },

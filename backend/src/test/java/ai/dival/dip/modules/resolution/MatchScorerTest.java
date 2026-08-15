@@ -274,8 +274,10 @@ class MatchScorerTest {
     @DisplayName("different account numbers at two institutions are the normal state of a real match")
     void differentAccountNumbersProveNothing() {
         MatchAssessment shown = scorer.compare(
-                new SubjectFacts(false, "jean pierre kabamba", "CD", null, Map.of(), true),
-                new SubjectFacts(false, "jean pierre kabamba", "CD", null, Map.of(), true));
+                new SubjectFacts(false, "jean pierre kabamba", "CD", null, Map.of(), true,
+                        null, null, null),
+                new SubjectFacts(false, "jean pierre kabamba", "CD", null, Map.of(), true,
+                        null, null, null));
 
         // Every genuine cross-operator match has two different customer numbers, because operators
         // number their own customers from one upwards. Reading that as evidence against would
@@ -299,12 +301,125 @@ class MatchScorerTest {
         assertThat(worst.confidence()).isBetween(0.0, 1.0);
     }
 
+    // --- what counsel asked for, and what it is for -------------------------
+
+    @Test
+    @DisplayName("two homonymous companies in different cities and trades are separated again")
+    void sectorAndCitySeparateWhatTheRegisterNumberNoLongerCan() {
+        // The pair the softened register-number rule started putting in front of a reviewer. Two
+        // companies of one name and two RCCMs used to score zero and vanish; they now score 0.45
+        // and land in the queue, because on a name and a number alone nothing can tell them from
+        // one company that re-registered.
+        //
+        // Sector and city are what tell them apart, which is the whole reason counsel named them.
+        MatchAssessment assessment = scorer.compare(
+                profiled("grand horizon sarl", Map.of("RCCM", "CD/KIN/RCCM/14-B-4001"),
+                        "Transport et logistique", "Kinshasa", "12 av. Kasa-Vubu"),
+                profiled("grand horizon sarl", Map.of("RCCM", "CD/KIN/RCCM/19-B-7788"),
+                        "Pharmacie", "Goma", "45 rue du Marché"));
+
+        assertThat(assessment.worthReviewing())
+                .as("0.55 name − 0.15 register − 0.15 sector − 0.25 city + 0.05 type")
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("and one company that re-registered reads as one company")
+    void sectorAndAddressCarryARegistrationChange() {
+        // Same two records, same conflicting RCCMs, everything else agreeing. This is the case the
+        // old rule could never surface at all, and the case these three columns exist to settle.
+        MatchAssessment assessment = scorer.compare(
+                profiled("grand horizon sarl", Map.of("RCCM", "CD/KIN/RCCM/14-B-4001"),
+                        "Transport et logistique", "Kinshasa", "12 av. Kasa-Vubu"),
+                profiled("grand horizon sarl", Map.of("RCCM", "CD/KIN/RCCM/19-B-7788"),
+                        "Transport et logistique", "Kinshasa", "12, avenue Kasa Vubu"));
+
+        // 0.83, which is high and is deliberately not asserted as "strong". The abbreviation costs
+        // it: "av." against "avenue" holds the address comparison to 0.789 rather than 1.0, worth
+        // about five points. Tuning the weights until this cleared 0.85 would be fitting the model
+        // to one fixture. Nothing merges at any confidence anyway — the number decides whether a
+        // person is asked to look, and this pair very much is.
+        assertThat(assessment.confidence()).isGreaterThan(0.80);
+        assertThat(assessment.worthReviewing()).isTrue();
+    }
+
+    @Test
+    @DisplayName("a street written two ways is one street")
+    void addressComparisonSurvivesPunctuation() {
+        // "12 av. Kasa-Vubu" against "12, avenue Kasa Vubu" is one address typed by two clerks.
+        // A comparison that called this a difference would be measuring a house style.
+        MatchAssessment assessment = scorer.compare(
+                profiled("alpha sarl", Map.of(), null, null, "12 av. Kasa-Vubu"),
+                profiled("alpha sarl", Map.of(), null, null, "12, avenue Kasa Vubu"));
+
+        assertThat(signal(assessment, MatchSignalCode.SIMILAR_ADDRESS).verdict())
+                .isEqualTo(MatchSignal.Verdict.AGREES);
+    }
+
+    @Test
+    @DisplayName("a different street is shown and weighed at nothing, unlike a different city")
+    void aDifferentStreetIsNotEvidenceAgainst() {
+        MatchAssessment assessment = scorer.compare(
+                profiled("alpha sarl", Map.of(), null, "Kinshasa", "12 av. Kasa-Vubu"),
+                profiled("alpha sarl", Map.of(), null, "Kinshasa", "78 boulevard du 30 Juin"));
+
+        // Neutral rather than conflicting, and the distinction is not cosmetic. A conflict tells a
+        // reviewer something was found against the pair; what was actually found is that a company
+        // moved, or that two clerks recorded two of its premises. Weighing that against a match
+        // would refuse genuine pairs on the strength of somebody's filing.
+        MatchSignal street = signal(assessment, MatchSignalCode.SIMILAR_ADDRESS);
+        assertThat(street.verdict()).isEqualTo(MatchSignal.Verdict.NEUTRAL);
+        assertThat(street.weight()).isZero();
+
+        // The city, which does compare as an equality, is where a real geographic disagreement is
+        // reported — and here it agrees.
+        assertThat(signal(assessment, MatchSignalCode.SAME_CITY).verdict())
+                .isEqualTo(MatchSignal.Verdict.AGREES);
+    }
+
+    @Test
+    @DisplayName("one side holding a sector and the other not is a gap, not a disagreement")
+    void aMissingFieldIsNotAConflict() {
+        // The ordinary state of the registry. One operator files against the published template
+        // and supplies everything; another declares from a billing system and supplies none of it.
+        // Reading that as evidence against would penalise the company for the platform's own
+        // uneven coverage.
+        MatchAssessment assessment = scorer.compare(
+                profiled("alpha sarl", Map.of(), "Transport", "Kinshasa", "12 av. Kasa-Vubu"),
+                profiled("alpha sarl", Map.of(), null, null, null));
+
+        for (MatchSignalCode code : List.of(MatchSignalCode.SAME_SECTOR,
+                MatchSignalCode.SAME_CITY, MatchSignalCode.SIMILAR_ADDRESS)) {
+            assertThat(signal(assessment, code).verdict())
+                    .as("%s", code)
+                    .isEqualTo(MatchSignal.Verdict.UNAVAILABLE);
+            assertThat(signal(assessment, code).weight()).isZero();
+        }
+    }
+
+    @Test
+    @DisplayName("a sector recorded in two letter cases is one sector")
+    void sectorComparisonIgnoresCaseAndPadding() {
+        MatchAssessment assessment = scorer.compare(
+                profiled("alpha sarl", Map.of(), "Transport et logistique", null, null),
+                profiled("alpha sarl", Map.of(), "TRANSPORT ET LOGISTIQUE ", null, null));
+
+        assertThat(signal(assessment, MatchSignalCode.SAME_SECTOR).verdict())
+                .isEqualTo(MatchSignal.Verdict.AGREES);
+    }
+
     private static SubjectFacts person(String name, String nationality, LocalDate born) {
-        return new SubjectFacts(false, name, nationality, born, Map.of(), false);
+        return new SubjectFacts(false, name, nationality, born, Map.of(), false, null, null, null);
     }
 
     private static SubjectFacts business(String name, Map<String, String> identifiers) {
-        return new SubjectFacts(true, name, "CD", null, identifiers, false);
+        return new SubjectFacts(true, name, "CD", null, identifiers, false, null, null, null);
+    }
+
+    /** A company the registry knows something about beyond its name and its documents. */
+    private static SubjectFacts profiled(String name, Map<String, String> identifiers,
+                                         String sector, String city, String street) {
+        return new SubjectFacts(true, name, "CD", null, identifiers, false, sector, city, street);
     }
 
     private static MatchSignal signal(MatchAssessment assessment, MatchSignalCode code) {

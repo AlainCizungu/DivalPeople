@@ -20,6 +20,13 @@ import java.util.Set;
  *                            which is what makes agreement here worth so much and disagreement
  *                            worth so much against
  * @param hasAccountReference whether the holding institution numbers this record itself
+ * @param sector              line of business, or null where nobody has supplied one. Compared
+ *                            loosely and weighed lightly: a great many companies share a sector
+ * @param city                city or commune, or null. Compared as an equality, which a street
+ *                            cannot be
+ * @param streetAddress       street, or null. Agreement is worth a great deal and disagreement
+ *                            worth nothing — two clerks type one address two ways at least as
+ *                            often as two companies occupy two buildings
  */
 public record SubjectFacts(
         boolean business,
@@ -27,7 +34,10 @@ public record SubjectFacts(
         String nationality,
         LocalDate dateOfBirth,
         Map<String, String> nationalIdentifiers,
-        boolean hasAccountReference) {
+        boolean hasAccountReference,
+        String sector,
+        String city,
+        String streetAddress) {
 
     public SubjectFacts {
         if (normalizedName == null) {

@@ -52,6 +52,28 @@ public class Subject {
     private String nationality;
 
     /**
+     * What the company does, where it is, and at what street — learned once and never overwritten.
+     *
+     * <p>Counsel's four matching elements are the name, the sector, the address and the register or
+     * tax number. Two of them arrive here; they are the two the resolution screen has reported as
+     * <em>never available</em> since it was built.
+     *
+     * <p><strong>A blank is filled by whoever supplies it first, and a later declaration carrying a
+     * different value is ignored.</strong> A subject is registry-wide, so last-writer-wins would
+     * let one participant rewrite another's view of a company it cannot see. The cost is real and
+     * stated rather than hidden: a stale address is not corrected by a fresher one, and correcting
+     * it goes through the subject rights path, which has a person on it.
+     */
+    @Column(name = "sector", length = 120)
+    private String sector;
+
+    @Column(name = "city", length = 120)
+    private String city;
+
+    @Column(name = "street_address", length = 300)
+    private String streetAddress;
+
+    /**
      * The subject this one turned out to be, once somebody decided they were the same.
      *
      * <p>A pointer rather than a delete. Erasing the absorbed row would erase the candidate case
@@ -161,6 +183,47 @@ public class Subject {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getSector() {
+        return sector;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public String getStreetAddress() {
+        return streetAddress;
+    }
+
+    /**
+     * Fills whichever of the three is still blank, and touches nothing else.
+     *
+     * <p>Returns how many were learned, so a caller can say so rather than guess. Blank input is
+     * not a value: an operator sending an empty column must not erase what another supplied.
+     *
+     * @return how many blanks this filled
+     */
+    int learnProfile(String newSector, String newCity, String newStreetAddress) {
+        int learned = 0;
+        if (isBlank(sector) && !isBlank(newSector)) {
+            sector = newSector.trim();
+            learned++;
+        }
+        if (isBlank(city) && !isBlank(newCity)) {
+            city = newCity.trim();
+            learned++;
+        }
+        if (isBlank(streetAddress) && !isBlank(newStreetAddress)) {
+            streetAddress = newStreetAddress.trim();
+            learned++;
+        }
+        return learned;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     public List<SubjectIdentifier> getIdentifiers() {

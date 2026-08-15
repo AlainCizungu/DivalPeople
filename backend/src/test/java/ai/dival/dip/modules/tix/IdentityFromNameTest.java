@@ -170,7 +170,7 @@ class IdentityFromNameTest extends AbstractIntegrationTest {
                 SourceKind.SPREADSHEET, null).getId();
         // Nulls where an identifier column and type would go. That is the whole feature.
         ingest.defineMapping(sourceId, null, null, "Customer", "Balance",
-                "USD", "POSTPAID", "BUSINESS", null);
+                "USD", "POSTPAID", "BUSINESS", null, null, null, null);
 
         UUID batchId = ingest.receive(sourceId, "orange-" + UUID.randomUUID() + ".xlsx",
                 UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8),

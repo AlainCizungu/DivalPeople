@@ -190,7 +190,8 @@ public class SubjectRegistryService {
         return new RegistrySubject(subject.getId(),
                 subject.getSubjectType() == Subject.SubjectType.BUSINESS,
                 subject.getFullName(), subject.getNormalizedName(), subject.getNationality(),
-                subject.getDateOfBirth(), Map.copyOf(national), hasAccountReference);
+                subject.getDateOfBirth(), Map.copyOf(national), hasAccountReference,
+                subject.getSector(), subject.getCity(), subject.getStreetAddress());
     }
 
     /**
@@ -198,11 +199,15 @@ public class SubjectRegistryService {
      *                            reference and never a phone number
      * @param hasAccountReference whether some institution numbers this subject itself, which is
      *                            worth showing a reviewer and worth nothing as evidence
+     * @param sector              line of business, or null. Learned from whoever supplied it first
+     * @param city                city or commune, or null
+     * @param streetAddress       street, or null
      */
     public record RegistrySubject(UUID id, boolean business, String fullName,
                                   String normalizedName, String nationality,
                                   LocalDate dateOfBirth, Map<String, String> nationalIdentifiers,
-                                  boolean hasAccountReference) {
+                                  boolean hasAccountReference, String sector, String city,
+                                  String streetAddress) {
     }
 
     /** @param survivor the older of the two, chosen by the registry rather than by the reviewer */

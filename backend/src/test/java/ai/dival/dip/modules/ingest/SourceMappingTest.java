@@ -53,7 +53,7 @@ class SourceMappingTest extends AbstractIntegrationTest {
 
     private SourceMapping define(String identifierColumn, String amountColumn) {
         return ingest.defineMapping(sourceId, identifierColumn, "RCCM", "Bsr", amountColumn,
-                "USD", "POSTPAID", "BUSINESS", null);
+                "USD", "POSTPAID", "BUSINESS", null, null, null, null);
     }
 
     @Test
@@ -124,7 +124,7 @@ class SourceMappingTest extends AbstractIntegrationTest {
         assertThatThrownBy(() -> define("  ", "Balance"))
                 .isInstanceOf(PolicyRefusedException.class);
         assertThatThrownBy(() -> ingest.defineMapping(sourceId, "BPR_0", "RCCM", "Bsr", "Balance",
-                "USD", "  ", "BUSINESS", null))
+                "USD", "  ", "BUSINESS", null, null, null, null))
                 .isInstanceOf(PolicyRefusedException.class);
     }
 
@@ -172,7 +172,7 @@ class SourceMappingTest extends AbstractIntegrationTest {
     @DisplayName("currency is stored upper-case whatever was typed")
     void currencyIsNormalised() {
         SourceMapping mapping = ingest.defineMapping(sourceId, "BPR_0", "RCCM", "Bsr", "Balance",
-                "usd", "POSTPAID", "BUSINESS", null);
+                "usd", "POSTPAID", "BUSINESS", null, null, null, null);
 
         // The reporting threshold is keyed on the currency code. "usd" finding no configured
         // floor would refuse every row in the delivery for a reason nobody could see.

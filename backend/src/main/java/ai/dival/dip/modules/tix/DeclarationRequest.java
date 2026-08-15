@@ -37,6 +37,7 @@ import java.util.List;
  *                        declaration date, so an operator cannot refresh a record's age by
  *                        re-declaring it
  * @param dunningEvidence assertion that the contractual dunning process ran first
+ * @param profile         sector, city and street, or null when the declaration says none of it
  */
 public record DeclarationRequest(
         @NotEmpty @Valid List<@NotNull SubmittedIdentifier> identifiers,
@@ -48,7 +49,44 @@ public record DeclarationRequest(
         @NotBlank @Size(min = 3, max = 3) String currency,
         @NotBlank @Size(max = 60) String serviceCategory,
         @NotNull LocalDate defaultDate,
-        boolean dunningEvidence) {
+        boolean dunningEvidence,
+        @Valid Profile profile) {
+
+    /**
+     * Everything an operator can say about a company beyond its name and its documents.
+     *
+     * <p>One component rather than three, and nullable, because most declarations will not carry
+     * it: an operator posting from its billing system has an account number and an amount, and the
+     * sector and address arrive on a file prepared against the published template. A record whose
+     * arity grew by three would have made every existing caller say {@code null, null, null}, which
+     * reads as an oversight rather than as an absence.
+     *
+     * @param sector        line of business, free text — there is no taxonomy both a telecom and a
+     *                      bank already hold, and inventing one would mean every operator mapping
+     *                      their vocabulary onto ours before a single row imported
+     * @param city          city or commune, compared as an equality
+     * @param streetAddress street, compared loosely and weighed at nothing when it differs
+     */
+    public record Profile(@Size(max = 120) String sector, @Size(max = 120) String city,
+                          @Size(max = 300) String streetAddress) {
+    }
+
+    /**
+     * A declaration that says nothing about the company beyond its name and its documents.
+     *
+     * <p>The common case today and the reason this constructor exists rather than making
+     * twenty-nine call sites pass a null. Kept explicit: somebody reading a call has to be able to
+     * see that no profile was supplied, and a shorter signature says that more clearly than three
+     * trailing nulls.
+     */
+    public DeclarationRequest(List<SubmittedIdentifier> identifiers, String fullName,
+                              Subject.SubjectType subjectType, LocalDate dateOfBirth,
+                              String nationality, BigDecimal amount, String currency,
+                              String serviceCategory, LocalDate defaultDate,
+                              boolean dunningEvidence) {
+        this(identifiers, fullName, subjectType, dateOfBirth, nationality, amount, currency,
+                serviceCategory, defaultDate, dunningEvidence, null);
+    }
 
     public record SubmittedIdentifier(@NotNull IdentifierType type, @NotBlank String value) {
     }

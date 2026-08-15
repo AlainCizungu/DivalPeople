@@ -92,6 +92,12 @@ export default function BatchPage() {
   const [amountColumn, setAmountColumn] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [serviceCategory, setServiceCategory] = useState("POSTPAID");
+  // Empty by default, and empty is the honest default: neither delivery DIP holds carries any of
+  // these. They are here so that a file prepared against the published template can say where they
+  // are, rather than arriving with the columns and having them dropped.
+  const [sectorColumn, setSectorColumn] = useState("");
+  const [cityColumn, setCityColumn] = useState("");
+  const [addressColumn, setAddressColumn] = useState("");
   const [subjectType, setSubjectType] = useState<SubjectType>("BUSINESS");
 
   /**
@@ -156,6 +162,9 @@ export default function BatchPage() {
         setAmountColumn(current.amountColumn);
         setCurrency(current.currency);
         setServiceCategory(current.serviceCategory);
+        setSectorColumn(current.sectorColumn ?? "");
+        setCityColumn(current.cityColumn ?? "");
+        setAddressColumn(current.addressColumn ?? "");
         setSubjectType(current.subjectType);
       }
     } else {
@@ -549,6 +558,11 @@ export default function BatchPage() {
                   currency: currency.trim(),
                   serviceCategory: serviceCategory.trim(),
                   subjectType,
+                  // Blank means absent, which the server treats as null. Sending "" would store an
+                  // empty column name and then refuse every derivation for a column called "".
+                  sectorColumn: sectorColumn.trim() || null,
+                  cityColumn: cityColumn.trim() || null,
+                  addressColumn: addressColumn.trim() || null,
                 }),
               );
             }}
@@ -664,6 +678,43 @@ export default function BatchPage() {
                 <option value="BUSINESS">{messages.search.types.BUSINESS}</option>
                 <option value="INDIVIDUAL">{messages.search.types.INDIVIDUAL}</option>
               </select>
+            </Field>
+
+            {/* Optional, and grouped after the required fields so the form still reads as a short
+                one for the two deliveries that carry none of this. The hint says what they buy,
+                because an operator asked to find three more columns deserves to know why. */}
+            <p className="sm:col-span-2 mt-2 border-t border-line pt-3 text-xs text-muted">
+              {t.mappingProfileNote}
+            </p>
+
+            <Field label={t.mappingSector} htmlFor="sectorColumn">
+              <input
+                id="sectorColumn"
+                className={inputClass}
+                list="batch-columns"
+                value={sectorColumn}
+                onChange={(e) => setSectorColumn(e.target.value)}
+              />
+            </Field>
+
+            <Field label={t.mappingCity} htmlFor="cityColumn">
+              <input
+                id="cityColumn"
+                className={inputClass}
+                list="batch-columns"
+                value={cityColumn}
+                onChange={(e) => setCityColumn(e.target.value)}
+              />
+            </Field>
+
+            <Field label={t.mappingAddress} htmlFor="addressColumn">
+              <input
+                id="addressColumn"
+                className={inputClass}
+                list="batch-columns"
+                value={addressColumn}
+                onChange={(e) => setAddressColumn(e.target.value)}
+              />
             </Field>
 
             {/* The header of this delivery, offered as suggestions rather than as a closed list:

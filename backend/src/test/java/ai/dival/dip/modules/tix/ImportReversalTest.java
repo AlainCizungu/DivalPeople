@@ -191,7 +191,7 @@ class ImportReversalTest extends AbstractIntegrationTest {
         UUID sourceId = ingest.registerSource("SRC-" + UUID.randomUUID(), "An export",
                 SourceKind.SPREADSHEET, null).getId();
         ingest.defineMapping(sourceId, "RCCM", "RCCM", "Bsr", "Balance",
-                "USD", "POSTPAID", "BUSINESS", null);
+                "USD", "POSTPAID", "BUSINESS", null, null, null, null);
 
         UUID batchId = ingest.receive(sourceId, "export-" + UUID.randomUUID() + ".xlsx",
                 UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8),

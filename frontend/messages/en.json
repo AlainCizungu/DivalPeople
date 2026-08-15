@@ -854,6 +854,10 @@
     "mappingCurrencyHint": "Fixed for this source. The file does not say.",
     "mappingService": "Service",
     "mappingSubjectType": "These are",
+    "mappingProfileNote": "Optional. Sector, city and street are what let a reviewer tell two companies of one name apart from one company that re-registered — the case a changed RCCM creates. Neither current delivery carries them; a file prepared against the published template does.",
+    "mappingSector": "Sector column (optional)",
+    "mappingCity": "City column (optional)",
+    "mappingAddress": "Street address column (optional)",
     "mappingSave": "Save the mapping",
     "mappingReplace": "Replace the mapping",
     "mappingReplaceNote": "Saving does not edit the current mapping — it supersedes it. Deliveries already derived keep the rules they were derived under.",
@@ -1267,6 +1271,7 @@
       "SAME_DATE_OF_BIRTH": "Same date of birth",
       "DIFFERENT_ACCOUNT_REFERENCES": "Different customer numbers",
       "SAME_SECONDARY_PHONE": "Same secondary phone",
+      "SAME_SECTOR": "Same sector",
       "SAME_CITY": "Same city",
       "SIMILAR_ADDRESS": "Similar address"
     },

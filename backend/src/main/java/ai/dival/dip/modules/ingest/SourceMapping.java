@@ -75,6 +75,23 @@ public class SourceMapping {
     @Column(name = "subject_type", nullable = false, updatable = false, length = 20)
     private String subjectType;
 
+    /**
+     * Where the sector, the city and the street live in this operator's file, if anywhere.
+     *
+     * <p>All three optional. The two real deliveries carry none of them, so requiring them would
+     * make every existing source undefinable; an operator who adopts the published template names
+     * them and the resolution queue gains three signals that have read <em>never available</em>
+     * since it was built.
+     */
+    @Column(name = "sector_column", updatable = false, length = 200)
+    private String sectorColumn;
+
+    @Column(name = "city_column", updatable = false, length = 200)
+    private String cityColumn;
+
+    @Column(name = "address_column", updatable = false, length = 200)
+    private String addressColumn;
+
     @Column(name = "version_number", nullable = false, updatable = false)
     private int versionNumber;
 
@@ -99,10 +116,26 @@ public class SourceMapping {
         // for JPA
     }
 
+    /**
+     * A mapping that names no profile columns, which is every mapping written before August 2026.
+     *
+     * <p>Kept as an overload rather than making the fourteen existing call sites pass three nulls,
+     * for the same reason {@code DeclarationRequest} keeps one: three trailing nulls read as an
+     * oversight, and a shorter signature says "this delivery carries none of that" out loud.
+     */
     public SourceMapping(SourceDataset dataSource, String identifierColumn, String identifierType,
                          String nameColumn, String amountColumn, String currency,
                          String serviceCategory, String subjectType, int versionNumber,
                          UUID definedBy) {
+        this(dataSource, identifierColumn, identifierType, nameColumn, amountColumn, currency,
+                serviceCategory, subjectType, versionNumber, definedBy, null, null, null);
+    }
+
+    public SourceMapping(SourceDataset dataSource, String identifierColumn, String identifierType,
+                         String nameColumn, String amountColumn, String currency,
+                         String serviceCategory, String subjectType, int versionNumber,
+                         UUID definedBy, String sectorColumn, String cityColumn,
+                         String addressColumn) {
         this.tenantId = TenantContext.require();
         this.dataSource = dataSource;
         // Both or neither. Blank is treated as absent because a form submits an empty string
@@ -123,6 +156,9 @@ public class SourceMapping {
         this.currency = required(currency, "currency").toUpperCase(java.util.Locale.ROOT);
         this.serviceCategory = required(serviceCategory, "service category");
         this.subjectType = required(subjectType, "subject type");
+        this.sectorColumn = optional(sectorColumn);
+        this.cityColumn = optional(cityColumn);
+        this.addressColumn = optional(addressColumn);
         this.versionNumber = versionNumber;
         this.definedBy = definedBy;
         this.definedAt = Instant.now();
@@ -259,6 +295,53 @@ public class SourceMapping {
 
     public String getSubjectType() {
         return subjectType;
+    }
+
+    public String getSectorColumn() {
+        return sectorColumn;
+    }
+
+    public String getCityColumn() {
+        return cityColumn;
+    }
+
+    public String getAddressColumn() {
+        return addressColumn;
+    }
+
+    /**
+     * What this row says about the company, or null when the mapping names no such columns.
+     *
+     * <p>Read through {@link #cell} like everything else, so a mapping naming a column the delivery
+     * lacks is refused here too — for the same reason it is refused for the identifier. A profile
+     * column that silently produced blanks would look exactly like a file that carries no sector,
+     * and the operator would never learn their header had changed.
+     */
+    public Profile profileFrom(Map<String, String> row) {
+        if (sectorColumn == null && cityColumn == null && addressColumn == null) {
+            return null;
+        }
+        return new Profile(
+                sectorColumn == null ? null : cell(row, sectorColumn),
+                cityColumn == null ? null : cell(row, cityColumn),
+                addressColumn == null ? null : cell(row, addressColumn));
+    }
+
+    /**
+     * This module's own triple, not the telecom module's.
+     *
+     * <p>{@code DeclarationRequest.Profile} would have done and would have made {@code ingest}
+     * import {@code tix} while {@code tix} already imports {@code ingest} — a cycle between two
+     * modules whose whole arrangement is that one reads files and the other decides what they mean.
+     * The architecture check does not forbid it, which is not the same as it being right.
+     * {@code ImportDeriver} converts, which is one line in the module that already depends on both.
+     */
+    public record Profile(String sector, String city, String streetAddress) {
+    }
+
+    /** Blank is absent: a form submits an empty string where a caller would pass null. */
+    private static String optional(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     public int getVersionNumber() {

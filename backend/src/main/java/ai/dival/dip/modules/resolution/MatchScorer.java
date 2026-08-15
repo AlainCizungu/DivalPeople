@@ -20,12 +20,14 @@ import org.springframework.stereotype.Component;
  * that cannot see each other, and the cost of being wrong is somebody refused credit for a debt
  * that is not theirs. A high number means a reviewer will probably agree with it.
  *
- * <p>Ten signals are reported on every comparison — eleven codes, of which the two name codes are
- * mutually exclusive. Three of the ten can never be evaluated today, and they are returned as
- * unavailable rather than left out. That is the honest report and it is also the product argument:
- * a delivery carrying a city and a second phone number would move a reviewer further than any
- * amount of cleverness about spelling, and the only way that ask gets made is if the gap is
- * visible on the screen every time.
+ * <p>Eleven signals are reported on every comparison, from twelve codes — the two name codes are
+ * mutually exclusive, so exactly one of them appears. That invariant is held by
+ * {@code theListIsAlwaysTheSame} rather than by this sentence, which is the third count in this
+ * file's history to have been written down wrong. A signal with nothing to compare is returned as unavailable rather than
+ * left out, and that reporting is what produced two of the twelve: sector and address read
+ * <em>never available</em> on every case this screen ever showed, counsel independently named both
+ * as matching criteria, and the gap being visible every time is how the ask got made. One is left —
+ * a second contact number, which no delivery carries.
  */
 @Component
 public class MatchScorer {
@@ -112,6 +114,53 @@ public class MatchScorer {
     /** How alike two names have to be before "similar" is claimed at all. */
     private static final double SIMILAR_NAME_THRESHOLD = 0.82;
 
+    /**
+     * Sector, city and street — the two elements counsel named that the registry did not hold.
+     *
+     * <p>Each is deliberately shaped differently, because they behave differently.
+     *
+     * <p><strong>Sector</strong> is light on agreement and heavier on disagreement. A great many
+     * Congolese companies are in general trade, so agreeing says little; two companies of the same
+     * name in transport and in pharmaceuticals are two companies, so disagreeing says more.
+     *
+     * <p><strong>City</strong> carries the real negative weight. It is the one address component
+     * that compares as an equality, and it is what separates two homonymous companies — the case
+     * counsel raised and the case the softened register-number rule now puts in front of a person.
+     *
+     * <p><strong>Street</strong> is asymmetric to the point of being one-sided: a matching address
+     * is close to decisive beside a name, and a differing one is weighed at nothing. Free-text
+     * addresses differ between two clerks at least as often as between two companies, and a company
+     * that moved keeps its identity. Weighing that difference against a match would refuse genuine
+     * pairs on the strength of somebody's punctuation.
+     *
+     * <p>Compared with the same routine that compares names, not because addresses are names but
+     * because the failure mode is identical: an abbreviation, a dropped token, a hyphen.
+     */
+    private static final double SAME_SECTOR = 0.08;
+    private static final double CONFLICTING_SECTOR = -0.15;
+    private static final double SAME_CITY = 0.10;
+    private static final double CONFLICTING_CITY = -0.25;
+    private static final double SIMILAR_ADDRESS = 0.25;
+
+    /**
+     * Looser than the name threshold, and set from a measurement rather than by eye.
+     *
+     * <p>"12 av. Kasa-Vubu" against "12, avenue Kasa Vubu" — one address, two clerks, and the
+     * commonest shape this comparison will meet — scores 0.789. A threshold of 0.75 would have sat
+     * almost exactly on it, which is not a threshold but a coin toss: a slightly longer street name
+     * would have fallen the other side of it for no reason anybody could explain to a reviewer.
+     *
+     * <p>The cost of being too generous is small and asymmetric. A false "similar" adds at most a
+     * quarter, scaled down by how alike the two actually are, and a false "different" costs
+     * nothing at all — the signal never counts against a pair.
+     *
+     * <p>Known limitation, recorded rather than hidden: an abbreviation is still expensive.
+     * "av." against "avenue" alone holds that pair to 0.789 rather than 1.0, which costs the
+     * assessment about five points. Fixing it means a dictionary of Congolese street abbreviations,
+     * which is local knowledge this file should not invent.
+     */
+    private static final double SIMILAR_ADDRESS_THRESHOLD = 0.70;
+
     public MatchAssessment compare(SubjectFacts left, SubjectFacts right) {
         List<MatchSignal> signals = new ArrayList<>();
 
@@ -160,11 +209,16 @@ public class MatchScorer {
                 ? MatchSignal.neutral(MatchSignalCode.DIFFERENT_ACCOUNT_REFERENCES)
                 : MatchSignal.unavailable(MatchSignalCode.DIFFERENT_ACCOUNT_REFERENCES));
 
-        // The three the platform cannot answer at all, and the reason this list is worth reading
-        // even when it decides nothing.
+        // One left that the platform cannot answer at all. It was three until August 2026; the
+        // other two are below, and they are the reason this list was worth reading while it still
+        // decided nothing — the gap being visible on every case is how the ask got made.
         signals.add(MatchSignal.unavailable(MatchSignalCode.SAME_SECONDARY_PHONE));
-        signals.add(MatchSignal.unavailable(MatchSignalCode.SAME_CITY));
-        signals.add(MatchSignal.unavailable(MatchSignalCode.SIMILAR_ADDRESS));
+
+        signals.add(equality(left.sector(), right.sector(), MatchSignalCode.SAME_SECTOR,
+                SAME_SECTOR, CONFLICTING_SECTOR));
+        signals.add(equality(left.city(), right.city(), MatchSignalCode.SAME_CITY,
+                SAME_CITY, CONFLICTING_CITY));
+        signals.add(addressSignal(left, right));
 
         double confidence = signals.stream().mapToDouble(MatchSignal::weight).sum();
         return new MatchAssessment(clamp(confidence), signals);
@@ -187,6 +241,42 @@ public class MatchScorer {
         return anyConflict
                 ? MatchSignal.conflicts(code, conflicts)
                 : MatchSignal.agrees(code, agrees);
+    }
+
+    /**
+     * A field both records must hold before it can agree or disagree.
+     *
+     * <p>One side blank is a gap and not a disagreement, which is the same rule the identifiers
+     * follow and the right one in a country where most fields are empty most of the time. Compared
+     * case- and space-insensitively, because "Transport et logistique" and "TRANSPORT ET
+     * LOGISTIQUE " are one answer typed twice.
+     */
+    private MatchSignal equality(String left, String right, MatchSignalCode code,
+                                 double agrees, double conflicts) {
+        if (!bothPresent(left, right)) {
+            return MatchSignal.unavailable(code);
+        }
+        return left.trim().equalsIgnoreCase(right.trim())
+                ? MatchSignal.agrees(code, agrees)
+                : MatchSignal.conflicts(code, conflicts);
+    }
+
+    /**
+     * The street, which only ever counts for a match and never against one.
+     *
+     * <p>A differing address is reported as neutral rather than as a conflict, and the distinction
+     * is the point: a conflict tells a reviewer something was found against the pair, and what was
+     * actually found is that two people typed an address differently.
+     */
+    private MatchSignal addressSignal(SubjectFacts left, SubjectFacts right) {
+        if (!bothPresent(left.streetAddress(), right.streetAddress())) {
+            return MatchSignal.unavailable(MatchSignalCode.SIMILAR_ADDRESS);
+        }
+        double similarity = similarity(left.streetAddress().toLowerCase(java.util.Locale.ROOT),
+                right.streetAddress().toLowerCase(java.util.Locale.ROOT));
+        return similarity >= SIMILAR_ADDRESS_THRESHOLD
+                ? MatchSignal.agrees(MatchSignalCode.SIMILAR_ADDRESS, SIMILAR_ADDRESS * similarity)
+                : MatchSignal.neutral(MatchSignalCode.SIMILAR_ADDRESS);
     }
 
     private MatchSignal nameSignal(SubjectFacts left, SubjectFacts right, boolean business) {
@@ -235,9 +325,14 @@ public class MatchScorer {
      *
      * <p>It matters most to the token comparison, where the hyphen is the difference between two
      * tokens and three, and so between an overlap of a half and an overlap of one.
+     *
+     * <p>The comma was added with the address comparison, and it was measured rather than assumed:
+     * "12 av. Kasa-Vubu" against "12, avenue Kasa Vubu" scored 0.750 with the comma left in and
+     * 0.789 with it flattened, because "12," and "12" are two tokens until it goes. Harmless to
+     * names, which rarely carry one and are not distinguished by it when they do.
      */
     private String flattenPunctuation(String name) {
-        return name.replaceAll("[-'’.]", " ").replaceAll("\\s+", " ").trim();
+        return name.replaceAll("[-'’.,]", " ").replaceAll("\\s+", " ").trim();
     }
 
     private double editSimilarity(String left, String right) {

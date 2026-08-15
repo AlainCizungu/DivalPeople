@@ -239,7 +239,8 @@ public class EntityResolutionService {
     private SubjectFacts facts(SubjectRegistryService.RegistrySubject subject) {
         return new SubjectFacts(subject.business(), subject.normalizedName(),
                 subject.nationality(), subject.dateOfBirth(), subject.nationalIdentifiers(),
-                subject.hasAccountReference());
+                subject.hasAccountReference(), subject.sector(), subject.city(),
+                subject.streetAddress());
     }
 
     private String asJson(List<MatchSignal> signals) {
