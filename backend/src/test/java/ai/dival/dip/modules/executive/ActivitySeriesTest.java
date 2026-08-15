@@ -137,8 +137,8 @@ class ActivitySeriesTest {
      *
      * <p>{@code List.of(row(...))} does not compile: a single {@code Object[]} handed to a varargs
      * method is spread rather than wrapped, so the inferred type is {@code List<Object>} and the
-     * call will not match. This exists so that mistake is made once, here, rather than at each of
-     * the five call sites.
+     * call will not match. This exists so that mistake is made once, here, rather than at each
+     * of the 8 call sites below.
      */
     private static List<Object[]> rows(Object[]... items) {
         return List.of(items);
