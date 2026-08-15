@@ -164,7 +164,7 @@ class WatchlistTest extends AbstractIntegrationTest {
     void unwatchingDeletes() {
         UUID subject = declare(vodacom);
         UUID watchId = TenantContext.runAsResult(bank,
-                () -> watchlist.watch(subject, "Credit facility under review.", WATCHER)).getId();
+                () -> watchlist.watch(subject, "Credit facility under review.", WATCHER)).id();
 
         TenantContext.runAs(bank, () -> watchlist.unwatch(watchId, WATCHER));
 
