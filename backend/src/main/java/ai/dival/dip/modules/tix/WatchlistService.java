@@ -68,9 +68,32 @@ public class WatchlistService {
         this.clock = clock;
     }
 
+    /**
+     * The watches this operator holds, already flattened.
+     *
+     * <p>Returns a record rather than the entity, and that is the fix for a mistake this codebase
+     * has now made twice. The controller was mapping the list after this method returned — outside
+     * the transaction, on a closed session — so every {@code entry.getSubject()} was a lazy proxy
+     * and the first name read threw. {@code BatchResponse} had exactly this shape and cost a round
+     * trip to diagnose.
+     *
+     * <p>The rule that avoids it: a service that owns a transaction hands back data, not entities
+     * that still need one.
+     */
     @Transactional(readOnly = true)
-    public List<WatchlistEntry> list() {
-        return watches.findByTenantIdOrderByExpiresAt(TenantContext.require());
+    public List<Watch> list() {
+        return watches.findByTenantIdOrderByExpiresAt(TenantContext.require()).stream()
+                .map(entry -> new Watch(entry.getId(), entry.getSubject().getId(),
+                        entry.getSubject().getFullName(), entry.getPurpose(),
+                        entry.getExpiresAt(), entry.getLastOutcome(),
+                        entry.getLastInstitutions(), entry.getLastCheckedAt()))
+                .toList();
+    }
+
+    /** A watch as the operator sees it: an outcome and a count, exactly as an inquiry discloses. */
+    public record Watch(UUID id, UUID subjectId, String name, String purpose, Instant expiresAt,
+                        InquiryResult.Outcome lastOutcome, Integer lastInstitutions,
+                        Instant lastCheckedAt) {
     }
 
     /**
@@ -81,7 +104,7 @@ public class WatchlistService {
      * decision to keep asking for a year.
      */
     @Transactional
-    public WatchlistEntry watch(UUID subjectId, String purpose, UUID actorId) {
+    public Watch watch(UUID subjectId, String purpose, UUID actorId) {
         UUID tenantId = TenantContext.require();
 
         if (purpose == null || purpose.isBlank()) {
@@ -108,7 +131,8 @@ public class WatchlistService {
 
         audit.record("TIX_WATCH_ADDED", "Subject", subjectId.toString(),
                 AuditService.OUTCOME_SUCCESS, actorId, purpose.trim());
-        return entry;
+        return new Watch(entry.getId(), subject.getId(), subject.getFullName(),
+                entry.getPurpose(), entry.getExpiresAt(), null, null, null);
     }
 
     @Transactional

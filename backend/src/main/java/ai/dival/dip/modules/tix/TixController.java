@@ -130,15 +130,14 @@ public class TixController {
      */
     @GetMapping("/watchlist")
     @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
-    public List<WatchResponse> watchlist() {
-        return watchlist.list().stream().map(WatchResponse::from).toList();
+    public List<WatchlistService.Watch> watchlist() {
+        return watchlist.list();
     }
 
     @PostMapping("/watchlist")
     @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
-    public WatchResponse watch(@Valid @RequestBody WatchRequest request) {
-        return WatchResponse.from(
-                watchlist.watch(request.subjectId(), request.purpose(), actorId()));
+    public WatchlistService.Watch watch(@Valid @RequestBody WatchRequest request) {
+        return watchlist.watch(request.subjectId(), request.purpose(), actorId());
     }
 
     @DeleteMapping("/watchlist/{id}")
@@ -161,23 +160,6 @@ public class TixController {
 
     /** @param purpose why this company is being monitored. Required, as on any inquiry. */
     public record WatchRequest(@NotNull UUID subjectId, @NotBlank String purpose) {
-    }
-
-    /**
-     * A watch as the operator sees it.
-     *
-     * <p>Carries the last answer, which is the same pair of facts an inquiry discloses and nothing
-     * more: an outcome and a count of institutions, never which.
-     */
-    public record WatchResponse(UUID id, UUID subjectId, String name, String purpose,
-                                Instant expiresAt, InquiryResult.Outcome lastOutcome,
-                                Integer lastInstitutions, Instant lastCheckedAt) {
-
-        static WatchResponse from(WatchlistEntry entry) {
-            return new WatchResponse(entry.getId(), entry.getSubject().getId(),
-                    entry.getSubject().getFullName(), entry.getPurpose(), entry.getExpiresAt(),
-                    entry.getLastOutcome(), entry.getLastInstitutions(), entry.getLastCheckedAt());
-        }
     }
 
     /**
