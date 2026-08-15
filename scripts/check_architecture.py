@@ -532,6 +532,36 @@ def check_cross_module_calls_are_public() -> None:
                 for path, cls, name in sorted(set(violations))))
 
 
+def check_every_table_is_granted_to_the_app() -> None:
+    """
+    Every table a migration creates must be granted to dip_app.
+
+    Added in August 2026 after two tables shipped without a grant. Both were correct in every way
+    this file already checked — tenant column, row-level security, a WITH CHECK policy — and both
+    answered every query with "permission denied for table". The harder half of the isolation story
+    was enforced and the trivial half was not.
+
+    The tests cannot catch this. Testcontainers runs as the schema owner, so a missing grant is
+    invisible to the whole suite and appears only in a running deployment, as a 500 on the first
+    request. That is precisely the class of defect a static check is for.
+    """
+    created: dict[str, Path] = {}
+    granted: set[str] = set()
+    for path in sorted(MIGRATIONS.glob("*.sql"), key=lambda p: int(re.search(r"V(\d+)", p.name).group(1))):
+        sql = path.read_text(encoding="utf-8")
+        for table in re.findall(r"CREATE TABLE (?:IF NOT EXISTS )?(\w+)", sql, re.IGNORECASE):
+            created.setdefault(table, path)
+        granted.update(re.findall(r"GRANT [^;]*? ON (\w+) TO dip_app", sql, re.IGNORECASE))
+
+    missing = [(t, p) for t, p in sorted(created.items()) if t not in granted]
+    if missing:
+        raise Failure("\n".join(
+            f"    {table} (created in {path.name}) — no GRANT ... TO dip_app"
+            for table, path in missing)
+            + "\n  The application owns no tables. Without a grant every query on this table "
+              "fails with SQLSTATE 42501, which no test can see because tests run as the owner.")
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
     ("annotations are attached to a declaration", check_annotations_are_attached),
@@ -541,6 +571,7 @@ CHECKS = [
     ("no fixed-width CHAR columns", check_no_char_columns),
     ("every endpoint declares authorization", check_every_endpoint_declares_authorization),
     ("raw INSERTs name every required column", check_raw_inserts_name_required_columns),
+    ("every table is granted to the application role", check_every_table_is_granted_to_the_app),
 ]
 
 
