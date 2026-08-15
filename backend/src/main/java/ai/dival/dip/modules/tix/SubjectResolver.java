@@ -136,6 +136,24 @@ public class SubjectResolver {
      * single operator, where no other operator can ever match it. The constructor refuses both
      * mistakes; this is what stops them being made.
      */
+    /**
+     * Fills whatever the registry does not yet hold, and overwrites nothing.
+     *
+     * <p>A subject is registry-wide: two operators declaring one company by national document land
+     * on one row, and nothing here arbitrates between "Transport et logistique" and "Logistique".
+     * Last-writer-wins would let one participant rewrite another's view of a company it cannot see,
+     * which is the disclosure the exchange exists to prevent, running backwards.
+     *
+     * <p>The cost is a stale value outliving a fresher one. That is the trade, and the way a
+     * company corrects what is held about it is the subject rights path, which has a person on it.
+     */
+    private static void learnProfile(Subject subject, DeclarationRequest request) {
+        DeclarationRequest.Profile profile = request.profile();
+        if (profile != null) {
+            subject.learnProfile(profile.sector(), profile.city(), profile.streetAddress());
+        }
+    }
+
     private static SubjectIdentifier newIdentifier(
             IdentifierType type, String value, UUID declaringTenantId) {
         return new SubjectIdentifier(

@@ -235,7 +235,7 @@ public class ImportDeriver {
                             + ". A credit balance is not a debt.");
         }
 
-        SourceMapping.Profile profile = mapping.profileFrom(row);
+        SourceMapping.Profile profile = mapping.profileFrom(cells);
 
         return new DeclarationRequest(
                 List.of(new DeclarationRequest.SubmittedIdentifier(type, identifier)),
