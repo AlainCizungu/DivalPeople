@@ -756,7 +756,8 @@
       "reviewShared": "Votre évaluation {cycle} vous a été partagée",
       "reviewDisputed": "{employee} conteste son évaluation {cycle}",
       "certificationExpiring": "{course} de {employee} expire dans {days} jour(s)",
-      "tixInquiryResultSuperseded": "Un enregistrement qui vous a été communiqué a été corrigé ou retiré. Vérifiez à nouveau le sujet {subject} avant de vous fier à la réponse précédente."
+      "tixInquiryResultSuperseded": "Un enregistrement qui vous a été communiqué a été corrigé ou retiré. Vérifiez à nouveau le sujet {subject} avant de vous fier à la réponse précédente.",
+      "watchedSubjectChanged": "{name} : l'échange indique désormais {outcome}, avec {institutions} institution(s) déclarante(s)."
     }
   },
   "imports": {
@@ -1330,5 +1331,25 @@
       "MOSTLY_NO_MATCH": "Le plus fort des trois et le plus difficile à écarter. Qui vérifie ses clients les trouve ; qui parcourt un format d'identifiant pour voir quelles valeurs existent ne trouve presque personne.",
       "HIT_THE_RATE_LIMIT": "Une personne faisant son travail n'atteint pour ainsi dire jamais un plafond horaire. Un traitement automatisé l'atteint aussitôt."
     }
+  },
+  "watchlist": {
+    "title": "Listes de surveillance",
+    "subtitle": "Les entreprises sur lesquelles vous interrogez l'échange de façon planifiée.",
+    "why": "Une surveillance n'est pas un pouvoir nouveau. C'est la consultation que vous pouvez déjà faire, posée chaque nuit, imputée sur le même quota horaire et inscrite dans la même piste d'audit avec la même finalité déclarée. Elle rapporte exactement ce qu'une consultation aurait rapporté le matin même : un résultat et le nombre d'institutions déclarantes — jamais lesquelles.",
+    "whyNightly": "Répondue de façon planifiée plutôt qu'à l'instant où quelque chose se produit, et c'est délibéré. Être averti l'après-midi où un concurrent déclare vous indiquerait le moment, et le moment associé à un compte de deux identifie l'autre institution par élimination.",
+    "loadFailed": "Impossible de charger la liste de surveillance.",
+    "forbidden": "Surveiller une entreprise requiert le rôle de consultation, car une surveillance est une consultation.",
+    "empty": "Vous ne surveillez personne.",
+    "emptyHint": "Ouvrez une entreprise depuis Entreprises ou depuis un résultat de recherche et démarrez la surveillance là. On vous demandera pourquoi, comme pour toute consultation.",
+    "sweep": "Interroger sur toutes maintenant",
+    "sweeping": "Interrogation…",
+    "sweepResult": "{watched} interrogée(s) ; {changed} réponse(s) ont changé. Cela a coûté {watched} consultations sur le quota de cette heure.",
+    "neverChecked": "Pas encore interrogée",
+    "lastChecked": "Dernière interrogation",
+    "expires": "S'arrête le",
+    "institutions": "institutions déclarantes",
+    "purpose": "Motif",
+    "remove": "Arrêter la surveillance",
+    "expiryNote": "Une surveillance s'arrête au bout de douze mois. Qui en a encore besoin la renouvelle et redit pourquoi — une liste qui ne fait que croître est une surveillance par accumulation."
   }
 }

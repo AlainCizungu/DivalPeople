@@ -756,7 +756,8 @@
       "reviewShared": "Your {cycle} review has been shared with you",
       "reviewDisputed": "{employee} has disputed their {cycle} review",
       "certificationExpiring": "{employee}'s {course} expires in {days} day(s)",
-      "tixInquiryResultSuperseded": "A record you were told about has been corrected or withdrawn. Check subject {subject} again before relying on the earlier answer."
+      "tixInquiryResultSuperseded": "A record you were told about has been corrected or withdrawn. Check subject {subject} again before relying on the earlier answer.",
+      "watchedSubjectChanged": "{name}: the exchange now says {outcome}, with {institutions} institution(s) reporting."
     }
   },
   "imports": {
@@ -1330,5 +1331,25 @@
       "MOSTLY_NO_MATCH": "The strongest of the three and the hardest to explain away. Somebody checking customers finds them; somebody walking an identifier format to see which values exist finds almost nobody.",
       "HIT_THE_RATE_LIMIT": "A person doing their job reaches an hourly cap approximately never. Something automated reaches it immediately."
     }
+  },
+  "watchlist": {
+    "title": "Watchlists",
+    "subtitle": "Companies you are asking the exchange about on a schedule.",
+    "why": "A watch is not a new power. It is the inquiry you can already make, asked every night, charged against the same hourly allowance and recorded in the same audit trail with the same stated purpose. It reports exactly what an inquiry would have reported that morning: an outcome and how many institutions report the company — never which.",
+    "whyNightly": "Answered on a schedule rather than the moment something happens, and that is deliberate. Being told the afternoon a rival declares would tell you when, and when plus a count of two identifies the other institution by elimination.",
+    "loadFailed": "Could not load the watchlist.",
+    "forbidden": "Watching a company needs the inquirer role, because a watch is an inquiry.",
+    "empty": "You are not watching anybody.",
+    "emptyHint": "Open a company from Businesses or from a search result and start a watch there. You will be asked why, as you are for any inquiry.",
+    "sweep": "Ask about all of them now",
+    "sweeping": "Asking…",
+    "sweepResult": "Asked about {watched}; {changed} answer(s) changed. That cost {watched} inquiries against this hour's allowance.",
+    "neverChecked": "Not yet asked",
+    "lastChecked": "Last asked",
+    "expires": "Stops",
+    "institutions": "institutions reporting",
+    "purpose": "Why",
+    "remove": "Stop watching",
+    "expiryNote": "A watch stops after twelve months. Somebody who still needs it renews it and says why again — a list that only ever grows is surveillance by accretion."
   }
 }

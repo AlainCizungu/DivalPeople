@@ -118,7 +118,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         // resolution: the page explains that reading colleagues' behaviour is a supervisory
         // function rather than leaving a built screen looking unbuilt.
         { href: "/app/anomalies", label: t.fraud },
-        { label: t.watchlists },
+        // A watch is an inquiry asked on a schedule, so the entry sits beside the risk screens
+        // rather than under Subjects: what it produces is an answer about exposure, not a record.
+        { href: "/app/watchlists", label: t.watchlists },
       ],
     },
     {

@@ -892,6 +892,42 @@ export type BehaviourReport = {
   people: InquiryBehaviour[];
 };
 
+export type Watch = {
+  id: string;
+  subjectId: string;
+  name: string;
+  purpose: string;
+  expiresAt: string;
+  /** The last answer: exactly what an inquiry discloses, and nothing more. */
+  lastOutcome: InquiryOutcome | null;
+  lastInstitutions: number | null;
+  lastCheckedAt: string | null;
+};
+
+export const watchlistApi = {
+  list(): Promise<Watch[]> {
+    return request<Watch[]>("/api/v1/tix/watchlist");
+  },
+
+  watch(subjectId: string, purpose: string): Promise<Watch> {
+    return request<Watch>("/api/v1/tix/watchlist", {
+      method: "POST",
+      body: JSON.stringify({ subjectId, purpose }),
+    });
+  },
+
+  unwatch(id: string): Promise<void> {
+    return request<void>(`/api/v1/tix/watchlist/${id}`, { method: "DELETE" });
+  },
+
+  /** Costs one inquiry per watch against this operator's hourly allowance. */
+  sweep(): Promise<{ watched: number; changed: number }> {
+    return request<{ watched: number; changed: number }>("/api/v1/tix/watchlist/sweep", {
+      method: "POST",
+    });
+  },
+};
+
 export const anomaliesApi = {
   behaviour(): Promise<BehaviourReport> {
     return request<BehaviourReport>("/api/v1/anomalies/behaviour");

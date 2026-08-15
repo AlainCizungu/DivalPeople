@@ -3,11 +3,15 @@ package ai.dival.dip.modules.tix;
 import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.users.CurrentUserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,18 +34,21 @@ public class TixController {
     private final DebtRecordService debtRecords;
     private final PortfolioService portfolio;
     private final SearchService search;
+    private final WatchlistService watchlist;
     private final SubjectRightsService rights;
     private final ImportDeriver imports;
     private final CurrentUserService currentUser;
 
     public TixController(ExchangeService exchange, DebtRecordService debtRecords,
                          PortfolioService portfolio, SearchService search,
+                         WatchlistService watchlist,
                          SubjectRightsService rights, ImportDeriver imports,
                          CurrentUserService currentUser) {
         this.exchange = exchange;
         this.debtRecords = debtRecords;
         this.portfolio = portfolio;
         this.search = search;
+        this.watchlist = watchlist;
         this.rights = rights;
         this.imports = imports;
         this.currentUser = currentUser;
@@ -114,6 +121,65 @@ public class TixController {
     }
 
     /** Everything the calling operator holds about one subject. Refuses subjects it does not. */
+    /**
+     * Watching a company: a standing inquiry.
+     *
+     * <p>Guarded by the inquirer role rather than the declarant one, and that is the whole framing.
+     * A watch is not a new power — it is the inquiry this account can already make, asked on a
+     * schedule, charged against the same allowance and audited under the same action.
+     */
+    @GetMapping("/watchlist")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public List<WatchResponse> watchlist() {
+        return watchlist.list().stream().map(WatchResponse::from).toList();
+    }
+
+    @PostMapping("/watchlist")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public WatchResponse watch(@Valid @RequestBody WatchRequest request) {
+        return WatchResponse.from(
+                watchlist.watch(request.subjectId(), request.purpose(), actorId()));
+    }
+
+    @DeleteMapping("/watchlist/{id}")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public void unwatch(@PathVariable UUID id) {
+        watchlist.unwatch(id, actorId());
+    }
+
+    /**
+     * Asks the exchange about everything being watched.
+     *
+     * <p>A POST because it writes, and because it spends: every watch costs one inquiry against
+     * this operator's hourly allowance, exactly as if somebody had asked by hand.
+     */
+    @PostMapping("/watchlist/sweep")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public WatchlistService.Sweep sweepWatchlist() {
+        return watchlist.sweep(actorId());
+    }
+
+    /** @param purpose why this company is being monitored. Required, as on any inquiry. */
+    public record WatchRequest(@NotNull UUID subjectId, @NotBlank String purpose) {
+    }
+
+    /**
+     * A watch as the operator sees it.
+     *
+     * <p>Carries the last answer, which is the same pair of facts an inquiry discloses and nothing
+     * more: an outcome and a count of institutions, never which.
+     */
+    public record WatchResponse(UUID id, UUID subjectId, String name, String purpose,
+                                Instant expiresAt, InquiryResult.Outcome lastOutcome,
+                                Integer lastInstitutions, Instant lastCheckedAt) {
+
+        static WatchResponse from(WatchlistEntry entry) {
+            return new WatchResponse(entry.getId(), entry.getSubject().getId(),
+                    entry.getSubject().getFullName(), entry.getPurpose(), entry.getExpiresAt(),
+                    entry.getLastOutcome(), entry.getLastInstitutions(), entry.getLastCheckedAt());
+        }
+    }
+
     /**
      * The operator's own book, by kind.
      *
