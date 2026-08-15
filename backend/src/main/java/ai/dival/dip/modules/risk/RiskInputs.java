@@ -1,5 +1,7 @@
 package ai.dival.dip.modules.risk;
 
+import java.math.BigDecimal;
+
 /**
  * Everything the indicator is allowed to look at.
  *
@@ -14,9 +16,18 @@ package ai.dival.dip.modules.risk;
  * differenced back into that activity. Every input below is either something the answer already
  * carries, or a band coarse enough that no sequence of readings recovers the underlying value.
  *
- * <p>Note what is missing: no amount, no currency, no operator identity, no dates, no count of
- * records. Amounts are absent because their currency is unconfirmed. Dates are absent because a
- * date is a joinable fact and a band is not.
+ * <p>Note what is missing: no operator identity, no dates, no count of records. Dates are absent
+ * because a date is a joinable fact and a band is not.
+ *
+ * <p><strong>An amount is here now, and it is the one input that deserved an argument.</strong>
+ * Until August 2026 the currency of the operator files was unknown, so exposure could not be
+ * weighed at all; counsel then confirmed both are USD. That settles whether the number means
+ * anything. It does not settle whether the number may be disclosed — the exchange has never
+ * reported an amount, deliberately, because an amount tells a competitor the size of a rival's
+ * commercial relationship. So the model takes the total and reports a band four steps wide. What
+ * leaves the platform is "somewhere between ten and a hundred thousand dollars", never a figure,
+ * and no sequence of readings differences back into one. Counsel asked for the exact amount; this
+ * is deliberately less than he asked for, pending a decision that is not the model's to take.
  *
  * @param anyOutstanding             at least one participant reports an unpaid obligation
  * @param anySettled                 at least one obligation on record was settled
@@ -29,6 +40,9 @@ package ai.dival.dip.modules.risk;
  *                                   changed everybody's assessment
  * @param identity                   how firmly the subject was matched
  * @param fraudSignalCount           advisory indicators raised, never findings
+ * @param outstandingUsd             everything unpaid, added up, in US dollars — or null when
+ *                                   nothing is unpaid or the file mixes currencies, which are two
+ *                                   different silences and the model says which
  */
 public record RiskInputs(
         boolean anyOutstanding,
@@ -36,7 +50,8 @@ public record RiskInputs(
         int institutionsWithOutstanding,
         long longestOverdueDays,
         IdentityStrength identity,
-        int fraudSignalCount) {
+        int fraudSignalCount,
+        BigDecimal outstandingUsd) {
 
     public RiskInputs {
         if (identity == null) {
@@ -46,6 +61,11 @@ public record RiskInputs(
         }
         if (institutionsWithOutstanding < 0 || fraudSignalCount < 0) {
             throw new IllegalArgumentException("Counts cannot be negative");
+        }
+        if (outstandingUsd != null && outstandingUsd.signum() < 0) {
+            throw new IllegalArgumentException(
+                    "A negative total is a credit balance, which the registry refuses on the way "
+                            + "in. Reaching the model means something upstream let one through.");
         }
     }
 }

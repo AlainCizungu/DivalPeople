@@ -29,7 +29,7 @@ which is defensible under a legal obligation and much harder to defend under con
 **Not a code change yet. A question to put back to him before the pilot**, because the answer
 decides whether the erasure refusal stands.
 
-### 2. He wants the amount disclosed
+### 2. He wants the amount disclosed — partially done, and deliberately less than he asked
 
 > *"l'idée est juste d'indiquer par exemple qu'un débiteur doit XXX montant à une société TELECOM
 > sans indiquer laquelle"*
@@ -44,7 +44,17 @@ amount plus an institution count is a great deal more than a status, and a bank 
 company it already knows can difference two answers over time into a rival's billing. His
 protection — not naming the operator — does not prevent that when only one institution reports.
 
-**Wants a decision from you before it is built.**
+**Half of it is now built, and the half that is built is the conservative half.** The risk
+indicator weighs the total in four bands a decimal order of magnitude apart — 1k, 10k, 100k — worth
+at most 10 points out of 100. An enquirer learns which of four brackets applies; nobody learns a
+figure, and no sequence of readings recovers one, which is the property that makes weighing it safe
+at all.
+
+Reporting the amount itself, as he asked, is still **not built and still wants your decision**. The
+trade has not changed: an amount plus an institution count is a great deal more than a status, and
+a bank asking about a company it already knows can difference two answers over time into a rival's
+billing. His protection — not naming the operator — does not prevent that when only one institution
+reports.
 
 ### 3. An RCCM changes, so it cannot be decisive
 
@@ -74,10 +84,10 @@ screen's own admission are the same finding arrived at from two directions.
 
 | Question | Answer | What changes |
 |---|---|---|
-| **Currency of `Balance`** | **USD**, both files | The largest open question in the product, closed. `OUTSTANDING_EXPOSURE` can stop being *Not assessed* — a risk model change, so `DIP-RI-3`, and the ceiling moves back up. Settings stops calling the threshold's currency unconfirmed. |
-| **Reporting threshold** | 100 USD is right | Provenance in Settings moves from *terms of reference* to a decision somebody has taken. |
-| **Retention** | Apply 5 years | Today: 3 years simple, 5 for a repeat. Wants 5. Settings stops marking these *unverified placeholder*. Worth one clarifying question: 5 for both, or 5 as the single period? |
-| **Rights deadlines** | **10 days** for access, **20** for everything else | Today: 60 and 30. A large tightening. The overdue and due-soon counts on the front door will change shape immediately, and a queue that was comfortable becomes a queue with real pressure on it. |
+| **Currency of `Balance`** | **USD**, both files | **Applied.** `OUTSTANDING_EXPOSURE` is assessed at 10 points in four bands; the model is `DIP-RI-3` and the ceiling is back at 100. The weight is small deliberately — see below. |
+| **Reporting threshold** | 100 USD is right | **Applied.** Provenance in Settings is now *advised by counsel* rather than *terms of reference*. |
+| **Retention** | Apply 5 years | **Applied as 5 for both.** Which means a repeat default is now kept no lifetime longer than a first one, so that distinction currently decides nothing — the two settings survive in case he wants one. `settled-days` was never asked about and is still the only *unverified placeholder* on the settings screen, which makes it much easier to see. |
+| **Rights deadlines** | **10 days** for access, **20** for everything else | **Applied.** A case keeps the deadline it was given when raised — `due_at` is written once and V23 forbids updating it — so this binds new requests and does not retroactively make the existing queue overdue. New cases will go overdue far faster and the front door will show it. |
 | **Article 214 scope** | Confirmed | Notifying every institution that enquired before the correction is right. No change. |
 | **Write-off status** | Accounting only; **the debt remains recoverable** | Closes an open question on the roadmap. Declaring the Vodacom write-offs is legitimate, and all 4,290 rows stand. |
 | **Prior authorisation** | Not required, in his estimation | Note the hedge — *j'estime*. Not a clearance. |

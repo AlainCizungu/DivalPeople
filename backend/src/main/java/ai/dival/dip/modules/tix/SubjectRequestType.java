@@ -32,16 +32,27 @@ public enum SubjectRequestType {
     /**
      * How long the Code du numérique allows to answer this.
      *
-     * <p>Sixty days for access — article 210 gives that long to supply a copy of what is held —
-     * and thirty for everything else, from articles 213, 214 and 215. The periods are here rather
-     * than in a configuration file on purpose: a reporting threshold is policy and belongs to a
-     * deployment, but a statutory deadline belongs to the statute, and making it tunable would
-     * invite somebody to tune it.
+     * <p><strong>Ten days for access, twenty for everything else.</strong> Counsel advised these
+     * in August 2026, replacing the sixty and thirty this file previously read off articles 210,
+     * 213, 214 and 215. Being wrong in the earlier direction is the expensive kind — every case
+     * answered on day forty under the old numbers was already a month late — so the shorter
+     * periods are applied as given rather than held pending a citation.
+     *
+     * <p>Note which way round they are. Access is the <em>shortest</em>, which reads oddly beside
+     * a regime where supplying a copy of a file is more work than acknowledging a dispute, and
+     * that is the point: telling somebody what is held about them is the right the others depend
+     * on, and a person who cannot see their record cannot know there is anything to rectify.
+     *
+     * <p>The periods are here rather than in configuration on purpose. A reporting threshold is
+     * policy and belongs to a deployment; a statutory deadline belongs to the statute, and making
+     * it tunable would invite somebody to tune it.
      *
      * <p>Missing one is not merely late. Article 214 makes it grounds in itself for a complaint to
-     * the Autorité de protection des données.
+     * the Autorité de protection des données. Existing open cases keep the deadline computed when
+     * they were raised — {@code due_at} is written once and V23 forbids updating it — so this
+     * change binds new requests rather than retroactively making yesterday's queue overdue.
      */
     public int answerWithinDays() {
-        return this == ACCESS ? 60 : 30;
+        return this == ACCESS ? 10 : 20;
     }
 }

@@ -24,7 +24,7 @@ that gap is visible rather than implied by a configuration file.
 
 | Case | Period | Where |
 |---|---|---|
-| First default, unsettled | 3 years from the **default date** | `dip.tix.retention.simple-years` |
+| First default, unsettled | 5 years from the **default date** | `dip.tix.retention.simple-years` |
 | Default by somebody the exchange has seen before | 5 years from the default date | `dip.tix.retention.repeat-years` |
 | Settled | 30 days from settlement, or the existing expiry if sooner | `dip.tix.retention.settled-days` |
 

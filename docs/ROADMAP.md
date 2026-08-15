@@ -45,7 +45,8 @@ describes a system that cannot lawfully be switched on.
 
 Two engineering consequences are concrete enough to build now, and are in `TIX_LEGAL_BASIS.md`:
 notifying every institution that enquired when a record is later corrected or erased (article 214),
-and putting statutory deadlines — 60 days for access, 30 for the rest — on subject requests.
+and putting statutory deadlines — 10 days for access, 20 for the rest, revised down from 60 and
+30 on counsel's advice in August 2026 — on subject requests.
 
 ### The gap that mattered most, and what is left of it
 

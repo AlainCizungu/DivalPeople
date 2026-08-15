@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.risk;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,7 +36,7 @@ public class RiskIndicatorService {
      * changes whenever any weight or threshold in this file changes — that is the rule, and it is
      * the whole reason the constant is here rather than a literal at the bottom of the method.
      */
-    public static final String MODEL_VERSION = "DIP-RI-2";
+    public static final String MODEL_VERSION = "DIP-RI-3";
 
     /**
      * How many factors the narrative names.
@@ -49,20 +50,36 @@ public class RiskIndicatorService {
     /** A factor has to be worth this much before it is worth naming as a driver. */
     private static final int DRIVER_THRESHOLD = 5;
 
+    /**
+     * The edges of the exposure bands, in US dollars.
+     *
+     * <p>Round numbers, each a decimal order of magnitude from the last, and chosen rather than
+     * fitted. Nothing in this platform's data could fit them: fitting an edge needs outcomes, and
+     * the registry holds who was owed money and not who eventually failed. A round number nobody
+     * mistakes for a finding is more honest than a precise one that implies a study.
+     *
+     * <p>The floor starts at 1,000 because the reporting threshold is 100 — a subject can be in
+     * the registry for a single obligation ten times the floor and still be, in any commercial
+     * reading, a small unpaid invoice.
+     */
+    private static final BigDecimal SMALL_EXPOSURE_USD = new BigDecimal("1000");
+    private static final BigDecimal MODERATE_EXPOSURE_USD = new BigDecimal("10000");
+    private static final BigDecimal LARGE_EXPOSURE_USD = new BigDecimal("100000");
+
     public RiskIndicator assess(RiskInputs inputs) {
         List<RiskFactor> factors = List.of(
                 paymentBehaviour(inputs),
                 debtAging(inputs),
                 reportingInstitutions(inputs),
                 identityConfidence(inputs),
-                // Three permanently zero now, all listed, and each says which kind of silence it
-                // is. Fraud joined the other two when it turned out the signal behind it could
-                // never fire — see NO_FRAUD_SIGNAL_IS_COMPUTABLE. The ceiling is therefore 90
-                // rather than 100, which is why this is DIP-RI-2 and not a tweak to DIP-RI-1.
+                outstandingExposure(inputs),
+                // Two permanently zero, both listed, and each says which kind of silence it is.
+                // Exposure left this group in DIP-RI-3 when the currency question was answered,
+                // which puts the ceiling back at 100 — the reason this is a new version and not a
+                // tweak to DIP-RI-2. A score of 67 does not mean in DIP-RI-3 what it meant in
+                // DIP-RI-2, and that is exactly what a version stamp is for.
                 RiskFactor.notAssessed(RiskFactorCode.FRAUD_INDICATORS,
                         NotAssessedReason.NO_FRAUD_SIGNAL_IS_COMPUTABLE),
-                RiskFactor.notAssessed(RiskFactorCode.OUTSTANDING_EXPOSURE,
-                        NotAssessedReason.CURRENCY_UNCONFIRMED),
                 RiskFactor.notAssessed(RiskFactorCode.DISPUTE_HISTORY,
                         NotAssessedReason.DISPUTES_ARE_NOT_DISCLOSED));
 
@@ -172,6 +189,54 @@ public class RiskIndicatorService {
             case NAME_ONLY -> RiskFactor.assessed(
                     RiskFactorCode.IDENTITY_CONFIDENCE, RiskRating.HIGH, 15);
         };
+    }
+
+    /**
+     * How much is unpaid, in four steps and never as a figure.
+     *
+     * <p>Not assessed at all until August 2026: neither operator export stated the currency of its
+     * amount column, and a total that might be dollars or might be francs is not a fact. Counsel
+     * confirmed both files are USD, which is what lets this factor exist and what moved the model
+     * to DIP-RI-3.
+     *
+     * <p><strong>The weight is small on purpose, and the small weight is the honest part.</strong>
+     * Ten points against thirty for age. Absolute exposure is a weak predictor of anything without
+     * something to divide it by — a company that owes eighty thousand dollars may be enormous and
+     * paying late, or small and finished, and this platform holds no revenue, no headcount and no
+     * balance sheet to tell those apart. Weighting it heavily would dress a size measurement up as
+     * a risk measurement, which is the specific error that makes a scoring model discriminate
+     * against large companies and flatter small ones.
+     *
+     * <p><strong>Four steps, and they are wide.</strong> The exchange has never disclosed an
+     * amount, deliberately, because an amount tells a competitor the size of a rival's commercial
+     * relationship. A band a decimal order of magnitude wide survives being watched: an enquirer
+     * who reads this subject every week and subtracts the other factors learns which of four
+     * brackets the total sits in and nothing nearer. The edges are round numbers rather than
+     * fitted ones, because a fitted edge implies a study that was never done.
+     *
+     * <p>Two silences, told apart. Nothing unpaid rates LOW at zero — a real assessment of a real
+     * fact. A mixed-currency file is not assessed, because adding dollars to francs needs a rate
+     * this application has no business inventing.
+     */
+    private RiskFactor outstandingExposure(RiskInputs inputs) {
+        if (!inputs.anyOutstanding()) {
+            return RiskFactor.assessed(RiskFactorCode.OUTSTANDING_EXPOSURE, RiskRating.LOW, 0);
+        }
+        BigDecimal total = inputs.outstandingUsd();
+        if (total == null) {
+            return RiskFactor.notAssessed(RiskFactorCode.OUTSTANDING_EXPOSURE,
+                    NotAssessedReason.MIXED_CURRENCY);
+        }
+        if (total.compareTo(SMALL_EXPOSURE_USD) <= 0) {
+            return RiskFactor.assessed(RiskFactorCode.OUTSTANDING_EXPOSURE, RiskRating.LOW, 2);
+        }
+        if (total.compareTo(MODERATE_EXPOSURE_USD) <= 0) {
+            return RiskFactor.assessed(RiskFactorCode.OUTSTANDING_EXPOSURE, RiskRating.MODERATE, 5);
+        }
+        if (total.compareTo(LARGE_EXPOSURE_USD) <= 0) {
+            return RiskFactor.assessed(RiskFactorCode.OUTSTANDING_EXPOSURE, RiskRating.HIGH, 8);
+        }
+        return RiskFactor.assessed(RiskFactorCode.OUTSTANDING_EXPOSURE, RiskRating.HIGH, 10);
     }
 
     /**

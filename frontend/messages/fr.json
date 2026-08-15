@@ -262,7 +262,7 @@
       "exposureValue": "2",
       "sourcesLabel": "Sources de données",
       "sourcesValue": "2",
-      "signal": "Expliqué par des obligations impayées depuis plus d'un an, déclarées par plusieurs institutions participantes. Les montants ne sont pas pondérés : aucune livraison n'indique sa devise."
+      "signal": "Expliqué par des obligations impayées depuis plus d'un an, déclarées par plusieurs institutions participantes. Le total dû est pondéré selon quatre tranches larges, jamais communiqué sous forme de montant."
     },
     "quick": [
       "Recherche universelle",
@@ -368,7 +368,7 @@
       "bandLabel": "Évaluation",
       "bandValue": "Risque élevé",
       "modelLabel": "Modèle",
-      "modelValue": "DIP-RI-2",
+      "modelValue": "DIP-RI-3",
       "rowsTitle": "Facteurs pris en compte",
       "rows": [
         {
@@ -398,8 +398,8 @@
         },
         {
           "label": "Encours dû",
-          "rating": "Non évalué",
-          "tone": "neutral"
+          "rating": "Faible",
+          "tone": "positive"
         },
         {
           "label": "Historique des contestations",
@@ -407,7 +407,7 @@
           "tone": "neutral"
         }
       ],
-      "notAssessedNote": "Trois facteurs ne sont délibérément jamais pondérés, et la raison de chacun est imprimée à côté de l'évaluation : des montants dont aucun opérateur n'a confirmé la devise, les contestations, déjà retirées de toutes les réponses de l'échange, et les indicateurs de fraude, dont le signal est rendu impossible par les règles d'unicité du registre."
+      "notAssessedNote": "Deux facteurs ne sont délibérément jamais pondérés, et la raison de chacun est imprimée à côté de l'évaluation : les contestations, déjà retirées de toutes les réponses de l'échange, et les indicateurs de fraude, dont le signal est rendu impossible par les règles d'unicité du registre. L'encours impayé les a rejoints jusqu'en août 2026, date à laquelle le conseil a confirmé que les fichiers des opérateurs sont libellés en dollars américains ; il est désormais pondéré selon quatre tranches assez larges pour qu'aucune série de consultations n'en restitue le montant."
     },
     "entity": {
       "eyebrow": "Intelligence sur les entités",
@@ -1150,7 +1150,7 @@
     },
     "notAssessedTitle": "Délibérément non évalué",
     "notAssessedReasons": {
-      "CURRENCY_UNCONFIRMED": "Les colonnes de montant des livraisons opérateurs n'indiquent aucune devise. Les pondérer risquerait une erreur d'un facteur d'environ 2 800 tout en paraissant parfaitement plausible ; l'encours est donc exclu tant qu'un opérateur ne l'a pas confirmé.",
+      "MIXED_CURRENCY": "Les montants figurant au dossier de ce sujet ne sont pas tous libellés dans la même devise, et les additionner supposerait d'inventer un taux de change. L'exposition n'est donc pas pondérée plutôt que partiellement additionnée : un total inférieur au montant réel est l'erreur qui coûte de l'argent au prêteur.",
       "DISPUTES_ARE_NOT_DISCLOSED": "Un enregistrement contesté est déjà retiré de toutes les réponses de l'échange, avant même que quiconque ne tranche. Déclarer la contestation elle-même rétablirait cette divulgation par un autre chemin et ferait de l'exercice d'un droit une chose qui coûte à celui qui l'exerce.",
       "NO_FRAUD_SIGNAL_IS_COMPUTABLE": "Le signal sur lequel reposait ce facteur — un identifiant détenu par deux sujets différents — ne peut pas se produire : les deux index uniques de la table des identifiants l'interdisent, ce qui est précisément ce qui fait qu'un numéro RCCM désigne une seule société. Le facteur a donc indiqué « Faible » sur chaque évaluation jamais produite, soit la façon la plus rassurante possible de dire qu'on n'a rien regardé."
     },
@@ -1167,12 +1167,14 @@
     "notSet": "Non défini",
     "groups": {
       "retention": "Durée de conservation des enregistrements",
+      "rights": "Réponse aux personnes inscrites au registre",
       "reporting": "Ce qui peut être déclaré",
       "exchange": "Limites de consultation",
       "models": "Seuils des modèles publiés"
     },
     "groupNotes": {
-      "retention": "Ce sont des durées légales et non des constantes techniques. Les trois proviennent des chiffres indicatifs des termes de référence et aucune n'a été vérifiée au regard du Code du numérique.",
+      "retention": "Ce sont des durées légales et non des constantes techniques. Deux d'entre elles provenaient des chiffres indicatifs des termes de référence jusqu'à la réponse du conseil en août 2026 ; la troisième n'a jamais fait l'objet d'une question et demeure non vérifiée — c'est à cela que servent les mentions portées à droite.",
+      "rights": "Le délai pour répondre à une personne qui interroge le registre sur son propre dossier. Nettement raccourci en août 2026 : l'accès disposait de soixante jours et le reste de trente. Chaque demande conserve le délai qui lui a été appliqué lors de son introduction ; ce changement vaut donc pour les demandes nouvelles et ne rend pas la file d'hier en retard.",
       "reporting": "Une devise absente de cette liste est refusée et non pondérée par défaut : la ligne manquante est elle-même un paramètre. Le CDF n'est délibérément pas défini, car le fixer suppose de choisir un taux USD/CDF qui évolue et dont quelqu'un doit répondre.",
       "exchange": "L'échange contient les enregistrements de concurrents et chaque requête est individuellement légitime. La limite ne rend pas un balayage impossible ; elle le ralentit assez pour que la piste d'audit soit lue.",
       "models": "Fixés par une version plutôt que par la configuration, et affichés parce qu'un seuil que l'on ne peut pas voir est un seuil qu'il faut croire sur parole."
@@ -1186,7 +1188,9 @@
       "INQUIRIES_PER_HOUR": "Consultations qu'une institution peut faire en une heure",
       "RISK_MODEL_VERSION": "Quelles règles ont produit une évaluation",
       "MATCH_REVIEW_THRESHOLD": "Confiance à partir de laquelle une paire est soumise à un examen",
-      "MATCH_STRONG_CONFIDENCE": "Confiance au-delà de laquelle un examinateur approuvera probablement"
+      "MATCH_STRONG_CONFIDENCE": "Confiance au-delà de laquelle un examinateur approuvera probablement",
+      "RIGHTS_ACCESS_DAYS": "Pour communiquer copie des données détenues",
+      "RIGHTS_OTHER_DAYS": "Pour répondre à une rectification, un effacement ou une contestation"
     },
     "units": {
       "YEARS": "ans",
@@ -1197,6 +1201,7 @@
     },
     "provenance": {
       "TERMS_OF_REFERENCE": "Termes de référence",
+      "LEGAL_ADVICE": "Avis du conseil juridique",
       "UNVERIFIED_PLACEHOLDER": "Valeur provisoire non vérifiée",
       "OPERATIONAL_DEFAULT": "Valeur d'exploitation par défaut",
       "COMPILED": "Fixé par la version",
@@ -1204,7 +1209,8 @@
     },
     "provenanceNote": {
       "UNVERIFIED_PLACEHOLDER": "Un chiffre plausible que personne n'a vérifié au regard de la loi. Il tiendra jusqu'à ce que quelqu'un le décide, et ne devrait pas être cité comme si quelqu'un l'avait fait.",
-      "NOT_SET": "Rien n'est configuré, ce qui entraîne un refus plutôt qu'une valeur par défaut."
+      "NOT_SET": "Rien n'est configuré, ce qui entraîne un refus plutôt qu'une valeur par défaut.",
+      "LEGAL_ADVICE": "Un juriste a été interrogé sur ce point et y a répondu en août 2026. C'est le fondement le plus solide dont dispose une valeur de cette page, et ce n'est pas pour autant l'approbation d'une autorité de contrôle."
     }
   },
   "access": {

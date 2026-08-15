@@ -75,7 +75,7 @@ class RiskIndicatorOnInquiryTest extends AbstractIntegrationTest {
         InquiryResult result = ask();
 
         assertThat(result.indicator()).isNotNull();
-        assertThat(result.indicator().modelVersion()).isEqualTo("DIP-RI-2");
+        assertThat(result.indicator().modelVersion()).isEqualTo("DIP-RI-3");
         assertThat(result.indicator().factors())
                 .as("every factor, every time, so two assessments can be compared")
                 .hasSize(RiskFactorCode.values().length);
@@ -104,10 +104,12 @@ class RiskIndicatorOnInquiryTest extends AbstractIntegrationTest {
 
         InquiryResult result = ask();
 
-        // 25 unpaid + 30 for the older of the two + 10 for the second institution. The bank
-        // learns that two participants are owed and that something is over a year old, and does
-        // not learn which two or how much — the same trade the institution count makes.
-        assertThat(result.indicator().score()).isEqualTo(65);
+        // 25 unpaid + 30 for the older of the two + 10 for the second institution + 2 for a
+        // thousand dollars of exposure. The bank learns that two participants are owed, that
+        // something is over a year old, and that the total is in the smallest of four brackets —
+        // and does not learn which two institutions or what the figure is. The same trade the
+        // institution count makes, applied to the amount.
+        assertThat(result.indicator().score()).isEqualTo(67);
         assertThat(result.indicator().band()).isEqualTo(RiskBand.ELEVATED);
         assertThat(result.indicator().principalDrivers())
                 .containsExactly(RiskFactorCode.DEBT_AGING, RiskFactorCode.PAYMENT_BEHAVIOUR);
@@ -159,17 +161,31 @@ class RiskIndicatorOnInquiryTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("exposure goes unassessed however large the amounts are")
-    void amountsAreNeverWeighed() {
+    @DisplayName("exposure is weighed from the amounts, and the figure itself never leaves")
+    void amountsAreBandedNotReported() {
         declare(vodacom, 400);
 
-        // Both real operator exports carry an amount column with no stated currency. Until
-        // somebody confirms it, weighting it would make every assessment potentially wrong by a
-        // factor of about 2,800 while looking entirely reasonable.
-        assertThat(factor(ask(), RiskFactorCode.OUTSTANDING_EXPOSURE).rating())
-                .isEqualTo(RiskRating.NOT_ASSESSED);
-        assertThat(factor(ask(), RiskFactorCode.FRAUD_INDICATORS).rating())
-                .as("and fraud with it, since the signal behind that one cannot fire either")
+        InquiryResult result = ask();
+
+        // Five hundred dollars, which is the bottom band. Assessed now — both exports were
+        // confirmed as USD in August 2026, which is what this factor was waiting on.
+        RiskFactor exposure = factor(result, RiskFactorCode.OUTSTANDING_EXPOSURE);
+        assertThat(exposure.rating()).isEqualTo(RiskRating.LOW);
+        assertThat(exposure.points()).isEqualTo(2);
+
+        // And the answer still carries no amount. This is the assertion worth having: the
+        // exchange gained a factor and did not gain a disclosure, and the day somebody adds an
+        // amount to InquiryResult this line is what objects.
+        //
+        // Asked of the record's shape rather than of its rendered text. Matching on "500" in a
+        // toString would read as the same check and would fail about once in a hundred and fifty
+        // runs on nothing but an unlucky UUID — a flake that looks like a leak.
+        assertThat(InquiryResult.class.getRecordComponents())
+                .as("no component of an inquiry answer is a money type")
+                .noneMatch(component -> component.getType() == BigDecimal.class);
+
+        assertThat(factor(result, RiskFactorCode.FRAUD_INDICATORS).rating())
+                .as("fraud stays unassessed, since the signal behind that one cannot fire")
                 .isEqualTo(RiskRating.NOT_ASSESSED);
     }
 

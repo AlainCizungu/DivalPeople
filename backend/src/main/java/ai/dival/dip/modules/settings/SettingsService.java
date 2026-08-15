@@ -2,6 +2,7 @@ package ai.dival.dip.modules.settings;
 
 import ai.dival.dip.modules.resolution.MatchAssessment;
 import ai.dival.dip.modules.risk.RiskIndicatorService;
+import ai.dival.dip.modules.tix.SubjectRequestType;
 import ai.dival.dip.modules.tix.TixProperties;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -49,26 +50,52 @@ public class SettingsService {
     }
 
     public Settings effective() {
-        return new Settings(retention(), reporting(), exchange(), models());
+        return new Settings(retention(), rights(), reporting(), exchange(), models());
     }
 
     /**
      * How long somebody stays in the registry.
      *
-     * <p>The section that earns this whole screen. These are legal periods, the values are the
-     * TDR's illustrative ones, and nobody has checked them against the Code.
+     * <p>The section that earns this whole screen, and the one that changed most in August 2026.
+     * Two of these were the TDR's illustrative figures that nobody had checked against the Code;
+     * counsel answered five years and they now say so. The third was never asked about and is
+     * still a placeholder — which is precisely why the provenance column has to distinguish them,
+     * because rendered as numbers on a page the three look identical.
      */
     private List<Setting> retention() {
         TixProperties.Retention periods = tix.retention();
         return List.of(
                 new Setting("RETENTION_SIMPLE_YEARS", String.valueOf(periods.simpleYears()),
-                        "YEARS", Provenance.UNVERIFIED_PLACEHOLDER),
+                        "YEARS", Provenance.LEGAL_ADVICE),
                 new Setting("RETENTION_REPEAT_YEARS", String.valueOf(periods.repeatYears()),
-                        "YEARS", Provenance.UNVERIFIED_PLACEHOLDER),
+                        "YEARS", Provenance.LEGAL_ADVICE),
+                // Not asked, not answered, still a plausible number nobody has checked.
                 new Setting("RETENTION_SETTLED_DAYS", String.valueOf(periods.settledDays()),
                         "DAYS", Provenance.UNVERIFIED_PLACEHOLDER),
                 new Setting("RETENTION_PURGE_SCHEDULE", retentionPurgeCron,
                         "CRON", Provenance.OPERATIONAL_DEFAULT));
+    }
+
+    /**
+     * How long the registry has to answer a person asking about themselves.
+     *
+     * <p>Shown because they moved a long way and because nothing else on any screen would say so.
+     * Counsel replaced sixty days for access and thirty for everything else with ten and twenty,
+     * which turns a comfortable queue into one with real pressure on it — an operator who does not
+     * know the number changed will discover it as a run of overdue cases.
+     *
+     * <p>Compiled rather than configured, and listed here anyway. A statutory deadline belongs to
+     * the statute; making it tunable would invite somebody to tune it, and a reader who cannot see
+     * it has to take the queue's arithmetic on trust.
+     */
+    private List<Setting> rights() {
+        return List.of(
+                new Setting("RIGHTS_ACCESS_DAYS",
+                        String.valueOf(SubjectRequestType.ACCESS.answerWithinDays()),
+                        "DAYS", Provenance.LEGAL_ADVICE),
+                new Setting("RIGHTS_OTHER_DAYS",
+                        String.valueOf(SubjectRequestType.DISPUTE.answerWithinDays()),
+                        "DAYS", Provenance.LEGAL_ADVICE));
     }
 
     /**
@@ -82,8 +109,10 @@ public class SettingsService {
     private List<Setting> reporting() {
         List<Setting> rows = new ArrayList<>();
         for (Map.Entry<String, BigDecimal> floor : tix.minimumDeclarable().entrySet()) {
+            // Was the TDR's suggestion; counsel confirmed 100 USD in August 2026, which promotes
+            // it from a figure in a document to a figure somebody stands behind.
             rows.add(new Setting("MINIMUM_DECLARABLE", floor.getValue().toPlainString(),
-                    floor.getKey(), Provenance.TERMS_OF_REFERENCE));
+                    floor.getKey(), Provenance.LEGAL_ADVICE));
         }
         if (rows.isEmpty()) {
             // Nothing may be declared at all in this state, which is a configuration fault rather
@@ -120,12 +149,14 @@ public class SettingsService {
 
     /**
      * @param retention how long records are kept, and when the sweep runs
+     * @param rights    how long there is to answer somebody asking about themselves
      * @param reporting the floor per currency; a currency absent from this list is refused
      * @param exchange  limits on asking
      * @param models    thresholds the risk indicator and the match scorer turn on
      */
-    public record Settings(List<Setting> retention, List<Setting> reporting,
-                           List<Setting> exchange, List<Setting> models) {
+    public record Settings(List<Setting> retention, List<Setting> rights,
+                           List<Setting> reporting, List<Setting> exchange,
+                           List<Setting> models) {
     }
 
     /**
@@ -151,10 +182,22 @@ public class SettingsService {
         TERMS_OF_REFERENCE,
 
         /**
+         * Advised by counsel, August 2026.
+         *
+         * <p>The strongest provenance on this screen and still not a clearance. It means a lawyer
+         * was asked the question and answered it, which is different from a regulator having
+         * approved anything — counsel's own note on prior authorisation is hedged ("j'estime"),
+         * and that hedge belongs to every value in this state.
+         */
+        LEGAL_ADVICE,
+
+        /**
          * A plausible number nobody has checked against the law.
          *
-         * <p>The dangerous kind, and the reason this screen exists. All three retention periods
-         * are in this state.
+         * <p>The dangerous kind, and the reason this screen exists. Two of the three retention
+         * periods left this state in August 2026; the one nobody asked about did not, and it is
+         * now the only value on the screen wearing this label — which makes it far easier to see
+         * than it was when it had company.
          */
         UNVERIFIED_PLACEHOLDER,
 

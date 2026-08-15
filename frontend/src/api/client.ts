@@ -58,7 +58,7 @@ export type RiskRating = "NOT_ASSESSED" | "LOW" | "MODERATE" | "HIGH";
 export type RiskBand = "LOW" | "MODERATE" | "ELEVATED" | "HIGH";
 
 export type NotAssessedReason =
-  | "CURRENCY_UNCONFIRMED"
+  | "MIXED_CURRENCY"
   | "DISPUTES_ARE_NOT_DISCLOSED"
   | "NO_FRAUD_SIGNAL_IS_COMPUTABLE";
 
@@ -738,6 +738,7 @@ export const overviewApi = {
 
 export type SettingProvenance =
   | "TERMS_OF_REFERENCE"
+  | "LEGAL_ADVICE"
   | "UNVERIFIED_PLACEHOLDER"
   | "OPERATIONAL_DEFAULT"
   | "COMPILED"
@@ -758,6 +759,7 @@ export type Setting = {
 
 export type Settings = {
   retention: Setting[];
+  rights: Setting[];
   reporting: Setting[];
   exchange: Setting[];
   models: Setting[];

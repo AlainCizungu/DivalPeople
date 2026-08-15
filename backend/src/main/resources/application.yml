@@ -96,12 +96,16 @@ dip:
     minimum-declarable:
       USD: 100
 
-    # How long somebody stays in the registry. These are LEGAL periods, not engineering constants,
-    # and the values below are the TDR's illustrative figures — they have NOT been checked against
-    # the Code du numérique. See docs/TIX_RETENTION.md before treating them as settled.
+    # How long somebody stays in the registry. These are LEGAL periods, not engineering constants.
+    #
+    # Five years, on counsel's advice of August 2026, replacing the TDR's illustrative three and
+    # five that nobody had checked against the Code du numérique. Both periods are now five, so a
+    # repeat default is currently kept no longer than a first one — the two settings survive
+    # because a deployment may yet be told to differentiate.
     retention:
-      simple-years: ${DIP_TIX_RETENTION_SIMPLE_YEARS:3}
+      simple-years: ${DIP_TIX_RETENTION_SIMPLE_YEARS:5}
       repeat-years: ${DIP_TIX_RETENTION_REPEAT_YEARS:5}
+      # NOT advised on, and still an unchecked placeholder — the one figure in this block that is.
       # Days a regularised debt survives after settlement. The TDR asks for erasure on
       # regularisation; a short window lets the settling operator reconcile, and settlement can
       # only ever bring erasure forward, never push it away. Zero means erase at the next sweep.

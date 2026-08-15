@@ -62,14 +62,22 @@ public enum RiskFactorCode {
     FRAUD_INDICATORS(0),
 
     /**
-     * The size of what is owed. <strong>Not assessed.</strong>
+     * The size of what is owed, in four wide bands.
      *
-     * <p>The amount column in both real operator exports has no stated currency. If it is francs
-     * rather than dollars every figure is out by a factor of about 2,800, and a model that
-     * weighted amounts would be wrong by that factor while looking entirely reasonable. Excluded
-     * until an operator confirms it, and named in every response so nobody assumes otherwise.
+     * <p>Not assessed until August 2026, and the reason was the currency: the amount column in
+     * both real operator exports carried no stated one, and francs rather than dollars is a factor
+     * of about 2,800 — a model weighting them would have been wrong by that much while looking
+     * entirely reasonable. Counsel confirmed both files are USD, which is what lets this factor
+     * exist and what moved the model to DIP-RI-3.
+     *
+     * <p><strong>Ten points, which is the smallest weight of any assessed factor, and that is
+     * deliberate.</strong> Absolute exposure predicts little without something to divide it by,
+     * and this platform holds no revenue, no headcount and no balance sheet. A company owing
+     * eighty thousand dollars may be large and slow or small and finished. Weighting size heavily
+     * would dress a size measurement as a risk measurement, which is how a model ends up
+     * penalising big companies and flattering small ones while appearing to measure conduct.
      */
-    OUTSTANDING_EXPOSURE(0),
+    OUTSTANDING_EXPOSURE(10),
 
     /**
      * Whether the subject has contested anything. <strong>Not assessed, and not disclosed.</strong>

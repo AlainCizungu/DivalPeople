@@ -166,13 +166,21 @@ class Article214Test extends AbstractIntegrationTest {
     // --- the deadlines ------------------------------------------------------
 
     @Test
-    @DisplayName("access gets sixty days and everything else gets thirty")
+    @DisplayName("access gets ten days and everything else gets twenty")
     void statutoryPeriodsByType() {
-        // Article 210 for access; articles 213, 214 and 215 for the rest.
-        assertThat(SubjectRequestType.ACCESS.answerWithinDays()).isEqualTo(60);
-        assertThat(SubjectRequestType.DISPUTE.answerWithinDays()).isEqualTo(30);
-        assertThat(SubjectRequestType.RECTIFICATION.answerWithinDays()).isEqualTo(30);
-        assertThat(SubjectRequestType.ERASURE.answerWithinDays()).isEqualTo(30);
+        // Sixty and thirty until August 2026, read off articles 210, 213, 214 and 215; counsel
+        // then advised ten and twenty. Asserted rather than inferred because these decide when a
+        // case starts nagging, and a deadline that quietly drifts is a compliance failure that
+        // looks like a working queue.
+        assertThat(SubjectRequestType.ACCESS.answerWithinDays()).isEqualTo(10);
+        assertThat(SubjectRequestType.DISPUTE.answerWithinDays()).isEqualTo(20);
+        assertThat(SubjectRequestType.RECTIFICATION.answerWithinDays()).isEqualTo(20);
+        assertThat(SubjectRequestType.ERASURE.answerWithinDays()).isEqualTo(20);
+
+        // Access is the shortest, which is the ordering worth stating: telling somebody what is
+        // held about them is the right the others depend on.
+        assertThat(SubjectRequestType.ACCESS.answerWithinDays())
+                .isLessThan(SubjectRequestType.RECTIFICATION.answerWithinDays());
     }
 
     @Test

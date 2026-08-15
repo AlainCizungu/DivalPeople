@@ -13,10 +13,12 @@ import { Card, EmptyState, ErrorNotice, PageHeader, Pill, type Tone } from "@/co
  * their records are kept and a compliance officer could not check a retention period against the
  * law without asking an engineer.
  *
- * <p><strong>Provenance is a column, not a footnote.</strong> Three of these numbers are the terms
- * of reference's illustrative figures and have never been checked against the Code du numérique. A
- * page that printed "3 years" beside "5 years" with no qualification would read as a decision
- * somebody took, and would go on reading that way in a screenshot in somebody's board pack.
+ * <p><strong>Provenance is a column, not a footnote.</strong> Most of these were the terms of
+ * reference's illustrative figures until counsel answered in August 2026; one of them still is,
+ * and it is now the only row on the page wearing the placeholder label — which makes it far easier
+ * to see than when it had company. A page that printed every number with no qualification would
+ * read as a set of decisions somebody took, and would go on reading that way in a screenshot in
+ * somebody's board pack.
  *
  * <p>Read-only, which is the design rather than a first step postponed. Shortening a retention
  * period puts records past due the moment it is saved.
@@ -59,6 +61,9 @@ export default function SettingsPage() {
   const sections: { id: keyof Settings; rows: Setting[] }[] = settings
     ? [
         { id: "retention", rows: settings.retention },
+        // Directly under retention, because the two answer the same question from opposite ends:
+        // how long the registry keeps somebody, and how long it has to answer them.
+        { id: "rights", rows: settings.rights },
         { id: "reporting", rows: settings.reporting },
         { id: "exchange", rows: settings.exchange },
         { id: "models", rows: settings.models },
@@ -126,6 +131,9 @@ function SettingRow({
   // causes a refusal, are not.
   const PROVENANCE_TONE: Record<Setting["provenance"], Tone> = {
     TERMS_OF_REFERENCE: "neutral",
+    // Neutral rather than reassuring. It is the strongest provenance here and still not a
+    // clearance — a lawyer answered a question; no regulator approved anything.
+    LEGAL_ADVICE: "neutral",
     UNVERIFIED_PLACEHOLDER: "review",
     OPERATIONAL_DEFAULT: "neutral",
     COMPILED: "neutral",

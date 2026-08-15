@@ -39,12 +39,20 @@ public record TixProperties(Map<String, BigDecimal> minimumDeclarable, Retention
      * without a release, which is how systems end up holding data past the period they are
      * allowed to.
      *
-     * <p>The defaults below are the TDR's illustrative figures and <strong>have not been checked
-     * against the law</strong>. They are placeholders with plausible values, which is the
-     * dangerous kind: see {@code docs/TIX_RETENTION.md}.
+     * <p><strong>Five years, on counsel's advice of August 2026.</strong> The defaults were the
+     * TDR's illustrative three and five and had never been checked against the Code; asked
+     * directly, counsel answered five. So both periods are five, which means the distinction
+     * between a first default and a repeat one currently changes nothing — the fields remain
+     * because a deployment may yet be told to differentiate, and collapsing them into one setting
+     * would make reinstating the difference a schema change rather than a configuration one.
      *
-     * @param simpleYears  a first, unsettled default
-     * @param repeatYears  a default by somebody the exchange has seen default before
+     * <p>{@code settledDays} was not asked about and is still an unchecked placeholder. It is
+     * reported as one on the settings screen, beside two figures that are no longer placeholders,
+     * which is the only reason the distinction is worth carrying.
+     *
+     * @param simpleYears  a first, unsettled default. Five, per counsel
+     * @param repeatYears  a default by somebody the exchange has seen default before. Also five,
+     *                     so this presently decides nothing
      * @param settledDays  how long a regularised debt survives after settlement. The TDR asks for
      *                     erasure on regularisation; a short window rather than zero exists so the
      *                     settling operator can reconcile, and it can only ever shorten a
@@ -56,13 +64,13 @@ public record TixProperties(Map<String, BigDecimal> minimumDeclarable, Retention
     public record Retention(int simpleYears, int repeatYears, Integer settledDays) {
 
         public Retention {
-            simpleYears = simpleYears > 0 ? simpleYears : 3;
+            simpleYears = simpleYears > 0 ? simpleYears : 5;
             repeatYears = repeatYears > 0 ? repeatYears : 5;
             settledDays = settledDays == null || settledDays < 0 ? 30 : settledDays;
         }
 
         static Retention defaults() {
-            return new Retention(3, 5, 30);
+            return new Retention(5, 5, 30);
         }
     }
 

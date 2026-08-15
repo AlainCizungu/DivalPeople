@@ -7,6 +7,7 @@ import ai.dival.dip.modules.risk.IdentityStrength;
 import ai.dival.dip.modules.risk.RiskIndicatorService;
 import ai.dival.dip.modules.risk.RiskInputs;
 import jakarta.persistence.EntityManager;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -91,6 +92,16 @@ public class ExchangeService {
      * that looks like enumeration. That module must not spell the string itself: two spellings
      * would not fail a build, would not fail a test, and would silently mean it watches nothing.
      */
+    /**
+     * The one currency the risk model will add up.
+     *
+     * <p>Not configuration. A deployment can add a reporting floor for another currency, and the
+     * day it does the exposure factor must stop answering rather than start converting — so this
+     * is deliberately not read from {@code TixProperties}, where somebody extending the floors
+     * would reasonably expect to be extending this too.
+     */
+    private static final String RISK_CURRENCY = "USD";
+
     public static final String INQUIRY_ACTION = "TIX_INQUIRY";
 
     /**
@@ -168,6 +179,16 @@ public class ExchangeService {
         boolean outstanding = false;
         boolean settled = false;
         long longestOverdueDays = -1;
+        // Totalled here and nowhere else, and never disclosed. The exchange answers with an
+        // outcome, a set of statuses and a count of institutions; this figure exists only to be
+        // turned into one of four bands inside the risk model, and no caller can read it back.
+        //
+        // Summed only over one currency. Every declaration today is USD — counsel confirmed both
+        // operator files are, and the deployment configures a floor for no other currency, so
+        // nothing else can be declared — but a second currency appearing later must not silently
+        // become a wrong total. It becomes a refusal to assess instead, which the screen prints.
+        BigDecimal outstandingUsd = BigDecimal.ZERO;
+        boolean mixedCurrency = false;
         for (DebtRecord record : records) {
             // Defence in depth: disputed or investigated records must never leak through.
             if (!record.isVisibleToOtherOperators()) {
@@ -183,6 +204,11 @@ public class ExchangeService {
                 // report a company that fell behind in 2023 and paid in 2023 as still behind.
                 longestOverdueDays = Math.max(longestOverdueDays,
                         ChronoUnit.DAYS.between(record.getDefaultDate(), today));
+                if (RISK_CURRENCY.equalsIgnoreCase(record.getCurrency())) {
+                    outstandingUsd = outstandingUsd.add(record.getAmount());
+                } else {
+                    mixedCurrency = true;
+                }
             } else {
                 settled = true;
             }
@@ -209,7 +235,11 @@ public class ExchangeService {
                         // carry are. A company with an RCCM on file that was matched on its name
                         // was still matched on its name.
                         strengthOf(resolution.identifier()),
-                        fraudSignals.size())));
+                        fraudSignals.size(),
+                        // Null rather than a partial sum. Handing the model the dollars and
+                        // dropping the francs would report a smaller exposure than the subject
+                        // has, which is the direction of error that costs a lender money.
+                        mixedCurrency ? null : outstandingUsd)));
     }
 
     /**

@@ -262,7 +262,7 @@
       "exposureValue": "2",
       "sourcesLabel": "Data sources",
       "sourcesValue": "2",
-      "signal": "Driven by obligations over a year overdue, reported by more than one participating institution. Amounts are not weighed: no delivery states its currency."
+      "signal": "Driven by obligations over a year overdue, reported by more than one participating institution. The total owed is weighed in four wide bands, never disclosed as a figure."
     },
     "quick": [
       "Universal Search",
@@ -368,7 +368,7 @@
       "bandLabel": "Assessment",
       "bandValue": "Elevated risk",
       "modelLabel": "Model",
-      "modelValue": "DIP-RI-2",
+      "modelValue": "DIP-RI-3",
       "rowsTitle": "Factors influencing assessment",
       "rows": [
         {
@@ -398,8 +398,8 @@
         },
         {
           "label": "Outstanding exposure",
-          "rating": "Not assessed",
-          "tone": "neutral"
+          "rating": "Low",
+          "tone": "positive"
         },
         {
           "label": "Dispute history",
@@ -407,7 +407,7 @@
           "tone": "neutral"
         }
       ],
-      "notAssessedNote": "Three factors are deliberately never weighed, and the reason for each is printed beside the assessment: amounts whose currency an operator has not confirmed, disputes, which are already withheld from every answer the exchange gives, and fraud indicators, whose signal the registry's own uniqueness rules make impossible."
+      "notAssessedNote": "Two factors are deliberately never weighed, and the reason for each is printed beside the assessment: disputes, which are already withheld from every answer the exchange gives, and fraud indicators, whose signal the registry's own uniqueness rules make impossible. Outstanding exposure joined them until August 2026, when counsel confirmed the operator files are in US dollars; it is now weighed in four bands wide enough that no sequence of readings recovers the amount."
     },
     "entity": {
       "eyebrow": "Entity Intelligence",
@@ -1150,7 +1150,7 @@
     },
     "notAssessedTitle": "Deliberately not assessed",
     "notAssessedReasons": {
-      "CURRENCY_UNCONFIRMED": "The amount columns in the operator deliveries carry no stated currency. Weighting them would risk being wrong by a factor of about 2,800 while looking entirely reasonable, so exposure is excluded until an operator confirms it.",
+      "MIXED_CURRENCY": "The amounts on this subject's file are not all in one currency, and adding them would mean inventing an exchange rate. Exposure is left unweighed rather than part-added, because a total smaller than the real one is the error that costs a lender money.",
       "DISPUTES_ARE_NOT_DISCLOSED": "A record under dispute is already withheld from every answer the exchange gives, before anybody decides who is right. Reporting the dispute itself would restore that disclosure by another route and make contesting a record something that costs the person who contests it.",
       "NO_FRAUD_SIGNAL_IS_COMPUTABLE": "The signal this factor rested on — one identifier held by two different subjects — cannot occur: both unique indexes on the identifier table forbid it, which is exactly how a business register number resolves to one company. So the factor reported Low on every assessment ever made, which is the most reassuring possible way to report having looked at nothing."
     },
@@ -1167,12 +1167,14 @@
     "notSet": "Not set",
     "groups": {
       "retention": "How long records are kept",
+      "rights": "Answering the people in the registry",
       "reporting": "What may be declared",
       "exchange": "Limits on asking",
       "models": "Published model thresholds"
     },
     "groupNotes": {
-      "retention": "These are legal periods rather than engineering constants. All three are the terms of reference's illustrative figures and none has been checked against the Code du numérique.",
+      "retention": "These are legal periods rather than engineering constants. Two were the terms of reference's illustrative figures until counsel answered in August 2026; the third was never asked about and is still unchecked, which is what the labels on the right are for.",
+      "rights": "How long there is to answer somebody asking about their own record. Shortened sharply in August 2026 — access was sixty days and everything else thirty. A case keeps the deadline it was given when it was raised, so this binds new requests rather than making yesterday's queue overdue.",
       "reporting": "A currency absent from this list is refused rather than defaulted, so the row that is missing is itself a setting. CDF is deliberately unset: choosing it means choosing a USD/CDF rate that moves and that somebody has to own.",
       "exchange": "The exchange holds competitors' records and every request is individually legitimate. The limit does not make a bulk sweep impossible; it makes it slow enough for the audit trail to be read.",
       "models": "Compiled into a release rather than configured, and shown because a threshold you cannot see is a threshold you have to take on trust."
@@ -1186,7 +1188,9 @@
       "INQUIRIES_PER_HOUR": "Inquiries one institution may make in an hour",
       "RISK_MODEL_VERSION": "Which rules produced an assessment",
       "MATCH_REVIEW_THRESHOLD": "Confidence at which a candidate pair reaches a reviewer",
-      "MATCH_STRONG_CONFIDENCE": "Confidence above which a reviewer will probably agree"
+      "MATCH_STRONG_CONFIDENCE": "Confidence above which a reviewer will probably agree",
+      "RIGHTS_ACCESS_DAYS": "To supply a copy of what is held",
+      "RIGHTS_OTHER_DAYS": "To answer a rectification, erasure or dispute"
     },
     "units": {
       "YEARS": "years",
@@ -1197,6 +1201,7 @@
     },
     "provenance": {
       "TERMS_OF_REFERENCE": "Terms of reference",
+      "LEGAL_ADVICE": "Advised by counsel",
       "UNVERIFIED_PLACEHOLDER": "Unverified placeholder",
       "OPERATIONAL_DEFAULT": "Operational default",
       "COMPILED": "Set by release",
@@ -1204,7 +1209,8 @@
     },
     "provenanceNote": {
       "UNVERIFIED_PLACEHOLDER": "A plausible figure nobody has checked against the law. It will hold until somebody decides it, and it should not be quoted as though somebody had.",
-      "NOT_SET": "Nothing is configured, so this is refused rather than defaulted."
+      "NOT_SET": "Nothing is configured, so this is refused rather than defaulted.",
+      "LEGAL_ADVICE": "A lawyer was asked this question and answered it in August 2026. That is the strongest footing anything on this page has, and it is still not a regulator's approval."
     }
   },
   "access": {

@@ -11,12 +11,19 @@ package ai.dival.dip.modules.risk;
 public enum NotAssessedReason {
 
     /**
-     * The data exists and cannot be trusted yet.
+     * The amounts on record are not all in one currency.
      *
-     * <p>Neither operator export states the currency of its amount column. This closes the day
-     * one of them confirms it, and then exposure gets weighed like anything else.
+     * <p>No longer the standing state of the exposure factor. Counsel confirmed in August 2026
+     * that both operator exports are in USD, and the deployment accepts no other currency for
+     * declaration — so in practice this fires only if a record predating that answer, or one
+     * declared under a floor added later, sits in the same subject's file in a second currency.
+     *
+     * <p>Kept rather than deleted, and kept as a refusal rather than a conversion. Adding two
+     * currencies needs a rate; a rate moves, somebody has to own it, and a number invented here
+     * would be a stale exchange rate wearing the costume of a risk factor. Declining to weigh a
+     * mixed file is the honest answer and it is a rare one.
      */
-    CURRENCY_UNCONFIRMED,
+    MIXED_CURRENCY,
 
     /**
      * The data exists and disclosing it would defeat a protection.

@@ -114,10 +114,16 @@ platform has configured. **A registry running on consent cannot guarantee a thre
 
 | Right | Deadline | Article |
 |---|---|---|
-| Access — a copy of the information | **60 days** from receipt | 210 |
-| Rectification / blocking — communicate what was done | **30 days** | 214 |
-| Erasure | **30 days** | 215 |
-| Opposition — communicate what was done | **30 days** | 213 |
+> **Revised August 2026.** These were 60 days for access and 30 for everything else, read off the
+> articles below. Counsel advised 10 and 20 and those are what the platform now applies. Being
+> wrong in the earlier direction was the expensive kind: a case answered on day forty under the old
+> figures was already a month late. A request keeps the deadline it was given when it was raised,
+> so the change binds new cases rather than retroactively making an existing queue overdue.
+
+| Access — a copy of the information | **10 days** from receipt | 210, and counsel, Aug 2026 |
+| Rectification / blocking — communicate what was done | **20 days** | 214, and counsel, Aug 2026 |
+| Erasure | **20 days** | 215, and counsel, Aug 2026 |
+| Opposition — communicate what was done | **20 days** | 213, and counsel, Aug 2026 |
 | Breach — notify the APD **and the data subject** | « sans délai » | 244 |
 
 `SubjectRequest` records when a case was raised, verified and decided. It has **no due date, no
@@ -241,7 +247,7 @@ Ordered by how much it changes.
    This is a question for AJF and counsel, not for the codebase, and every item below depends on it.
 2. **Notify prior recipients when a record is corrected or erased** (article 214). The audit trail
    holds the recipient list; nothing reads it. This is the largest functional gap found.
-3. **Put deadlines on subject requests** — 60 days for access, 30 for the rest — with an overdue
+3. **Put deadlines on subject requests** — 10 days for access, 20 for the rest — with an overdue
    state visible to whoever is handling the queue.
 4. **Decide where this is hosted** (article 201), including backups, before the pilot rather than
    after.
