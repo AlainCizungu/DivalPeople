@@ -280,6 +280,11 @@ export function PortfolioSection() {
             </tbody>
           </table>
         </div>
+
+        {/* Beside the numbers, not in a footnote at the bottom of the page. A table of dollar
+            figures reads as a report of something, and this one is a mock-up — the search board
+            above says so about its own figures and this had nothing. */}
+        <p className="mt-3 text-xs text-muted">{portfolio.note}</p>
       </div>
     </section>
   );

@@ -544,7 +544,8 @@
           "risk": "Élevé",
           "status": "Sous surveillance"
         }
-      ]
+      ],
+      "note": "Chiffres illustratifs. DIP présente à une institution son propre encours dans son intégralité et jamais celui d'une autre — une version réelle de ce tableau est votre portefeuille, non celui du marché."
     },
     "ai": {
       "eyebrow": "Intelligence Dival AI",
@@ -552,14 +553,14 @@
       "body": "Les analystes disposent d'un dossier de preuves : exactement les faits auxquels ils ont déjà droit, réunis en un seul endroit avec la provenance de chacun et la liste explicite de ce qui n'y figure pas, et pourquoi. Aucun modèle de langage n'est configuré dans ce déploiement — le socle factuel a été construit en premier, car un analyste disposant d'un accès direct à la base répondrait à des questions que tout le dispositif de cet échange vise à refuser. Les décisions finales de crédit, d'entrée en relation, de fraude et de service demeurent entre des mains humaines autorisées.",
       "exchanges": [
         {
-          "role": "Analyste risque",
-          "question": "Pourquoi cette entreprise est-elle classée à risque modéré ?",
-          "answer": "Les facteurs principaux sont des soldes télécoms impayés anciens et des retards de paiement répétés. La confiance dans l’identité est élevée et aucun indicateur de fraude significatif n’est présent. Consultez la chronologie détaillée de l’exposition avant d’accorder des conditions supplémentaires."
+          "role": "ANALYSTE CRÉDIT",
+          "question": "Pourquoi Grand Horizon SARL est-elle jugée à risque élevé ?",
+          "answer": "Deux institutions déclarent une obligation. Votre propre dossier compte trois enregistrements, le plus ancien impayé depuis 412 jours, et l'indicateur de risque DIP s'établit à 67 sur 100 — expliqué par l'ancienneté de l'obligation et par la déclaration de plusieurs institutions. Les indicateurs de fraude et l'historique des contestations ne sont pas notés du tout, et la réponse le dit plutôt que de les présenter comme vierges."
         },
         {
-          "role": "Gestionnaire de portefeuille",
-          "question": "Montrez-moi les entreprises à forte exposition avec une ancienneté supérieure à 180 jours.",
-          "answer": "J’ai trouvé 14 entités correspondant aux critères de portefeuille sélectionnés. La plus forte concentration d’exposition se situe sur les comptes télécoms entreprises. Ouvrez la vue filtrée du portefeuille pour examiner les enregistrements sources et l’état du recouvrement."
+          "role": "RESPONSABLE DE PORTEFEUILLE",
+          "question": "Quelles entreprises nous doivent plus de 20 000 ?",
+          "answer": "Quatorze entreprises, 640 200 USD dus à votre institution, dont quatre impayées depuis plus d'un an. Ce total est votre encours et non celui du marché — DIP ne divulgue jamais ce qui est dû à une autre institution. Restreindre aux entreprises déclarées par plusieurs institutions coûterait quatorze de vos consultations horaires, et la réponse en annonce le prix avant de le décompter."
         }
       ],
       "answeredBy": "Dival AI"
@@ -586,7 +587,7 @@
           "body": "Consulter quelqu’un ne le crée jamais. Une personne qui se présente pour savoir si elle est inscrite ne le devient pas en le demandant."
         }
       ],
-      "note": "Les durées de conservation sont paramétrables et non codées en dur, car ce sont des durées légales. Les valeurs de la version actuelle sont les chiffres indicatifs des termes de référence ; elles sont en cours de vérification au regard du Code du numérique avant d’être tenues pour acquises."
+      "note": "Les durées de conservation sont des paramètres et non des constantes, car ce sont des durées légales. Le conseil a préconisé cinq ans en août 2026 et c'est ce que la plateforme applique ; l'écran des paramètres indique l'origine de chaque valeur, et la seule sur laquelle personne n'a encore été interrogé le signale toujours."
     },
     "governance": {
       "eyebrow": "Gouvernance par conception",
@@ -633,22 +634,27 @@
         "Recherche dans votre propre portefeuille par nom ou identifiant",
         "Conservation, expiration et effacement qui supprime au lieu de masquer",
         "Demandes d'accès, de contestation, de retrait et d'effacement, avec délais légaux",
-        "Une vue d'exposition par opérateur, par ancienneté et par devise"
+        "Une vue d'exposition par opérateur, par ancienneté et par devise",
+        "Résolution d'identité : rapprochements notés, présentés côte à côte et tranchés par une personne — jamais fusionnés automatiquement",
+        "Profils consolidés pour les entreprises et les particuliers",
+        "Listes de surveillance, balayées comme des consultations permanentes et décomptées comme telles",
+        "Détection d'anomalies comportementales sur la piste d'audit, y compris l'usage abusif de DIP lui-même",
+        "Intelligence de direction : votre portefeuille du jour, treize mois d'activité et le traitement des demandes des personnes",
+        "Interroger DIP : une question en langage courant, une réponse chiffrée à partir des enregistrements",
+        "Un modèle d'import publié, chaque colonne expliquée, sur lequel les opérateurs alignent leurs exports",
+        "Un catalogue des habilitations lu directement dans les contrôles du code, et un écran de paramètres indiquant l'origine de chaque valeur"
       ],
       "designedTitle": "Conçu, non construit",
       "designed": [
-        "La file de résolution d'identité : correspondances candidates examinées et tranchées par une personne",
-        "Profils consolidés pour les entreprises et les particuliers",
-        "Listes de surveillance et suivi de portefeuille",
-        "L'analyste IA",
-        "API temps réel et flux planifiés"
+        "API temps réel et flux programmés",
+        "Un modèle de langage qui rédige les réponses en plus de lire les questions — configurable, désactivé par défaut, et suspendu à une réponse juridique sur le transfert de données hors du pays"
       ],
       "openTitle": "Non encore tranché",
       "open": [
-        "La devise de la colonne des montants dans les livraisons opérateurs, qu'aucun des deux fichiers n'indique",
-        "Si une créance passée en perte est un statut ou un autre type d'enregistrement",
-        "Si le seuil de déclaration résiste au contact des données réelles",
-        "Quelle base légale au titre de l'article 192 fonde l'échange"
+        "Ce qui se passe lorsqu'une personne retire son consentement alors que la créance demeure impayée. Le conseil confirme que le fondement est contractuel et qu'aucune loi n'oblige un opérateur à déclarer — ce qui rend le refus actuel d'effacer une dette impayée plus difficile à défendre, et non plus aisé",
+        "Si la ligne « + 360 jours » des fichiers opérateurs signifie que le montant à déclarer est celui de cette tranche et non le solde. Dans ce cas, tous les montants déjà importés sont erronés",
+        "Si les données de débiteurs peuvent être transmises à un modèle de langage hébergé hors de la RDC pour qu'il rédige une réponse. Le paramètre existe et il est désactivé",
+        "S'il faut divulguer le montant dû aux autres institutions, comme le conseil le demande. Aujourd'hui l'échange communique un nombre et une tranche, jamais un montant"
       ],
       "note": "Les colonnes ci-dessous décrivent l’état réel de la plateforme. Les chiffres présentés ailleurs sur cette page illustrent le produit et ne rendent pas compte d’un registre national en production."
     },

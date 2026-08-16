@@ -291,13 +291,13 @@
         {
           "badge": "RISK",
           "title": "Risk Intelligence",
-          "body": "Combine payment behaviour, aging, exposure, disputes, source history, and fraud indicators into transparent risk insights for human decision makers.",
+          "body": "Combine payment behaviour, aging, exposure, how many institutions report, and how firmly the subject was identified into one figure — with every weight published, and the two factors the platform refuses to score named beside it.",
           "more": "Explore risk"
         },
         {
           "badge": "FRAUD",
           "title": "Fraud and Anomaly Detection",
-          "body": "Surface duplicate identities, unusual relationships, repeated defaults, conflicting information, suspicious account patterns, and potential data-quality problems.",
+          "body": "Surface unusual search behaviour by an institution's own users, repeated defaults, conflicting information, and data-quality problems. Not duplicate identities: the registry's uniqueness rules make one document under two subjects impossible, so a detector for it would report nothing forever.",
           "more": "Explore fraud"
         }
       ]
@@ -544,7 +544,8 @@
           "risk": "High",
           "status": "Monitor"
         }
-      ]
+      ],
+      "note": "Illustrative figures. DIP shows an institution its own exposure in full and never another institution's — a real version of this table is your book, not the market's."
     },
     "ai": {
       "eyebrow": "Dival AI Intelligence",
@@ -552,14 +553,14 @@
       "body": "Analysts get an evidence pack: exactly the facts they are already entitled to, assembled in one place with the provenance of each and an explicit list of what is not there and why. No language model is configured in this deployment — the grounding was built first, because an analyst with direct database access would answer questions this exchange spends its whole design refusing. Final lending, onboarding, fraud and service decisions remain with authorized humans.",
       "exchanges": [
         {
-          "role": "Risk Analyst",
-          "question": "Why is this business classified as moderate risk?",
-          "answer": "The primary drivers are aged outstanding telecom balances and repeated late-payment indicators. Identity confidence is high and no material fraud indicators are currently present. Review the detailed exposure timeline before extending additional terms."
+          "role": "CREDIT ANALYST",
+          "question": "Why is Grand Horizon SARL considered high risk?",
+          "answer": "Two institutions report an obligation. Your own file holds three records, the oldest unpaid for 412 days, and the DIP Risk Indicator reads 67 of 100 — driven by the age of the obligation and by more than one institution reporting it. Fraud indicators and dispute history are not scored at all, and the answer says so rather than reporting them as clear."
         },
         {
-          "role": "Portfolio Manager",
-          "question": "Show me companies with high exposure and aging above 180 days.",
-          "answer": "I found 14 entities matching the selected portfolio criteria. The largest exposure concentration is within enterprise telecom accounts. Open the filtered portfolio view to review source records and recovery status."
+          "role": "PORTFOLIO MANAGER",
+          "question": "Which businesses owe us more than 20,000?",
+          "answer": "Fourteen companies, 640,200 USD owed to you, four of them unpaid for over a year. That total is your exposure and not the market's — DIP never discloses what another institution is owed. Narrowing to companies more than one institution reports would cost fourteen of your hourly inquiries, and the answer quotes the price before spending it."
         }
       ],
       "answeredBy": "Dival AI"
@@ -586,7 +587,7 @@
           "body": "Looking somebody up never creates them. Somebody who comes forward to ask whether they are listed does not become listed by asking."
         }
       ],
-      "note": "Retention periods are configuration, not constants, because they are legal periods. The values in the current build are the terms of reference's illustrative figures and are being checked against the Code du numérique before anyone should treat them as settled."
+      "note": "Retention periods are configuration, not constants, because they are legal periods. Counsel advised five years in August 2026 and that is what the platform applies; the settings screen names the origin of every value, and the one figure nobody has yet been asked about still says so."
     },
     "governance": {
       "eyebrow": "Governed by Design",
@@ -633,22 +634,27 @@
         "Searching your own book by name or identifier",
         "Retention, expiry, and erasure that deletes rather than hides",
         "Subject access, dispute, withdrawal, and erasure requests, on statutory deadlines",
-        "An operator exposure view, aged, per currency"
+        "An operator exposure view, aged, per currency",
+        "Entity resolution: candidate matches scored, shown side by side, and decided by a person — never merged automatically",
+        "Consolidated profiles for businesses and individuals",
+        "Watchlists, swept as standing inquiries and charged like one",
+        "Behavioural anomaly detection over the audit trail, including abuse of DIP itself",
+        "Executive intelligence: your book today, thirteen months of activity, and how rights requests were answered",
+        "Ask DIP: a question in words, answered with figures counted from rows",
+        "A published import template, with every column explained, that operators prepare their exports against",
+        "A permissions catalogue read from the guards themselves, and a settings screen that states where each value came from"
       ],
       "designedTitle": "Designed, not built",
       "designed": [
-        "The identity resolution queue: candidate matches reviewed and decided by a person",
-        "Consolidated entity profiles for businesses and individuals",
-        "Watchlists and portfolio monitoring",
-        "The AI analyst",
-        "Real-time APIs and scheduled feeds"
+        "Real-time APIs and scheduled feeds",
+        "A language model that phrases answers as well as reading questions — configurable, off by default, and waiting on a legal answer about sending data abroad"
       ],
       "openTitle": "Not yet decided",
       "open": [
-        "The currency of the amount column in the operator deliveries, which nothing in either file states",
-        "Whether a written-off debt is a status or a different kind of record",
-        "Whether the reporting threshold survives contact with real data",
-        "What lawful basis under article 192 the exchange operates on"
+        "What happens when somebody withdraws consent while the debt is still unpaid. Counsel confirms the basis is contractual and that no law obliges an operator to report — which makes the current refusal to erase an outstanding debt harder to defend, not easier",
+        "Whether the \"+360 days\" line in the operator files means the figure to report is that bucket rather than the balance. If it does, every amount already imported is wrong",
+        "Whether debtor data may be sent to a language model hosted outside the DRC so that it can phrase an answer. The switch exists and is off",
+        "Whether the amount owed should be disclosed to other institutions, as counsel has asked. Today the exchange discloses a count and a band, never a figure"
       ],
       "note": "The columns below are the honest state of the platform. Figures shown elsewhere on this page illustrate the product rather than report a live national registry."
     },
