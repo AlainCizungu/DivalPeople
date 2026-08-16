@@ -22,7 +22,7 @@ import { Button, Card, EmptyState, ErrorNotice, Pill, inputClass } from "@/compo
  * company is exactly what an inquiry discloses, so doing it to forty companies is forty inquiries
  * against the same hourly allowance as everybody else. The button carries the price.
  */
-export function AskDip() {
+export function AskDip({ bare = false }: { bare?: boolean } = {}) {
   const messages = useMessages();
   const t = messages.ask;
 
@@ -49,8 +49,8 @@ export function AskDip() {
 
   const suggestions: string[] = t.suggestions;
 
-  return (
-    <Card title={t.title} description={t.note}>
+  const body = (
+    <>
       <form
         className="flex flex-col gap-3 sm:flex-row"
         onSubmit={(event) => {
@@ -96,6 +96,19 @@ export function AskDip() {
       )}
 
       {answer && <AnswerView answer={answer} t={t} />}
+    </>
+  );
+
+  // In the floating panel the heading and border come from the panel, so a Card would draw a box
+  // inside a box. On the page it supplies both.
+  return bare ? (
+    <div className="p-4">
+      <p className="mb-3 text-xs text-muted">{t.note}</p>
+      {body}
+    </div>
+  ) : (
+    <Card title={t.title} description={t.note}>
+      {body}
     </Card>
   );
 }

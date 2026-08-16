@@ -1447,6 +1447,7 @@
       "NO_NATIONAL_DOCUMENT_IS_HELD": "Cette entreprise ne dispose au dossier d'aucun numéro d'immatriculation, numéro d'impôt ou autre document national — rien qui l'identifie auprès d'un tiers. C'est l'élément concret à aller recueillir.",
       "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY": "Le rapprochement est resté sous le seuil à partir duquel la plateforme répond sans intervention humaine : ce qu'elle aurait pu dire est donc retenu plutôt que deviné. Il ne s'agit pas d'un constat sur l'entreprise."
     },
-    "noCompany": "Aucune entreprise de ce nom ne figure dans votre portefeuille. Le nom a été extrait de votre question : il peut donc s'agir d'une lecture erronée autant que d'une entreprise absente — essayez la dénomination sociale."
+    "noCompany": "Aucune entreprise de ce nom ne figure dans votre portefeuille. Le nom a été extrait de votre question : il peut donc s'agir d'une lecture erronée autant que d'une entreprise absente — essayez la dénomination sociale.",
+    "close": "Fermer"
   }
 }

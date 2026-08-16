@@ -8,6 +8,7 @@ import { notificationsApi } from "@/api/client";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { BrandMark } from "./BrandMark";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { AskDipLauncher } from "./AskDipLauncher";
 
 /**
  * Application shell: left navigation, top utility bar, main content area.
@@ -300,6 +301,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="flex-1 p-6">{children}</main>
+
+        {/* Every screen, bottom right, closed until asked for. The questions this answers are the
+            ones somebody thinks of while looking at something else. */}
+        <AskDipLauncher />
       </div>
     </div>
   );
