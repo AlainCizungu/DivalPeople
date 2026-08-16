@@ -5,6 +5,7 @@ import ai.dival.dip.common.error.ConflictException;
 import ai.dival.dip.common.error.PolicyRefusedException;
 import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,14 +28,18 @@ public class DebtRecordService {
     private final ReportingThreshold threshold;
     private final RetentionPolicy retention;
 
+    /** The application's clock, so "in the future" means the same here as everywhere else. */
+    private final Clock clock;
+
     public DebtRecordService(DebtRecordRepository debtRecords, AuditService audit,
                              SubjectResolver subjects, ReportingThreshold threshold,
-                             RetentionPolicy retention) {
+                             RetentionPolicy retention, Clock clock) {
         this.debtRecords = debtRecords;
         this.audit = audit;
         this.subjects = subjects;
         this.threshold = threshold;
         this.retention = retention;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -96,7 +101,7 @@ public class DebtRecordService {
                     "A default may not be declared without evidence that the contractual dunning "
                             + "process ran first.");
         }
-        if (request.defaultDate().isAfter(LocalDate.now())) {
+        if (request.defaultDate().isAfter(LocalDate.now(clock))) {
             // A future default date would start the retention clock in the future, which keeps a
             // record alive past the period the law allows.
             throw new PolicyRefusedException("The default date cannot be in the future.");

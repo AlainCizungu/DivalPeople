@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -39,11 +40,15 @@ public class TixController {
     private final ImportDeriver imports;
     private final CurrentUserService currentUser;
 
+    /** The application's clock. A portfolio dated by the machine's zone ages records differently
+     *  from every other screen for part of each day. */
+    private final Clock clock;
+
     public TixController(ExchangeService exchange, DebtRecordService debtRecords,
                          PortfolioService portfolio, SearchService search,
                          WatchlistService watchlist,
                          SubjectRightsService rights, ImportDeriver imports,
-                         CurrentUserService currentUser) {
+                         CurrentUserService currentUser, Clock clock) {
         this.exchange = exchange;
         this.debtRecords = debtRecords;
         this.portfolio = portfolio;
@@ -52,6 +57,7 @@ public class TixController {
         this.rights = rights;
         this.imports = imports;
         this.currentUser = currentUser;
+        this.clock = clock;
     }
 
     /** Verify a prospective customer before activating a credit-bearing service. */
@@ -103,7 +109,7 @@ public class TixController {
     @GetMapping("/portfolio")
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
     public PortfolioService.Summary portfolio() {
-        return portfolio.summarise(LocalDate.now());
+        return portfolio.summarise(LocalDate.now(clock));
     }
 
     /**

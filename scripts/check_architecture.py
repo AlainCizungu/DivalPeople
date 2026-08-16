@@ -630,6 +630,48 @@ def check_no_repeated_annotation() -> None:
                         "the declaration it belongs to.")
 
 
+def check_tix_reads_the_injected_clock() -> None:
+    """
+    No LocalDate.now() or Instant.now() inside the exchange.
+
+    The platform declares Clock.systemUTC() as its clock and says why in TimeConfig: a window that
+    shifts twice a year is a bug waiting for a specific Sunday. Three TIX classes then called
+    LocalDate.now() anyway, which reads the JVM's default zone.
+
+    Both things "today" decides in this module are consequential — whether a record has passed its
+    retention date and is therefore invisible, and which ageing band it falls in — so on a server
+    set to anything but UTC a subject could be findable on one screen and erased on another for a
+    few hours a day. Nothing would fail; the two screens would simply disagree.
+
+    Scoped to tix because that is where a date decides whether personal data may still be shown.
+    Widening it to the HR modules would be a larger change than this check is worth today, and a
+    check nobody can make pass gets deleted rather than obeyed.
+
+    **Instant.now() is deliberately allowed**, and that distinction is the point rather than a
+    loophole. An Instant is an absolute moment: it returns the same value whatever zone the JVM is
+    set to, so it cannot produce the disagreement this rule exists to prevent. Only LocalDate and
+    LocalDateTime resolve a zone to decide what "now" means. The first version of this check flagged
+    DebtRecord's two updatedAt assignments, which are correct, are entity lifecycle timestamps an
+    injected clock cannot easily reach, and match what TenantOwnedEntity has always done. Failing
+    them would have made this something to work around rather than something to obey.
+    """
+    offenders = []
+    for path in java_sources():
+        if "/modules/tix/" not in str(path).replace("\\", "/"):
+            continue
+        source = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.S)
+        source = re.sub(r"//[^\n]*", "", source)
+        for number, line in enumerate(source.splitlines(), start=1):
+            if re.search(r"\b(LocalDate|LocalDateTime)\.now\(\s*\)", line):
+                offenders.append(f"    {path.relative_to(REPO)}:{number} — {line.strip()}")
+
+    if offenders:
+        raise Failure("\n".join(offenders)
+                      + "\n  Ask the injected Clock: LocalDate.now(clock). The machine's zone and "
+                        "the application's UTC disagree for part of every day, and here that "
+                        "decides whether a record is still visible.")
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
     ("annotations are attached to a declaration", check_annotations_are_attached),
@@ -641,6 +683,7 @@ CHECKS = [
     ("raw INSERTs name every required column", check_raw_inserts_name_required_columns),
     ("every table is granted to the application role", check_every_table_is_granted_to_the_app),
     ("no annotation is repeated on one declaration", check_no_repeated_annotation),
+    ("the exchange reads the injected clock", check_tix_reads_the_injected_clock),
 ]
 
 

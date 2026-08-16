@@ -5,6 +5,7 @@ import ai.dival.dip.common.error.PolicyRefusedException;
 import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +44,23 @@ public class SearchService {
     private final DebtRecordRepository debtRecords;
     private final AuditService audit;
 
-    public SearchService(DebtRecordRepository debtRecords, AuditService audit) {
+    /**
+     * The application's clock, not the machine's.
+     *
+     * <p>Injected in August 2026 to fix a defect these three methods shared: they called
+     * {@code LocalDate.now()}, which reads the JVM's default zone, while the platform declares
+     * {@code Clock.systemUTC()} as its clock and everything else asks that. On a server set to
+     * anything but UTC the two disagree for part of every day — and both things "today" decides
+     * here are consequential: whether a record has passed its retention date and is therefore
+     * invisible, and which ageing band it falls in. A subject could be findable on one screen and
+     * erased on another, for a few hours, on a machine nobody had thought about.
+     */
+    private final Clock clock;
+
+    public SearchService(DebtRecordRepository debtRecords, AuditService audit, Clock clock) {
         this.debtRecords = debtRecords;
         this.audit = audit;
+        this.clock = clock;
     }
 
     /**
@@ -66,7 +81,7 @@ public class SearchService {
                             + "matches most of the book and answers nothing.");
         }
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         List<Subject> found = debtRecords.searchOwn(
                 tenantId,
                 Subject.normalizeName(trimmed),
@@ -103,7 +118,7 @@ public class SearchService {
     @Transactional(readOnly = true)
     public Browse browseOwn(Subject.SubjectType type, UUID actorId) {
         UUID tenantId = TenantContext.require();
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
 
         // One more than the page, so the screen can say the list is cut short rather than end
         // silently at a round number and let somebody believe they have seen the whole book.
@@ -140,7 +155,7 @@ public class SearchService {
     @Transactional(readOnly = true)
     public Profile profileOf(UUID subjectId, UUID actorId) {
         UUID tenantId = TenantContext.require();
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
 
         List<DebtRecord> mine = debtRecords
                 .findByTenantIdAndSubjectIdOrderByDefaultDateDesc(tenantId, subjectId).stream()
