@@ -2,6 +2,7 @@ package ai.dival.dip.modules.analyst;
 
 import ai.dival.dip.common.audit.AuditService;
 import ai.dival.dip.modules.tix.DebtRecordService;
+import ai.dival.dip.modules.tix.SearchService;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.Clock;
@@ -53,14 +54,19 @@ public class AskService {
 
     private final QuestionInterpreter interpreter;
     private final DebtRecordService debtRecords;
+    private final SearchService search;
+    private final EvidencePackService packs;
     private final AiGateway model;
     private final AuditService audit;
     private final Clock clock;
 
     public AskService(QuestionInterpreter interpreter, DebtRecordService debtRecords,
-                      AiGateway model, AuditService audit, Clock clock) {
+                      SearchService search, EvidencePackService packs, AiGateway model,
+                      AuditService audit, Clock clock) {
         this.interpreter = interpreter;
         this.debtRecords = debtRecords;
+        this.search = search;
+        this.packs = packs;
         this.model = model;
         this.audit = audit;
         this.clock = clock;
@@ -79,7 +85,7 @@ public class AskService {
             case EXPOSURE_ABOVE, EXPOSURE_ABOVE_MULTI_INSTITUTION -> exposure(read);
             case WHAT_CHANGED -> changed(read);
             case PRIORITISE -> prioritise(read);
-            case WHY_RISKY -> new Answer(read, List.of(), List.of(), 0, null);
+            case WHY_RISKY -> whyRisky(read, actorId);
             case UNSUPPORTED -> new Answer(read, List.of(), List.of(), 0, null);
         };
 
@@ -126,6 +132,47 @@ public class AskService {
                 read.intent() == Intent.EXPOSURE_ABOVE_MULTI_INSTITUTION ? rows.size() : 0;
 
         return new Answer(read, figures, companies, inquiriesItWouldCost, null);
+    }
+
+    /**
+     * Why one company reads as risky, answered from its evidence pack.
+     *
+     * <p>The pack is the grounding: this operator's own file, the exchange's verdict, the risk
+     * indicator with every factor behind it, and the list of what is deliberately not there. So
+     * this intent adds no new disclosure — it asks the question the analyst screen used to ask
+     * through a search box, in words.
+     *
+     * <p><strong>Costs one inquiry</strong>, because the pack does, and the question itself is the
+     * stated purpose recorded against it. A company the operator holds nothing about comes back
+     * with no figures rather than a refusal: the name was a guess pulled out of a sentence, and
+     * "no company of that name in your book" is a visible miss rather than a wrong answer about
+     * the right company.
+     */
+    private Answer whyRisky(Interpretation read, UUID actorId) {
+        if (read.subjectName() == null || read.subjectName().isBlank()) {
+            return new Answer(read, List.of(), List.of(), 0, null);
+        }
+        List<SearchService.Result> found = search.searchOwn(read.subjectName(), actorId);
+        if (found.isEmpty()) {
+            return new Answer(read, List.of(), List.of(), 0, null);
+        }
+
+        EvidencePackService.EvidencePack pack = packs.forSubject(
+                found.get(0).subjectId(), read.subjectName(), actorId);
+
+        List<Figure> figures = new ArrayList<>();
+        figures.add(new Figure("INSTITUTIONS", String.valueOf(pack.exchange().institutionCount()),
+                null));
+        figures.add(new Figure("RECORDS_HELD", String.valueOf(pack.held().records().size()), null));
+        if (pack.exchange().indicator() != null) {
+            figures.add(new Figure("RISK_SCORE",
+                    String.valueOf(pack.exchange().indicator().score()), "/ 100"));
+        }
+
+        return new Answer(read, List.copyOf(figures),
+                List.of(new Company(pack.held().subjectId(), pack.held().name(), null, 0,
+                        pack.held().records().size())),
+                0, null, null, pack.absent());
     }
 
     /** What entered the book inside the window. Own records, so it costs nothing. */
@@ -198,17 +245,22 @@ public class AskService {
      * @param narrative      the model's phrasing of the figures, or null. Decoration over numbers
      *                       that are already correct
      * @param narratedBy     which model wrote the narrative, so an odd sentence can be attributed
+     * @param caveats        what the answer deliberately does not contain, where the question has
+     *                       such a list. A summary that quietly omits what it could not find reads
+     *                       as complete
      */
     public record Answer(Interpretation understood, List<Figure> figures, List<Company> companies,
-                         int inquiryCost, String narrative, String narratedBy) {
+                         int inquiryCost, String narrative, String narratedBy,
+                         List<Absence> caveats) {
 
         public Answer(Interpretation understood, List<Figure> figures, List<Company> companies,
                       int inquiryCost, String narrative) {
-            this(understood, figures, companies, inquiryCost, narrative, null);
+            this(understood, figures, companies, inquiryCost, narrative, null, List.of());
         }
 
         Answer withNarrative(String prose, String modelName) {
-            return new Answer(understood, figures, companies, inquiryCost, prose, modelName);
+            return new Answer(understood, figures, companies, inquiryCost, prose, modelName,
+                    caveats);
         }
     }
 

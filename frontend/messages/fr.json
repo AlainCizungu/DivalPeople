@@ -1397,37 +1397,7 @@
   },
   "analyst": {
     "title": "Analyste IA Dival",
-    "subtitle": "Tout ce que la plateforme peut honnêtement dire d'une entreprise, et ce qu'elle ne peut pas.",
-    "whatThisIs": "Aucun modèle de langage n'a rédigé ce qui suit, et aucun n'est configuré dans ce déploiement. Ce qui est construit est ce sur quoi un modèle devrait s'appuyer : l'ensemble exact des faits auxquels vous avez déjà droit, réunis en un seul endroit avec leur provenance. Cet ordre est délibéré — un analyste disposant d'un accès direct à la base répondrait parfaitement, et de façon catastrophique, à la question « quelles entreprises l'autre opérateur déclare-t-il », car toutes les règles qui rendent cet échange sûr se situent au-dessus de la base et non à l'intérieur.",
-    "findTitle": "Rechercher une entreprise de votre portefeuille",
-    "findNote": "Uniquement les entreprises pour lesquelles vous détenez déjà un enregistrement. La constitution d'un dossier interroge l'échange : elle est donc décomptée de votre quota horaire et inscrite à la piste d'audit avec le motif indiqué — exactement comme toute autre consultation.",
-    "queryLabel": "Dénomination ou numéro d'immatriculation",
-    "queryPlaceholder": "Grand Horizon, ou CD/KIN/RCCM/…",
-    "search": "Rechercher",
-    "purposeLabel": "Motif de la consultation",
-    "purposeHint": "Obligatoire et enregistré. Un dossier interroge l'échange, et une consultation sans motif déclaré est précisément ce que la piste d'audit sert à prévenir.",
-    "assemble": "Constituer le dossier (coûte une consultation)",
-    "assembling": "Constitution…",
-    "noResults": "Aucune entreprise de votre portefeuille ne correspond.",
-    "failed": "Impossible de constituer le dossier.",
-    "packTitle": "{name}",
-    "packNote": "Constitué selon {version}, pour : {purpose}",
-    "ownTitle": "Ce que vous détenez",
-    "ownNote": "Votre propre dossier, dans son intégralité, parce qu'il est le vôtre. Chaque enregistrement indique son origine.",
-    "declaredHere": "déclaré ici",
-    "fromDelivery": "issu d'une livraison",
-    "exchangeTitle": "Réponse de l'échange",
-    "institutions": "{count} institution(s) déclarent une obligation",
-    "absentTitle": "Ce qui ne figure pas ici, et pourquoi",
-    "absentNote": "Énuméré plutôt qu'omis. Une synthèse qui passe sous silence ce qu'elle n'a pas trouvé se lit comme complète.",
-    "absences": {
-      "NO_MODEL_PRODUCED_THIS": "Aucun modèle de langage n'a rédigé ce qui précède. Aucun n'est configuré dans ce déploiement ; le périmètre a été défini avant le modèle plutôt qu'après.",
-      "OTHER_OPERATORS_ARE_NOT_NAMED": "Combien d'institutions déclarent, jamais lesquelles. Un décompte est un fait relatif à l'entreprise ; un nom est un fait relatif à la relation commerciale d'un concurrent.",
-      "OTHER_OPERATORS_AMOUNTS_ARE_NOT_DISCLOSED": "Ce qui est dû à une autre institution ne figure pas ici. Le vôtre y figure intégralement. Un montant provenant d'ailleurs vous renseignerait sur l'ampleur de la relation commerciale d'un concurrent, ce qui n'est pas un fait relatif au débiteur.",
-      "CONTESTED_RECORDS_ARE_WITHHELD": "Un enregistrement contesté quitte l'échange dès la contestation — et pas seulement celui de l'institution visée. Tous les enregistrements relatifs à cette entreprise sont retirés, y compris les vôtres, avant que quiconque ait tranché. L'échange peut donc répondre « aucun impayé » avec zéro institution alors que des dettes vives figurent toujours au dossier. Un silence ici ne signifie surtout pas l'absence de dette. Votre propre dossier ci-dessus n'est pas affecté : le retrait régit ce que l'échange dit aux autres, non ce que vous pouvez voir de vos propres données.",
-      "NO_NATIONAL_DOCUMENT_IS_HELD": "Cette entreprise ne dispose au dossier d'aucun numéro d'immatriculation, numéro d'impôt ou autre document national — rien qui l'identifie auprès d'un tiers. C'est l'élément concret à aller recueillir.",
-      "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY": "Le rapprochement est resté sous le seuil à partir duquel la plateforme répond sans intervention humaine : ce qu'elle aurait pu dire est donc retenu plutôt que deviné. Il ne s'agit pas d'un constat sur l'entreprise."
-    }
+    "subtitle": "Tout ce que la plateforme peut honnêtement dire d'une entreprise, et ce qu'elle ne peut pas."
   },
   "ask": {
     "title": "Interroger DIP",
@@ -1468,6 +1438,15 @@
     "colCompany": "Entreprise",
     "colOwed": "Dû à votre institution",
     "colOldest": "Impayé le plus ancien",
-    "days": "{days} jours"
+    "days": "{days} jours",
+    "caveats": {
+      "NO_MODEL_PRODUCED_THIS": "Aucun modèle de langage n'a rédigé ce qui précède. Aucun n'est configuré dans ce déploiement ; le périmètre a été défini avant le modèle plutôt qu'après.",
+      "OTHER_OPERATORS_ARE_NOT_NAMED": "Combien d'institutions déclarent, jamais lesquelles. Un décompte est un fait relatif à l'entreprise ; un nom est un fait relatif à la relation commerciale d'un concurrent.",
+      "OTHER_OPERATORS_AMOUNTS_ARE_NOT_DISCLOSED": "Ce qui est dû à une autre institution ne figure pas ici. Le vôtre y figure intégralement. Un montant provenant d'ailleurs vous renseignerait sur l'ampleur de la relation commerciale d'un concurrent, ce qui n'est pas un fait relatif au débiteur.",
+      "CONTESTED_RECORDS_ARE_WITHHELD": "Un enregistrement contesté quitte l'échange dès la contestation — et pas seulement celui de l'institution visée. Tous les enregistrements relatifs à cette entreprise sont retirés, y compris les vôtres, avant que quiconque ait tranché. L'échange peut donc répondre « aucun impayé » avec zéro institution alors que des dettes vives figurent toujours au dossier. Un silence ici ne signifie surtout pas l'absence de dette. Votre propre dossier ci-dessus n'est pas affecté : le retrait régit ce que l'échange dit aux autres, non ce que vous pouvez voir de vos propres données.",
+      "NO_NATIONAL_DOCUMENT_IS_HELD": "Cette entreprise ne dispose au dossier d'aucun numéro d'immatriculation, numéro d'impôt ou autre document national — rien qui l'identifie auprès d'un tiers. C'est l'élément concret à aller recueillir.",
+      "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY": "Le rapprochement est resté sous le seuil à partir duquel la plateforme répond sans intervention humaine : ce qu'elle aurait pu dire est donc retenu plutôt que deviné. Il ne s'agit pas d'un constat sur l'entreprise."
+    },
+    "noCompany": "Aucune entreprise de ce nom ne figure dans votre portefeuille. Le nom a été extrait de votre question : il peut donc s'agir d'une lecture erronée autant que d'une entreprise absente — essayez la dénomination sociale."
   }
 }

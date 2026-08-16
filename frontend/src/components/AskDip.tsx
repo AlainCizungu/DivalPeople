@@ -182,6 +182,23 @@ function AnswerView({
         </p>
       )}
 
+      {/* What the answer deliberately does not contain. Listed rather than omitted: a summary
+          that quietly leaves out what it could not find reads as complete, and this one can be
+          quieter than the registry when a company is contested. */}
+      {answer.caveats.length > 0 && (
+        <ul className="mt-4 flex flex-col gap-2 text-xs">
+          {answer.caveats.map((code) => (
+            <li key={code} className="rounded border border-line bg-soft px-3 py-2 text-muted">
+              {label(t.caveats, code)}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {answer.figures.length === 0 && answer.understood.intent === "WHY_RISKY" && (
+        <EmptyState>{t.noCompany}</EmptyState>
+      )}
+
       {answer.companies.length > 0 && (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[32rem] text-sm">
