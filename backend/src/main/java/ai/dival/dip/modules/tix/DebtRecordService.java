@@ -227,6 +227,25 @@ public class DebtRecordService {
     }
 
     /**
+     * Companies this operator is still owed money by, above a threshold, largest first.
+     *
+     * <p>One currency, because adding two would need a rate nobody here owns. The caller states
+     * which, and the answer says so — a total captioned only "exposure" invites the reader to
+     * assume it covers everything.
+     */
+    @Transactional(readOnly = true)
+    public List<Object[]> exposureBySubject(String currency, LocalDate today, BigDecimal minAmount) {
+        return debtRecords.exposureBySubject(TenantContext.require(), currency, today,
+                minAmount == null ? BigDecimal.ZERO : minAmount);
+    }
+
+    /** How many records entered this operator's book since a moment. */
+    @Transactional(readOnly = true)
+    public long declaredSince(Instant since) {
+        return debtRecords.countByTenantIdAndCreatedAtAfter(TenantContext.require(), since);
+    }
+
+    /**
      * Records this operator declared, per month, since a moment.
      *
      * <p>Counted on when the record entered the registry rather than on when the obligation fell

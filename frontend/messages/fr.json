@@ -1428,5 +1428,46 @@
       "NO_NATIONAL_DOCUMENT_IS_HELD": "Cette entreprise ne dispose au dossier d'aucun numéro d'immatriculation, numéro d'impôt ou autre document national — rien qui l'identifie auprès d'un tiers. C'est l'élément concret à aller recueillir.",
       "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY": "Le rapprochement est resté sous le seuil à partir duquel la plateforme répond sans intervention humaine : ce qu'elle aurait pu dire est donc retenu plutôt que deviné. Il ne s'agit pas d'un constat sur l'entreprise."
     }
+  },
+  "ask": {
+    "title": "Interroger DIP",
+    "note": "Le modèle lit votre question ; la plateforme calcule la réponse. Chaque chiffre ci-dessous est décompté à partir d'enregistrements auxquels vous avez déjà accès — aucun nombre présenté ici n'a été rédigé par un modèle de langage.",
+    "placeholder": "Quelles entreprises nous doivent plus de 20 000 ?",
+    "askButton": "Interroger",
+    "thinking": "Traitement…",
+    "failed": "Impossible de répondre.",
+    "unsupported": "Cette question ne fait pas partie de celles auxquelles cet analyste sait répondre. La liste est volontairement courte : l'analyste y choisit au lieu de rédiger sa propre requête, de sorte qu'une question mal comprise produit une réponse erronée à l'une de vos questions plutôt qu'un accès à des données qui ne vous sont pas ouvertes. Essayez l'une des suggestions ci-dessus.",
+    "suggestions": [
+      "Quelles entreprises nous doivent plus de 20 000 ?",
+      "Quelles entreprises doivent plus de 20 000 auprès de plusieurs institutions ?",
+      "Qu'est-ce qui a changé dans notre portefeuille cette semaine ?",
+      "Quels comptes notre équipe de recouvrement doit-elle traiter en priorité ?"
+    ],
+    "intents": {
+      "EXPOSURE_ABOVE": "Compris comme : entreprises vous devant plus d'un certain montant",
+      "EXPOSURE_ABOVE_MULTI_INSTITUTION": "Compris comme : les mêmes, déclarées par plusieurs institutions",
+      "WHY_RISKY": "Compris comme : pourquoi une entreprise paraît risquée",
+      "WHAT_CHANGED": "Compris comme : ce qui a changé dans votre portefeuille",
+      "PRIORITISE": "Compris comme : quels comptes traiter en premier",
+      "UNSUPPORTED": "Non compris"
+    },
+    "readAmount": "seuil retenu : {amount}",
+    "readWindow": "période retenue : {days} jours",
+    "readByModel": "question lue par le modèle",
+    "readByRules": "question lue par les règles intégrées",
+    "writtenBy": "Phrase rédigée par {model} à partir des chiffres ci-dessus. Ces chiffres ont été calculés avant sa rédaction et n'en dépendent pas.",
+    "figures": {
+      "COMPANIES": "Entreprises",
+      "YOUR_EXPOSURE": "Votre encours",
+      "OVER_A_YEAR": "Impayés de plus d'un an",
+      "DECLARED_IN_WINDOW": "Enregistrements ajoutés",
+      "WINDOW_DAYS": "Période (jours)"
+    },
+    "yourExposureNote": "« Votre encours » désigne ce que ces entreprises vous doivent. DIP ne divulgue jamais ce qui est dû à une autre institution : aucun chiffre présenté ici n'est un total de marché, et le présenter comme tel serait faux.",
+    "inquiryCost": "Vérifier ces {count} entreprises auprès des autres institutions coûterait {count} de vos consultations horaires, car le nombre d'institutions déclarantes est précisément ce qu'une consultation révèle. Rien n'a été décompté : il s'agit d'une estimation.",
+    "colCompany": "Entreprise",
+    "colOwed": "Dû à votre institution",
+    "colOldest": "Impayé le plus ancien",
+    "days": "{days} jours"
   }
 }

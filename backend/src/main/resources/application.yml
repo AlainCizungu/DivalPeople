@@ -77,6 +77,28 @@ spring:
           issuer-uri: ${DIP_OIDC_ISSUER_URI:http://localhost:8081/realms/dip}
 
 dip:
+  # The language model behind the Dival AI analyst.
+  #
+  # TWO SWITCHES, and the split is the point. `enabled` lets the model read WHAT THE USER TYPED and
+  # return a structured intent; that text carries nothing from the registry, so nothing about anybody
+  # in it leaves the country. `narrate` lets the model read THE ANSWER DIP COMPUTED so it can phrase
+  # it — company names and the amounts this operator is owed — which is a transfer of registry data
+  # to a processor outside the DRC.
+  #
+  # As of August 2026 counsel has NOT been asked whether there is a basis for that transfer. The
+  # question is in docs/OLIVIER_ANSWERS.md. Every outbound call writes an audit row, and the screen
+  # says so while narration is on.
+  #
+  # No key is committed. Absent one, both switches are inert: questions are read by rule and answers
+  # are rendered from figures, which is less impressive and equally true.
+  ai:
+    enabled: ${DIP_AI_ENABLED:false}
+    narrate: ${DIP_AI_NARRATE:false}
+    base-url: ${DIP_AI_BASE_URL:https://api.openai.com/v1}
+    api-key: ${DIP_AI_API_KEY:}
+    model: ${DIP_AI_MODEL:gpt-4o-mini}
+    timeout-ms: ${DIP_AI_TIMEOUT_MS:12000}
+
   tix:
     # Inquiries one operator may make in an hour. The exchange holds competitors' debt records,
     # and every request is individually legitimate — the aggregate is what turns a lookup service

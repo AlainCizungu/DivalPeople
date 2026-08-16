@@ -820,12 +820,76 @@ export type EvidencePack = {
   absent: PackAbsence[];
 };
 
+export type AskIntent =
+  | "EXPOSURE_ABOVE"
+  | "EXPOSURE_ABOVE_MULTI_INSTITUTION"
+  | "WHY_RISKY"
+  | "WHAT_CHANGED"
+  | "PRIORITISE"
+  | "UNSUPPORTED";
+
+/**
+ * What the analyst understood, shown before the answer.
+ *
+ * The failure mode of a natural-language front end is not a wrong number, it is a right number to
+ * a different question. `byModel` says whether a language model read the question or the rules did,
+ * so a screen full of rule-based readings is a visible symptom rather than a silent degradation.
+ */
+export type AskInterpretation = {
+  intent: AskIntent;
+  minAmount: string | null;
+  days: number;
+  subjectName: string | null;
+  byModel: boolean;
+};
+
+/** A number, counted from rows by the platform. Never produced by a model. */
+export type AskFigure = { code: string; value: string; unit: string | null };
+
+export type AskCompany = {
+  subjectId: string;
+  name: string;
+  /** What you are owed, not what the market is. */
+  owed: string;
+  oldestDays: number;
+  records: number;
+};
+
+/**
+ * An answer.
+ *
+ * `narrative` is the model's phrasing of `figures` and is decoration over numbers that are already
+ * correct — null whenever narration is off or the model was unreachable. `inquiryCost` is what
+ * screening across institutions *would* cost; it is quoted rather than spent.
+ */
+export type AskAnswer = {
+  understood: AskInterpretation;
+  figures: AskFigure[];
+  companies: AskCompany[];
+  inquiryCost: number;
+  narrative: string | null;
+  narratedBy: string | null;
+};
+
 export const analystApi = {
   /** Costs one inquiry against the hourly allowance, and says so on the screen. */
   pack(subjectId: string, purpose: string): Promise<EvidencePack> {
     return request<EvidencePack>(
       `/api/v1/analyst/subject/${subjectId}?purpose=${encodeURIComponent(purpose)}`,
     );
+  },
+
+  /**
+   * A question in words.
+   *
+   * POST because the question is free text a user typed and a query string would write it into
+   * every access log on the way — and a question can name a company.
+   */
+  ask(question: string): Promise<AskAnswer> {
+    return request<AskAnswer>("/api/v1/analyst/ask", {
+      method: "POST",
+      body: JSON.stringify({ question }),
+    });
   },
 };
 

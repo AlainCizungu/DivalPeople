@@ -1,5 +1,6 @@
 package ai.dival.dip.modules.tix;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -134,6 +135,34 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
     // A cross-operator count of prior defaults lived here briefly and was removed before it ran.
     // Récidive does need to be judged across operators, but reading across them requires exchange
      /**
+     * One row per company this operator is still owed money by, largest first.
+     *
+     * <p>Grouped in SQL. The alternative — read every record and total them in Java — is the
+     * mistake the front door made with 3,699 rows, and the analyst would make it against the whole
+     * book on every question.
+     *
+     * <p>Outstanding only, unexpired only, and one currency at a time. Summing across currencies
+     * would need a rate this application has no business inventing, which is the same refusal the
+     * risk model makes about exposure.
+     *
+     * <p>Columns: subject id, name, total owed, oldest default date, how many records.
+     */
+    @Query(value = "select s.id, s.full_name, sum(d.amount) as total, "
+            + "min(d.default_date) as oldest, count(*) as records "
+            + "from tix_debt_record d join tix_subject s on s.id = d.subject_id "
+            + "where d.tenant_id = :tenantId and d.status = 'OUTSTANDING' "
+            + "and d.currency = :currency and d.retention_until >= :today "
+            + "group by s.id, s.full_name having sum(d.amount) >= :minAmount "
+            + "order by total desc", nativeQuery = true)
+    List<Object[]> exposureBySubject(@Param("tenantId") UUID tenantId,
+                                     @Param("currency") String currency,
+                                     @Param("today") LocalDate today,
+                                     @Param("minAmount") BigDecimal minAmount);
+
+    /** Records this operator added since a moment. What entered the book. */
+    long countByTenantIdAndCreatedAtAfter(UUID tenantId, Instant since);
+
+    /**
      * How many records this operator declared in each month since a moment, oldest first.
      *
      * <p>Counted on {@code createdAt} — when the record entered the registry — and not on the

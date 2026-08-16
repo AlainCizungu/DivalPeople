@@ -1428,5 +1428,46 @@
       "NO_NATIONAL_DOCUMENT_IS_HELD": "This company has no register number, tax number or other national document on file — nothing that identifies it to anybody but you. That is the concrete thing to go and collect.",
       "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY": "The match fell below the threshold at which the platform will answer without a person looking, so anything it might have said is withheld rather than guessed. Not a finding about the company."
     }
+  },
+  "ask": {
+    "title": "Ask DIP",
+    "note": "The model reads your question; the platform computes the answer. Every figure below is counted from records you are already entitled to see — no number here was written by a language model.",
+    "placeholder": "Which businesses owe us more than 20,000?",
+    "askButton": "Ask",
+    "thinking": "Working…",
+    "failed": "Could not answer that.",
+    "unsupported": "That is not one of the questions this analyst can answer. It is a short list on purpose: the analyst chooses from it rather than writing its own query, so a misread question produces the wrong answer to a question of yours rather than reaching data you may not see. Try one of the suggestions above.",
+    "suggestions": [
+      "Which businesses owe us more than 20,000?",
+      "Which businesses owe more than 20,000 across multiple institutions?",
+      "What changed in our portfolio this week?",
+      "Which accounts should our collection team prioritise?"
+    ],
+    "intents": {
+      "EXPOSURE_ABOVE": "Understood as: companies owing you above a threshold",
+      "EXPOSURE_ABOVE_MULTI_INSTITUTION": "Understood as: the same, reported by more than one institution",
+      "WHY_RISKY": "Understood as: why one company looks risky",
+      "WHAT_CHANGED": "Understood as: what changed in your book",
+      "PRIORITISE": "Understood as: which accounts to work first",
+      "UNSUPPORTED": "Not understood"
+    },
+    "readAmount": "threshold read as {amount}",
+    "readWindow": "window read as {days} days",
+    "readByModel": "question read by the model",
+    "readByRules": "question read by the built-in rules",
+    "writtenBy": "Sentence phrased by {model} from the figures above. The figures were computed before it was written and do not depend on it.",
+    "figures": {
+      "COMPANIES": "Companies",
+      "YOUR_EXPOSURE": "Your exposure",
+      "OVER_A_YEAR": "Unpaid over a year",
+      "DECLARED_IN_WINDOW": "Records added",
+      "WINDOW_DAYS": "Window (days)"
+    },
+    "yourExposureNote": "\"Your exposure\" means what these companies owe you. DIP never discloses what another institution is owed, so no figure here is a market total — and one presented as such would be wrong.",
+    "inquiryCost": "Screening these {count} companies across institutions would cost {count} of your hourly inquiries, because how many institutions report a company is exactly what an inquiry discloses. Nothing has been spent: this is a quote.",
+    "colCompany": "Company",
+    "colOwed": "Owed to you",
+    "colOldest": "Oldest unpaid",
+    "days": "{days} days"
   }
 }

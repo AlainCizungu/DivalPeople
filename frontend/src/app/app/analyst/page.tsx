@@ -20,6 +20,7 @@ import {
   Pill,
   inputClass,
 } from "@/components/ui";
+import { AskDip } from "@/components/AskDip";
 
 /**
  * The Dival AI analyst, which is at present not an AI.
@@ -87,6 +88,8 @@ export default function AnalystPage() {
       <p className="mb-5 rounded border border-line bg-soft px-4 py-3 text-sm text-muted">
         {t.whatThisIs}
       </p>
+
+      <AskDip />
 
       <Card title={t.findTitle} description={t.findNote}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
