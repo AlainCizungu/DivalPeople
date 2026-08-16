@@ -789,6 +789,46 @@ export const executiveApi = {
   },
 };
 
+/**
+ * A thing the pack does not contain, and why.
+ *
+ * Four appear on every pack; the last two only when they apply. `NO_MODEL_PRODUCED_THIS` is first
+ * on purpose — the menu entry says "AI analyst" and a reader is entitled to know that nothing in
+ * front of them was generated.
+ */
+export type PackAbsence =
+  | "NO_MODEL_PRODUCED_THIS"
+  | "OTHER_OPERATORS_ARE_NOT_NAMED"
+  | "OTHER_OPERATORS_AMOUNTS_ARE_NOT_DISCLOSED"
+  | "CONTESTED_RECORDS_ARE_WITHHELD"
+  | "NO_NATIONAL_DOCUMENT_IS_HELD"
+  | "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY";
+
+/**
+ * Everything the platform can honestly say about one company, and what it cannot.
+ *
+ * `held` is this operator's own file, in full, because it is its own. `exchange` is exactly what an
+ * inquiry returns — an outcome, statuses, a count of institutions, and the risk indicator — never
+ * an amount and never a name. Assembling one costs an inquiry.
+ */
+export type EvidencePack = {
+  packVersion: string;
+  assembledAt: string;
+  purpose: string;
+  held: SubjectProfile;
+  exchange: InquiryResult;
+  absent: PackAbsence[];
+};
+
+export const analystApi = {
+  /** Costs one inquiry against the hourly allowance, and says so on the screen. */
+  pack(subjectId: string, purpose: string): Promise<EvidencePack> {
+    return request<EvidencePack>(
+      `/api/v1/analyst/subject/${subjectId}?purpose=${encodeURIComponent(purpose)}`,
+    );
+  },
+};
+
 export type SettingProvenance =
   | "TERMS_OF_REFERENCE"
   | "LEGAL_ADVICE"

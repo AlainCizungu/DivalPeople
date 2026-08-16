@@ -549,7 +549,7 @@
     "ai": {
       "eyebrow": "Intelligence Dival AI",
       "title": "Interrogez l’ensemble du réseau d’intelligence.",
-      "body": "L’IA synthétise les preuves et aide les analystes à naviguer dans de grands portefeuilles ; les décisions finales de crédit, d’entrée en relation, de fraude et de service restent aux personnes autorisées.",
+      "body": "Les analystes disposent d'un dossier de preuves : exactement les faits auxquels ils ont déjà droit, réunis en un seul endroit avec la provenance de chacun et la liste explicite de ce qui n'y figure pas, et pourquoi. Aucun modèle de langage n'est configuré dans ce déploiement — le socle factuel a été construit en premier, car un analyste disposant d'un accès direct à la base répondrait à des questions que tout le dispositif de cet échange vise à refuser. Les décisions finales de crédit, d'entrée en relation, de fraude et de service demeurent entre des mains humaines autorisées.",
       "exchanges": [
         {
           "role": "Analyste risque",
@@ -1394,5 +1394,39 @@
     "rightsLateNote": "L'article 214 fait du dépassement du délai un motif de plainte en lui-même.",
     "rightsNothingAnswered": "Aucune décision n'a encore été rendue : il n'y a donc rien à situer dans les délais ou hors délais.",
     "absences": "Deux chiffres sont délibérément absents. Il n'existe pas de courbe de l'encours dans le temps, car rien ne conserve d'instantané de ce qui était dû à une date passée ; en tracer une supposerait que les enregistrements ont existé sans interruption depuis leur date d'exigibilité — une hypothèse déguisée en historique. Et il n'existe pas de décompte des consultations ayant révélé une dette, car la piste d'audit enregistre qu'une question a été posée et à quelle fin, jamais ce qu'elle a renvoyé. Enregistrer la réponse conserverait une seconde copie de la divulgation sous la durée d'audit plutôt que sous la durée de conservation, et transformerait la piste en une ombre consultable de l'échange."
+  },
+  "analyst": {
+    "title": "Analyste IA Dival",
+    "subtitle": "Tout ce que la plateforme peut honnêtement dire d'une entreprise, et ce qu'elle ne peut pas.",
+    "whatThisIs": "Aucun modèle de langage n'a rédigé ce qui suit, et aucun n'est configuré dans ce déploiement. Ce qui est construit est ce sur quoi un modèle devrait s'appuyer : l'ensemble exact des faits auxquels vous avez déjà droit, réunis en un seul endroit avec leur provenance. Cet ordre est délibéré — un analyste disposant d'un accès direct à la base répondrait parfaitement, et de façon catastrophique, à la question « quelles entreprises l'autre opérateur déclare-t-il », car toutes les règles qui rendent cet échange sûr se situent au-dessus de la base et non à l'intérieur.",
+    "findTitle": "Rechercher une entreprise de votre portefeuille",
+    "findNote": "Uniquement les entreprises pour lesquelles vous détenez déjà un enregistrement. La constitution d'un dossier interroge l'échange : elle est donc décomptée de votre quota horaire et inscrite à la piste d'audit avec le motif indiqué — exactement comme toute autre consultation.",
+    "queryLabel": "Dénomination ou numéro d'immatriculation",
+    "queryPlaceholder": "Grand Horizon, ou CD/KIN/RCCM/…",
+    "search": "Rechercher",
+    "purposeLabel": "Motif de la consultation",
+    "purposeHint": "Obligatoire et enregistré. Un dossier interroge l'échange, et une consultation sans motif déclaré est précisément ce que la piste d'audit sert à prévenir.",
+    "assemble": "Constituer le dossier (coûte une consultation)",
+    "assembling": "Constitution…",
+    "noResults": "Aucune entreprise de votre portefeuille ne correspond.",
+    "failed": "Impossible de constituer le dossier.",
+    "packTitle": "{name}",
+    "packNote": "Constitué selon {version}, pour : {purpose}",
+    "ownTitle": "Ce que vous détenez",
+    "ownNote": "Votre propre dossier, dans son intégralité, parce qu'il est le vôtre. Chaque enregistrement indique son origine.",
+    "declaredHere": "déclaré ici",
+    "fromDelivery": "issu d'une livraison",
+    "exchangeTitle": "Réponse de l'échange",
+    "institutions": "{count} institution(s) déclarent une obligation",
+    "absentTitle": "Ce qui ne figure pas ici, et pourquoi",
+    "absentNote": "Énuméré plutôt qu'omis. Une synthèse qui passe sous silence ce qu'elle n'a pas trouvé se lit comme complète.",
+    "absences": {
+      "NO_MODEL_PRODUCED_THIS": "Aucun modèle de langage n'a rédigé ce qui précède. Aucun n'est configuré dans ce déploiement ; le périmètre a été défini avant le modèle plutôt qu'après.",
+      "OTHER_OPERATORS_ARE_NOT_NAMED": "Combien d'institutions déclarent, jamais lesquelles. Un décompte est un fait relatif à l'entreprise ; un nom est un fait relatif à la relation commerciale d'un concurrent.",
+      "OTHER_OPERATORS_AMOUNTS_ARE_NOT_DISCLOSED": "Ce qui est dû à une autre institution ne figure pas ici. Le vôtre y figure intégralement. Un montant provenant d'ailleurs vous renseignerait sur l'ampleur de la relation commerciale d'un concurrent, ce qui n'est pas un fait relatif au débiteur.",
+      "CONTESTED_RECORDS_ARE_WITHHELD": "Un enregistrement contesté quitte l'échange dès la contestation, avant que quiconque ait tranché. Cette réponse peut donc être plus discrète que le registre, et un silence ici n'équivaut pas à une absence de dette.",
+      "NO_NATIONAL_DOCUMENT_IS_HELD": "Cette entreprise ne dispose au dossier d'aucun numéro d'immatriculation, numéro d'impôt ou autre document national — rien qui l'identifie auprès d'un tiers. C'est l'élément concret à aller recueillir.",
+      "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY": "Le rapprochement est resté sous le seuil à partir duquel la plateforme répond sans intervention humaine : ce qu'elle aurait pu dire est donc retenu plutôt que deviné. Il ne s'agit pas d'un constat sur l'entreprise."
+    }
   }
 }

@@ -549,7 +549,7 @@
     "ai": {
       "eyebrow": "Dival AI Intelligence",
       "title": "Ask questions across the intelligence network.",
-      "body": "AI summarizes evidence and helps analysts navigate large portfolios, while final lending, onboarding, fraud, and service decisions remain with authorized humans.",
+      "body": "Analysts get an evidence pack: exactly the facts they are already entitled to, assembled in one place with the provenance of each and an explicit list of what is not there and why. No language model is configured in this deployment — the grounding was built first, because an analyst with direct database access would answer questions this exchange spends its whole design refusing. Final lending, onboarding, fraud and service decisions remain with authorized humans.",
       "exchanges": [
         {
           "role": "Risk Analyst",
@@ -1394,5 +1394,39 @@
     "rightsLateNote": "Article 214 makes a missed deadline grounds in itself for a complaint.",
     "rightsNothingAnswered": "Nothing has been decided yet, so there is nothing here to be early or late.",
     "absences": "Two figures are deliberately absent. There is no chart of exposure over time, because nothing snapshots what was owed on a past date and drawing one would mean assuming records existed continuously from their default date — an assumption dressed as history. And there is no count of how many inquiries came back with a debt, because the audit trail records that a question was asked and what it was for, never what it returned. Recording the answer would keep a second copy of the disclosure under the audit period rather than the retention period, and turn the trail into a searchable shadow of the exchange."
+  },
+  "analyst": {
+    "title": "Dival AI analyst",
+    "subtitle": "Everything the platform can honestly say about one company, and what it cannot.",
+    "whatThisIs": "No language model wrote any of this, and none is configured in this deployment. What is built is the thing a model would have to rest on: the exact set of facts you are already entitled to, assembled in one place with its provenance. That order is deliberate — an analyst given direct database access would answer \"which companies does the other operator report\" perfectly and catastrophically, because every rule that makes this exchange safe lives above the database rather than in it.",
+    "findTitle": "Find a company in your book",
+    "findNote": "Only companies you already hold a record against. Assembling a pack asks the exchange, so it is charged against your hourly allowance and recorded in the audit trail with the reason you give — exactly like any other inquiry.",
+    "queryLabel": "Name or register number",
+    "queryPlaceholder": "Grand Horizon, or CD/KIN/RCCM/…",
+    "search": "Search",
+    "purposeLabel": "Why you are looking",
+    "purposeHint": "Required, and recorded. A pack asks the exchange, and an inquiry with no stated reason is what the audit trail exists to prevent.",
+    "assemble": "Assemble pack (costs one inquiry)",
+    "assembling": "Assembling…",
+    "noResults": "Nothing in your book matches that.",
+    "failed": "Could not assemble the pack.",
+    "packTitle": "{name}",
+    "packNote": "Assembled under {version}, for: {purpose}",
+    "ownTitle": "What you hold",
+    "ownNote": "Your own file, in full, because it is yours. Each record says where it came from.",
+    "declaredHere": "declared here",
+    "fromDelivery": "derived from a delivery",
+    "exchangeTitle": "What the exchange answered",
+    "institutions": "{count} institution(s) report an obligation",
+    "absentTitle": "What is not here, and why",
+    "absentNote": "Listed rather than omitted. A summary that quietly leaves out what it could not find reads as complete.",
+    "absences": {
+      "NO_MODEL_PRODUCED_THIS": "No language model wrote any of this. None is configured in this deployment; the boundary was built before the model rather than after.",
+      "OTHER_OPERATORS_ARE_NOT_NAMED": "How many institutions report, never which. A count is a fact about the company; a name is a fact about a competitor's customer relationship.",
+      "OTHER_OPERATORS_AMOUNTS_ARE_NOT_DISCLOSED": "What another institution is owed is not here. Yours is, in full. An amount from elsewhere would tell you the size of a rival's commercial relationship, which is not a fact about the debtor.",
+      "CONTESTED_RECORDS_ARE_WITHHELD": "A record under dispute leaves the exchange the moment it is contested, before anybody decides who is right. So this answer can be quieter than the registry, and silence here is not the same as absence of debt.",
+      "NO_NATIONAL_DOCUMENT_IS_HELD": "This company has no register number, tax number or other national document on file — nothing that identifies it to anybody but you. That is the concrete thing to go and collect.",
+      "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY": "The match fell below the threshold at which the platform will answer without a person looking, so anything it might have said is withheld rather than guessed. Not a finding about the company."
+    }
   }
 }

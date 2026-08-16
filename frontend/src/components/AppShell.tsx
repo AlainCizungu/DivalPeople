@@ -158,7 +158,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     },
     {
       heading: t.groupAi,
-      items: [{ label: t.aiAnalyst }],
+      items: [{ href: "/app/analyst", label: t.aiAnalyst }],
     },
     {
       heading: t.groupGovernance,
