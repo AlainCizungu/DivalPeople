@@ -20,9 +20,13 @@ const ANALYST_PAGE = "/app/analyst";
  * interruption. It also covers part of the screen while open, so it opens because somebody asked
  * for it and shuts on Escape.
  *
- * <p>The dedicated page at {@code /app/analyst} remains, because the navigation needs somewhere to
- * point and a long answer deserves the width. Both render the same component; there is one
- * implementation and two ways in.
+ * <p>The navigation no longer carries an entry for it. A menu item and a permanent button in the
+ * corner are two doors to one room, and the menu item was the one that made people leave the screen
+ * they were asking about.
+ *
+ * <p>The page at {@code /app/analyst} still exists and still renders the same component, unlinked —
+ * a long answer deserves the width, and a bookmark should not break. When somebody is on it, this
+ * launcher gets out of the way rather than floating a shortcut to the screen they are looking at.
  */
 export function AskDipLauncher() {
   const t = useMessages().ask;

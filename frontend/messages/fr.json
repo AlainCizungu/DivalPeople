@@ -9,7 +9,6 @@
     "groupRisk": "Risque et surveillance",
     "groupNetwork": "Réseau",
     "groupData": "Gestion des données",
-    "groupAi": "IA",
     "groupGovernance": "Gouvernance",
     "groupSystem": "Système",
     "home": "Vue d'ensemble",
@@ -30,7 +29,6 @@
     "participants": "Réseau d'intelligence DIP",
     "imports": "Import de données",
     "entityResolution": "Résolution d'entités",
-    "aiAnalyst": "Analyste IA Dival",
     "audit": "Pistes d'audit",
     "access": "Accès et permissions",
     "disputes": "Litiges et corrections",
@@ -210,7 +208,6 @@
   },
   "landing": {
     "nav": {
-      "ai": "Dival AI",
       "platform": "Plateforme",
       "search": "Recherche",
       "risk": "Intelligence du risque",
