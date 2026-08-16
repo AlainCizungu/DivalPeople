@@ -170,10 +170,21 @@ class EvidencePackTest extends AbstractIntegrationTest {
 
         EvidencePackService.EvidencePack pack = assemble(vodacom);
 
-        // Orange's record leaves the exchange the moment it is contested, so the count falls to
-        // one. A reader who did not know that could read the quieter answer as absence of debt,
-        // which is why the caveat is on every pack rather than only on this one.
-        assertThat(pack.exchange().institutionCount()).isEqualTo(1);
+        // Nought, not one. A dispute raised at Orange suppresses Vodacom's record about the same
+        // company too — the harm of being wrongly listed accrues daily, so reporting stops
+        // everywhere the day somebody contests it and before anybody decides who is right.
+        //
+        // I wrote this expecting one, on the assumption that a dispute suppresses only the
+        // disputing operator's record. InstitutionCountTest carries a note saying its first
+        // version made exactly the same assumption. Recording it twice because it is the thing
+        // about this platform that is most often guessed wrong, and because it makes the caveat
+        // below far more important than it looks: a contested subject does not merely go quieter,
+        // it goes silent, and silence here is emphatically not absence of debt.
+        assertThat(pack.exchange().institutionCount()).isZero();
+
+        // Vodacom's own file is untouched. Suppression governs what the exchange tells others,
+        // not what an operator may see of its own records.
+        assertThat(pack.held().records()).hasSize(1);
         assertThat(pack.absent()).contains(Absence.CONTESTED_RECORDS_ARE_WITHHELD);
     }
 

@@ -41,11 +41,17 @@ public enum Absence {
     OTHER_OPERATORS_AMOUNTS_ARE_NOT_DISCLOSED,
 
     /**
-     * A record under dispute is withheld from the moment it is contested.
+     * A contested record is withheld from the moment it is contested, at every operator.
      *
-     * <p>Before anybody decides who is right, because the harm of being wrongly listed accrues
-     * daily. So a pack can be quieter than the registry, and saying so is the honest version of
-     * that trade — a reader who did not know might read silence as absence of debt.
+     * <p>Not only the record of the institution the dispute was raised against — <em>every</em>
+     * record about that company leaves the exchange, including yours. Before anybody decides who
+     * is right, because the harm of being wrongly listed accrues daily.
+     *
+     * <p>So a pack about a contested company does not merely go quieter: the exchange can answer
+     * CLEAR with nought institutions while the registry still holds live debts. That is the trade
+     * the design makes, and stating it is the difference between a reader understanding the answer
+     * and misreading silence as absence of debt. Your own file is unaffected and appears in full;
+     * suppression governs what the exchange tells others, not what you may see of your own.
      */
     CONTESTED_RECORDS_ARE_WITHHELD,
 
