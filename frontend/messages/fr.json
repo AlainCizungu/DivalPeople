@@ -210,6 +210,7 @@
   },
   "landing": {
     "nav": {
+      "ai": "Dival AI",
       "platform": "Plateforme",
       "search": "Recherche",
       "risk": "Intelligence du risque",
@@ -237,12 +238,12 @@
     },
     "hero": {
       "eyebrow": "Dival Intelligence Platform · DIP",
-      "title": "Une plateforme nationale d’intelligence de confiance pour de meilleures décisions.",
-      "body": "Recherchez des entreprises ou des particuliers, analysez l’exposition financière, identifiez les signaux de risque, détectez la fraude et prenez de meilleures décisions grâce à un réseau d’intelligence sécurisé conçu pour les institutions de la République démocratique du Congo.",
+      "title": "Posez une question à votre centrale des risques. Obtenez une réponse vérifiable.",
+      "body": "DIP réunit les données de risque des télécoms et des banques en un réseau national gouverné pour la République démocratique du Congo — et place un assistant devant. Recherchez une entreprise, mesurez l'encours, voyez combien d'institutions la signalent déjà et décidez en quelques minutes — sans qu'aucune institution ne voie jamais les clients d'une autre.",
       "checks": [
+        "Posez vos questions en français ou en anglais",
         "Intelligence entreprises et particuliers",
-        "Prêt pour les API",
-        "Chaque interrogation tracée avec sa finalité"
+        "Chaque consultation enregistrée avec son motif"
       ]
     },
     "board": {
@@ -309,7 +310,7 @@
       "steps": [
         {
           "title": "Ingérer",
-          "body": "Excel, CSV, dépôts sécurisés, API et flux planifiés."
+          "body": "Excel, CSV et dépôts sécurisés — chaque ligne brute conservée telle quelle, avec sa provenance."
         },
         {
           "title": "Valider",
@@ -321,11 +322,11 @@
         },
         {
           "title": "Enrichir",
-          "body": "Exposition, ancienneté, historique, relations, indicateurs de fraude et tendances."
+          "body": "Encours, ancienneté, nombre d’institutions déclarantes, confiance d’identité et treize mois de tendance."
         },
         {
           "title": "Décider",
-          "body": "Recherche, rapports de risque, alertes, API, tableaux de bord et revue humaine."
+          "body": "Recherche, Ask DIP, indicateurs de risque, dossiers de preuve, listes de surveillance, tableaux de bord et revue humaine."
         }
       ]
     },
@@ -423,13 +424,13 @@
         {
           "badge": "PARTICULIER",
           "title": "Intelligence particuliers",
-          "body": "Résolvez les identités à partir d’identifiants personnels approuvés et d’enregistrements historiques, faites ressortir les signaux de paiement et de fraude, et appuyez des décisions d’entrée en relation responsables.",
+          "body": "Résolvez les identités à partir d’identifiants personnels approuvés et d’enregistrements historiques, faites ressortir le comportement de paiement et le nombre d’institutions qui signalent la personne, et appuyez des décisions d’entrée en relation responsables.",
           "more": "Profil particulier"
         },
         {
           "badge": "SURVEILLANCE",
           "title": "Surveillance de portefeuille",
-          "body": "Surveillez clients et portefeuilles existants : nouvelles dettes, évolution de l’ancienneté, indicateurs de fraude, passages en perte, litiges et changements de risque significatifs.",
+          "body": "Placez vos clients et portefeuilles sous surveillance, balayés chaque nuit : nouveaux impayés, vieillissement, passages en perte, contestations et changements de risque significatifs.",
           "more": "Surveillance de portefeuille"
         }
       ]
@@ -469,13 +470,13 @@
         {
           "badge": "BANQUE",
           "title": "Banque et crédit",
-          "body": "Diligence client, recherche d’entreprises, rapprochement d’identités, indicateurs de risque avant crédit, surveillance de portefeuille, signaux de fraude et aide à la décision par API.",
+          "body": "Diligence client, recherche d’entreprises, rapprochement d’identités, indicateurs de risque avant crédit, listes de surveillance de portefeuille et détection d’anomalies de comportement chez vos propres utilisateurs.",
           "more": "Édition banque"
         },
         {
           "badge": "TIX",
           "title": "Échange d’intelligence télécom",
-          "body": "Intelligence partagée sur les impayés télécoms, ancienneté de l’exposition, indicateurs de nomadisme client, historique des comptes, doublons et évaluation du risque à l’entrée en relation.",
+          "body": "Intelligence partagée sur les impayés télécoms, ancienneté de l’exposition, nombre d’opérateurs qui signalent un sujet, historique des comptes, résolution d’identité entre les livres des opérateurs et évaluation du risque à l’entrée en relation.",
           "more": "Module TIX"
         },
         {
@@ -548,9 +549,18 @@
       "note": "Chiffres illustratifs. DIP présente à une institution son propre encours dans son intégralité et jamais celui d'une autre — une version réelle de ce tableau est votre portefeuille, non celui du marché."
     },
     "ai": {
-      "eyebrow": "Intelligence Dival AI",
-      "title": "Interrogez l’ensemble du réseau d’intelligence.",
-      "body": "Les analystes disposent d'un dossier de preuves : exactement les faits auxquels ils ont déjà droit, réunis en un seul endroit avec la provenance de chacun et la liste explicite de ce qui n'y figure pas, et pourquoi. Aucun modèle de langage n'est configuré dans ce déploiement — le socle factuel a été construit en premier, car un analyste disposant d'un accès direct à la base répondrait à des questions que tout le dispositif de cet échange vise à refuser. Les décisions finales de crédit, d'entrée en relation, de fraude et de service demeurent entre des mains humaines autorisées.",
+      "eyebrow": "Dival AI",
+      "title": "Posez une question. Obtenez une réponse calculée sur des enregistrements réels.",
+      "body": "Formulez ce que vous cherchez et DIP y répond — les entreprises au-dessus d'un seuil, ce qui a bougé cette semaine, qui relancer, pourquoi une société paraît risquée. L'assistant lit la question ; la plateforme calcule la réponse à partir d'enregistrements auxquels vous avez déjà accès. Chaque chiffre peut être ouvert et vérifié.",
+      "prompt": "Quelles entreprises nous doivent plus de 20 000 auprès de plusieurs institutions ?",
+      "askAction": "Interroger DIP",
+      "chips": [
+        "Qu'est-ce qui a changé cette semaine ?",
+        "Quels comptes le recouvrement doit-il prioriser ?",
+        "Pourquoi cette entreprise est-elle à risque ?"
+      ],
+      "grounded": "Ancré par conception : l'assistant choisit parmi un ensemble fixe de questions et ne rédige jamais sa propre requête ; il ne peut donc atteindre que des données auxquelles vous aviez déjà accès. Il affiche ce qu'il a compris avant de répondre et signale ce qu'il a délibérément laissé de côté.",
+      "answeredBy": "Dival AI",
       "exchanges": [
         {
           "role": "ANALYSTE CRÉDIT",
@@ -562,8 +572,68 @@
           "question": "Quelles entreprises nous doivent plus de 20 000 ?",
           "answer": "Quatorze entreprises, 640 200 USD dus à votre institution, dont quatre impayées depuis plus d'un an. Ce total est votre encours et non celui du marché — DIP ne divulgue jamais ce qui est dû à une autre institution. Restreindre aux entreprises déclarées par plusieurs institutions coûterait quatorze de vos consultations horaires, et la réponse en annonce le prix avant de le décompter."
         }
-      ],
-      "answeredBy": "Dival AI"
+      ]
+    },
+    "capabilities": {
+      "eyebrow": "La plateforme",
+      "title": "Tout ce qui suit fonctionne aujourd'hui.",
+      "body": "Ce n'est pas une feuille de route. Chacun de ces éléments est dans le produit, en français et en anglais, avec une isolation au niveau des lignes entre institutions et une piste d'audit derrière chaque action.",
+      "groups": [
+        {
+          "name": "Interroger et trouver",
+          "items": [
+            "Interroger DIP en langage courant et obtenir des chiffres calculés sur les enregistrements",
+            "Recherche universelle dans votre portefeuille par nom ou par identifiant",
+            "Profils consolidés pour les entreprises et les particuliers",
+            "Dossiers de preuves : une entreprise, son dossier, le verdict, et ce qui manque délibérément"
+          ]
+        },
+        {
+          "name": "Échange",
+          "items": [
+            "Consultation inter-institutions renvoyant un statut et un décompte — jamais un nom, jamais un montant",
+            "Déclarer un défaut, avec un seuil en dessous duquel rien n'entre au registre",
+            "Quota et motif : chaque question enregistrée avec la raison invoquée",
+            "Listes de surveillance interrogées chaque nuit et décomptées comme les consultations qu'elles sont"
+          ]
+        },
+        {
+          "name": "Comprendre le risque",
+          "items": [
+            "L'indicateur de risque DIP, chaque pondération publiée à côté du chiffre",
+            "Encours par tranche d'ancienneté et par devise, calculé côté serveur",
+            "Intelligence de direction : votre portefeuille du jour et treize mois d'activité",
+            "Détection d'anomalies sur la piste d'audit, y compris l'usage abusif de DIP"
+          ]
+        },
+        {
+          "name": "Alimenter la plateforme",
+          "items": [
+            "Import CSV et Excel, lignes brutes conservées intactes avec la provenance de chaque enregistrement",
+            "Un mappage que vous définissez et versionnez, sur l'en-tête réel de votre export",
+            "Import fondé sur vos propres numéros de compte, ou sur le seul nom",
+            "Annuler une livraison : tous les enregistrements qui en découlent disparaissent avec elle"
+          ]
+        },
+        {
+          "name": "Résoudre l'identité",
+          "items": [
+            "Rapprochements notés sur des signaux publiés et tranchés par une personne",
+            "Le RCCM lu pour ce qu'il est : réattribué quand une entreprise modifie ses statuts",
+            "Secteur, ville et adresse comparés lorsqu'un opérateur les fournit",
+            "Aucune fusion automatique, à quelque niveau de confiance que ce soit"
+          ]
+        },
+        {
+          "name": "Rester défendable",
+          "items": [
+            "Accès, contestation, rectification et effacement dans les délais légaux",
+            "Une conservation qui supprime au lieu de masquer, décomptée depuis l'exigibilité",
+            "Un catalogue des habilitations lu dans les contrôles du code",
+            "Des paramètres indiquant l'origine de chaque valeur configurée"
+          ]
+        }
+      ]
     },
     "subjects": {
       "eyebrow": "Les personnes inscrites au registre",
@@ -616,48 +686,6 @@
         }
       ]
     },
-    "status": {
-      "eyebrow": "Où en est la plateforme",
-      "title": "Ce qui fonctionne aujourd’hui, et ce qui vient ensuite.",
-      "body": "Une grande partie de cette page décrit une conception. Cette section indique ce qui en existe : une plateforme qui demande aux institutions de lui confier un patrimoine national doit être de celles qui le disent.",
-      "builtTitle": "En fonctionnement aujourd’hui",
-      "built": [
-        "Plateforme bilingue, authentification, rôles et isolation des locataires imposée par la base de données",
-        "Déclaration d'un impayé, avec un seuil en deçà duquel rien n'entre au registre",
-        "Consultation inter-opérateurs ne renvoyant qu'un statut, limitée en débit et auditée avec une finalité déclarée",
-        "Combien d'institutions déclarent un sujet — jamais lesquelles, jamais combien, jamais depuis quand",
-        "Import CSV et Excel avec stockage brut immuable et provenance pour chaque ligne",
-        "Transformation des lignes importées en enregistrements, via une correspondance que l'opérateur définit et versionne",
-        "Import d'une livraison identifiée par les numéros de compte de l'opérateur, ou par le seul nom",
-        "Retrait d'une livraison publiée, et de tous les enregistrements qui en découlent",
-        "L'indicateur de risque DIP, chaque facteur et sa pondération publiés à côté du chiffre",
-        "Recherche dans votre propre portefeuille par nom ou identifiant",
-        "Conservation, expiration et effacement qui supprime au lieu de masquer",
-        "Demandes d'accès, de contestation, de retrait et d'effacement, avec délais légaux",
-        "Une vue d'exposition par opérateur, par ancienneté et par devise",
-        "Résolution d'identité : rapprochements notés, présentés côte à côte et tranchés par une personne — jamais fusionnés automatiquement",
-        "Profils consolidés pour les entreprises et les particuliers",
-        "Listes de surveillance, balayées comme des consultations permanentes et décomptées comme telles",
-        "Détection d'anomalies comportementales sur la piste d'audit, y compris l'usage abusif de DIP lui-même",
-        "Intelligence de direction : votre portefeuille du jour, treize mois d'activité et le traitement des demandes des personnes",
-        "Interroger DIP : une question en langage courant, une réponse chiffrée à partir des enregistrements",
-        "Un modèle d'import publié, chaque colonne expliquée, sur lequel les opérateurs alignent leurs exports",
-        "Un catalogue des habilitations lu directement dans les contrôles du code, et un écran de paramètres indiquant l'origine de chaque valeur"
-      ],
-      "designedTitle": "Conçu, non construit",
-      "designed": [
-        "API temps réel et flux programmés",
-        "Un modèle de langage qui rédige les réponses en plus de lire les questions — configurable, désactivé par défaut, et suspendu à une réponse juridique sur le transfert de données hors du pays"
-      ],
-      "openTitle": "Non encore tranché",
-      "open": [
-        "Ce qui se passe lorsqu'une personne retire son consentement alors que la créance demeure impayée. Le conseil confirme que le fondement est contractuel et qu'aucune loi n'oblige un opérateur à déclarer — ce qui rend le refus actuel d'effacer une dette impayée plus difficile à défendre, et non plus aisé",
-        "Si la ligne « + 360 jours » des fichiers opérateurs signifie que le montant à déclarer est celui de cette tranche et non le solde. Dans ce cas, tous les montants déjà importés sont erronés",
-        "Si les données de débiteurs peuvent être transmises à un modèle de langage hébergé hors de la RDC pour qu'il rédige une réponse. Le paramètre existe et il est désactivé",
-        "S'il faut divulguer le montant dû aux autres institutions, comme le conseil le demande. Aujourd'hui l'échange communique un nombre et une tranche, jamais un montant"
-      ],
-      "note": "Les colonnes ci-dessous décrivent l’état réel de la plateforme. Les chiffres présentés ailleurs sur cette page illustrent le produit et ne rendent pas compte d’un registre national en production."
-    },
     "finalCta": {
       "title": "Transformez les données que vous détenez déjà en intelligence exploitable.",
       "body": "Commencez avec vos tableurs télécoms existants. Ajoutez de nouvelles institutions, des API et des capacités de risque à mesure que le réseau grandit.",
@@ -687,8 +715,8 @@
           "title": "Plateforme",
           "links": [
             "Résolution d’identité",
-            "Intelligence fraude",
-            "API",
+            "Détection d’anomalies",
+            "Import et mapping",
             "Assistant IA"
           ]
         },

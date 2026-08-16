@@ -7,6 +7,7 @@ import { Hero } from "@/components/landing/Hero";
 import {
   AiSection,
   BoundarySection,
+  CapabilitiesSection,
   EntitySection,
   ExchangeSection,
   FinalCta,
@@ -18,7 +19,6 @@ import {
   PortfolioSection,
   QuickLinks,
   RiskSection,
-  StatusSection,
   SubjectRightsSection,
 } from "@/components/landing/sections";
 
@@ -29,12 +29,20 @@ import {
  * what comes out, who it is for, and only then how it is governed. Governance last is deliberate;
  * leading with it answers an objection nobody has raised yet.
  *
- * <p>Three sections were added once there was a real product to describe. {@code Boundary} follows
- * the exchange because the question it answers — what will my competitors learn — is the next one
- * a reader has. {@code SubjectRights} precedes governance, since the rights are the substance and
- * governance is the machinery around them. {@code Status} sits last before the call to action: a
- * page that has just described a national platform should say which parts of it exist before it
- * asks anybody to get in touch.
+ * <p>The assistant comes second, immediately after the hero. It is the thing a visitor remembers
+ * and the thing no competing registry in the region has, and burying it under six sections about
+ * data governance was selling the plumbing ahead of the product.
+ *
+ * <p>{@code Boundary} follows the exchange because the question it answers — what will my
+ * competitors learn — is the next one a reader has. {@code SubjectRights} precedes governance,
+ * since the rights are the substance and governance is the machinery around them.
+ *
+ * <p>What is <em>not</em> here: the build-status columns that used to sit before the call to
+ * action, listing what runs, what is designed and what is undecided. They moved to
+ * {@code docs/BUILD_STATUS.md}, and the rule came with them — everything this page advertises
+ * appears in that file's "running today" list, and nothing may be added here before it does. A
+ * commercial page is allowed to be confident. It is not allowed to describe something that does
+ * not exist.
  */
 export default function LandingPage() {
   return (
@@ -48,6 +56,8 @@ export default function LandingPage() {
       <main>
         <Hero />
         <QuickLinks />
+        <AiSection />
+        <CapabilitiesSection />
         <PlatformSection />
         <ExchangeSection />
         <BoundarySection />
@@ -56,10 +66,8 @@ export default function LandingPage() {
         <NationalTrustSection />
         <IndustriesSection />
         <PortfolioSection />
-        <AiSection />
         <SubjectRightsSection />
         <GovernanceSection />
-        <StatusSection />
         <FinalCta />
       </main>
 

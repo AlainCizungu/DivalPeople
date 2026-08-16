@@ -18,6 +18,8 @@ export function LandingHeader() {
   const { status, signIn } = useSession();
 
   const links = [
+    // First, because it is the first thing on the page and the thing people came to see.
+    { href: "#ai", label: messages.landing.nav.ai },
     { href: "#platform", label: messages.landing.nav.platform },
     { href: "#search", label: messages.landing.nav.search },
     { href: "#risk", label: messages.landing.nav.risk },

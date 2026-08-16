@@ -294,19 +294,118 @@ export function AiSection() {
   const messages = useMessages();
   const { ai } = messages.landing;
   return (
-    <section id="ai" className="mx-auto max-w-7xl px-6 py-14 md:py-20">
-      <SectionHeading eyebrow={ai.eyebrow} title={ai.title} body={ai.body} />
-      <div className="grid gap-6 md:grid-cols-2">
-        {ai.exchanges.map((item) => (
-          <article key={item.role} className="rounded-xl border border-line bg-white p-6">
-            <Eyebrow>{item.role}</Eyebrow>
-            <p className="mb-4 text-lg font-semibold text-navy">“{item.question}”</p>
-            <p className="rounded-lg bg-soft p-4 text-sm text-ink">
-              <strong className="text-blue">{ai.answeredBy}: </strong>
-              {item.answer}
-            </p>
-          </article>
-        ))}
+    <section id="ai" className="bg-navy text-white">
+      <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
+        <div className="mb-10 max-w-3xl">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-blue">
+            {ai.eyebrow}
+          </p>
+          <h2 className="mb-4 text-3xl font-bold leading-tight md:text-4xl">{ai.title}</h2>
+          <p className="text-base text-white/70">{ai.body}</p>
+        </div>
+
+        {/* The product's own question box, drawn rather than screenshotted, so it stays in step
+            with the real one and stays legible at any width. */}
+        <div className="mb-8 rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-1 items-center gap-3 rounded-lg bg-white px-4 py-3">
+              <SparkMark />
+              <span className="text-sm text-muted">{ai.prompt}</span>
+            </div>
+            <span className="rounded-lg bg-blue px-6 py-3 text-center text-sm font-semibold text-white">
+              {ai.askAction}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ai.chips.map((chip) => (
+              <span
+                key={chip}
+                className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/70"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {ai.exchanges.map((item) => (
+            <article
+              key={item.role}
+              className="rounded-2xl border border-white/15 bg-white/5 p-6 transition hover:bg-white/10"
+            >
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-blue">
+                {item.role}
+              </p>
+              <p className="mb-4 text-lg font-semibold">“{item.question}”</p>
+              <p className="rounded-xl bg-white p-4 text-sm text-ink">
+                <strong className="text-blue">{ai.answeredBy}: </strong>
+                {item.answer}
+              </p>
+            </article>
+          ))}
+        </div>
+
+        <p className="mt-6 max-w-3xl text-sm text-white/60">{ai.grounded}</p>
+      </div>
+    </section>
+  );
+}
+
+/** The mark used beside the assistant, matching the one in the product. */
+function SparkMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" className="text-blue" fill="currentColor">
+      <path d="M12 2l1.9 5.6L19.5 9.5 13.9 11.4 12 17l-1.9-5.6L4.5 9.5l5.6-1.9z" />
+      <path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity="0.6" />
+    </svg>
+  );
+}
+
+/**
+ * Everything the platform does, on one screen.
+ *
+ * <p>A commercial page needs one place a reader can see the whole product rather than inferring it
+ * from six themed sections. Twenty-four capabilities in six groups, and every one of them is in
+ * {@code docs/BUILD_STATUS.md} under "running today" — that file holds the rule this section obeys:
+ * confident is allowed, describing something that does not exist is not.
+ *
+ * <p>Grouped by what somebody is trying to do rather than by which module owns it. A reader
+ * deciding whether to join a registry does not care that identity resolution and the risk model
+ * live in different packages.
+ */
+export function CapabilitiesSection() {
+  const messages = useMessages();
+  const { capabilities } = messages.landing;
+  return (
+    <section id="capabilities" className="bg-soft">
+      <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
+        <SectionHeading
+          eyebrow={capabilities.eyebrow}
+          title={capabilities.title}
+          body={capabilities.body}
+        />
+
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {capabilities.groups.map((group) => (
+            <article
+              key={group.name}
+              className="rounded-2xl border border-line bg-white p-7 transition hover:border-blue/40 hover:shadow-sm"
+            >
+              <h3 className="mb-4 text-lg font-bold text-navy">{group.name}</h3>
+              <ul className="flex flex-col gap-3">
+                {group.items.map((item) => (
+                  <li key={item} className="flex gap-3 text-sm text-ink">
+                    <span aria-hidden="true" className="mt-0.5 shrink-0 text-green">
+                      ✓
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -448,7 +547,7 @@ export function SubjectRightsSection() {
   const messages = useMessages();
   const { subjects } = messages.landing;
   return (
-    <section id="subjects" className="bg-soft">
+    <section id="subjects" className="bg-white">
       <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
       <SectionHeading eyebrow={subjects.eyebrow} title={subjects.title} body={subjects.body} />
 
@@ -483,50 +582,6 @@ export function SubjectRightsSection() {
  * inaccuracy. Stating the gap plainly costs nothing with a bank and is the strongest thing a
  * regulator can be shown.
  */
-export function StatusSection() {
-  const messages = useMessages();
-  const { status } = messages.landing;
-
-  const columns = [
-    { title: status.builtTitle, items: status.built, accent: "border-l-green", mark: "✓" },
-    { title: status.designedTitle, items: status.designed, accent: "border-l-blue", mark: "○" },
-    { title: status.openTitle, items: status.open, accent: "border-l-warning", mark: "?" },
-  ];
-
-  return (
-    <section id="status" className="bg-soft">
-      <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
-        <SectionHeading eyebrow={status.eyebrow} title={status.title} body={status.body} />
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {columns.map((column) => (
-            <article
-              key={column.title}
-              className={`rounded-xl border border-line border-l-4 bg-white p-7 ${column.accent}`}
-            >
-              <h3 className="mb-4 text-lg font-bold text-navy">{column.title}</h3>
-              <ul className="flex flex-col gap-3 text-sm text-muted">
-                {column.items.map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span aria-hidden="true" className="font-extrabold text-ink">
-                      {column.mark}
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-
-        <p className="mt-6 rounded-lg border-2 border-navy bg-white px-5 py-4 font-semibold text-navy">
-          {status.note}
-        </p>
-      </div>
-    </section>
-  );
-}
-
 export function LandingFooter() {
   const messages = useMessages();
   const { footer } = messages.landing;
