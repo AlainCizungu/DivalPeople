@@ -15,8 +15,6 @@
     "search": "Universal search",
     "executive": "Executive intelligence",
     "portfolioIntelligence": "Portfolio intelligence",
-    "businesses": "Businesses",
-    "individuals": "Individuals",
     "records": "My records",
     "inquiries": "Inquiries",
     "declare": "Declarations",
@@ -172,7 +170,14 @@
       "dispute": "Mark disputed",
       "daysRemaining": "{days} days left",
       "awaitingErasure": "past its period",
-      "settleNote": "Marking a record settled brings its erasure date forward and stops it counting against the subject. Marking it disputed suspends it from inquiry results while the dispute is open."
+      "settleNote": "Marking a record settled brings its erasure date forward and stops it counting against the subject. Marking it disputed suspends it from inquiry results while the dispute is open.",
+      "subject": "Subject",
+      "emptyForFilter": "No records of that kind in your book.",
+      "filters": {
+        "ALL": "All",
+        "BUSINESS": "Businesses",
+        "INDIVIDUAL": "Individuals"
+      }
     },
     "checkTitle": "Who are you checking?",
     "checkDescription": "Identify the company by its register number where you can. Names are unreliable: operator exports truncate them, and different companies share them.",
@@ -198,7 +203,11 @@
       "OUTSTANDING_DEBT": "At least one institution reports an unpaid obligation.",
       "REVIEW_REQUIRED": "The identifier matched, but not confidently enough to act on. Check by hand."
     },
-    "accountReferenceNote": "Only this organisation can match on it. Account numbers are assigned by each operator from one upwards, so the same number belongs to a different company at every operator — records identified this way stay visible to you and invisible to the exchange. Map an RCCM or tax number as well when the file has one."
+    "accountReferenceNote": "Only this organisation can match on it. Account numbers are assigned by each operator from one upwards, so the same number belongs to a different company at every operator — records identified this way stay visible to you and invisible to the exchange. Map an RCCM or tax number as well when the file has one.",
+    "subjectTypes": {
+      "BUSINESS": "Business",
+      "INDIVIDUAL": "Individual"
+    }
   },
   "auth": {
     "signIn": "Sign in",
@@ -1330,26 +1339,6 @@
     "whoYouAre": "Signed in as {name}, holding: {roles}. If PLATFORM_ADMIN is not in that list, this session is not a registry account — and if it is, the refusal came from the API rather than from this page, which is a different problem.",
     "noRoles": "no roles at all",
     "registerNumberNote": "A register number that differs weighs much less against a match than one that agrees weighs for it. An RCCM is reissued when a company amends its statutes or adds capital, so two different numbers may be two companies or one company before and after a change — and nothing in either file says which. A conflicting tax number still settles it."
-  },
-  "directory": {
-    "businessesTitle": "Businesses",
-    "businessesSubtitle": "Companies your institution has reported, in name order.",
-    "individualsTitle": "Individuals",
-    "individualsSubtitle": "People your institution has reported, in name order.",
-    "ownBookNote": "Your own book only. An institution can browse the people it has itself reported and nobody else's — the difference between a directory of your records and a directory of the country.",
-    "loadFailed": "Could not load the list.",
-    "forbidden": "Browsing the book needs the declarant role. An account that may only enquire submits an identifier and receives a verdict, rather than a list.",
-    "empty": "Nothing here yet.",
-    "emptyBusinesses": "You have not reported any company, or every record has passed its retention date and been erased.",
-    "emptyIndividuals": "You have not reported any individual. Both real operator deliveries are business portfolios, so this stays empty until somebody sends a subscriber file — and a subscriber file with a date of birth is what would make identity resolution work for people.",
-    "truncated": "Showing the first {count}. Narrow it with search rather than scrolling.",
-    "count": "{count} on file",
-    "records": "records",
-    "open": "open",
-    "oldest": "Oldest",
-    "mixedCurrency": "Several currencies",
-    "openProfile": "Open",
-    "searchInstead": "Search by name or identifier"
   },
   "anomalies": {
     "title": "Fraud and anomalies",

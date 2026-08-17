@@ -15,8 +15,6 @@
     "search": "Recherche universelle",
     "executive": "Intelligence de direction",
     "portfolioIntelligence": "Intelligence de portefeuille",
-    "businesses": "Entreprises",
-    "individuals": "Particuliers",
     "records": "Mes déclarations",
     "inquiries": "Consultations",
     "declare": "Déclarations",
@@ -172,7 +170,14 @@
       "dispute": "Marquer contesté",
       "daysRemaining": "{days} jours restants",
       "awaitingErasure": "période dépassée",
-      "settleNote": "Marquer un enregistrement comme régularisé avance sa date d’effacement et cesse de le compter contre le sujet. Le marquer contesté le retire des résultats d’interrogation tant que la contestation est ouverte."
+      "settleNote": "Marquer un enregistrement comme régularisé avance sa date d’effacement et cesse de le compter contre le sujet. Le marquer contesté le retire des résultats d’interrogation tant que la contestation est ouverte.",
+      "subject": "Sujet",
+      "emptyForFilter": "Aucun enregistrement de ce type dans votre portefeuille.",
+      "filters": {
+        "ALL": "Tous",
+        "BUSINESS": "Entreprises",
+        "INDIVIDUAL": "Particuliers"
+      }
     },
     "checkTitle": "Qui vérifiez-vous ?",
     "checkDescription": "Identifiez l’entreprise par son numéro de registre lorsque c’est possible. Les noms sont peu fiables : les exports opérateurs les tronquent, et des sociétés différentes les partagent.",
@@ -198,7 +203,11 @@
       "OUTSTANDING_DEBT": "Au moins une institution signale une obligation impayée.",
       "REVIEW_REQUIRED": "L’identifiant correspond, mais pas assez sûrement pour agir. Vérifiez manuellement."
     },
-    "accountReferenceNote": "Seule votre organisation peut l’utiliser pour un rapprochement. Chaque opérateur numérote ses comptes à partir de un, si bien qu’un même numéro désigne une autre entreprise chez chaque opérateur : les enregistrements identifiés ainsi restent visibles pour vous et invisibles pour l’échange. Faites aussi correspondre un RCCM ou un numéro d’impôt si le fichier en contient un."
+    "accountReferenceNote": "Seule votre organisation peut l’utiliser pour un rapprochement. Chaque opérateur numérote ses comptes à partir de un, si bien qu’un même numéro désigne une autre entreprise chez chaque opérateur : les enregistrements identifiés ainsi restent visibles pour vous et invisibles pour l’échange. Faites aussi correspondre un RCCM ou un numéro d’impôt si le fichier en contient un.",
+    "subjectTypes": {
+      "BUSINESS": "Entreprise",
+      "INDIVIDUAL": "Particulier"
+    }
   },
   "auth": {
     "signIn": "Se connecter",
@@ -1330,26 +1339,6 @@
     "whoYouAre": "Connecté en tant que {name}, avec les rôles : {roles}. Si PLATFORM_ADMIN n'y figure pas, cette session n'est pas un compte du registre — et s'il y figure, le refus vient de l'API et non de cette page, ce qui est un autre problème.",
     "noRoles": "aucun rôle",
     "registerNumberNote": "Un numéro d'immatriculation différent pèse beaucoup moins contre un rapprochement qu'un numéro identique ne pèse en sa faveur. Le RCCM est réattribué lorsqu'une entreprise modifie ses statuts ou augmente son capital : deux numéros distincts peuvent donc désigner deux entreprises ou une seule, avant et après une modification — et rien dans les deux dossiers ne permet de trancher. Un numéro d'impôt divergent, lui, tranche toujours."
-  },
-  "directory": {
-    "businessesTitle": "Entreprises",
-    "businessesSubtitle": "Sociétés déclarées par votre institution, par ordre alphabétique.",
-    "individualsTitle": "Particuliers",
-    "individualsSubtitle": "Personnes déclarées par votre institution, par ordre alphabétique.",
-    "ownBookNote": "Votre portefeuille uniquement. Une institution peut parcourir les personnes qu'elle a elle-même déclarées et aucune autre — la différence entre un répertoire de vos enregistrements et un répertoire du pays.",
-    "loadFailed": "Impossible de charger la liste.",
-    "forbidden": "Parcourir le portefeuille requiert le rôle de déclarant. Un compte qui ne peut que consulter soumet un identifiant et reçoit un verdict, pas une liste.",
-    "empty": "Rien pour l'instant.",
-    "emptyBusinesses": "Vous n'avez déclaré aucune société, ou tous les enregistrements ont dépassé leur durée de conservation et ont été effacés.",
-    "emptyIndividuals": "Vous n'avez déclaré aucun particulier. Les deux livraisons opérateurs réelles sont des portefeuilles d'entreprises : cette liste restera vide jusqu'à l'envoi d'un fichier d'abonnés — et un fichier d'abonnés comportant une date de naissance est ce qui ferait fonctionner la résolution d'identité pour les personnes.",
-    "truncated": "Affichage des {count} premiers. Affinez par la recherche plutôt qu'en faisant défiler.",
-    "count": "{count} au dossier",
-    "records": "enregistrements",
-    "open": "ouverts",
-    "oldest": "Le plus ancien",
-    "mixedCurrency": "Plusieurs devises",
-    "openProfile": "Ouvrir",
-    "searchInstead": "Rechercher par nom ou identifiant"
   },
   "anomalies": {
     "title": "Fraude et anomalies",

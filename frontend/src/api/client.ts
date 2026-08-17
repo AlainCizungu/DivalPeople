@@ -234,6 +234,9 @@ export type DeclarationRequest = {
 export type DebtRecord = {
   id: string;
   subjectId: string;
+  /** Who owes it. The list used to show amounts against a bare uuid. */
+  subjectName: string;
+  subjectType: SubjectType;
   status: DebtStatus;
   amount: string;
   currency: string;
@@ -1232,10 +1235,13 @@ export const tixApi = {
    * this to records the caller declared, and there is no parameter that could widen it.
    */
   /**
-   * The operator's own book, by kind.
+   * Subjects of one kind, listed.
    *
-   * Truncated is carried rather than inferred from the length: a list that stops at a round
-   * number without saying so reads as the whole book.
+   * <p><strong>Nothing in this application calls it.</strong> The Businesses and Individuals
+   * screens were its only callers and were folded into Records, where the kind is a filter rather
+   * than a destination. Kept rather than deleted: `GET /api/v1/tix/subjects?type=` is a working,
+   * guarded, tested endpoint, and removing a server capability because one screen stopped using it
+   * is a wider decision than the one that was made. Delete both together, or neither.
    */
   browse(type: SubjectType): Promise<{ subjects: SearchResult[]; truncated: boolean }> {
     return request<{ subjects: SearchResult[]; truncated: boolean }>(

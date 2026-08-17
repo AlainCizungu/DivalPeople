@@ -373,9 +373,23 @@ public class TixController {
      * <p>Nothing here crosses the exchange. An enquiring operator sees {@link InquiryResult},
      * which has never carried an amount and still does not.
      */
+    /**
+     * One declared record, with enough of its subject to be read.
+     *
+     * <p>{@code subjectName} and {@code subjectType} are here because the records screen listed
+     * amounts and dates against a bare uuid: an operator could see that it had reported 18,400 USD
+     * and not who owed it. Both come from the subject, which is lazy, so
+     * {@code findByTenantIdWithSubject} loads it — see that method for why the entity is not made
+     * eager instead.
+     *
+     * <p>Naming the subject discloses nothing new. Every record here is this operator's own, and
+     * it is the operator's own customer.
+     */
     public record DebtRecordResponse(
             UUID id,
             UUID subjectId,
+            String subjectName,
+            Subject.SubjectType subjectType,
             DebtStatus status,
             java.math.BigDecimal amount,
             String currency,
@@ -387,6 +401,8 @@ public class TixController {
             return new DebtRecordResponse(
                     record.getId(),
                     record.getSubject().getId(),
+                    record.getSubject().getFullName(),
+                    record.getSubject().getSubjectType(),
                     record.getStatus(),
                     record.getAmount(),
                     record.getCurrency(),

@@ -24,6 +24,22 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
      */
     List<DebtRecord> findByTenantId(UUID tenantId);
 
+    /**
+     * The same records, with the subject already loaded.
+     *
+     * <p>The records screen names the company and says whether it is a business or a person, and
+     * both live on {@code subject}, which is lazy. Mapping to a response happens in the controller,
+     * after the service's transaction has closed — so reaching for the name there throws
+     * {@code LazyInitializationException} rather than returning null, and it throws on the list
+     * endpoint only, which is the shape of defect that reaches a demo.
+     *
+     * <p>A join fetch rather than eager mapping on the entity: making {@code subject} EAGER would
+     * load it for the exchange sweep, the retention purge and every other path that wants the row
+     * and not the company.
+     */
+    @Query("select d from DebtRecord d join fetch d.subject where d.tenantId = :tenantId")
+    List<DebtRecord> findByTenantIdWithSubject(@Param("tenantId") UUID tenantId);
+
     List<DebtRecord> findByTenantIdAndSubjectId(UUID tenantId, UUID subjectId);
 
     long countByTenantId(UUID tenantId);

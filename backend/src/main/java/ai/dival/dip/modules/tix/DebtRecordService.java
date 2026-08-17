@@ -45,7 +45,8 @@ public class DebtRecordService {
 
     @Transactional(readOnly = true)
     public List<DebtRecord> listOwn() {
-        return debtRecords.findByTenantId(TenantContext.require());
+        // With the subject, because the response names it. See findByTenantIdWithSubject.
+        return debtRecords.findByTenantIdWithSubject(TenantContext.require());
     }
 
     /**
@@ -180,6 +181,10 @@ public class DebtRecordService {
         // Regularisation brings erasure forward. expiryOnSettlement takes the earlier of the two
         // dates, so paying a debt can never extend how long the record about it is kept.
         record.retainUntil(retention.expiryOnSettlement(record.getRetentionUntil()));
+        // Initialised inside the transaction. The response names the subject, and the
+        // controller maps it after this method returns — by which point a lazy proxy has
+        // nothing to load from.
+        record.getSubject().getFullName();
         audit.record("TIX_DEBT_SETTLED", "DebtRecord", recordId.toString(),
                 AuditService.OUTCOME_SUCCESS, actorId,
                 "Settled; retention brought forward to " + record.getRetentionUntil());
@@ -192,6 +197,10 @@ public class DebtRecordService {
         DebtRecord record = debtRecords.findByIdAndTenantId(recordId, tenantId)
                 .orElseThrow(() -> new DebtRecordNotFoundException(recordId));
         record.dispute();
+        // Initialised inside the transaction. The response names the subject, and the
+        // controller maps it after this method returns — by which point a lazy proxy has
+        // nothing to load from.
+        record.getSubject().getFullName();
         audit.recordSuccess("TIX_DEBT_DISPUTED", "DebtRecord", recordId.toString(), actorId);
         return record;
     }

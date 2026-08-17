@@ -23,7 +23,7 @@ page may be confident, and it may not describe anything that is not here.**
 - Subject access, dispute, withdrawal, and erasure requests, on statutory deadlines
 - An operator exposure view, aged, per currency
 - Entity resolution: candidate matches scored, shown side by side, and decided by a person — never merged automatically
-- Consolidated profiles for businesses and individuals
+- Consolidated profiles for businesses and individuals, listed together in one records screen with the kind as a filter
 - Watchlists, swept as standing inquiries and charged like one
 - Behavioural anomaly detection over the audit trail, including abuse of DIP itself
 - Executive intelligence: your book today, thirteen months of activity, and how rights requests were answered
