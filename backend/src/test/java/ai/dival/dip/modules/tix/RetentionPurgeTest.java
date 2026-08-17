@@ -3,6 +3,7 @@ package ai.dival.dip.modules.tix;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ai.dival.dip.AbstractIntegrationTest;
+import ai.dival.dip.PlatformDate;
 import ai.dival.dip.RequiresDocker;
 import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.tenants.Tenant;
@@ -65,7 +66,7 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
                 () -> debtRecordService.declare(declaration(document), null).record().getId());
 
         // Four years on: past the three-year period for a first default.
-        purge.purgeAsOf(LocalDate.now().plusYears(4));
+        purge.purgeAsOf(PlatformDate.today().plusYears(4));
 
         // findById, not a service call. A service could be hiding it; the row itself must be gone.
         assertThat(debtRecords.findById(recordId))
@@ -83,7 +84,7 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
         UUID recordId = TenantContext.runAsResult(operatorA,
                 () -> debtRecordService.declare(declaredToday(document), null).record().getId());
 
-        purge.purgeAsOf(LocalDate.now().plusYears(1));
+        purge.purgeAsOf(PlatformDate.today().plusYears(1));
 
         assertThat(debtRecords.findById(recordId)).isPresent();
     }
@@ -96,7 +97,7 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
                 () -> debtRecordService.declare(declaration(document), null)
                         .record().getSubject().getId());
 
-        purge.purgeAsOf(LocalDate.now().plusYears(4));
+        purge.purgeAsOf(PlatformDate.today().plusYears(4));
 
         // The tail of erasure, and the part that is easy to forget: deleting every record about
         // somebody while keeping their name, date of birth and national ID number leaves personal
@@ -132,10 +133,10 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
                         LocalDate.of(1990, 5, 12), "CD",
                         new BigDecimal("400.00"), "USD", "POSTPAID",
                         // Declared today, so it is still live when A's four-year-old one is not.
-                        LocalDate.now(), true), null).record().getId());
+                        PlatformDate.today(), true), null).record().getId());
 
         // A's record is a first default declared four years ago; B's is from today.
-        purge.purgeAsOf(LocalDate.now().plusYears(4));
+        purge.purgeAsOf(PlatformDate.today().plusYears(4));
 
         assertThat(debtRecords.findById(recordOfB))
                 .as("operator B's record is nowhere near its retention period")
@@ -152,7 +153,7 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
         UUID recordId = TenantContext.runAsResult(operatorA,
                 () -> debtRecordService.declare(declaration(document), null).record().getId());
 
-        purge.purgeAsOf(LocalDate.now().plusYears(4));
+        purge.purgeAsOf(PlatformDate.today().plusYears(4));
 
         // An erasure nobody can evidence is indistinguishable from data loss, and the difference
         // matters to exactly the person who asks whether the platform still holds their data.
@@ -174,7 +175,7 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
                 List.of(new DeclarationRequest.SubmittedIdentifier(
                         IdentifierType.NATIONAL_ID, document)),
                 "Jean Kabila", Subject.SubjectType.INDIVIDUAL, LocalDate.of(1990, 5, 12), "CD",
-                new BigDecimal("150.00"), "USD", "POSTPAID", LocalDate.now(), true);
+                new BigDecimal("150.00"), "USD", "POSTPAID", PlatformDate.today(), true);
     }
 
     private static DeclarationRequest declaration(String document) {
@@ -184,6 +185,6 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
                 "Jean Kabila", Subject.SubjectType.INDIVIDUAL, LocalDate.of(1990, 5, 12), "CD",
                 new BigDecimal("150.00"), "USD", "POSTPAID",
                 // Four years ago, so a three-year period has run out by the time the purge runs.
-                LocalDate.now().minusYears(4), true);
+                PlatformDate.today().minusYears(4), true);
     }
 }

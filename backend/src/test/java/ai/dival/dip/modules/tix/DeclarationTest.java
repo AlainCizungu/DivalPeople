@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ai.dival.dip.AbstractIntegrationTest;
+import ai.dival.dip.PlatformDate;
 import ai.dival.dip.RequiresDocker;
 import ai.dival.dip.common.error.ConflictException;
 import ai.dival.dip.common.error.PolicyRefusedException;
@@ -115,7 +116,7 @@ class DeclarationTest extends AbstractIntegrationTest {
                         "Jean Kabila", Subject.SubjectType.INDIVIDUAL,
                         LocalDate.of(1990, 5, 12), "CD",
                         new BigDecimal("200.00"), "USD", "POSTPAID",
-                        LocalDate.now().minusDays(30), true), null));
+                        PlatformDate.today().minusDays(30), true), null));
 
         assertThat(second.identifiersLearned()).isEqualTo(1);
         assertThat(second.record().getSubject().getId()).isEqualTo(subjectId);
@@ -138,7 +139,7 @@ class DeclarationTest extends AbstractIntegrationTest {
                         IdentifierType.PASSPORT, documentOfAnother)),
                 "Someone Else", Subject.SubjectType.INDIVIDUAL, null, "CD",
                 new BigDecimal("300.00"), "USD", "POSTPAID",
-                LocalDate.now().minusDays(10), true), null));
+                PlatformDate.today().minusDays(10), true), null));
 
         // Submitting both together claims they are one person. They are already two, and merging
         // would move one person's debts onto another irreversibly. Refusing is the only safe
@@ -150,7 +151,7 @@ class DeclarationTest extends AbstractIntegrationTest {
                                 IdentifierType.PASSPORT, documentOfAnother)),
                 "Jean Kabila", Subject.SubjectType.INDIVIDUAL, null, "CD",
                 new BigDecimal("400.00"), "USD", "POSTPAID",
-                LocalDate.now().minusDays(5), true), null))
+                PlatformDate.today().minusDays(5), true), null))
                 .isInstanceOf(SubjectResolver.AmbiguousSubjectException.class);
     }
 
@@ -188,7 +189,7 @@ class DeclarationTest extends AbstractIntegrationTest {
                         IdentifierType.NATIONAL_ID, document)),
                 "Too Small", Subject.SubjectType.INDIVIDUAL, null, "CD",
                 new BigDecimal("12.00"), "USD", "POSTPAID",
-                LocalDate.now().minusDays(3), true), null))
+                PlatformDate.today().minusDays(3), true), null))
                 .isInstanceOf(PolicyRefusedException.class);
 
         // The point of the ordering in declare(). If resolution ran first, a refused declaration
@@ -208,7 +209,7 @@ class DeclarationTest extends AbstractIntegrationTest {
                         IdentifierType.NATIONAL_ID, nationalId())),
                 "No Dunning", Subject.SubjectType.INDIVIDUAL, null, "CD",
                 new BigDecimal("500.00"), "USD", "POSTPAID",
-                LocalDate.now().minusDays(3), false), null))
+                PlatformDate.today().minusDays(3), false), null))
                 .isInstanceOf(PolicyRefusedException.class)
                 .hasMessageContaining("dunning");
     }
@@ -223,7 +224,7 @@ class DeclarationTest extends AbstractIntegrationTest {
                         IdentifierType.NATIONAL_ID, nationalId())),
                 "Time Traveller", Subject.SubjectType.INDIVIDUAL, null, "CD",
                 new BigDecimal("500.00"), "USD", "POSTPAID",
-                LocalDate.now().plusDays(1), true), null))
+                PlatformDate.today().plusDays(1), true), null))
                 .isInstanceOf(PolicyRefusedException.class)
                 .hasMessageContaining("future");
     }
@@ -238,6 +239,6 @@ class DeclarationTest extends AbstractIntegrationTest {
                         IdentifierType.NATIONAL_ID, document)),
                 "Jean Kabila", Subject.SubjectType.INDIVIDUAL, LocalDate.of(1990, 5, 12), "CD",
                 new BigDecimal("150.00"), "USD", "POSTPAID",
-                LocalDate.now().minusDays(60), true);
+                PlatformDate.today().minusDays(60), true);
     }
 }
