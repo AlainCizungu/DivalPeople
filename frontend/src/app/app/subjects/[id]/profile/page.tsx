@@ -37,7 +37,7 @@ import {
  * nothing for both would let a reader conclude the more comforting one.
  */
 const SIGNAL_TONE: Record<string, Tone> = {
-  MULTIPLE_OUTSTANDING_OBLIGATIONS: "serious",
+  DEFAULTED_WITH_YOU_BEFORE: "serious",
   OBLIGATION_OLDER_THAN_A_YEAR: "serious",
   REPORTED_BY_SEVERAL_INSTITUTIONS: "review",
   AN_IDENTIFIER_IS_REUSED: "review",
@@ -153,11 +153,17 @@ export default function Subject360Page() {
                 value={String(view.overview.institutionCount)}
                 note={t.institutionsNote}
               />
-              <Metric label={t.openAccounts} value={String(view.overview.openAccounts)} />
+              {/* A fact, not a count. One operator holds at most one open obligation against one
+                  subject, so "Open accounts: 1" reads as though it could have been 4. */}
               <Metric
-                label={t.pastDue}
-                value={String(view.overview.pastDueAccounts)}
-                tone={view.overview.pastDueAccounts > 0 ? "warning" : "plain"}
+                label={t.status}
+                value={view.overview.hasOutstanding ? t.unpaidNow : t.nothingUnpaid}
+                tone={view.overview.hasOutstanding ? "warning" : "plain"}
+              />
+              <Metric
+                label={t.settledBefore}
+                value={String(view.overview.settledRecords)}
+                note={t.settledBeforeNote}
               />
               <Metric
                 label={t.oldestUnpaid}

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ai.dival.dip.AbstractIntegrationTest;
 import ai.dival.dip.RequiresDocker;
+import ai.dival.dip.common.error.ConflictException;
 import ai.dival.dip.common.error.PolicyRefusedException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.tenants.Tenant;
@@ -120,33 +121,68 @@ class Subject360Test extends AbstractIntegrationTest {
     @DisplayName("every overview figure is the asker's own book, and the count is the exception")
     void theOverviewIsYourOwnBook() {
         declare(vodacom, "500.00");
-        declare(vodacom, "250.00");
         declare(orange, "9999.00");
 
         Subject360Service.Subject360 view = openAs(vodacom);
 
-        assertThat(view.overview().yourExposure()).isEqualTo("750.00");
-        assertThat(view.overview().yourRecords()).isEqualTo(2);
-        assertThat(view.overview().openAccounts()).isEqualTo(2);
+        assertThat(view.overview().yourExposure())
+                .as("Orange's 9999 is not in it")
+                .isEqualTo("500.00");
+        assertThat(view.overview().yourRecords()).isEqualTo(1);
+        assertThat(view.overview().hasOutstanding()).isTrue();
         assertThat(view.overview().institutionCount())
                 .as("the one figure on this screen that is not the asker's own")
                 .isEqualTo(2);
     }
 
     @Test
+    @DisplayName("one operator may hold one open obligation per subject, and the screen says so as a fact not a count")
+    void oneOpenObligationPerOperator() {
+        declare(vodacom, "500.00");
+
+        // uq_tix_debt_open_per_operator is unique on (tenant_id, subject_id) WHERE status =
+        // 'OUTSTANDING'. Pinned here because the 360 screen was first built without knowing it:
+        // it carried an "open accounts" count and a signal that fired above one, and the count
+        // could only ever be 0 or 1 while the signal could never fire at all — a detector
+        // reporting nothing forever, which is the exact thing this screen refuses to do about
+        // fraud two panels down.
+        assertThatThrownBy(() -> declare(vodacom, "250.00"))
+                .as("a second open obligation against the same subject by the same operator")
+                .isInstanceOf(ConflictException.class);
+
+        assertThat(openAs(vodacom).overview().hasOutstanding())
+                .as("so the honest shape is a fact, not a number that looks like it could be four")
+                .isTrue();
+    }
+
+    @Test
     @DisplayName("signals are derived from the figures beside them, not asserted")
     void signalsFollowTheFigures() {
         declare(vodacom, "500.00");
-        declare(vodacom, "250.00");
         declare(orange, "300.00");
 
         List<Subject360Service.Signal> signals = openAs(vodacom).signals();
 
-        assertThat(signals).contains(
-                Subject360Service.Signal.MULTIPLE_OUTSTANDING_OBLIGATIONS,
-                Subject360Service.Signal.REPORTED_BY_SEVERAL_INSTITUTIONS);
+        assertThat(signals).contains(Subject360Service.Signal.REPORTED_BY_SEVERAL_INSTITUTIONS);
         assertThat(signals).doesNotContain(
                 Subject360Service.Signal.NOTHING_OUTSTANDING_IN_YOUR_BOOK);
+    }
+
+    @Test
+    @DisplayName("a company that fell due before and paid, and is unpaid again, is a repeat default")
+    void repeatDefaultIsTheSignalThatSurvived() {
+        // What "multiple outstanding obligations" was reaching for, expressed in a way the
+        // registry can actually hold: settle the first, declare again, and the history is real.
+        UUID first = declareReturning(vodacom, "500.00");
+        TenantContext.runAs(vodacom, () -> debtRecords.settle(first, null));
+        declare(vodacom, "250.00");
+
+        Subject360Service.Subject360 view = openAs(vodacom);
+
+        assertThat(view.overview().settledRecords()).isEqualTo(1);
+        assertThat(view.overview().hasOutstanding()).isTrue();
+        assertThat(view.signals())
+                .contains(Subject360Service.Signal.DEFAULTED_WITH_YOU_BEFORE);
     }
 
     @Test
@@ -219,14 +255,19 @@ class Subject360Test extends AbstractIntegrationTest {
      * which is the fixture the whole class rests on.
      */
     private void declare(UUID operator, String amount) {
-        subject = TenantContext.runAsResult(operator, () -> debtRecords.declare(
+        declareReturning(operator, amount);
+    }
+
+    private UUID declareReturning(UUID operator, String amount) {
+        DebtRecord record = TenantContext.runAsResult(operator, () -> debtRecords.declare(
                 new DeclarationRequest(
                         List.of(new DeclarationRequest.SubmittedIdentifier(IdentifierType.RCCM,
                                 rccm)),
                         "Trans-Congo 360 " + rccm.substring(rccm.length() - 8),
                         Subject.SubjectType.BUSINESS, null, "CD",
                         new BigDecimal(amount), "USD", "POSTPAID",
-                        LocalDate.now().minusDays(30), true), null)
-                .record().getSubject().getId());
+                        LocalDate.now().minusDays(30), true), null).record());
+        subject = record.getSubject().getId();
+        return record.getId();
     }
 }

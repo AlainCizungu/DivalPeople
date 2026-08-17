@@ -30,7 +30,7 @@ page may be confident, and it may not describe anything that is not here.**
 - Ask DIP: a question in words, answered with figures counted from rows
 - A published import template, with every column explained, that operators prepare their exports against
 - A permissions catalogue read from the guards themselves, and a settings screen that states where each value came from
-- The Subject 360° profile: the indicator, your own exposure, how many institutions report, coded risk signals, and a timeline of your own records — one inquiry, one stated purpose
+- The Subject 360° profile: the indicator, your own exposure, whether anything is unpaid now and how often this company has settled with you before, how many institutions report, coded risk signals, and a timeline of your own records — one inquiry, one stated purpose
 
 ## Designed, not built
 

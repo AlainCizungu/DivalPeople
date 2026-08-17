@@ -142,8 +142,8 @@ public class Subject360Service {
         BigDecimal yours = BigDecimal.ZERO;
         String currency = null;
         boolean mixed = false;
-        int open = 0;
-        int pastDue = 0;
+        boolean outstanding = false;
+        int settled = 0;
         int contested = 0;
         long oldestUnpaidDays = -1;
 
@@ -152,14 +152,14 @@ public class Subject360Service {
                     || record.status() == DebtStatus.UNDER_INVESTIGATION) {
                 contested++;
             }
+            if (record.status() == DebtStatus.SETTLED) {
+                settled++;
+            }
             if (record.status() != DebtStatus.OUTSTANDING) {
                 continue;
             }
-            open++;
+            outstanding = true;
             long age = ChronoUnit.DAYS.between(record.defaultDate(), today);
-            if (age > 0) {
-                pastDue++;
-            }
             oldestUnpaidDays = Math.max(oldestUnpaidDays, age);
 
             // Same refusal the risk model and the contributor list make: a sum of dollars and
@@ -178,8 +178,8 @@ public class Subject360Service {
                 mixed ? null : yours.toPlainString(),
                 mixed ? null : currency,
                 held.records().size(),
-                open,
-                pastDue,
+                outstanding,
+                settled,
                 contested,
                 oldestUnpaidDays,
                 answer.institutionCount(),
@@ -236,8 +236,11 @@ public class Subject360Service {
                                         Overview overview) {
         List<Signal> signals = new ArrayList<>();
 
-        if (overview.openAccounts() > 1) {
-            signals.add(Signal.MULTIPLE_OUTSTANDING_OBLIGATIONS);
+        // Repeat default, which is what "multiple outstanding obligations" was reaching for and
+        // could not express: one operator can only ever hold one open obligation per subject, so
+        // the interesting history is the settled one behind it.
+        if (overview.hasOutstanding() && overview.settledRecords() > 0) {
+            signals.add(Signal.DEFAULTED_WITH_YOU_BEFORE);
         }
         if (overview.oldestUnpaidDays() > LONG_OVERDUE_DAYS) {
             signals.add(Signal.OBLIGATION_OLDER_THAN_A_YEAR);
@@ -257,7 +260,7 @@ public class Subject360Service {
             // The exchange withholds them from everybody else, including from the count above.
             signals.add(Signal.SOME_RECORDS_ARE_CONTESTED);
         }
-        if (overview.openAccounts() == 0) {
+        if (!overview.hasOutstanding()) {
             signals.add(Signal.NOTHING_OUTSTANDING_IN_YOUR_BOOK);
         }
         if (held.identifiers().stream().noneMatch(id -> id.type().isStrong()
@@ -321,17 +324,41 @@ public class Subject360Service {
     }
 
     /**
+     * The figures at the top of the screen.
+     *
+     * <p><strong>There is no "open accounts" count here, and that is a fact about the registry
+     * rather than a gap.</strong> {@code uq_tix_debt_open_per_operator} is unique on
+     * {@code (tenant_id, subject_id) WHERE status = 'OUTSTANDING'}: one operator may hold exactly
+     * one open obligation against one subject. A count would therefore be 0 or 1 forever, which is
+     * a boolean wearing a number's clothes — and worse, it reads as though it could be 4, so a
+     * lender comparing two companies would think it had learned something.
+     *
+     * <p>The first version of this record did carry {@code openAccounts} and
+     * {@code pastDueAccounts}, and a signal that fired when the first exceeded 1. The signal could
+     * never fire. That is the same defect this screen refuses to commit over fraud indicators —
+     * a detector that reports nothing forever, indistinguishable from one that is working and
+     * finding nothing — and it was shipped here by not checking the constraint before counting.
+     *
+     * <p>What replaces it is what the operator's own file can actually say: whether there is an
+     * open obligation now, and how many times this company has fallen due and paid before.
+     * "Defaulted with you twice and settled both times" is a real and useful shape, and unlike a
+     * count of open accounts it is not bounded at one.
+     *
      * @param yourExposure       what <em>this</em> operator is owed, never the market's. Null when
      *                           the operator's own records are in more than one currency
-     * @param oldestUnpaidDays   age of the oldest unpaid obligation in this operator's book, or -1
+     * @param yourRecords        every record on file, settled history included
+     * @param hasOutstanding     whether an obligation is unpaid right now. At most one can be
+     * @param settledRecords     how many previously fell due and were paid
+     * @param oldestUnpaidDays   age of the unpaid obligation, or -1 when nothing is unpaid
      * @param institutionCount   how many operators report this subject, including this one
      * @param daysSinceUpdate    since this operator's own file last changed, or -1
      * @param marketExposure     the sum across named contributors. Null unless the deployment
      *                           discloses amounts, and null when any contributor's is withheld
      */
-    public record Overview(String yourExposure, String currency, int yourRecords, int openAccounts,
-                           int pastDueAccounts, int contestedRecords, long oldestUnpaidDays,
-                           int institutionCount, long daysSinceUpdate, String marketExposure) {
+    public record Overview(String yourExposure, String currency, int yourRecords,
+                           boolean hasOutstanding, int settledRecords, int contestedRecords,
+                           long oldestUnpaidDays, int institutionCount, long daysSinceUpdate,
+                           String marketExposure) {
     }
 
     /** @param on the date the event is placed at; the screen groups by year */
@@ -347,7 +374,7 @@ public class Subject360Service {
 
     /** Coded for the same reason, and each is derived from a figure elsewhere on the screen. */
     public enum Signal {
-        MULTIPLE_OUTSTANDING_OBLIGATIONS,
+        DEFAULTED_WITH_YOU_BEFORE,
         OBLIGATION_OLDER_THAN_A_YEAR,
         REPORTED_BY_SEVERAL_INSTITUTIONS,
         AN_IDENTIFIER_IS_REUSED,

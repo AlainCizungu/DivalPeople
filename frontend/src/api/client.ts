@@ -366,7 +366,7 @@ export type Contributor = {
 };
 
 export type SubjectSignal =
-  | "MULTIPLE_OUTSTANDING_OBLIGATIONS"
+  | "DEFAULTED_WITH_YOU_BEFORE"
   | "OBLIGATION_OLDER_THAN_A_YEAR"
   | "REPORTED_BY_SEVERAL_INSTITUTIONS"
   | "AN_IDENTIFIER_IS_REUSED"
@@ -399,8 +399,16 @@ export type Subject360Overview = {
   yourExposure: string | null;
   currency: string | null;
   yourRecords: number;
-  openAccounts: number;
-  pastDueAccounts: number;
+  /**
+   * Whether an obligation is unpaid right now. A boolean, not a count.
+   *
+   * `uq_tix_debt_open_per_operator` is unique on `(tenant_id, subject_id) WHERE status =
+   * 'OUTSTANDING'` — one operator holds at most one open obligation against one subject, so a
+   * count would be 0 or 1 forever while reading as though it could be 4.
+   */
+  hasOutstanding: boolean;
+  /** How many previously fell due and were paid. Unlike open accounts, not bounded at one. */
+  settledRecords: number;
   contestedRecords: number;
   /** -1 when nothing is unpaid. */
   oldestUnpaidDays: number;

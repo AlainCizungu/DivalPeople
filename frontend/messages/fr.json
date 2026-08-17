@@ -1500,8 +1500,6 @@
     "mixedCurrency": "Devises mixtes",
     "institutions": "Institutions déclarantes",
     "institutionsNote": "Vous compris. Jamais lesquelles.",
-    "openAccounts": "Comptes ouverts",
-    "pastDue": "En retard",
     "oldestUnpaid": "Plus ancien impayé",
     "lastUpdate": "Votre dossier mis à jour",
     "lastUpdateNote": "Le vôtre seulement. La fraîcheur du dossier des autres n'est pas divulguée.",
@@ -1524,7 +1522,6 @@
     "stamp": "Assemblé par {version}.",
     "backToOwnFile": "Ouvrir votre propre dossier sur cette entreprise",
     "signalShort": {
-      "MULTIPLE_OUTSTANDING_OBLIGATIONS": "Plusieurs impayés",
       "OBLIGATION_OLDER_THAN_A_YEAR": "Plus d'un an",
       "REPORTED_BY_SEVERAL_INSTITUTIONS": "Plusieurs institutions",
       "AN_IDENTIFIER_IS_REUSED": "Identifiant réutilisé",
@@ -1532,10 +1529,10 @@
       "NO_NATIONAL_DOCUMENT_ON_FILE": "Aucun document national",
       "NO_IDENTIFIER_CONFLICT": "Aucun conflit",
       "NOTHING_OUTSTANDING_IN_YOUR_BOOK": "Aucun impayé",
-      "FRAUD_NOT_ASSESSED": "Non évalué"
+      "FRAUD_NOT_ASSESSED": "Non évalué",
+      "DEFAULTED_WITH_YOU_BEFORE": "Défaut répété"
     },
     "signals": {
-      "MULTIPLE_OUTSTANDING_OBLIGATIONS": "Plus d'une obligation impayée dans votre portefeuille.",
       "OBLIGATION_OLDER_THAN_A_YEAR": "Un impayé dépasse 365 jours — au-delà de la facture en retard, dans la perte.",
       "REPORTED_BY_SEVERAL_INSTITUTIONS": "Plus d'une institution déclare cette entreprise. Lesquelles n'est pas divulgué.",
       "AN_IDENTIFIER_IS_REUSED": "Un identifiant au dossier apparaît sous plus d'un sujet. Indicatif : une question pour une personne, pas un constat sur l'entreprise.",
@@ -1543,12 +1540,18 @@
       "NO_NATIONAL_DOCUMENT_ON_FILE": "Aucun RCCM, aucune pièce d'identité nationale ni passeport au dossier : l'échange a été interrogé sur le nom.",
       "NO_IDENTIFIER_CONFLICT": "Aucun identifiant au dossier n'apparaît sous un autre sujet.",
       "NOTHING_OUTSTANDING_IN_YOUR_BOOK": "Rien d'impayé dans votre propre portefeuille.",
-      "FRAUD_NOT_ASSESSED": "Les indicateurs de fraude ne sont pas évalués, et ne le seront jamais : les règles d'unicité du registre rendent impossible un même document sous deux sujets, un détecteur ne signalerait donc jamais rien. Une coche verte ici affirmerait un contrôle qui n'existe pas."
+      "FRAUD_NOT_ASSESSED": "Les indicateurs de fraude ne sont pas évalués, et ne le seront jamais : les règles d'unicité du registre rendent impossible un même document sous deux sujets, un détecteur ne signalerait donc jamais rien. Une coche verte ici affirmerait un contrôle qui n'existe pas.",
+      "DEFAULTED_WITH_YOU_BEFORE": "A déjà été échu chez vous puis payé, et l'est de nouveau. Défaut répété dans votre propre portefeuille."
     },
     "events": {
       "OBLIGATION_FELL_DUE": "Obligation échue",
       "OBLIGATION_SETTLED": "Obligation réglée",
       "RECORD_CONTESTED": "Enregistrement contesté"
-    }
+    },
+    "status": "Actuellement",
+    "unpaidNow": "Impayé",
+    "nothingUnpaid": "Aucun impayé",
+    "settledBefore": "Déjà réglé",
+    "settledBeforeNote": "Échu chez vous puis payé"
   }
 }

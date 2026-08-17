@@ -1500,8 +1500,6 @@
     "mixedCurrency": "Mixed currencies",
     "institutions": "Institutions reporting",
     "institutionsNote": "Including you. Never which.",
-    "openAccounts": "Open accounts",
-    "pastDue": "Past due",
     "oldestUnpaid": "Oldest unpaid",
     "lastUpdate": "Your file updated",
     "lastUpdateNote": "Yours only. Nobody else's freshness is disclosed.",
@@ -1524,7 +1522,6 @@
     "stamp": "Assembled by {version}.",
     "backToOwnFile": "Open your own file on this company",
     "signalShort": {
-      "MULTIPLE_OUTSTANDING_OBLIGATIONS": "Multiple unpaid",
       "OBLIGATION_OLDER_THAN_A_YEAR": "Over a year",
       "REPORTED_BY_SEVERAL_INSTITUTIONS": "Several institutions",
       "AN_IDENTIFIER_IS_REUSED": "Identifier reused",
@@ -1532,10 +1529,10 @@
       "NO_NATIONAL_DOCUMENT_ON_FILE": "No national document",
       "NO_IDENTIFIER_CONFLICT": "No conflict",
       "NOTHING_OUTSTANDING_IN_YOUR_BOOK": "Nothing unpaid",
-      "FRAUD_NOT_ASSESSED": "Not assessed"
+      "FRAUD_NOT_ASSESSED": "Not assessed",
+      "DEFAULTED_WITH_YOU_BEFORE": "Repeat default"
     },
     "signals": {
-      "MULTIPLE_OUTSTANDING_OBLIGATIONS": "More than one obligation in your book is unpaid.",
       "OBLIGATION_OLDER_THAN_A_YEAR": "Something unpaid is more than 365 days old — past a late invoice and into a write-off.",
       "REPORTED_BY_SEVERAL_INSTITUTIONS": "More than one institution reports this company. Which ones is not disclosed.",
       "AN_IDENTIFIER_IS_REUSED": "An identifier on file appears under more than one subject. Advisory, and a question for a person rather than a finding about the company.",
@@ -1543,12 +1540,18 @@
       "NO_NATIONAL_DOCUMENT_ON_FILE": "No RCCM, national ID or passport is on file, so the exchange was asked using the name.",
       "NO_IDENTIFIER_CONFLICT": "No identifier on file appears under another subject.",
       "NOTHING_OUTSTANDING_IN_YOUR_BOOK": "Nothing in your own book is unpaid.",
-      "FRAUD_NOT_ASSESSED": "Fraud indicators are not assessed, and never will be: the registry's uniqueness rules make one document under two subjects impossible, so a detector for it would report nothing forever. A green tick here would assert a check that does not run."
+      "FRAUD_NOT_ASSESSED": "Fraud indicators are not assessed, and never will be: the registry's uniqueness rules make one document under two subjects impossible, so a detector for it would report nothing forever. A green tick here would assert a check that does not run.",
+      "DEFAULTED_WITH_YOU_BEFORE": "Has fallen due with you before and paid, and is unpaid again. Repeat default in your own book."
     },
     "events": {
       "OBLIGATION_FELL_DUE": "Obligation fell due",
       "OBLIGATION_SETTLED": "Obligation settled",
       "RECORD_CONTESTED": "Record contested"
-    }
+    },
+    "status": "Right now",
+    "unpaidNow": "Unpaid",
+    "nothingUnpaid": "Nothing unpaid",
+    "settledBefore": "Settled before",
+    "settledBeforeNote": "Fell due with you and was paid"
   }
 }
