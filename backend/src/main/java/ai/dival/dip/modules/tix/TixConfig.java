@@ -11,6 +11,6 @@ import org.springframework.context.annotation.Configuration;
  * shared code depend on a module — the direction {@code scripts/check_architecture.py} forbids.
  */
 @Configuration
-@EnableConfigurationProperties(TixProperties.class)
+@EnableConfigurationProperties({TixProperties.class, DisclosureProperties.class})
 public class TixConfig {
 }

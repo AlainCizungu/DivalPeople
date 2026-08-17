@@ -35,6 +35,7 @@ public class TixController {
     private final DebtRecordService debtRecords;
     private final PortfolioService portfolio;
     private final SearchService search;
+    private final Subject360Service subject360;
     private final WatchlistService watchlist;
     private final SubjectRightsService rights;
     private final ImportDeriver imports;
@@ -45,12 +46,14 @@ public class TixController {
     private final Clock clock;
 
     public TixController(ExchangeService exchange, DebtRecordService debtRecords,
+                         Subject360Service subject360,
                          PortfolioService portfolio, SearchService search,
                          WatchlistService watchlist,
                          SubjectRightsService rights, ImportDeriver imports,
                          CurrentUserService currentUser, Clock clock) {
         this.exchange = exchange;
         this.debtRecords = debtRecords;
+        this.subject360 = subject360;
         this.portfolio = portfolio;
         this.search = search;
         this.watchlist = watchlist;
@@ -186,6 +189,27 @@ public class TixController {
     @PreAuthorize("hasRole('" + Roles.TIX_DECLARANT + "')")
     public SearchService.Profile profile(@PathVariable UUID id) {
         return search.profileOf(id, actorId());
+    }
+
+    /**
+     * Everything the platform can say about one company.
+     *
+     * <p><strong>Guarded on TIX_INQUIRER and not on TIX_DECLARANT</strong>, unlike the plain
+     * profile above it. The two look like the same screen with more on it, and they are not: this
+     * one asks the exchange. Whoever may open it is making an inquiry against another operator's
+     * records, and that is the role the exchange charges, rate-limits and audits. A declarant who
+     * may not enquire keeps the flat profile of their own file.
+     *
+     * <p>{@code purpose} is a required parameter and not a nicety. An inquiry without a stated
+     * reason is the thing the audit trail exists to prevent, and a screen that supplied a
+     * plausible default — "profile view" — would put the same sentence on every row and empty the
+     * trail of its content.
+     */
+    @GetMapping("/subjects/{id}/profile360")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public Subject360Service.Subject360 profile360(@PathVariable UUID id,
+                                                   @RequestParam("purpose") String purpose) {
+        return subject360.assemble(id, purpose, actorId());
     }
 
     @PostMapping("/debt-records/{id}/settle")

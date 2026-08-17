@@ -6,6 +6,7 @@ import ai.dival.dip.common.error.ResourceNotFoundException;
 import ai.dival.dip.common.tenancy.TenantContext;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -194,7 +195,12 @@ public class SearchService {
                                 identifier.getIdentifierType(), identifier.getNormalizedValue()))
                         .toList(),
                 summarise(subject, tenantId, today),
-                List.copyOf(held));
+                List.copyOf(held),
+                // The operator's own file, never anybody else's. How recently a competitor
+                // touched its records is the "never since when" the exchange refuses, and it does
+                // not become acceptable by being rendered as "2 days ago".
+                mine.stream().map(DebtRecord::getUpdatedAt).filter(java.util.Objects::nonNull)
+                        .max(java.util.Comparator.naturalOrder()).orElse(null));
     }
 
     private Result summarise(Subject subject, UUID tenantId, LocalDate today) {
@@ -252,9 +258,15 @@ public class SearchService {
                          LocalDate oldestDefault, AgingBand oldestBand) {
     }
 
+    /**
+     * @param lastUpdatedAt when this operator's own file on the subject last changed, or null.
+     *                      Scoped to {@code records} above, which are this tenant's; the freshness
+     *                      of another operator's file is not disclosed and is not derivable here
+     */
     public record Profile(UUID subjectId, String name, Subject.SubjectType subjectType,
                           LocalDate dateOfBirth, String nationality,
-                          List<Identifier> identifiers, Result summary, List<Held> records) {
+                          List<Identifier> identifiers, Result summary, List<Held> records,
+                          Instant lastUpdatedAt) {
     }
 
     /**

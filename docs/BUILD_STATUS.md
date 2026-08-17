@@ -30,6 +30,7 @@ page may be confident, and it may not describe anything that is not here.**
 - Ask DIP: a question in words, answered with figures counted from rows
 - A published import template, with every column explained, that operators prepare their exports against
 - A permissions catalogue read from the guards themselves, and a settings screen that states where each value came from
+- The Subject 360° profile: the indicator, your own exposure, how many institutions report, coded risk signals, and a timeline of your own records — one inquiry, one stated purpose
 
 ## Designed, not built
 
@@ -41,12 +42,12 @@ page may be confident, and it may not describe anything that is not here.**
 - What happens when somebody withdraws consent while the debt is still unpaid. Counsel confirms the basis is contractual and that no law obliges an operator to report — which makes the current refusal to erase an outstanding debt harder to defend, not easier
 - Whether the "+360 days" line in the operator files means the figure to report is that bucket rather than the balance. If it does, every amount already imported is wrong
 - Whether debtor data may be sent to a language model hosted outside the DRC so that it can phrase an answer. The switch exists and is off
-- Whether the amount owed should be disclosed to other institutions, as counsel has asked. Today the exchange discloses a count and a band, never a figure
+- Whether the amount owed should be disclosed to other institutions, as counsel has asked. Today the exchange discloses a count and a band, never a figure. **The named view is now built and switched off**: `dip.disclosure.name-institutions` prints the operators behind the count and `dip.disclosure.disclose-amounts` prints what each is owed. Neither may be turned on until counsel answers *and* the participants whose books become visible have agreed — an operator that joined on "never which, never how much" and finds its ledger itemised on a competitor's screen has a reason to leave and a reason to sue. Every answer carrying names writes a `TIX_CONTRIBUTORS_DISCLOSED` audit row
 
 ## The rule this file exists to enforce
 
 Before adding a claim to the landing page, it has to appear in *Running today* — and before it
 appears there, it has to be traceable to something in the tree. The last audit checked all
-twenty-one against a file. When a claim moves from *Designed* to *Running*, it may move to the
+twenty-two against a file. When a claim moves from *Designed* to *Running*, it may move to the
 landing page and not before.
 

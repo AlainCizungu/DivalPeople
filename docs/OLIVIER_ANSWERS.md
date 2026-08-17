@@ -154,6 +154,14 @@ needing an answer.
 Drafted as `docs/EMAIL_OLIVIER_TEMPLATE.md`, to travel with the template rather than a week after
 it. Four questions carried into that email, and the rest left for the operators:
 
+- **Naming the creditor, not just the amount.** You asked whether the amount owed may be disclosed
+  to other institutions. The Subject 360° profile makes the question concrete and slightly larger:
+  the screen can now name the operators reporting a subject *and* price each position. Both are
+  behind switches and both ship **off**, so today the screen still says "three institutions report
+  this company" and refuses to say which. Two things before either is turned on — your answer, and
+  the agreement of the operators whose books become visible. They joined on "never which, never how
+  much", and that sentence is the reason a competitor was willing to put its receivables ledger
+  into a shared database.
 - **Consent withdrawal** while a debt is unpaid — see above.
 - **Dunning** — was the contractual reminder process actually run on all 4,290 accounts? The
   platform requires that attestation and records who gave it.

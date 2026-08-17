@@ -12,8 +12,10 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -43,6 +45,17 @@ public class ExchangeService {
     private final AuditService audit;
     private final EntityManager entityManager;
     private final InquiryRateLimiter rateLimiter;
+
+    /**
+     * Whether this deployment names the operators behind the count, and prices them.
+     *
+     * <p>Off in the shipped configuration. Read in exactly one place below, so there is one line to
+     * audit rather than a rule spread across the class.
+     */
+    private final DisclosureProperties disclosure;
+
+    /** Turns a tenant id into an operator name, and only when the switch above says it may. */
+    private final TenantDirectory tenants;
     private final RiskIndicatorService riskIndicator;
     private final Clock clock;
 
@@ -54,6 +67,8 @@ public class ExchangeService {
                            EntityManager entityManager,
                            InquiryRateLimiter rateLimiter,
                            RiskIndicatorService riskIndicator,
+                           DisclosureProperties disclosure,
+                           TenantDirectory tenants,
                            Clock clock) {
         this.subjects = subjects;
         this.identifiers = identifiers;
@@ -63,6 +78,8 @@ public class ExchangeService {
         this.entityManager = entityManager;
         this.rateLimiter = rateLimiter;
         this.riskIndicator = riskIndicator;
+        this.disclosure = disclosure;
+        this.tenants = tenants;
         this.clock = clock;
     }
 
@@ -103,6 +120,17 @@ public class ExchangeService {
     private static final String RISK_CURRENCY = "USD";
 
     public static final String INQUIRY_ACTION = "TIX_INQUIRY";
+
+    /**
+     * Written whenever an answer carried operator names out of this class.
+     *
+     * <p>Separate from {@link #INQUIRY_ACTION} because the two questions are different. The
+     * inquiry row says somebody asked about this subject, and it looks identical in a deployment
+     * that names contributors and one that does not. This row says <em>a competitor's identity
+     * left the exchange</em>, which is the thing an operator would want to count if it ever found
+     * out the switch had been on.
+     */
+    public static final String CONTRIBUTORS_DISCLOSED = "TIX_CONTRIBUTORS_DISCLOSED";
 
     /**
      * Resolves the submitted identifiers to a subject and reports the statuses held against it.
@@ -189,6 +217,16 @@ public class ExchangeService {
         // become a wrong total. It becomes a refusal to assess instead, which the screen prints.
         BigDecimal outstandingUsd = BigDecimal.ZERO;
         boolean mixedCurrency = false;
+        // Per-operator, and accumulated only when this deployment has switched naming on. Built
+        // here rather than in a second pass because the second pass would have to reproduce every
+        // exclusion above it — the dispute filter, the expiry filter, the status filter — and a
+        // contributor list that disagreed with the count beside it is worse than no list.
+        //
+        // The condition is read once, into a local. Reading the switch inside the loop would be
+        // the same behaviour and a worse thing to audit: a reviewer would have to satisfy
+        // themselves that nothing mutates it mid-iteration.
+        boolean naming = disclosure.canName();
+        Map<UUID, Position> byOperator = new LinkedHashMap<>();
         for (DebtRecord record : records) {
             // Defence in depth: disputed or investigated records must never leak through.
             if (!record.isVisibleToOtherOperators()) {
@@ -196,6 +234,10 @@ public class ExchangeService {
             }
             statuses.add(record.getStatus());
             institutions.add(record.getTenantId());
+            if (naming) {
+                byOperator.computeIfAbsent(record.getTenantId(), any -> new Position())
+                        .add(record);
+            }
             if (record.getStatus() == DebtStatus.OUTSTANDING) {
                 outstanding = true;
                 institutionsOwed.add(record.getTenantId());
@@ -219,6 +261,7 @@ public class ExchangeService {
                 : InquiryResult.Outcome.CLEAR;
 
         List<String> fraudSignals = detectFraudSignals(subject, tenantId);
+        List<InquiryResult.Contributor> contributors = name(byOperator, actorId, request.purpose());
 
         return new InquiryResult(
                 outcome,
@@ -239,7 +282,96 @@ public class ExchangeService {
                         // Null rather than a partial sum. Handing the model the dollars and
                         // dropping the francs would report a smaller exposure than the subject
                         // has, which is the direction of error that costs a lender money.
-                        mixedCurrency ? null : outstandingUsd)));
+                        mixedCurrency ? null : outstandingUsd)),
+                contributors);
+    }
+
+    /**
+     * Attaches operator names, and records that it did.
+     *
+     * <p>Empty in, empty out — which is the shipped path, because {@code inquire} never fills the
+     * map unless naming is on. So this method has one job beyond formatting: <strong>write the
+     * audit row</strong>. A disclosure that leaves no trace is the failure this whole module is
+     * built to prevent, and the inquiry's own audit row cannot serve, because it is written
+     * identically whether or not names went out with the answer. Somebody reconstructing what a
+     * competitor learned about them needs to be able to tell those two apart.
+     *
+     * <p>The row is written <em>before</em> the list is returned rather than after it is rendered,
+     * for the reason the AI gateway writes its own row before calling out: a response that fails on
+     * the way to the screen still had the names assembled from the database.
+     */
+    private List<InquiryResult.Contributor> name(Map<UUID, Position> byOperator, UUID actorId,
+                                                 String purpose) {
+        if (byOperator.isEmpty()) {
+            return List.of();
+        }
+
+        boolean pricing = disclosure.canPrice();
+        Map<UUID, String> names = tenants.namesOf(byOperator.keySet());
+
+        audit.record(CONTRIBUTORS_DISCLOSED, "Subject", null, AuditService.OUTCOME_SUCCESS, actorId,
+                byOperator.size() + " operator(s) named"
+                        + (pricing ? " with amounts" : " without amounts") + "; " + purpose);
+
+        List<InquiryResult.Contributor> named = new ArrayList<>();
+        for (Map.Entry<UUID, Position> entry : byOperator.entrySet()) {
+            Position position = entry.getValue();
+            named.add(new InquiryResult.Contributor(
+                    names.getOrDefault(entry.getKey(), TenantDirectory.UNKNOWN),
+                    // Null rather than the figure when pricing is off, and null rather than zero
+                    // when the operator's records are all settled: an operator that is owed
+                    // nothing and an operator whose amount is withheld must not be told apart by
+                    // reading a 0.
+                    pricing && position.hasFigure() ? position.owed.toPlainString() : null,
+                    pricing && position.hasFigure() ? position.currency : null,
+                    position.records));
+        }
+        return List.copyOf(named);
+    }
+
+    /**
+     * One operator's running total while the exchange reads across the registry.
+     *
+     * <p>Mutable and package-private on purpose: it lives for the length of one method and never
+     * reaches a caller. What crosses the wire is {@link InquiryResult.Contributor}, which is
+     * immutable and carries strings.
+     *
+     * <p>Sums only outstanding records. A settled record still counts toward {@code records} —
+     * "four records, none outstanding" is a real and useful shape — but adding its amount would
+     * report money that has already been paid as money still owed.
+     *
+     * <p>Mixed currencies stop the total rather than blending it, the same refusal the risk model
+     * makes. The first currency seen wins and a second one blanks the figure, because a sum of
+     * dollars and francs is not a smaller number or a larger one, it is not a number.
+     */
+    private static final class Position {
+        private BigDecimal owed = BigDecimal.ZERO;
+        private String currency;
+        private int records;
+        /** Latches. A position that has seen two currencies never becomes summable again. */
+        private boolean mixed;
+
+        private void add(DebtRecord record) {
+            records++;
+            if (record.getStatus() != DebtStatus.OUTSTANDING || mixed) {
+                return;
+            }
+            if (currency == null) {
+                currency = record.getCurrency();
+            }
+            if (currency.equalsIgnoreCase(record.getCurrency())) {
+                owed = owed.add(record.getAmount());
+            } else {
+                mixed = true;
+                owed = BigDecimal.ZERO;
+                currency = null;
+            }
+        }
+
+        /** Summable, and something to sum. Mixed currencies and settled-only both read false. */
+        private boolean hasFigure() {
+            return !mixed && currency != null && owed.signum() > 0;
+        }
     }
 
     /**

@@ -340,6 +340,97 @@ export type SubjectProfile = {
   identifiers: { type: IdentifierType; value: string }[];
   summary: SearchResult;
   records: HeldRecord[];
+  /**
+   * When this operator's own file on the subject last changed, or null.
+   *
+   * Scoped to `records` above, which are the caller's. How recently a *competitor* touched its
+   * file is the "never since when" the exchange refuses, and it does not become acceptable by
+   * being rendered as "2 days ago".
+   */
+  lastUpdatedAt: string | null;
+};
+
+/**
+ * One named operator's position, when the deployment discloses them.
+ *
+ * **Empty in the shipped configuration.** The exchange answers with a count and never with a list;
+ * see `DisclosureProperties` on the server. A screen must not infer "nobody else reports this
+ * company" from an empty array — `contributorsWithheld` is what answers that.
+ */
+export type Contributor = {
+  institution: string;
+  /** Null when naming is on and pricing is off, and null for a position that is fully settled. */
+  owed: string | null;
+  currency: string | null;
+  records: number;
+};
+
+export type SubjectSignal =
+  | "MULTIPLE_OUTSTANDING_OBLIGATIONS"
+  | "OBLIGATION_OLDER_THAN_A_YEAR"
+  | "REPORTED_BY_SEVERAL_INSTITUTIONS"
+  | "AN_IDENTIFIER_IS_REUSED"
+  | "SOME_RECORDS_ARE_CONTESTED"
+  | "NO_NATIONAL_DOCUMENT_ON_FILE"
+  | "NO_IDENTIFIER_CONFLICT"
+  | "NOTHING_OUTSTANDING_IN_YOUR_BOOK"
+  | "FRAUD_NOT_ASSESSED";
+
+export type SubjectEventCode =
+  | "OBLIGATION_FELL_DUE"
+  | "OBLIGATION_SETTLED"
+  | "RECORD_CONTESTED";
+
+export type SubjectEvent = {
+  on: string;
+  code: SubjectEventCode;
+  detail: string | null;
+};
+
+/**
+ * The overview figures.
+ *
+ * **Every one of these is the caller's own except `institutionCount`.** The obvious caption is
+ * "total known exposure" and it would be read as the market's; what the platform can total is the
+ * asker's book, and what it can put beside it is how many institutions report the same subject.
+ */
+export type Subject360Overview = {
+  /** What *you* are owed. Null when your own records are in more than one currency. */
+  yourExposure: string | null;
+  currency: string | null;
+  yourRecords: number;
+  openAccounts: number;
+  pastDueAccounts: number;
+  contestedRecords: number;
+  /** -1 when nothing is unpaid. */
+  oldestUnpaidDays: number;
+  institutionCount: number;
+  /** -1 when the file has never been updated. Your own file only. */
+  daysSinceUpdate: number;
+  /** Null unless the deployment discloses amounts, and null when any contributor's is withheld. */
+  marketExposure: string | null;
+};
+
+export type Subject360 = {
+  viewVersion: string;
+  assembledAt: string;
+  subjectId: string;
+  name: string;
+  subjectType: SubjectType;
+  identifiers: { type: IdentifierType; value: string }[];
+  /** Null when the exchange would not confirm the identity. */
+  indicator: RiskIndicator | null;
+  outcome: InquiryOutcome;
+  overview: Subject360Overview;
+  signals: SubjectSignal[];
+  contributors: Contributor[];
+  /**
+   * True when the list is empty *because this platform does not name them* — which is the shipped
+   * state. An empty list is also what a subject nobody else reports looks like, so the screen
+   * cannot tell the two apart without this.
+   */
+  contributorsWithheld: boolean;
+  timeline: SubjectEvent[];
 };
 
 /**
@@ -1104,6 +1195,20 @@ export const tixApi = {
 
   listDebtRecords(): Promise<DebtRecord[]> {
     return request<DebtRecord[]>("/api/v1/tix/debt-records");
+  },
+
+  /**
+   * Everything the platform can say about one company.
+   *
+   * **Costs an inquiry**, so `purpose` is required and there is no default. A screen that supplied
+   * a plausible one — "profile view" — would put the same sentence on every row of the audit trail
+   * and empty it of its content.
+   */
+  profile360(subjectId: string, purpose: string): Promise<Subject360> {
+    return request<Subject360>(
+      `/api/v1/tix/subjects/${encodeURIComponent(subjectId)}/profile360`
+        + `?purpose=${encodeURIComponent(purpose)}`,
+    );
   },
 
   /** The calling operator's own exposure. Aggregated server-side; there is no tenant parameter. */

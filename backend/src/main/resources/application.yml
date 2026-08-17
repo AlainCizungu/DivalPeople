@@ -99,6 +99,29 @@ dip:
     model: ${DIP_AI_MODEL:gpt-4o-mini}
     timeout-ms: ${DIP_AI_TIMEOUT_MS:12000}
 
+  # WHAT ONE OPERATOR MAY LEARN ABOUT ANOTHER'S BOOK.
+  #
+  # Both OFF, and off is what every participant was shown. The exchange answers with a count — how
+  # many institutions report a subject — and never which, never how much, never since when. That
+  # sentence is the reason a competitor is willing to put its receivables ledger into a shared
+  # database, and it is not renegotiated by a deployment flipping a flag quietly.
+  #
+  # `name-institutions` prints the operators behind the count. `disclose-amounts` prints what each
+  # is owed, and does nothing unless naming is also on — an itemised list of anonymous amounts is
+  # the same disclosure with an extra step.
+  #
+  # BEFORE EITHER IS TURNED ON, two things that are not engineering decisions:
+  #   1. Counsel answers. "May the amount owed be disclosed to other institutions" is already open
+  #      in docs/OLIVIER_ANSWERS.md; naming the creditor beside it is strictly more than was asked.
+  #   2. Participants are told, and agree. An operator that joined on "never which, never how much"
+  #      and finds its ledger itemised on a competitor's screen has a reason to leave and to sue.
+  #
+  # Every answer that carries names writes a TIX_CONTRIBUTORS_DISCLOSED audit row, separate from
+  # the inquiry's own row, so the disclosures can be counted after the fact.
+  disclosure:
+    name-institutions: ${DIP_DISCLOSE_INSTITUTIONS:false}
+    disclose-amounts: ${DIP_DISCLOSE_AMOUNTS:false}
+
   tix:
     # Inquiries one operator may make in an hour. The exchange holds competitors' debt records,
     # and every request is individually legitimate — the aggregate is what turns a lookup service

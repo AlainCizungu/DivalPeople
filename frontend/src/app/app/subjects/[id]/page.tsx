@@ -107,6 +107,22 @@ export default function SubjectProfilePage() {
     <div className="mx-auto max-w-5xl">
       <PageHeader title={profile.name} subtitle={t.profileSubtitle} action={back} />
 
+      {/* The way on to the exchange, and it is a link rather than a section of this page. Asking
+          costs an inquiry against the hourly allowance and needs a stated purpose; folding it in
+          here would spend both because somebody opened their own file. */}
+      <Link
+        href={`/app/subjects/${subjectId}/profile`}
+        className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-blue/30 bg-blue/5 px-5 py-4 transition hover:border-blue/60"
+      >
+        <span>
+          <strong className="block text-sm font-bold text-navy">{t.open360}</strong>
+          <span className="text-sm text-muted">{t.open360Note}</span>
+        </span>
+        <span aria-hidden="true" className="text-blue">
+          →
+        </span>
+      </Link>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <Metric label={t.colRecords} value={String(profile.summary.recordCount)} />
         <Metric
