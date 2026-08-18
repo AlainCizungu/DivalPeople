@@ -18,6 +18,9 @@ export function LandingHeader() {
   const { status, signIn } = useSession();
 
   const links = [
+    // First. The assistant is the second section on the page and the thing a visitor remembers,
+    // and until this link came back nothing above the fold pointed at it.
+    { href: "#ai", label: messages.landing.nav.ai },
     { href: "#platform", label: messages.landing.nav.platform },
     { href: "#search", label: messages.landing.nav.search },
     { href: "#risk", label: messages.landing.nav.risk },

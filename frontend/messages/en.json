@@ -217,6 +217,7 @@
   },
   "landing": {
     "nav": {
+      "ai": "Dival AI",
       "platform": "Platform",
       "search": "Search",
       "risk": "Risk Intelligence",
@@ -250,7 +251,9 @@
         "Ask in French or English",
         "B2B and individual intelligence",
         "Every inquiry logged with its purpose"
-      ]
+      ],
+      "aiBadge": "New — Dival AI",
+      "aiBadgeLink": "Ask DIP a question"
     },
     "board": {
       "title": "Universal Intelligence Search",
@@ -272,11 +275,26 @@
       "signal": "Driven by obligations over a year overdue, reported by more than one participating institution. The total owed is weighed in four wide bands, never disclosed as a figure."
     },
     "quick": [
-      "Universal Search",
-      "DIP Risk Indicator",
-      "Data Exchange",
-      "Bank and Telecom",
-      "AI Intelligence"
+      {
+        "label": "Universal Search",
+        "href": "#search"
+      },
+      {
+        "label": "DIP Risk Indicator",
+        "href": "#risk"
+      },
+      {
+        "label": "Data Exchange",
+        "href": "#exchange"
+      },
+      {
+        "label": "Bank and Telecom",
+        "href": "#industries"
+      },
+      {
+        "label": "Dival AI",
+        "href": "#ai"
+      }
     ],
     "platform": {
       "eyebrow": "National Intelligence Infrastructure",

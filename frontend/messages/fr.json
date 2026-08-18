@@ -217,6 +217,7 @@
   },
   "landing": {
     "nav": {
+      "ai": "Dival AI",
       "platform": "Plateforme",
       "search": "Recherche",
       "risk": "Intelligence du risque",
@@ -250,7 +251,9 @@
         "Posez vos questions en français ou en anglais",
         "Intelligence entreprises et particuliers",
         "Chaque consultation enregistrée avec son motif"
-      ]
+      ],
+      "aiBadge": "Nouveau — Dival AI",
+      "aiBadgeLink": "Posez une question à DIP"
     },
     "board": {
       "title": "Recherche universelle",
@@ -272,11 +275,26 @@
       "signal": "Expliqué par des obligations impayées depuis plus d'un an, déclarées par plusieurs institutions participantes. Le total dû est pondéré selon quatre tranches larges, jamais communiqué sous forme de montant."
     },
     "quick": [
-      "Recherche universelle",
-      "Indicateur de risque DIP",
-      "Échange de données",
-      "Banques et télécoms",
-      "Intelligence IA"
+      {
+        "label": "Recherche universelle",
+        "href": "#search"
+      },
+      {
+        "label": "Indicateur de risque DIP",
+        "href": "#risk"
+      },
+      {
+        "label": "Échange de données",
+        "href": "#exchange"
+      },
+      {
+        "label": "Banque et télécoms",
+        "href": "#industries"
+      },
+      {
+        "label": "Dival AI",
+        "href": "#ai"
+      }
     ],
     "platform": {
       "eyebrow": "Infrastructure nationale d’intelligence",

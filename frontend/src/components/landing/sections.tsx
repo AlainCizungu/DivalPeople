@@ -20,8 +20,14 @@ export function QuickLinks() {
   return (
     <div className="border-y border-line bg-white">
       <div className="mx-auto flex max-w-7xl flex-wrap gap-x-8 gap-y-3 px-6 py-4 text-sm font-semibold text-ink">
+        {/* Anchors, not words. This band sat directly under the hero naming five things the
+            product does and doing nothing when clicked — the most valuable strip of pixels on the
+            page spent on decoration. "Dival AI" pointing at nothing is what made the assistant
+            look unadvertised while its section was two blocks down. */}
         {messages.landing.quick.map((item) => (
-          <span key={item}>{item}</span>
+          <a key={item.href} href={item.href} className="transition hover:text-blue">
+            {item.label}
+          </a>
         ))}
       </div>
     </div>

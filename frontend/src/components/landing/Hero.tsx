@@ -13,6 +13,16 @@ import { CheckList, Eyebrow } from "./primitives";
  * kind of image that ends up in a deck as though it were real output. Grand Horizon SARL does not
  * exist.
  */
+/** The mark used beside the assistant, matching the one the product draws. */
+function SparkMark() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path d="M12 2l1.9 5.6L19.5 9.5 13.9 11.4 12 17l-1.9-5.6L4.5 9.5l5.6-1.9z" />
+      <path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity="0.6" />
+    </svg>
+  );
+}
+
 export function Hero() {
   const messages = useMessages();
   const { hero, board, actions } = messages.landing;
@@ -46,7 +56,18 @@ export function Hero() {
             </a>
           </div>
 
-          <CheckList items={hero.checks} className="mt-7" />
+          {/* Above the fold, and it names the thing. The headline says "ask a question", which
+              implies an assistant to anybody who already knows there is one; this says so. */}
+          <a
+            href="#ai"
+            className="mt-7 inline-flex items-center gap-2 rounded-full border border-blue/30 bg-blue/5 px-4 py-2 text-sm font-semibold text-blue transition hover:border-blue/60 hover:bg-blue/10"
+          >
+            <SparkMark />
+            {hero.aiBadge}
+            <span className="font-normal text-ink">{hero.aiBadgeLink} →</span>
+          </a>
+
+          <CheckList items={hero.checks} className="mt-5" />
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-[#e6edf5] bg-white shadow-xl">
