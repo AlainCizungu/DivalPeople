@@ -2,6 +2,7 @@
 
 import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
+import { SocialRow } from "./social";
 import { Pill, type Tone } from "@/components/ui";
 import { Eyebrow, FeatureCard, SectionHeading, gradientFor } from "./primitives";
 
@@ -606,7 +607,11 @@ export function LandingFooter() {
             </div>
           ))}
         </div>
-        <div className="mt-10 border-t border-line pt-6 text-sm text-muted">
+        <div className="mt-10 border-t border-line pt-8">
+          <SocialRow heading={footer.followUs} />
+        </div>
+
+        <div className="mt-8 border-t border-line pt-6 text-sm text-muted">
           <p>{footer.legal}</p>
           <p>{footer.tagline}</p>
         </div>
