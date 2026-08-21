@@ -1165,7 +1165,26 @@
     "backToSearch": "Back to search",
     "inquire": "Ask the exchange about this subject",
     "open360": "Open the 360° profile",
-    "open360Note": "Ask the exchange: the risk indicator, how many institutions report this company, and the signals worth acting on. Costs one inquiry."
+    "open360Note": "Ask the exchange: the risk indicator, how many institutions report this company, and the signals worth acting on. Costs one inquiry.",
+    "eyebrow": "Universal search",
+    "found": "Companies found",
+    "owedToYou": "Owed to you",
+    "excludedFromTotal": "{count} excluded — another currency",
+    "oldestInResults": "Oldest unpaid in these results",
+    "sortBy": "Sort",
+    "noneOfThatKind": "No results of that kind.",
+    "openFile": "Open the file",
+    "nothingUnpaid": "Nothing unpaid",
+    "filters": {
+      "ALL": "All",
+      "BUSINESS": "Businesses",
+      "INDIVIDUAL": "Individuals"
+    },
+    "sorts": {
+      "EXPOSURE": "Owed",
+      "OLDEST": "Oldest",
+      "NAME": "Name"
+    }
   },
   "audit": {
     "title": "Audit trail",

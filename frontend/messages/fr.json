@@ -1165,7 +1165,26 @@
     "backToSearch": "Retour à la recherche",
     "inquire": "Interroger l’échange sur ce sujet",
     "open360": "Ouvrir le profil 360°",
-    "open360Note": "Interroger l'échange : l'indicateur de risque, le nombre d'institutions déclarantes et les signaux à traiter. Coûte une consultation."
+    "open360Note": "Interroger l'échange : l'indicateur de risque, le nombre d'institutions déclarantes et les signaux à traiter. Coûte une consultation.",
+    "eyebrow": "Recherche universelle",
+    "found": "Entreprises trouvées",
+    "owedToYou": "Ce qui vous est dû",
+    "excludedFromTotal": "{count} exclue(s) — autre devise",
+    "oldestInResults": "Plus ancien impayé de ces résultats",
+    "sortBy": "Trier",
+    "noneOfThatKind": "Aucun résultat de ce type.",
+    "openFile": "Ouvrir le dossier",
+    "nothingUnpaid": "Aucun impayé",
+    "filters": {
+      "ALL": "Tous",
+      "BUSINESS": "Entreprises",
+      "INDIVIDUAL": "Particuliers"
+    },
+    "sorts": {
+      "EXPOSURE": "Dû",
+      "OLDEST": "Ancienneté",
+      "NAME": "Nom"
+    }
   },
   "audit": {
     "title": "Journal d’audit",

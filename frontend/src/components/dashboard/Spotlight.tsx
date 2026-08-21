@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
-import { Band, useReducedMotion } from "./motion";
+import { Band, useReducedMotion } from "@/components/visual/motion";
 
 /**
  * The rotating band at the top of the dashboard.

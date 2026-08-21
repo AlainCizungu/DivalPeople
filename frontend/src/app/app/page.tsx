@@ -15,7 +15,7 @@ import {
   type SearchResult,
 } from "@/api/client";
 import { Spotlight } from "@/components/dashboard/Spotlight";
-import { HoverTile, Ring, Sparkline } from "@/components/dashboard/motion";
+import { HoverTile, Ring, Sparkline } from "@/components/visual/motion";
 import { Button, Card, EmptyState, inputClass } from "@/components/ui";
 
 /**

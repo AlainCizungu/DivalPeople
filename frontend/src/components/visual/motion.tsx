@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
- * Movement on the dashboard, and the one rule all of it obeys.
+ * Movement, and the one rule all of it obeys.
+ *
+ * <p>Lives outside {@code components/dashboard} because it stopped being the dashboard's: the
+ * search screen draws the same counters and the same aged strips, and two copies of an animation
+ * drift until one of them forgets to check the motion preference.
  *
  * <p><strong>Every animation here checks {@code prefers-reduced-motion} and renders its final
  * state instantly when it is set.</strong> That is an accessibility setting people turn on because
@@ -290,6 +294,55 @@ export function Band({ children }: { children: ReactNode }) {
   return (
     <div className="overflow-hidden rounded-2xl bg-[linear-gradient(120deg,#0b1f3a_0%,#123a63_55%,#0a4f5c_100%)] text-white">
       {children}
+    </div>
+  );
+}
+
+/**
+ * How old the oldest unpaid obligation is, as a strip of segments.
+ *
+ * <p>The aging bands the exchange already uses, drawn rather than named. A band code — "OVER_360" —
+ * is precise and takes a second to place; a strip with three of five lit says how far along the
+ * scale a company is before the reader has finished the label beside it.
+ *
+ * <p>Filled up to and including the band, not only at it. A company in the oldest band is also past
+ * every band before it, and one lit segment floating at the end reads as "only this one".
+ *
+ * @param band the band code, or null when nothing is unpaid
+ */
+export function AgedStrip({
+  band,
+  bands,
+  label,
+}: {
+  band: string | null;
+  bands: string[];
+  label: string;
+}) {
+  const reached = band === null ? -1 : bands.indexOf(band);
+
+  return (
+    <div className="flex items-center gap-1" role="img" aria-label={label}>
+      {bands.map((option, index) => {
+        const lit = index <= reached;
+        // Later bands are worse, so the strip warms as it fills rather than staying one colour.
+        const colour =
+          index >= bands.length - 1
+            ? "var(--color-error)"
+            : index >= bands.length - 2
+              ? "var(--color-orange)"
+              : index >= 1
+                ? "var(--color-warning)"
+                : "var(--color-success)";
+        return (
+          <span
+            key={option}
+            aria-hidden="true"
+            className="h-1.5 w-5 rounded-full transition-colors"
+            style={{ background: lit ? colour : "var(--color-line)" }}
+          />
+        );
+      })}
     </div>
   );
 }
