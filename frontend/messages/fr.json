@@ -85,7 +85,39 @@
     "actionPortfolio": "Voir ce qui vous est dû, par ancienneté",
     "actionCases": "Répondre à une personne qui s’est manifestée",
     "actionImports": "Transmettre un fichier",
-    "actionAudit": "Lire la piste d’audit"
+    "actionAudit": "Lire la piste d’audit",
+    "spotlight": {
+      "roleDescription": "Point saillant",
+      "goTo": "Afficher l'élément {position} sur {total}",
+      "paused": "En pause",
+      "statutory": "Délai légal",
+      "retention": "Conservation",
+      "deliveries": "Livraisons",
+      "contested": "Contesté",
+      "overdue": "{count} demande(s) de droits ont dépassé leur délai légal.",
+      "dueSoon": "{count} demande(s) de droits arrivent à échéance cette semaine.",
+      "awaitingErasure": "{count} enregistrement(s) ont dépassé leur durée de conservation et attendent l'effacement.",
+      "awaitingDelivery": "{count} livraison(s) attendent votre validation ou votre publication.",
+      "contestedRecords": "{count} de vos enregistrements sont contestés et retirés de l'échange.",
+      "quietEyebrow": "Rien en attente",
+      "quiet": "Rien n'est en retard, rien n'échoit cette semaine, et aucune livraison n'est restée à mi-chemin.",
+      "openCases": "Ouvrir les dossiers",
+      "openPortfolio": "Ouvrir le portefeuille",
+      "openImports": "Ouvrir les livraisons",
+      "openRecords": "Ouvrir vos enregistrements"
+    },
+    "lookup": {
+      "title": "Rechercher une entreprise",
+      "note": "Votre propre portefeuille, par nom ou identifiant. Trois caractères minimum. Ouvre le dossier de l'entreprise — le profil 360° est un clic plus loin, car celui-là interroge l'échange.",
+      "placeholder": "Trans-Congo, ou CD/KIN/RCCM/16-B-5150",
+      "action": "Rechercher",
+      "noResults": "Aucune entreprise de ce nom ou identifiant dans votre portefeuille.",
+      "records": "{count} enregistrement(s)"
+    },
+    "activityTitle": "Treize mois de déclarations",
+    "activityDescription": "Ce que vous avez déclaré, mois par mois. Survolez une barre pour le chiffre.",
+    "noActivity": "Aucune série d'activité disponible pour votre compte.",
+    "openExecutive": "Ouvrir l'intelligence dirigeante"
   },
   "tix": {
     "title": "Vérifier une entreprise",

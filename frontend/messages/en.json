@@ -85,7 +85,39 @@
     "actionPortfolio": "See what you are owed, aged",
     "actionCases": "Answer somebody who has come forward",
     "actionImports": "Send a file",
-    "actionAudit": "Read the audit trail"
+    "actionAudit": "Read the audit trail",
+    "spotlight": {
+      "roleDescription": "Spotlight",
+      "goTo": "Show item {position} of {total}",
+      "paused": "Paused",
+      "statutory": "Statutory deadline",
+      "retention": "Retention",
+      "deliveries": "Deliveries",
+      "contested": "Contested",
+      "overdue": "{count} rights request(s) are past their statutory deadline.",
+      "dueSoon": "{count} rights request(s) fall due this week.",
+      "awaitingErasure": "{count} record(s) are past their retention period and awaiting erasure.",
+      "awaitingDelivery": "{count} delivery(ies) are waiting on you to validate or publish.",
+      "contestedRecords": "{count} of your records are contested and withheld from the exchange.",
+      "quietEyebrow": "Nothing waiting",
+      "quiet": "Nothing is overdue, nothing is due this week, and no delivery is half-finished.",
+      "openCases": "Open the cases",
+      "openPortfolio": "Open the portfolio",
+      "openImports": "Open deliveries",
+      "openRecords": "Open your records"
+    },
+    "lookup": {
+      "title": "Look up a company",
+      "note": "Your own book, by name or identifier. Three characters minimum. Opens the company's file — the 360° profile is one click further, because that one asks the exchange.",
+      "placeholder": "Trans-Congo, or CD/KIN/RCCM/16-B-5150",
+      "action": "Search",
+      "noResults": "No company of that name or identifier is in your book.",
+      "records": "{count} record(s)"
+    },
+    "activityTitle": "Thirteen months of declarations",
+    "activityDescription": "What you declared, month by month. Hover a bar for the figure.",
+    "noActivity": "No activity series available for your account.",
+    "openExecutive": "Open executive intelligence"
   },
   "tix": {
     "title": "Check a business",
