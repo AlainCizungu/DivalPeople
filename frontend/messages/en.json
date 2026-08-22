@@ -192,7 +192,11 @@
       "subjectCreatedTitle": "This opened a new file.",
       "subjectCreatedBody": "The exchange had no record of this subject before now. They are in the registry because of this declaration.",
       "subjectExisted": "This subject was already known to the exchange. Your record has been added to what is held about them.",
-      "retentionNote": "The record is erased automatically on the retention date. Settling it brings that date forward and can never push it back."
+      "retentionNote": "The record is erased automatically on the retention date. Settling it brings that date forward and can never push it back.",
+      "eyebrow": "Declare a default",
+      "consequenceExchange": "Every participating institution will learn that somebody is owed money by this company — never who, and never how much.",
+      "consequenceRetention": "The record is kept for a fixed period and then erased, whether or not it is ever paid.",
+      "consequenceDispute": "The company can dispute it, and reporting stops everywhere the day they do — before anybody decides who is right."
     },
     "records": {
       "title": "My records",

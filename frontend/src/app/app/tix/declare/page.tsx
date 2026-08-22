@@ -110,15 +110,45 @@ export default function DeclarePage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader
-        title={t.title}
-        subtitle={t.subtitle}
-        action={
-          <Link href="/app/tix/records" className="text-sm font-bold text-blue hover:underline">
+      {/* Deliberately sober, and the only band in the application that is not the house gradient.
+          Every other screen reads something; this one writes — it puts a company on a national
+          register, where every participating institution can see that somebody is owed money. A
+          cheerful header on the one screen whose action harms a third party would be the wrong
+          instinct dressed as polish. */}
+      <div className="overflow-hidden rounded-2xl border-l-4 border-l-warning bg-navy text-white">
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-warning uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="mb-5 max-w-2xl text-sm text-white/70">{t.subtitle}</p>
+
+          {/* What happens after the button, before the button. Three consequences, stated where
+              somebody reads them rather than in a note underneath the form they have already
+              filled in. */}
+          <ul className="flex flex-col gap-2 text-sm text-white/80">
+            {[t.consequenceExchange, t.consequenceRetention, t.consequenceDispute].map(
+              (line) => (
+                <li key={line} className="flex gap-2.5">
+                  <span aria-hidden="true" className="text-warning">
+                    •
+                  </span>
+                  {line}
+                </li>
+              ),
+            )}
+          </ul>
+
+          <Link
+            href="/app/tix/records"
+            className="mt-5 inline-block text-sm font-bold text-blue hover:underline"
+          >
             {t.viewRecords} →
           </Link>
-        }
-      />
+        </div>
+      </div>
+
+      <div className="mt-6" />
 
       <Card>
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
@@ -240,6 +270,10 @@ export default function DeclarePage() {
 
       {result && (
         <div className="mt-6">
+          {/* Confirmation, not congratulation. No green anywhere: a declaration that succeeded is
+              not good news, it is a record created about a company that will be visible to every
+              participant until it expires. Green here would be the platform cheering an act it
+              exists to take seriously. */}
           <Card title={t.declared}>
             <div className="flex flex-col gap-4">
               {result.subjectWasCreated ? (
@@ -267,7 +301,10 @@ export default function DeclarePage() {
                 </div>
                 <div>
                   <dt className="text-xs text-muted">{t.retainedUntil}</dt>
-                  <dd className="mt-0.5 font-bold tabular-nums text-navy">
+                  {/* Given the weight of the figure it is. This date is how long a company carries
+                      the consequence of one afternoon's data entry, and it was set in the same
+                      size as the service category. */}
+                  <dd className="mt-0.5 text-lg font-bold tabular-nums text-navy">
                     {result.record.retentionUntil}
                   </dd>
                 </div>

@@ -192,7 +192,11 @@
       "subjectCreatedTitle": "Ceci a ouvert un nouveau dossier.",
       "subjectCreatedBody": "L’échange n’avait aucune trace de ce sujet jusqu’à présent. Il figure au registre en raison de cette déclaration.",
       "subjectExisted": "Ce sujet était déjà connu de l’échange. Votre enregistrement s’ajoute à ce qui est détenu à son sujet.",
-      "retentionNote": "L’enregistrement est effacé automatiquement à la date de conservation. Une régularisation avance cette date et ne peut jamais la repousser."
+      "retentionNote": "L’enregistrement est effacé automatiquement à la date de conservation. Une régularisation avance cette date et ne peut jamais la repousser.",
+      "eyebrow": "Déclarer un impayé",
+      "consequenceExchange": "Chaque institution participante apprendra que cette entreprise doit de l'argent à quelqu'un — jamais à qui, jamais combien.",
+      "consequenceRetention": "L'enregistrement est conservé pour une durée déterminée puis effacé, qu'il soit payé ou non.",
+      "consequenceDispute": "L'entreprise peut le contester, et la déclaration cesse partout le jour où elle le fait — avant que quiconque ne tranche."
     },
     "records": {
       "title": "Mes enregistrements",
