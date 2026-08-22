@@ -132,7 +132,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     {
       heading: t.groupNetwork,
       items: [
-        { label: t.tix },
+        // "TIX — Telecom intelligence" was here as a Soon chip, and it is gone. Everything the
+        // exchange does today already happens under Intelligence, Subjects and Risk: an operator
+        // declares, enquires, watches and is monitored, and all of it is the network working. A
+        // separate entry promising telecom intelligence described a thing that is not a separate
+        // thing, and a chip that never becomes a screen is a promise the menu keeps making.
+        //
+        // The group now holds only the platform administrator's view and disappears for everybody
+        // else, which the render below already handles.
         // Platform administration. Hidden rather than shown-and-refused, because a menu item
         // that always 403s teaches people to ignore refusals.
         ...(isPlatformAdmin
@@ -249,6 +256,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           </Link>
                         ) : (
                           <span
+                            // Dormant, not broken. No navigation item is href-less today — the
+                            // last one, the TIX chip, was removed — so this branch renders
+                            // nothing until somebody adds a designed-but-unbuilt entry. Kept
+                            // because the affordance is generic; it promises nothing on its own.
                             title={t.soonTitle}
                             className="flex cursor-default items-center justify-between gap-2 rounded px-3 py-2 text-sm text-muted"
                           >
