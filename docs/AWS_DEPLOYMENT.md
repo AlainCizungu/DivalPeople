@@ -147,10 +147,18 @@ write anything, does not belong here.
 Follow **DEPLOYMENT.md § First deploy**. The AWS-specific values in `infra/deploy.env`:
 
 ```ini
+# Lowercase, even though the repository is not. A registry rejects a mixed-case path, and the
+# publishing side lowercases it silently — so the images are at the lowercase path and this is
+# the only place the two can disagree.
+GITHUB_REPOSITORY=alaincizungu/divalpeople
+
 SITE_HOSTNAME=dip.dival.ai
 KEYCLOAK_HOSTNAME=id.dival.ai
 SITE_URL=https://dip.dival.ai
 OIDC_ISSUER=https://id.dival.ai/realms/dip
+
+# prod,demo to seed the exchange. See § 7.
+SPRING_PROFILES_ACTIVE=prod,demo
 
 BACKUP_HOST_DIR=/var/backups/dip
 ```
