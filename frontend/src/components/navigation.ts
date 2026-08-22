@@ -71,14 +71,24 @@ export type ItemId =
   | "organization"
   | "settings";
 
-export type GroupId =
-  | "intelligence"
-  | "subjects"
-  | "risk"
-  | "network"
-  | "data"
-  | "governance"
-  | "system";
+/**
+ * The seven areas, in the order they are drawn.
+ *
+ * <p>A value rather than a bare type, because the menu remembers which headings you left open
+ * and has to be able to discard an id that no longer names anything. Deriving the type from the
+ * array keeps the two from parting company.
+ */
+export const GROUP_IDS = [
+  "intelligence",
+  "subjects",
+  "risk",
+  "network",
+  "data",
+  "governance",
+  "system",
+] as const;
+
+export type GroupId = (typeof GROUP_IDS)[number];
 
 export type NavAudience = {
   isPlatformAdmin: boolean;

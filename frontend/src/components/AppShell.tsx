@@ -9,7 +9,25 @@ import { useMessages } from "@/i18n/LocaleProvider";
 import { BrandMark } from "./BrandMark";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { AskDipLauncher } from "./AskDipLauncher";
-import { activeHref, buildNavigation, itemKey, keyOfFirst } from "./navigation";
+import {
+  activeHref,
+  buildNavigation,
+  GROUP_IDS,
+  itemKey,
+  keyOfFirst,
+  type GroupId,
+} from "./navigation";
+
+/**
+ * Where the open headings are remembered.
+ *
+ * <p>Per browser, not per account, and that is the right scope: it is a preference about a menu,
+ * not a fact about a person. Nothing in it is worth a round trip, and nothing in it is worth
+ * anything to anybody who reads it.
+ */
+const OPEN_GROUPS_KEY = "dip.nav.open";
+
+const KNOWN_GROUPS: readonly GroupId[] = GROUP_IDS;
 
 /**
  * Application shell: left navigation, top utility bar, main content area.
@@ -17,6 +35,16 @@ import { activeHref, buildNavigation, itemKey, keyOfFirst } from "./navigation";
  * <p>The navigation used to be a flat list of the eleven screens that happened to exist, in the
  * order they were built. It read as a changelog. This is the platform's actual shape — eight
  * areas of work, and an item sits in the area it belongs to whether or not it has been built.
+ *
+ * <p><strong>The headings collapse.</strong> Twenty-one entries under seven headings is a menu
+ * that scrolls on a laptop, and a menu that scrolls is one where the thing you want is reliably
+ * below the fold. Closed, it is seven rows. The group you are in opens on every navigation — you
+ * can shut it again, and it will reopen the next time you move, because hiding the highlight that
+ * says where you are defeats the point of the menu.
+ *
+ * <p>What was open is remembered per browser, and a collapsed heading carries the sum of its
+ * items' badges so that tidying the menu cannot hide the unread count that is most of the reason
+ * anybody opens System.
  *
  * <p><strong>The unbuilt items are shown, and shown as unbuilt.</strong> That is a deliberate
  * reversal of the note that used to stand here, which said a nav full of links to nothing makes
@@ -87,6 +115,80 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // is, and the reader has no way to tell those apart from the outside.
   const currentKey = keyOfFirst(groups, current);
 
+  /**
+   * Which heading the page you are on lives under.
+   *
+   * <p>Found by the entry, not by the route, because two groups can share a route: Inquiries and
+   * Risk intelligence are both {@code /app/tix}. The highlight already resolves that to one
+   * entry, and the open group has to be the same one or the menu would open a heading whose
+   * contents are not lit.
+   */
+  const currentGroup = groups.find((group) =>
+    group.items.some((item) => itemKey(group, item) === currentKey),
+  )?.id;
+
+  const [open, setOpen] = useState<GroupId[]>(currentGroup ? [currentGroup] : []);
+  const [restored, setRestored] = useState(false);
+
+  /**
+   * What was open last time.
+   *
+   * <p>Read after mount rather than during the first render. {@code localStorage} does not exist
+   * on the server, and a component whose first client render disagrees with the markup it was
+   * given is a hydration error — so the server and the first client paint both show exactly one
+   * group open, the one you are in, and the remembered set arrives a frame later.
+   *
+   * <p>Stored ids are filtered against the groups that exist. A heading removed in a later
+   * version leaves its id behind in every browser that ever saw it, and nothing else here would
+   * notice.
+   */
+  useEffect(() => {
+    let stored: GroupId[] = [];
+    try {
+      const raw = window.localStorage.getItem(OPEN_GROUPS_KEY);
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          stored = parsed.filter((value): value is GroupId =>
+            KNOWN_GROUPS.includes(value as GroupId),
+          );
+        }
+      }
+    } catch {
+      // A browser with storage disabled, or a key somebody hand-edited. Neither is a reason to
+      // fail to draw the navigation.
+    }
+    setOpen((previous) => Array.from(new Set([...stored, ...previous])));
+    setRestored(true);
+    // Once, on mount. Re-reading storage on every navigation would undo a collapse the moment
+    // somebody clicked anything.
+  }, []);
+
+  /**
+   * The group you are in opens, every time the route changes.
+   *
+   * <p>You may collapse it again afterwards and that sticks until you navigate. The alternative —
+   * refusing to reopen it — hides the highlight that tells you where you are, which is the one
+   * thing the menu is for.
+   */
+  useEffect(() => {
+    if (!currentGroup) return;
+    setOpen((previous) =>
+      previous.includes(currentGroup) ? previous : [...previous, currentGroup],
+    );
+  }, [currentGroup]);
+
+  useEffect(() => {
+    // Guarded on restored, so the single-group set that exists for one frame before the read
+    // completes is never the thing that gets written back over it.
+    if (!restored) return;
+    try {
+      window.localStorage.setItem(OPEN_GROUPS_KEY, JSON.stringify(open));
+    } catch {
+      // Nothing is lost that was not already only a convenience.
+    }
+  }, [open, restored]);
+
   return (
     <div className="flex min-h-screen">
       <nav
@@ -103,20 +205,62 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
 
-        {/* Twenty-five entries do not fit on a laptop, so the list scrolls and the brand and
-            the footer stay put. */}
+        {/* Still scrolls, because every heading can be opened at once and somebody will. The
+            brand and the footer stay put. */}
         <div className="flex-1 overflow-y-auto p-3">
           {groups.map((group) => {
             // A group can empty out entirely — Network does, for anybody who is not a platform
             // administrator, once its unbuilt items are gone. Printing the heading over nothing
             // would be worse than printing neither.
             if (group.items.length === 0) return null;
+            const expanded = open.includes(group.id);
+            // Carried up to the heading so a collapsed group cannot swallow the number. The
+            // notification badge is most of the reason anybody opens System, and a menu that
+            // hides it while claiming to be tidier has lost the argument for collapsing at all.
+            const hiddenBadges = expanded
+              ? 0
+              : group.items.reduce((sum, item) => sum + (item.badge ?? 0), 0);
             return (
-              <div key={group.id} className="mb-4 last:mb-0">
-                <p className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-muted">
-                  {group.heading}
-                </p>
-                <ul className="space-y-0.5">
+              <div key={group.id} className="mb-2 last:mb-0">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpen((previous) =>
+                      previous.includes(group.id)
+                        ? previous.filter((id) => id !== group.id)
+                        : [...previous, group.id],
+                    )
+                  }
+                  aria-expanded={expanded}
+                  aria-controls={`nav-${group.id}`}
+                  className="flex w-full items-center gap-1.5 rounded px-3 py-1.5 text-left text-[11px] font-bold tracking-wider text-muted uppercase transition hover:bg-soft hover:text-ink"
+                >
+                  <svg
+                    aria-hidden="true"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                    className={`shrink-0 transition-transform motion-reduce:transition-none ${
+                      expanded ? "rotate-90" : ""
+                    }`}
+                  >
+                    <path
+                      d="M3 1.5L7 5l-4 3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>{group.heading}</span>
+                  {hiddenBadges > 0 && (
+                    <span className="ml-auto rounded-full bg-blue px-2 py-0.5 text-[10px] font-bold text-white tabular-nums">
+                      {hiddenBadges}
+                    </span>
+                  )}
+                </button>
+                <ul id={`nav-${group.id}`} hidden={!expanded} className="space-y-0.5 pt-0.5">
                   {group.items.map((item) => {
                     const key = itemKey(group, item);
                     const active = key === currentKey;
