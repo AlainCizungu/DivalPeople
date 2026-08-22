@@ -1540,7 +1540,11 @@
       "THE_EXCHANGE_WOULD_NOT_CONFIRM_IDENTITY": "The match fell below the threshold at which the platform will answer without a person looking, so anything it might have said is withheld rather than guessed. Not a finding about the company."
     },
     "noCompany": "No company of that name is in your book. The name was taken from your question, so this is as likely to be a misread as a missing company — try the company's registered name.",
-    "close": "Close"
+    "close": "Close",
+    "idle": "Ask about your own book — what is owed, what changed, who to chase. Every figure in the answer is counted from your records; only the sentence marked as written by a model is written by one.",
+    "legendAmount": "Amount",
+    "legendPeriod": "Period",
+    "legendHint": "What DIP expects to read. The answer says what it actually understood."
   },
   "profile360": {
     "title": "Subject profile",

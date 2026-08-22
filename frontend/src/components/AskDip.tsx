@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
 import { ApiError, analystApi, type AskAnswer } from "@/api/client";
-import { Button, Card, EmptyState, ErrorNotice, Pill, inputClass } from "@/components/ui";
+import { AskDipMark } from "@/components/ask/AskDipMark";
+import { QuestionField } from "@/components/ask/QuestionField";
+import { Button, Card, EmptyState, ErrorNotice, Pill } from "@/components/ui";
 
 /**
  * Ask DIP.
@@ -58,12 +60,12 @@ export function AskDip({ bare = false }: { bare?: boolean } = {}) {
           void run(question.trim());
         }}
       >
-        <input
-          className={inputClass}
+        <QuestionField
           value={question}
-          onChange={(event) => setQuestion(event.target.value)}
+          onChange={setQuestion}
           placeholder={t.placeholder}
-          aria-label={t.title}
+          label={t.title}
+          disabled={busy}
         />
         <Button type="submit" disabled={busy || question.trim().length === 0}>
           {busy ? t.thinking : t.askButton}
@@ -77,7 +79,7 @@ export function AskDip({ bare = false }: { bare?: boolean } = {}) {
           <button
             key={suggestion}
             type="button"
-            className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:bg-soft"
+            className="rounded-full border border-line bg-white px-3 py-1.5 text-xs text-muted transition hover:-translate-y-0.5 hover:border-blue hover:text-blue hover:shadow-sm"
             onClick={() => {
               setQuestion(suggestion);
               void run(suggestion);
@@ -87,6 +89,29 @@ export function AskDip({ bare = false }: { bare?: boolean } = {}) {
           </button>
         ))}
       </div>
+
+      {/* While the answer is being assembled. The mark quickens and three lines stand in for the
+          shape of what is coming — a spinner says "wait", this says "an answer is being built".
+          Nothing here is a number: a skeleton that showed digits would be showing invented ones. */}
+      {busy && (
+        <div className="mt-5 flex items-start gap-3 rounded-lg border border-line bg-soft/60 p-4">
+          <AskDipMark size={28} busy />
+          <div className="flex-1 space-y-2 pt-1">
+            <span className="block h-2.5 w-1/3 rounded-full bg-line" />
+            <span className="block h-2.5 w-2/3 rounded-full bg-line" />
+            <span className="block h-2.5 w-1/2 rounded-full bg-line" />
+          </div>
+        </div>
+      )}
+
+      {/* Before anything has been asked. An empty panel reads as broken; this reads as ready, and
+          it repeats the one sentence that governs the whole feature. */}
+      {!busy && !answer && !failure && (
+        <div className="mt-5 flex items-start gap-3 rounded-lg border border-dashed border-line px-4 py-5">
+          <AskDipMark size={28} />
+          <p className="pt-1 text-sm text-muted">{t.idle}</p>
+        </div>
+      )}
 
       {failure && (
         <ErrorNotice>
@@ -107,7 +132,17 @@ export function AskDip({ bare = false }: { bare?: boolean } = {}) {
       {body}
     </div>
   ) : (
-    <Card title={t.title} description={t.note}>
+    <Card>
+      {/* The heading is drawn here rather than passed to Card so the mark can sit in it. On the
+          full page this panel is the whole screen, and a mark beside the title is what tells
+          somebody at a glance which of the platform's boxes this one is. */}
+      <div className="mb-4 flex items-start gap-3">
+        <AskDipMark size={36} busy={busy} />
+        <div>
+          <h2 className="font-bold text-navy">{t.title}</h2>
+          <p className="mt-0.5 text-sm text-muted">{t.note}</p>
+        </div>
+      </div>
       {body}
     </Card>
   );

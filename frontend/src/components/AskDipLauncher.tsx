@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { AskDip } from "@/components/AskDip";
+import { AskDipMark } from "@/components/ask/AskDipMark";
 
 /** The dedicated page. A floating shortcut to the screen you are on is clutter, not help. */
 const ANALYST_PAGE = "/app/analyst";
@@ -62,9 +63,9 @@ export function AskDipLauncher() {
         type="button"
         onClick={() => setOpen(true)}
         aria-expanded={false}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-navy px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:opacity-90"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 rounded-full bg-[linear-gradient(120deg,#0b1f3a_0%,#123a63_55%,#0a4f5c_100%)] py-2.5 pl-2.5 pr-5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
       >
-        <Spark />
+        <AskDipMark size={28} />
         {t.title}
       </button>
     );
@@ -79,16 +80,19 @@ export function AskDipLauncher() {
          is capped so it never becomes a second page. */
       className="fixed bottom-6 right-6 z-40 flex max-h-[calc(100vh-3rem)] w-[min(28rem,calc(100vw-3rem))] flex-col overflow-y-auto rounded-lg border border-line bg-white shadow-xl"
     >
-      <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-line bg-white px-4 py-2">
-        <span className="flex items-center gap-2 text-sm font-bold text-navy">
-          <Spark />
+      {/* The panel's own header, in the assistant's colours rather than the page's. It is the one
+          surface on screen that is not part of whatever you were reading, and looking different is
+          how it says so. */}
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-[linear-gradient(120deg,#0b1f3a_0%,#123a63_55%,#0a4f5c_100%)] px-4 py-3 text-white">
+        <span className="flex items-center gap-2.5 text-sm font-bold">
+          <AskDipMark size={26} />
           {t.title}
         </span>
         <button
           type="button"
           onClick={() => setOpen(false)}
           aria-label={t.close}
-          className="rounded px-2 py-1 text-lg leading-none text-muted transition hover:bg-soft"
+          className="rounded px-2 py-1 text-lg leading-none text-white/70 transition hover:bg-white/10 hover:text-white"
         >
           ×
         </button>
@@ -98,15 +102,5 @@ export function AskDipLauncher() {
         <AskDip bare />
       </div>
     </div>
-  );
-}
-
-/** Four points rather than a robot or a brain. Nothing here is pretending to think. */
-function Spark() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-      <path d="M12 2l1.9 5.6L19.5 9.5 13.9 11.4 12 17l-1.9-5.6L4.5 9.5l5.6-1.9z" />
-      <path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity="0.6" />
-    </svg>
   );
 }
