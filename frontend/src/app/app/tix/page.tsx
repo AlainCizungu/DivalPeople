@@ -18,9 +18,10 @@ import {
   PageHeader,
   Pill,
   inputClass,
-  type Tone,
 } from "@/components/ui";
 import { RiskIndicatorPanel } from "@/components/RiskIndicatorPanel";
+import { InstitutionPips, VerdictBanner } from "@/components/tix/InquiryVisuals";
+import { Band } from "@/components/visual/motion";
 
 /**
  * Check a business before extending credit.
@@ -40,13 +41,6 @@ import { RiskIndicatorPanel } from "@/components/RiskIndicatorPanel";
 // useful — but it can never find a company you have not reported yourself.
 const BUSINESS_IDENTIFIERS: IdentifierType[] =
   ["RCCM", "TAX_NUMBER", "NATIONAL_ID", "MSISDN", "ACCOUNT_REFERENCE"];
-
-const OUTCOME_TONE: Record<InquiryOutcome, Tone> = {
-  NO_MATCH: "neutral",
-  CLEAR: "positive",
-  OUTSTANDING_DEBT: "serious",
-  REVIEW_REQUIRED: "review",
-};
 
 export default function CreditCheckPage() {
   const messages = useMessages();
@@ -96,25 +90,48 @@ export default function CreditCheckPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <PageHeader title={t.title} subtitle={t.subtitle} />
+      {/* The exchange's own colours. This is the screen where one institution asks about another
+          institution's customer, and it should not look like the rest of the operator's private
+          workspace. */}
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="max-w-2xl text-sm text-white/70">{t.subtitle}</p>
+        </div>
+      </Band>
+
+      <div className="mt-6" />
 
       <Card title={t.checkTitle} description={t.checkDescription}>
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label={t.identifierType} htmlFor="identifierType" hint={t.identifierTypeHint}>
-              <select
-                id="identifierType"
-                className={inputClass}
-                value={identifierType}
-                onChange={(e) => setIdentifierType(e.target.value as IdentifierType)}
-              >
-                {BUSINESS_IDENTIFIERS.map((type) => (
-                  <option key={type} value={type}>
-                    {t.identifierTypes[type]}
-                  </option>
-                ))}
-              </select>
-            </Field>
+            {/* Chips rather than a select. Five options, and which one you have in front of you
+                decides whether the inquiry can find anything at all — hiding four of them behind
+                a click makes that choice look incidental. */}
+            <div className="sm:col-span-2">
+              <Field label={t.identifierType} hint={t.identifierTypeHint}>
+                <div className="flex flex-wrap gap-2">
+                  {BUSINESS_IDENTIFIERS.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setIdentifierType(type)}
+                      aria-pressed={identifierType === type}
+                      className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
+                        identifierType === type
+                          ? "border-blue bg-blue text-white"
+                          : "border-line bg-white text-ink hover:border-blue/50 hover:bg-soft"
+                      }`}
+                    >
+                      {t.identifierTypes[type]}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </div>
 
             <Field label={t.identifier} htmlFor="identifier">
               <input
@@ -166,20 +183,16 @@ export default function CreditCheckPage() {
 
       {result && (
         <div className="mt-6 flex flex-col gap-6">
+          {/* The verdict, at the size of the decision it is used for. It was a pill beside a
+              sentence — the same words, at the weight of a footnote, on the screen somebody uses
+              to decide whether to extend credit. */}
+          <VerdictBanner outcome={result.outcome} />
+
           <Card title={t.resultTitle}>
             <div className="flex flex-col gap-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <Pill tone={OUTCOME_TONE[result.outcome]}>{t.outcomes[result.outcome]}</Pill>
-                <span className="text-sm text-muted">{t.outcomeExplained[result.outcome]}</span>
-              </div>
-
               <dl className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <dt className="text-xs text-muted">{t.reportedBy}</dt>
-                  <dd className="mt-0.5 text-2xl font-bold tabular-nums text-navy">
-                    {result.institutionCount}
-                  </dd>
-                  <dd className="text-xs text-muted">{t.reportedByNote}</dd>
+                  <InstitutionPips count={result.institutionCount} />
                 </div>
                 <div>
                   <dt className="text-xs text-muted">{t.statusesHeld}</dt>

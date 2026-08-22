@@ -117,7 +117,13 @@
     "activityTitle": "Thirteen months of declarations",
     "activityDescription": "What you declared, month by month. Hover a bar for the figure.",
     "noActivity": "No activity series available for your account.",
-    "openExecutive": "Open executive intelligence"
+    "openExecutive": "Open executive intelligence",
+    "inquiry": {
+      "eyebrow": "The exchange",
+      "title": "Check a company you have never dealt with",
+      "note": "Ask every participating institution at once. You learn how many report an unpaid obligation — never which, and never how much. Costs one inquiry and is recorded with your stated purpose.",
+      "action": "Make an inquiry"
+    }
   },
   "tix": {
     "title": "Check a business",
@@ -239,7 +245,9 @@
     "subjectTypes": {
       "BUSINESS": "Business",
       "INDIVIDUAL": "Individual"
-    }
+    },
+    "eyebrow": "Trusted Data Exchange",
+    "pipsNote": "{count} institution(s), each mark one of them. DIP does not say which."
   },
   "auth": {
     "signIn": "Sign in",

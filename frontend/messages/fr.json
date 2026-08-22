@@ -117,7 +117,13 @@
     "activityTitle": "Treize mois de déclarations",
     "activityDescription": "Ce que vous avez déclaré, mois par mois. Survolez une barre pour le chiffre.",
     "noActivity": "Aucune série d'activité disponible pour votre compte.",
-    "openExecutive": "Ouvrir l'intelligence dirigeante"
+    "openExecutive": "Ouvrir l'intelligence dirigeante",
+    "inquiry": {
+      "eyebrow": "L'échange",
+      "title": "Vérifiez une entreprise que vous ne connaissez pas",
+      "note": "Interrogez toutes les institutions participantes d'un coup. Vous apprenez combien déclarent un impayé — jamais lesquelles, jamais combien. Coûte une consultation, enregistrée avec le motif que vous indiquez.",
+      "action": "Lancer une consultation"
+    }
   },
   "tix": {
     "title": "Vérifier une entreprise",
@@ -239,7 +245,9 @@
     "subjectTypes": {
       "BUSINESS": "Entreprise",
       "INDIVIDUAL": "Particulier"
-    }
+    },
+    "eyebrow": "Échange de données de confiance",
+    "pipsNote": "{count} institution(s), chaque marque en représente une. DIP ne dit pas lesquelles."
   },
   "auth": {
     "signIn": "Se connecter",

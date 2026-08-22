@@ -196,8 +196,13 @@ export default function DashboardPage() {
         <Spotlight slides={slides} />
       )}
 
-      <div className="mt-6">
+      {/* Two questions, side by side, and the pairing is the teaching. "Is this company in OUR
+          book?" is free and instant; "does anybody else report them?" costs an inquiry and is
+          recorded. People conflate the two constantly, and putting them next to each other with
+          different weights says which is which without a paragraph. */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <LookupBar />
+        {roles.includes("TIX_INQUIRER") && <InquiryCta />}
       </div>
 
       {!loading && (
@@ -324,6 +329,42 @@ export default function DashboardPage() {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * The way through to the exchange.
+ *
+ * <p>A card rather than another line in the quick-actions list, because the inquiry is the thing
+ * this platform exists to make possible and it was reachable only from a row of identical grey
+ * buttons at the bottom of the page.
+ *
+ * <p>It says what it costs. An inquiry charges the hourly allowance and writes an audit row with
+ * the purpose typed against it, and somebody arriving from a dashboard tile should know that
+ * before they click rather than when the form asks them why.
+ */
+function InquiryCta() {
+  const t = useMessages().dashboard.inquiry;
+  return (
+    <Link
+      href="/app/tix"
+      className="group flex flex-col justify-between rounded-lg p-6 text-white transition hover:-translate-y-0.5 hover:shadow-lg"
+      style={{ background: "linear-gradient(140deg,#0b1f3a 0%,#0a4f5c 100%)" }}
+    >
+      <div>
+        <p className="mb-2 text-xs font-semibold tracking-[0.16em] text-blue uppercase">
+          {t.eyebrow}
+        </p>
+        <h2 className="mb-2 text-xl font-bold">{t.title}</h2>
+        <p className="text-sm text-white/70">{t.note}</p>
+      </div>
+      <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold">
+        {t.action}
+        <span aria-hidden="true" className="transition group-hover:translate-x-1">
+          →
+        </span>
+      </span>
+    </Link>
   );
 }
 
