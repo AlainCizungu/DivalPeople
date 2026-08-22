@@ -9,7 +9,9 @@ import {
   type ExecutiveBriefing,
   type ExecutiveMonth,
 } from "@/api/client";
-import { Card, EmptyState, ErrorNotice, Metric, PageHeader } from "@/components/ui";
+import Link from "next/link";
+import { Card, EmptyState, ErrorNotice, Metric } from "@/components/ui";
+import { Band, CountUp, HoverTile, Ring } from "@/components/visual/motion";
 
 /**
  * Executive intelligence.
@@ -65,14 +67,47 @@ export default function ExecutivePage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader
-        title={t.title}
-        subtitle={
-          briefing
-            ? interpolate(t.subtitle, t.subtitle, { date: briefing.asOf })
-            : t.subtitleLoading
-        }
-      />
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="mb-6 max-w-2xl text-sm text-white/70">
+            {briefing
+              ? interpolate(t.subtitle, t.subtitle, { date: briefing.asOf })
+              : t.subtitleLoading}
+          </p>
+
+          {/* Three counts and no money. This briefing is read by somebody who does not work the
+              queues, and the figure they would most like — what the market is owed — is the one
+              the exchange refuses. Counts are what can honestly be totalled. */}
+          {briefing && (
+            <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+              <div>
+                <p className="text-4xl font-bold">
+                  <CountUp value={briefing.book?.total ?? 0} />
+                </p>
+                <p className="text-xs text-white/60">{t.bookTotal}</p>
+              </div>
+              <div>
+                <p className="text-4xl font-bold">
+                  <CountUp value={briefing.book?.outstanding ?? 0} />
+                </p>
+                <p className="text-xs text-white/60">{t.bookOutstanding}</p>
+              </div>
+              <div>
+                <p className="text-4xl font-bold">
+                  <CountUp value={briefing.rights?.raised ?? 0} />
+                </p>
+                <p className="text-xs text-white/60">{t.rightsRaised}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </Band>
+
+      <div className="mt-6" />
 
       {failure && (
         <ErrorNotice>
@@ -84,15 +119,44 @@ export default function ExecutivePage() {
 
       {briefing?.book && (
         <Card title={t.bookTitle} description={t.bookNote}>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Metric label={t.bookTotal} value={String(briefing.book.total)} />
-            <Metric label={t.bookOutstanding} value={String(briefing.book.outstanding)} />
-            <Metric label={t.bookSettled} value={String(briefing.book.settled)} />
-            <Metric
+          {/* The same ring as the dashboard and the portfolio, over the same statuses in the same
+              colours. Three screens describing one book in three visual languages is how a reader
+              concludes they are looking at three books. */}
+          <Ring
+            total={briefing.book.total}
+            caption={t.bookTotal}
+            segments={[
+              {
+                label: t.bookOutstanding,
+                value: briefing.book.outstanding,
+                colour: "var(--color-error)",
+              },
+              {
+                label: t.bookContested,
+                value: briefing.book.contested,
+                colour: "var(--color-warning)",
+              },
+              {
+                label: t.bookSettled,
+                value: briefing.book.settled,
+                colour: "var(--color-success)",
+              },
+            ]}
+          />
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <HoverTile
+              href="/app/tix/records"
               label={t.bookContested}
-              value={String(briefing.book.contested)}
-              note={t.bookContestedNote}
+              value={briefing.book.contested}
+              reveal={t.bookContestedNote}
               tone={briefing.book.contested > 0 ? "warning" : "plain"}
+            />
+            <HoverTile
+              href="/app/tix/portfolio"
+              label={t.bookAwaitingErasure}
+              value={briefing.book.awaitingErasure}
+              reveal={t.bookAwaitingErasureNote}
+              tone={briefing.book.awaitingErasure > 0 ? "serious" : "plain"}
             />
           </div>
         </Card>
@@ -119,7 +183,35 @@ export default function ExecutivePage() {
               tone={briefing.rights.late > 0 ? "serious" : "plain"}
             />
           </div>
-          {answered === 0 && (
+          {/* The one ratio on this screen, and it is drawn only when there is something to
+              divide. Article 214 makes a missed deadline grounds for a complaint in itself, so
+              this is the figure a board asks about — and a "100%" printed over nothing answered
+              would be the most flattering lie the platform could tell. */}
+          {answered > 0 ? (
+            <div className="mt-5">
+              <div className="mb-1.5 flex items-baseline justify-between">
+                <span className="text-sm text-muted">{t.rightsOnTime}</span>
+                <span className="text-2xl font-bold tabular-nums text-navy">
+                  {Math.round((briefing.rights.inTime / answered) * 100)}%
+                </span>
+              </div>
+              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-line">
+                <span
+                  className="block h-full bg-success"
+                  style={{ width: `${(briefing.rights.inTime / answered) * 100}%` }}
+                />
+                <span
+                  className="block h-full bg-error"
+                  style={{ width: `${(briefing.rights.late / answered) * 100}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-muted">
+                {interpolate(t.rightsOnTimeNote, t.rightsOnTimeNote, {
+                  answered: String(answered),
+                })}
+              </p>
+            </div>
+          ) : (
             <p className="mt-3 text-xs text-muted">{t.rightsNothingAnswered}</p>
           )}
         </Card>
@@ -178,9 +270,25 @@ function ActivityChart({
 
   return (
     <div>
-      <p className="mb-3 text-xs text-muted">
-        {interpolate(t.activityScale, t.activityScale, { peak: String(peak) })}
-      </p>
+      <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
+        <span>{interpolate(t.activityScale, t.activityScale, { peak: String(peak) })}</span>
+        {/* A legend, because three bars in three colours with the colours explained only by the
+            column headers means reading the header row again on every line. */}
+        <span className="ml-auto flex flex-wrap items-center gap-4">
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden="true" className="h-2 w-4 rounded-full bg-navy" />
+            {t.activityDeclared}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden="true" className="h-2 w-4 rounded-full bg-green" />
+            {t.activityInquiries}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden="true" className="h-2 w-4 rounded-full bg-error" />
+            {t.activityRefused}
+          </span>
+        </span>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[36rem] text-sm">
           <thead>

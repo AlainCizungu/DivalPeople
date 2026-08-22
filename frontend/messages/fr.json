@@ -1510,7 +1510,12 @@
     "rightsLate": "Traitées hors délai",
     "rightsLateNote": "L'article 214 fait du dépassement du délai un motif de plainte en lui-même.",
     "rightsNothingAnswered": "Aucune décision n'a encore été rendue : il n'y a donc rien à situer dans les délais ou hors délais.",
-    "absences": "Deux chiffres sont délibérément absents. Il n'existe pas de courbe de l'encours dans le temps, car rien ne conserve d'instantané de ce qui était dû à une date passée ; en tracer une supposerait que les enregistrements ont existé sans interruption depuis leur date d'exigibilité — une hypothèse déguisée en historique. Et il n'existe pas de décompte des consultations ayant révélé une dette, car la piste d'audit enregistre qu'une question a été posée et à quelle fin, jamais ce qu'elle a renvoyé. Enregistrer la réponse conserverait une seconde copie de la divulgation sous la durée d'audit plutôt que sous la durée de conservation, et transformerait la piste en une ombre consultable de l'échange."
+    "absences": "Deux chiffres sont délibérément absents. Il n'existe pas de courbe de l'encours dans le temps, car rien ne conserve d'instantané de ce qui était dû à une date passée ; en tracer une supposerait que les enregistrements ont existé sans interruption depuis leur date d'exigibilité — une hypothèse déguisée en historique. Et il n'existe pas de décompte des consultations ayant révélé une dette, car la piste d'audit enregistre qu'une question a été posée et à quelle fin, jamais ce qu'elle a renvoyé. Enregistrer la réponse conserverait une seconde copie de la divulgation sous la durée d'audit plutôt que sous la durée de conservation, et transformerait la piste en une ombre consultable de l'échange.",
+    "eyebrow": "Intelligence dirigeante",
+    "bookAwaitingErasure": "Au-delà de la conservation",
+    "bookAwaitingErasureNote": "Conservés au-delà du délai légal, en attente d'effacement",
+    "rightsOnTime": "Traitées dans le délai légal",
+    "rightsOnTimeNote": "Sur {answered} demande(s) traitée(s). L'article 214 fait d'un délai dépassé un motif de plainte en soi."
   },
   "analyst": {
     "title": "Analyste IA Dival",

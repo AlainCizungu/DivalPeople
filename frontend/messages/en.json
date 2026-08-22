@@ -1510,7 +1510,12 @@
     "rightsLate": "Answered late",
     "rightsLateNote": "Article 214 makes a missed deadline grounds in itself for a complaint.",
     "rightsNothingAnswered": "Nothing has been decided yet, so there is nothing here to be early or late.",
-    "absences": "Two figures are deliberately absent. There is no chart of exposure over time, because nothing snapshots what was owed on a past date and drawing one would mean assuming records existed continuously from their default date — an assumption dressed as history. And there is no count of how many inquiries came back with a debt, because the audit trail records that a question was asked and what it was for, never what it returned. Recording the answer would keep a second copy of the disclosure under the audit period rather than the retention period, and turn the trail into a searchable shadow of the exchange."
+    "absences": "Two figures are deliberately absent. There is no chart of exposure over time, because nothing snapshots what was owed on a past date and drawing one would mean assuming records existed continuously from their default date — an assumption dressed as history. And there is no count of how many inquiries came back with a debt, because the audit trail records that a question was asked and what it was for, never what it returned. Recording the answer would keep a second copy of the disclosure under the audit period rather than the retention period, and turn the trail into a searchable shadow of the exchange.",
+    "eyebrow": "Executive intelligence",
+    "bookAwaitingErasure": "Past retention",
+    "bookAwaitingErasureNote": "Held beyond the period the law allows, awaiting erasure",
+    "rightsOnTime": "Answered within the statutory deadline",
+    "rightsOnTimeNote": "Of {answered} request(s) answered. Article 214 makes a missed deadline grounds for a complaint in itself."
   },
   "analyst": {
     "title": "Dival AI analyst",
