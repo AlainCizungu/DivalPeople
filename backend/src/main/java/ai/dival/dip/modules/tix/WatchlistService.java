@@ -11,6 +11,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -67,6 +68,15 @@ public class WatchlistService {
      */
     private static final int SWEEP_SLICE = 100;
 
+    /**
+     * How many open alerts one screen carries.
+     *
+     * <p>An operator with a large watchlist and a bad month can have thousands. Pulling them all to
+     * render a queue somebody works fifty at a time is the mistake the dashboard already made, and
+     * the count beside the list comes from the database rather than from this array's length.
+     */
+    private static final int MAX_OPEN_ALERTS = 200;
+
     private final WatchlistRepository watches;
     private final WatchlistGroupRepository groups;
     private final MonitoringAlertRepository alerts;
@@ -108,14 +118,171 @@ public class WatchlistService {
                 .map(entry -> new Watch(entry.getId(), entry.getSubject().getId(),
                         entry.getSubject().getFullName(), entry.getPurpose(),
                         entry.getExpiresAt(), entry.getLastOutcome(),
-                        entry.getLastInstitutions(), entry.getLastCheckedAt()))
+                        entry.getLastInstitutions(), entry.getLastScore(),
+                        entry.getLastCheckedAt(),
+                        entry.getWatchlist() == null ? null : entry.getWatchlist().getId(),
+                        entry.getWatchlist() == null ? null : entry.getWatchlist().getName()))
                 .toList();
     }
 
     /** A watch as the operator sees it: an outcome and a count, exactly as an inquiry discloses. */
+    /**
+     * @param lastScore     the indicator at the last sweep, or null — never known, or the exchange
+     *                      would not confirm the identity that night
+     * @param watchlistId   the group, or null for an unfiled watch. Null is a real state and the
+     *                      screen names it rather than hiding those rows
+     */
     public record Watch(UUID id, UUID subjectId, String name, String purpose, Instant expiresAt,
                         InquiryResult.Outcome lastOutcome, Integer lastInstitutions,
-                        Instant lastCheckedAt) {
+                        Integer lastScore, Instant lastCheckedAt,
+                        UUID watchlistId, String watchlistName) {
+    }
+
+    /**
+     * The groups, each with what is in it.
+     *
+     * <p>Counted in the database rather than by loading the entries. A bank monitoring twelve
+     * thousand customers would otherwise pull twelve thousand rows to render six numbers, which is
+     * the mistake the dashboard already made once.
+     */
+    @Transactional(readOnly = true)
+    public List<Group> groups() {
+        UUID tenantId = TenantContext.require();
+        List<Group> listed = new ArrayList<>();
+        for (Watchlist group : groups.findByTenantIdOrderByName(tenantId)) {
+            listed.add(new Group(group.getId(), group.getName(), group.getPurpose(),
+                    (int) watches.countByTenantIdAndWatchlistId(tenantId, group.getId())));
+        }
+        // Unfiled last, and present even when empty is false — a zero here would be a group nobody
+        // made, and a row that appears from nowhere the first time somebody forgets to file a
+        // watch is more confusing than one that is simply absent.
+        int unfiled = (int) watches.countByTenantIdAndWatchlistIsNull(tenantId);
+        if (unfiled > 0) {
+            listed.add(new Group(null, null, null, unfiled));
+        }
+        return List.copyOf(listed);
+    }
+
+    /**
+     * Creates a group.
+     *
+     * @param purpose why the group exists, required for the same reason a watch needs one:
+     *                monitoring a list of companies indefinitely with no stated reason is the thing
+     *                a regulator objects to
+     */
+    @Transactional
+    public Group createGroup(String name, String purpose, UUID actorId) {
+        if (name == null || name.isBlank()) {
+            throw new PolicyRefusedException("A watchlist needs a name.");
+        }
+        if (purpose == null || purpose.isBlank()) {
+            throw new PolicyRefusedException(
+                    "Say what this watchlist is for. A standing list of companies with no stated "
+                            + "reason is the thing a regulator asks about first.");
+        }
+        Watchlist group = groups.save(new Watchlist(name.trim(), purpose.trim(), actorId));
+        audit.record("TIX_WATCHLIST_CREATED", "Watchlist", group.getId().toString(),
+                AuditService.OUTCOME_SUCCESS, actorId, name.trim() + ": " + purpose.trim());
+        return new Group(group.getId(), group.getName(), group.getPurpose(), 0);
+    }
+
+    /**
+     * Moves a watch into a group, or out of every group.
+     *
+     * <p>A null group unfiles it rather than stopping the watch. Filing is organisation; stopping
+     * is a decision, and this method is not where that one gets made by accident.
+     */
+    @Transactional
+    public void file(UUID watchId, UUID groupId, UUID actorId) {
+        UUID tenantId = TenantContext.require();
+        WatchlistEntry entry = watches.findByIdAndTenantId(watchId, tenantId)
+                .orElseThrow(() -> new WatchNotFoundException(watchId));
+
+        Watchlist group = groupId == null ? null
+                : groups.findByIdAndTenantId(groupId, tenantId)
+                        .orElseThrow(() -> new WatchNotFoundException(groupId));
+
+        entry.fileUnder(group);
+        audit.record("TIX_WATCH_FILED", "Subject", entry.getSubject().getId().toString(),
+                AuditService.OUTCOME_SUCCESS, actorId,
+                group == null ? "unfiled" : "filed under " + group.getName());
+    }
+
+    /** @param id null for the unfiled pseudo-group, which is a real state and not a group */
+    public record Group(UUID id, String name, String purpose, int watched) {
+    }
+
+    /**
+     * The alert queue: what changed and has not been looked at.
+     *
+     * <p><strong>Sorted here rather than in the query.</strong> The severity column stores the enum
+     * name, so ordering by it in SQL sorts alphabetically — INFORMATIONAL, MATERIAL, NOTABLE — and
+     * puts the least urgent alerts at the top of a queue whose entire job is the opposite. It would
+     * have looked like a working sort. In Java the order is the enum's own, which is declared
+     * worst-first and can be read.
+     */
+    @Transactional(readOnly = true)
+    public List<Alert> openAlerts() {
+        return alerts.findOpen(TenantContext.require(), Limit.of(MAX_OPEN_ALERTS)).stream()
+                .sorted(Comparator.comparing(MonitoringAlert::getSeverity)
+                        .thenComparing(MonitoringAlert::getRaisedAt, Comparator.reverseOrder()))
+                .map(WatchlistService::describe)
+                .toList();
+    }
+
+    /**
+     * Somebody looked at an alert and said what they concluded.
+     *
+     * <p>The note is required, exactly as it is on a dispute and on a resolution decision. An alert
+     * closed with no reason tells a later reader nothing except that the queue got shorter, and the
+     * queue getting shorter is not the outcome anybody wanted.
+     */
+    @Transactional
+    public Alert acknowledge(UUID alertId, String note, UUID actorId) {
+        if (note == null || note.isBlank()) {
+            throw new PolicyRefusedException(
+                    "Say what you found. An alert closed with no reason records only that somebody "
+                            + "made the queue shorter.");
+        }
+        MonitoringAlert alert = alerts.findByIdAndTenantId(alertId, TenantContext.require())
+                .orElseThrow(() -> new WatchNotFoundException(alertId));
+
+        if (!alert.isOpen()) {
+            throw new ConflictException("This alert has already been acknowledged.");
+        }
+
+        alert.acknowledge(actorId, note.trim(), clock.instant());
+        audit.record("TIX_ALERT_ACKNOWLEDGED", "Subject",
+                alert.getSubject().getId().toString(), AuditService.OUTCOME_SUCCESS, actorId,
+                note.trim());
+        return describe(alert);
+    }
+
+    private static Alert describe(MonitoringAlert alert) {
+        return new Alert(alert.getId(), alert.getSubject().getId(),
+                alert.getSubject().getFullName(), alert.getRaisedAt(), alert.getSeverity(),
+                alert.getPreviousOutcome(), alert.getCurrentOutcome(),
+                alert.getPreviousInstitutions(), alert.getCurrentInstitutions(),
+                alert.getPreviousScore(), alert.getCurrentScore(),
+                alert.getAcknowledgedAt(), alert.getAcknowledgementNote());
+    }
+
+    /**
+     * One change, with what it was before.
+     *
+     * <p>Carries no amount and names no institution. Which participant began reporting and how much
+     * they are owed are the exchange's standing refusals, and neither becomes disclosable because
+     * it arrived as a change rather than as an answer.
+     *
+     * @param previousOutcome null when this was the subject's first observed state
+     */
+    public record Alert(UUID id, UUID subjectId, String name, Instant raisedAt,
+                        MonitoringAlert.Severity severity,
+                        InquiryResult.Outcome previousOutcome,
+                        InquiryResult.Outcome currentOutcome,
+                        Integer previousInstitutions, int currentInstitutions,
+                        Integer previousScore, Integer currentScore,
+                        Instant acknowledgedAt, String acknowledgementNote) {
     }
 
     /**

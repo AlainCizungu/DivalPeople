@@ -34,7 +34,8 @@
     "organization": "Organisation",
     "settings": "Paramètres",
     "soon": "Bientôt",
-    "soonTitle": "Conçu, pas encore construit. Rien à ouvrir."
+    "soonTitle": "Conçu, pas encore construit. Rien à ouvrir.",
+    "monitoring": "Surveillance"
   },
   "common": {
     "search": "Rechercher",
@@ -1624,5 +1625,28 @@
     "nothingUnpaid": "Aucun impayé",
     "settledBefore": "Déjà réglé",
     "settledBeforeNote": "Échu chez vous puis payé"
+  },
+  "monitoring": {
+    "eyebrow": "Surveillance continue",
+    "title": "Ce qui a changé",
+    "subtitle": "Une recherche vous dit ce que DIP sait maintenant. Voici ce qui a changé ensuite, trouvé sans que personne ne recherche à nouveau.",
+    "openCount": "{open} ouverte(s), {material} matérielle(s)",
+    "empty": "Rien n'a changé concernant les entreprises que vous surveillez.",
+    "emptyHint": "Les alertes apparaissent ici lorsqu'un balayage nocturne détecte une différence.",
+    "openWatchlists": "Ouvrir vos listes de surveillance",
+    "forbidden": "Votre compte ne peut pas voir les alertes de surveillance. Le rôle de consultation est requis.",
+    "indicator": "Indicateur de risque DIP",
+    "institutions": "Institutions déclarantes",
+    "outcome": "Réponse de l'échange",
+    "withheld": "Retenu",
+    "acknowledge": "Acquitter",
+    "noteLabel": "Qu'avez-vous constaté ?",
+    "notePlaceholder": "Client appelé ; échéancier convenu",
+    "boundary": "Aucune alerte ne nomme une institution ni un montant. DIP indique combien de participants déclarent une entreprise et jamais lesquels ; un changement ne rend pas cela divulgable — la même règle que pour toute réponse de l'échange.",
+    "severities": {
+      "MATERIAL": "Changement de risque matériel",
+      "NOTABLE": "Changement notable",
+      "INFORMATIONAL": "Pour information"
+    }
   }
 }

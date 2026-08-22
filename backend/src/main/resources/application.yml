@@ -159,6 +159,12 @@ dip:
     # Nightly, away from the HR sweeps so a slow purge cannot delay the morning alerts.
     retention-purge-cron: ${DIP_TIX_RETENTION_PURGE_CRON:0 15 2 * * *}
 
+    # Continuous monitoring, thirty minutes after the purge. Deliberately after: a subject whose
+    # records are past their retention period is erased at 02:15, and sweeping first would raise
+    # alerts about companies the registry is about to forget — telling an operator that a customer
+    # improved overnight when what happened is that the evidence expired.
+    monitoring-sweep-cron: ${DIP_TIX_MONITORING_SWEEP_CRON:0 45 2 * * *}
+
   hr:
     # How much warning to give before a contract ends.
     contract-expiry-notice-days: ${DIP_CONTRACT_EXPIRY_NOTICE_DAYS:30}

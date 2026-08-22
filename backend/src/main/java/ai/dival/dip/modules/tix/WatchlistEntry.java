@@ -193,6 +193,19 @@ public class WatchlistEntry extends TenantOwnedEntity {
         this.expiresAt = until;
     }
 
+    /** Moves this watch into a group, or out of every group when given null. */
+    void fileUnder(Watchlist group) {
+        this.watchlist = group;
+    }
+
+    public Watchlist getWatchlist() {
+        return watchlist;
+    }
+
+    public Integer getLastScore() {
+        return lastScore;
+    }
+
     public boolean hasExpired(Instant now) {
         return expiresAt.isBefore(now);
     }

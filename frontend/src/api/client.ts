@@ -1144,7 +1144,53 @@ export type Watch = {
   /** The last answer: exactly what an inquiry discloses, and nothing more. */
   lastOutcome: InquiryOutcome | null;
   lastInstitutions: number | null;
+  /** The indicator at the last sweep. Null when never checked, or when the exchange withheld it. */
+  lastScore: number | null;
   lastCheckedAt: string | null;
+  /** Null for an unfiled watch, which is a real state and not an error. */
+  watchlistId: string | null;
+  watchlistName: string | null;
+};
+
+/**
+ * A named group of companies one institution watches.
+ *
+ * `id` and `name` are null for the unfiled pseudo-group — watches nobody has put in a list. That is
+ * a real state rather than a group, and the screen names it rather than hiding those rows.
+ */
+export type WatchlistGroup = {
+  id: string | null;
+  name: string | null;
+  purpose: string | null;
+  watched: number;
+};
+
+export type AlertSeverity = "MATERIAL" | "NOTABLE" | "INFORMATIONAL";
+
+/**
+ * Something changed about a watched company, with what it was before.
+ *
+ * Carries no amount and names no institution. Which participant began reporting and how much they
+ * are owed are the exchange's standing refusals, and neither becomes disclosable because it arrived
+ * as a change rather than as an answer.
+ *
+ * `previousScore` and `currentScore` are null when the exchange withheld the indicator — it does
+ * that for any answer it is not confident about — so a null is "not known then", never "was zero".
+ */
+export type MonitoringAlert = {
+  id: string;
+  subjectId: string;
+  name: string;
+  raisedAt: string;
+  severity: AlertSeverity;
+  previousOutcome: InquiryOutcome | null;
+  currentOutcome: InquiryOutcome;
+  previousInstitutions: number | null;
+  currentInstitutions: number;
+  previousScore: number | null;
+  currentScore: number | null;
+  acknowledgedAt: string | null;
+  acknowledgementNote: string | null;
 };
 
 export const watchlistApi = {
@@ -1171,6 +1217,36 @@ export const watchlistApi = {
    * charged inquiry, so a big watchlist takes several nights. The screen says so rather than
    * implying a full pass.
    */
+  groups(): Promise<WatchlistGroup[]> {
+    return request<WatchlistGroup[]>("/api/v1/tix/watchlists");
+  },
+
+  createGroup(name: string, purpose: string): Promise<WatchlistGroup> {
+    return request<WatchlistGroup>("/api/v1/tix/watchlists", {
+      method: "POST",
+      body: JSON.stringify({ name, purpose }),
+    });
+  },
+
+  /** `watchlistId: null` unfiles the watch. It does not stop watching — that is `unwatch`. */
+  file(watchId: string, watchlistId: string | null): Promise<void> {
+    return request<void>(`/api/v1/tix/watchlist/${watchId}/file`, {
+      method: "POST",
+      body: JSON.stringify({ watchlistId }),
+    });
+  },
+
+  alerts(): Promise<MonitoringAlert[]> {
+    return request<MonitoringAlert[]>("/api/v1/tix/monitoring/alerts");
+  },
+
+  acknowledge(alertId: string, note: string): Promise<MonitoringAlert> {
+    return request<MonitoringAlert>(
+      `/api/v1/tix/monitoring/alerts/${alertId}/acknowledge`,
+      { method: "POST", body: JSON.stringify({ note }) },
+    );
+  },
+
   sweep(): Promise<{ watched: number; checked: number; changed: number }> {
     return request<{ watched: number; checked: number; changed: number }>(
       "/api/v1/tix/watchlist/sweep",

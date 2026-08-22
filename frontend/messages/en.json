@@ -34,7 +34,8 @@
     "organization": "Organization",
     "settings": "Settings",
     "soon": "Soon",
-    "soonTitle": "Designed, not built yet. Nothing to open."
+    "soonTitle": "Designed, not built yet. Nothing to open.",
+    "monitoring": "Monitoring"
   },
   "common": {
     "search": "Search",
@@ -1624,5 +1625,28 @@
     "nothingUnpaid": "Nothing unpaid",
     "settledBefore": "Settled before",
     "settledBeforeNote": "Fell due with you and was paid"
+  },
+  "monitoring": {
+    "eyebrow": "Continuous monitoring",
+    "title": "What changed",
+    "subtitle": "A search tells you what DIP knows now. This is what changed afterwards, found without anybody searching again.",
+    "openCount": "{open} open, {material} material",
+    "empty": "Nothing has changed about the companies you watch.",
+    "emptyHint": "Alerts appear here after a nightly sweep finds a difference.",
+    "openWatchlists": "Open your watchlists",
+    "forbidden": "Your account cannot see monitoring alerts. This needs the inquirer role.",
+    "indicator": "DIP Risk Indicator",
+    "institutions": "Institutions reporting",
+    "outcome": "Exchange answer",
+    "withheld": "Withheld",
+    "acknowledge": "Acknowledge",
+    "noteLabel": "What did you find?",
+    "notePlaceholder": "Called the customer; payment plan agreed",
+    "boundary": "No alert names an institution or an amount. DIP tells you how many participants report a company and never which, and a change does not make that disclosable — the same rule as every other answer the exchange gives.",
+    "severities": {
+      "MATERIAL": "Material risk change",
+      "NOTABLE": "Notable change",
+      "INFORMATIONAL": "For information"
+    }
   }
 }

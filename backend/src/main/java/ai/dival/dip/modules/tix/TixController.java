@@ -161,6 +161,55 @@ public class TixController {
      * <p>A POST because it writes, and because it spends: every watch costs one inquiry against
      * this operator's hourly allowance, exactly as if somebody had asked by hand.
      */
+    @GetMapping("/watchlists")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public List<WatchlistService.Group> watchlistGroups() {
+        return watchlist.groups();
+    }
+
+    @PostMapping("/watchlists")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public WatchlistService.Group createWatchlist(@Valid @RequestBody GroupRequest request) {
+        return watchlist.createGroup(request.name(), request.purpose(), actorId());
+    }
+
+    /**
+     * Moves a watch into a group, or out of every group.
+     *
+     * <p>A null group unfiles rather than unwatches. Filing is organisation and stopping is a
+     * decision, and this endpoint is not where the second one gets made by mistake — that is what
+     * DELETE /watchlist/{id} is for.
+     */
+    @PostMapping("/watchlist/{id}/file")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public void fileWatch(@PathVariable UUID id, @RequestBody FileRequest request) {
+        watchlist.file(id, request.watchlistId(), actorId());
+    }
+
+    /** What changed about the companies this operator watches, and has not been looked at. */
+    @GetMapping("/monitoring/alerts")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public List<WatchlistService.Alert> openAlerts() {
+        return watchlist.openAlerts();
+    }
+
+    @PostMapping("/monitoring/alerts/{id}/acknowledge")
+    @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
+    public WatchlistService.Alert acknowledgeAlert(@PathVariable UUID id,
+                                                   @Valid @RequestBody AcknowledgeRequest request) {
+        return watchlist.acknowledge(id, request.note(), actorId());
+    }
+
+    public record GroupRequest(@NotBlank String name, @NotBlank String purpose) {
+    }
+
+    /** @param watchlistId null unfiles the watch, which is a legitimate destination */
+    public record FileRequest(UUID watchlistId) {
+    }
+
+    public record AcknowledgeRequest(@NotBlank String note) {
+    }
+
     @PostMapping("/watchlist/sweep")
     @PreAuthorize("hasRole('" + Roles.TIX_INQUIRER + "')")
     public WatchlistService.Sweep sweepWatchlist() {

@@ -124,6 +124,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         // A watch is an inquiry asked on a schedule, so the entry sits beside the risk screens
         // rather than under Subjects: what it produces is an answer about exposure, not a record.
         { href: "/app/watchlists", label: t.watchlists },
+        // Beside the watchlist and not inside it. One screen answers "who do I care about" and the
+        // other "what happened to them", and they are worked by different people on different days.
+        { href: "/app/monitoring", label: t.monitoring },
       ],
     },
     {
