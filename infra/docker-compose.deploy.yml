@@ -86,7 +86,16 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY:?set GITHUB_REPOSITORY}/backend:${IMAGE_TAG:?set IMAGE_TAG}
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      # prod always, and demo alongside it on the shared testing instance. Never demo instead
+      # of prod: the demo profile carries no datasource, no issuer and no connection settings —
+      # it says only what is in the database at start-up. See application-demo.yml.
+      #
+      # The one variable in this file with a default, against the rule the rest of it follows.
+      # That rule exists so a missing value stops the deployment rather than quietly falling back
+      # to something from development, and here the fallback IS the restrictive answer: an
+      # unset variable cannot cause demonstration data to appear on a host that holds real
+      # records. Demo has to be asked for, in writing, in deploy.env.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
 
       DIP_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       # The owner. Runs migrations, and nothing else.

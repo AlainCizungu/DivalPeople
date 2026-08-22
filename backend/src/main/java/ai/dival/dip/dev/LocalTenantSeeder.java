@@ -18,11 +18,17 @@ import org.springframework.stereotype.Component;
  * authenticate happily and then fail on the first write, which is a confusing way to start.
  *
  * <p>Goes through {@link TenantService} rather than writing rows directly, so seeding cannot
- * drift away from the validation and audit that the API applies. Restricted to the {@code local}
- * profile; this never runs in a deployed environment.
+ * drift away from the validation and audit that the API applies.
+ *
+ * <p><strong>Local and demo profiles only.</strong> {@code demo} is activated as {@code prod,demo}
+ * on the shared testing instance, where an empty registry makes every screen look broken rather
+ * than new. It seeds data and never seeds an identity: the tenant ids below are fixed constants,
+ * so a Keycloak account created by hand carrying one of them lands in a populated book. Nothing
+ * here creates a login, and the realm fixture in {@code infra/keycloak/} — which has published
+ * passwords — still must never be imported anywhere reachable from the internet.
  */
 @Component
-@Profile("local")
+@Profile({"local", "demo"})
 @ConditionalOnProperty(name = "dip.local.seed-tenants", havingValue = "true")
 @Order(10) // before LocalTixSeeder, which needs these tenants to exist
 public class LocalTenantSeeder implements ApplicationRunner {
@@ -39,7 +45,7 @@ public class LocalTenantSeeder implements ApplicationRunner {
      * account carrying a tenant attribute. Adding a tenant here costs nothing and adding a user
      * would mean editing the realm.
      *
-     * <p>Names are marked "(local)" for the same reason the other two are. A screenshot of demo
+     * <p>Names are marked "(demo)" for the same reason the other two are. A screenshot of demo
      * data that names a real bank without qualification is a screenshot that will circulate.
      */
     private static final UUID BANK = UUID.fromString("33333333-3333-3333-3333-333333333333");
@@ -59,25 +65,25 @@ public class LocalTenantSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         // provision() is idempotent, so a restart against an existing database is a no-op.
-        tenants.provision(OPERATOR_A, "Operator A (local)", "operator-a",
+        tenants.provision(OPERATOR_A, "Operator A (demo)", "operator-a",
                 Tenant.Edition.TELECOM, "fr", null);
-        tenants.provision(OPERATOR_B, "Operator B (local)", "operator-b",
+        tenants.provision(OPERATOR_B, "Operator B (demo)", "operator-b",
                 Tenant.Edition.TELECOM, "fr", null);
 
-        tenants.provision(BANK, "Banque de Kinshasa (local)", "banque-kinshasa",
+        tenants.provision(BANK, "Banque de Kinshasa (demo)", "banque-kinshasa",
                 Tenant.Edition.BANKING, "fr", null);
-        tenants.provision(SECOND_BANK, "Crédit du Fleuve (local)", "credit-fleuve",
+        tenants.provision(SECOND_BANK, "Crédit du Fleuve (demo)", "credit-fleuve",
                 Tenant.Edition.BANKING, "fr", null);
-        tenants.provision(UTILITY, "Énergie du Congo (local)", "energie-congo",
+        tenants.provision(UTILITY, "Énergie du Congo (demo)", "energie-congo",
                 Tenant.Edition.ENTERPRISE, "fr", null);
-        tenants.provision(MINISTRY, "Direction Générale des Impôts (local)", "dgi",
+        tenants.provision(MINISTRY, "Direction Générale des Impôts (demo)", "dgi",
                 Tenant.Edition.GOVERNMENT, "fr", null);
-        tenants.provision(MICROFINANCE, "Microfinance Solidarité (local)", "microfinance-solidarite",
+        tenants.provision(MICROFINANCE, "Microfinance Solidarité (demo)", "microfinance-solidarite",
                 Tenant.Edition.NGO, "fr", null);
         // Left active here and suspended by the TIX seeder, so the participants screen has both
         // states on it. A status column where every row says the same thing teaches nobody what
         // the other state looks like.
-        tenants.provision(SUSPENDED, "Télécom Régional (local)", "telecom-regional",
+        tenants.provision(SUSPENDED, "Télécom Régional (demo)", "telecom-regional",
                 Tenant.Edition.TELECOM, "fr", null);
     }
 

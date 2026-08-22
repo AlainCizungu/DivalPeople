@@ -39,10 +39,15 @@ import org.springframework.stereotype.Component;
  * data that proves nothing, and it is how a NOT NULL column added in a migration turns into an
  * application that will not start.
  *
- * <p>Local profile only. Never runs in a deployed environment.
+ * <p><strong>Local and demo profiles only.</strong> {@code demo} is activated as {@code prod,demo}
+ * on the shared testing instance, where an empty registry makes every screen look broken rather
+ * than new. It seeds data and never seeds an identity: the tenant ids below are fixed constants,
+ * so a Keycloak account created by hand carrying one of them lands in a populated book. Nothing
+ * here creates a login, and the realm fixture in {@code infra/keycloak/} — which has published
+ * passwords — still must never be imported anywhere reachable from the internet.
  */
 @Component
-@Profile("local")
+@Profile({"local", "demo"})
 @ConditionalOnProperty(name = "dip.local.seed-tix", havingValue = "true")
 @Order(21) // after LocalTixSeeder, which owns the identifier infra/dev.sh checks for
 public class LocalTixPortfolioSeeder implements ApplicationRunner {

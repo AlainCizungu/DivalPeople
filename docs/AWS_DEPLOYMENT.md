@@ -249,24 +249,45 @@ minutes — but the archive that has been through `infra/backup/restore-drill.sh
   and manual deploys. If they load real customer records into it, they should know the boundary
   they are loading them across.
 
-### There will be no data to look at
+### Seeding the exchange
 
-The demo seeders in `ai.dival.dip.dev` are `@Profile("local")` and say in their own javadoc that
-they never run in a deployed environment. That was the right call — they pair with the Keycloak
-fixture — but it means a freshly deployed instance is empty, and an empty registry makes every
-screen look broken rather than new.
+A freshly deployed instance is empty, and an empty registry does not look new — it looks broken.
+Every count is zero, and the exchange, whose whole point is that more than one institution has
+contributed, demonstrates nothing.
 
-Two ways to fix it, and they are not equally good:
+In `infra/deploy.env`:
 
-1. **A `demo` Spring profile**, activated as `prod,demo`, that seeds the exchange data — tenants,
-   subjects, records, inquiries — and seeds no identities at all. The tenant UUIDs are fixed
-   constants, so a hand-made Keycloak account carrying `tenant_id=11111111-…` lands in a populated
-   book. This keeps the rule that matters: **seeding data is not seeding logins.**
-2. Import a spreadsheet through the data-import screen as the first thing anybody does. Honest,
-   and slower to arrange than it sounds, because the exchange only becomes interesting when more
-   than one operator has contributed.
+```ini
+SPRING_PROFILES_ACTIVE=prod,demo
+```
 
-The first is a small backend change and is not built yet.
+`prod,demo`, never `demo` alone. The demo profile carries no datasource, no issuer and no
+connection settings; it says only what is in the database at start-up.
+
+On the next start you get two operators, six other participants, and two books of businesses aged
+across every band in two currencies — including one business owing both operators, which is the
+case the exchange exists for. Every institution name carries `(demo)`, so a screenshot that
+circulates cannot be mistaken for a real bank's position.
+
+**It seeds data and never an identity.** No sign-in is created. The tenant ids are fixed
+constants, so an account you create by hand in Keycloak carrying
+`tenant_id=11111111-1111-1111-1111-111111111111` opens the first seeded book, and
+`22222222-2222-2222-2222-222222222222` the second. The realm fixture in `infra/keycloak/` still
+must never be imported — its passwords are in the repository.
+
+**Nothing personnel-shaped is seeded.** No employees, payroll, leave, attendance, performance,
+learning or self-service. Those seeders invent salaries, national identifiers and logins wired to
+fixture accounts, and none of that belongs on a public host. `DemoProfileScopeTest` fails the build
+if anybody adds a seeder to the profile, because that edit is two words long and looks like
+configuration when it is a disclosure decision.
+
+The backend logs a warning on every start while this is on. Read it once — it is the only thing
+that will tell a colleague, six months from now, that the eight institutions in this database were
+invented.
+
+**Turning it off does not remove the data.** Seeding is idempotent and skips what already exists;
+dropping `demo` from the variable stops it adding more and leaves what is there. Clearing it is a
+deliberate act, so plan on rebuilding the database before this instance holds anything real.
 
 ---
 

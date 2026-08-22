@@ -1,0 +1,46 @@
+# The shared testing instance's data, and nothing else.
+#
+# Activated alongside prod, never instead of it:
+#
+#   SPRING_PROFILES_ACTIVE=prod,demo
+#
+# It carries no datasource, no issuer, no connection settings of any kind. Everything about HOW
+# the application runs comes from prod; this file only says WHAT is in the database when it
+# starts. A demo profile that also configured a datasource would be a second, half-maintained
+# deployment configuration, and the day the two disagreed would be a confusing one.
+#
+# WHY THIS EXISTS. The seeders were @Profile("local") and said in their own javadoc that they
+# never run in a deployed environment. That was right for the reason it gave — they pair with a
+# Keycloak fixture whose passwords are in the repository — but it left a deployed instance
+# completely empty, and an empty registry does not look new, it looks broken. Every count is
+# zero, every list says "nothing here", and the exchange, whose entire point is that more than
+# one institution has contributed, demonstrates nothing at all.
+#
+# THE LINE THIS KEEPS. Seeding data is not seeding logins.
+#
+# Only three seeders answer to this profile: the tenants, and the two that fill the exchange.
+# The tenant ids are fixed constants, so an account created by hand in Keycloak carrying
+# tenant_id=11111111-1111-1111-1111-111111111111 opens a populated book without anything here
+# having created a way in. DemoProfileScopeTest fails the build if a fourth seeder is ever added
+# to the profile without somebody deciding to.
+#
+# What is deliberately NOT here: employees, payroll, leave, attendance, performance, learning,
+# recruitment, lifecycle and self-service. Those seed salaries, national identifiers and
+# sign-ins linked to fixture accounts. None of that belongs on a host reachable from the
+# internet, and none of it is what partners came to look at.
+#
+# The prefix below still reads dip.local. It is historical and now inaccurate. It is left alone
+# on purpose: @ConditionalOnProperty matches on a string, so a rename that misses one seeder
+# does not fail the build — it silently stops seeding, which is the one failure this file cannot
+# afford to introduce quietly.
+
+dip:
+  local:
+    # The two operators plus the participants that make the network look like a network.
+    seed-tenants: true
+
+    # One subject owing operator B, so an inquiry from operator A crosses the tenant boundary and
+    # returns something; then two books of businesses spread across every aging band, in two
+    # currencies, with one business owing both operators. That last case is the one the exchange
+    # exists for and the one worth showing.
+    seed-tix: true
