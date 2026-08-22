@@ -4,8 +4,22 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
-import { ApiError, watchlistApi, type Watch } from "@/api/client";
-import { Button, Card, EmptyState, ErrorNotice, PageHeader, Pill, type Tone } from "@/components/ui";
+import {
+  ApiError,
+  watchlistApi,
+  type Watch,
+  type WatchlistGroup,
+} from "@/api/client";
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorNotice,
+  PageHeader,
+  Pill,
+  inputClass,
+  type Tone,
+} from "@/components/ui";
 
 /**
  * Companies this institution is asking the exchange about on a schedule.
@@ -24,6 +38,10 @@ export default function WatchlistsPage() {
   const t = messages.watchlist;
 
   const [watches, setWatches] = useState<Watch[] | null>(null);
+  const [groups, setGroups] = useState<WatchlistGroup[] | null>(null);
+  const [newName, setNewName] = useState("");
+  const [newPurpose, setNewPurpose] = useState("");
+  const [creating, setCreating] = useState(false);
   const [forbidden, setForbidden] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [sweeping, setSweeping] = useState(false);
@@ -36,7 +54,14 @@ export default function WatchlistsPage() {
 
   const load = useCallback(async () => {
     try {
-      setWatches(await watchlistApi.list());
+      // Both together. Rendering the groups before the watches arrive would draw empty sections
+      // and then fill them, which reads as a list that lost its contents.
+      const [listed, grouped] = await Promise.all([
+        watchlistApi.list(),
+        watchlistApi.groups(),
+      ]);
+      setWatches(listed);
+      setGroups(grouped);
       setFailure(null);
     } catch (caught) {
       if (caught instanceof ApiError && caught.status === 403) {
@@ -59,6 +84,7 @@ export default function WatchlistsPage() {
       const swept = await watchlistApi.sweep();
       setOutcome(
         interpolate(t.sweepResult, t.sweepResult, {
+          checked: String(swept.checked),
           watched: String(swept.watched),
           changed: String(swept.changed),
         }),
@@ -68,6 +94,29 @@ export default function WatchlistsPage() {
       setFailure(describe(caught));
     } finally {
       setSweeping(false);
+    }
+  }
+
+  async function onCreate() {
+    setCreating(true);
+    try {
+      await watchlistApi.createGroup(newName.trim(), newPurpose.trim());
+      setNewName("");
+      setNewPurpose("");
+      await load();
+    } catch (caught) {
+      setFailure(describe(caught));
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function onFile(watchId: string, watchlistId: string | null) {
+    try {
+      await watchlistApi.file(watchId, watchlistId);
+      await load();
+    } catch (caught) {
+      setFailure(describe(caught));
     }
   }
 
@@ -113,33 +162,122 @@ export default function WatchlistsPage() {
       )}
 
       {!forbidden && watches !== null && watches.length > 0 && (
-        <Card title={t.title} description={t.expiryNote}>
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <Button type="button" onClick={() => void onSweep()} disabled={sweeping}>
-              {sweeping ? t.sweeping : t.sweep}
-            </Button>
-            {outcome && <span className="text-sm text-muted">{outcome}</span>}
-          </div>
+        <>
+          <Card title={t.title} description={t.expiryNote}>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="button" onClick={() => void onSweep()} disabled={sweeping}>
+                {sweeping ? t.sweeping : t.sweep}
+              </Button>
+              {outcome && <span className="text-sm text-muted">{outcome}</span>}
+            </div>
+          </Card>
 
-          <div className="flex flex-col divide-y divide-line">
-            {watches.map((watch) => (
-              <Row key={watch.id} watch={watch} t={t} onRemove={onRemove} />
+          {/* Grouped, and the unfiled section is last and named rather than hidden. A watch nobody
+              put in a list is still being monitored, and a screen that only showed groups would
+              quietly stop showing it. */}
+          <div className="mt-6 flex flex-col gap-6">
+            {sections(watches, groups).map((section) => (
+              <Card
+                key={section.id ?? "unfiled"}
+                title={section.name ?? t.unfiled}
+                description={section.purpose ?? t.unfiledHint}
+              >
+                <div className="flex flex-col divide-y divide-line">
+                  {section.watches.map((watch) => (
+                    <Row
+                      key={watch.id}
+                      watch={watch}
+                      t={t}
+                      groups={groups ?? []}
+                      onRemove={onRemove}
+                      onFile={onFile}
+                    />
+                  ))}
+                </div>
+              </Card>
             ))}
           </div>
-        </Card>
+        </>
+      )}
+
+      {!forbidden && watches !== null && (
+        <div className="mt-6">
+          <Card title={t.newGroup} description={t.newGroupHint}>
+            <form
+              className="flex flex-col gap-3 sm:flex-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void onCreate();
+              }}
+            >
+              <input
+                className={inputClass}
+                value={newName}
+                onChange={(event) => setNewName(event.target.value)}
+                placeholder={t.newGroupName}
+                aria-label={t.newGroupName}
+              />
+              <input
+                className={inputClass}
+                value={newPurpose}
+                onChange={(event) => setNewPurpose(event.target.value)}
+                placeholder={t.newGroupPurpose}
+                aria-label={t.newGroupPurpose}
+              />
+              <Button
+                type="submit"
+                disabled={
+                  creating || newName.trim() === "" || newPurpose.trim() === ""
+                }
+              >
+                {creating ? messages.common.loading : t.create}
+              </Button>
+            </form>
+          </Card>
+        </div>
       )}
     </div>
   );
 }
 
+/**
+ * Which section each watch belongs in.
+ *
+ * <p>Built from the groups the server returned rather than from the watches, so an empty group
+ * still appears. A list somebody made and has not filled is not the same as a list that does not
+ * exist, and hiding it would make "create" look like it did nothing.
+ *
+ * <p>Unfiled last, and only when there is something in it — a section that materialises the first
+ * time somebody forgets to file a watch is stranger than one that is simply absent.
+ */
+function sections(watches: Watch[], groups: WatchlistGroup[] | null) {
+  const named = (groups ?? []).filter((group) => group.id !== null);
+  const built = named.map((group) => ({
+    id: group.id,
+    name: group.name,
+    purpose: group.purpose,
+    watches: watches.filter((watch) => watch.watchlistId === group.id),
+  }));
+
+  const unfiled = watches.filter((watch) => watch.watchlistId === null);
+  if (unfiled.length > 0) {
+    built.push({ id: null, name: null, purpose: null, watches: unfiled });
+  }
+  return built;
+}
+
 function Row({
   watch,
   t,
+  groups,
   onRemove,
+  onFile,
 }: {
   watch: Watch;
   t: ReturnType<typeof useMessages>["watchlist"];
+  groups: WatchlistGroup[];
   onRemove: (id: string) => Promise<void>;
+  onFile: (watchId: string, watchlistId: string | null) => Promise<void>;
 }) {
   // Read here rather than in a helper below. The first version called useMessages() from a plain
   // function, which is a hook outside a component: it compiles, and React refuses it at runtime.
@@ -167,6 +305,24 @@ function Row({
       </div>
 
       <div className="ml-auto flex flex-wrap items-center gap-2">
+        {/* Filing moves a watch between lists. It never stops one — that is the remove button, and
+            keeping them visibly different is the point of having both. */}
+        <select
+          className="rounded border border-line bg-white px-2 py-1 text-xs text-ink"
+          value={watch.watchlistId ?? ""}
+          aria-label={t.fileUnder}
+          onChange={(event) => void onFile(watch.id, event.target.value || null)}
+        >
+          <option value="">{t.unfiled}</option>
+          {groups
+            .filter((group) => group.id !== null)
+            .map((group) => (
+              <option key={group.id} value={group.id ?? ""}>
+                {group.name}
+              </option>
+            ))}
+        </select>
+
         {/* Null is not "clear". It means nobody has asked yet, which is the state every watch is
             in on the day it is created. */}
         {watch.lastOutcome ? (
