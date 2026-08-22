@@ -219,7 +219,9 @@
         "ALL": "All",
         "BUSINESS": "Businesses",
         "INDIVIDUAL": "Individuals"
-      }
+      },
+      "eyebrow": "Your register",
+      "contested": "Contested"
     },
     "checkTitle": "Who are you checking?",
     "checkDescription": "Identify the company by its register number where you can. Names are unreliable: operator exports truncate them, and different companies share them.",

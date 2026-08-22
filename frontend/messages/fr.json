@@ -219,7 +219,9 @@
         "ALL": "Tous",
         "BUSINESS": "Entreprises",
         "INDIVIDUAL": "Particuliers"
-      }
+      },
+      "eyebrow": "Votre registre",
+      "contested": "Contestés"
     },
     "checkTitle": "Qui vérifiez-vous ?",
     "checkDescription": "Identifiez l’entreprise par son numéro de registre lorsque c’est possible. Les noms sont peu fiables : les exports opérateurs les tronquent, et des sociétés différentes les partagent.",

@@ -16,10 +16,19 @@ import {
   Card,
   EmptyState,
   ErrorNotice,
-  PageHeader,
   Pill,
   type Tone,
 } from "@/components/ui";
+import { Band, CountUp } from "@/components/visual/motion";
+
+/** The edge on a row, matching the pill in it. */
+const STATUS_EDGE: Record<DebtStatus, string> = {
+  OUTSTANDING: "border-l-error",
+  SETTLED: "border-l-success",
+  DISPUTED: "border-l-warning",
+  UNDER_INVESTIGATION: "border-l-warning",
+  CLEARED: "border-l-line",
+};
 
 const STATUS_TONE: Record<DebtStatus, Tone> = {
   OUTSTANDING: "serious",
@@ -107,18 +116,75 @@ export default function RecordsPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader
-        title={t.title}
-        subtitle={t.subtitle}
-        action={
-          <Link
-            href="/app/tix/declare"
-            className="rounded bg-blue px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-dark"
-          >
-            {t.declare}
-          </Link>
-        }
-      />
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+                {t.eyebrow}
+              </p>
+              <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+              <p className="max-w-2xl text-sm text-white/70">{t.subtitle}</p>
+            </div>
+            <Link
+              href="/app/tix/declare"
+              className="shrink-0 rounded bg-white px-4 py-2.5 text-sm font-bold text-navy transition hover:bg-white/85"
+            >
+              {t.declare}
+            </Link>
+          </div>
+
+          {/* Counts, and no total owed. This book can hold more than one currency and the screen
+              below shows each record's own — adding them here would be a number that is not of
+              anything, which the portfolio screen already refuses to print. */}
+          {records !== null && (
+            <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+              <div>
+                <p className="text-4xl font-bold">
+                  <CountUp value={records.length} />
+                </p>
+                <p className="text-xs text-white/60">{t.filters.ALL}</p>
+              </div>
+              <div>
+                <p className="text-4xl font-bold">
+                  <CountUp
+                    value={records.filter((r) => r.status === "OUTSTANDING").length}
+                  />
+                </p>
+                <p className="text-xs text-white/60">{messages.tix.statuses.OUTSTANDING}</p>
+              </div>
+              <div>
+                <p className="text-4xl font-bold">
+                  <CountUp
+                    value={
+                      records.filter(
+                        (r) =>
+                          r.status === "DISPUTED" || r.status === "UNDER_INVESTIGATION",
+                      ).length
+                    }
+                  />
+                </p>
+                <p className="text-xs text-white/60">{t.contested}</p>
+              </div>
+              {/* Only when it is not zero. A permanent "0 past retention" trains somebody to stop
+                  reading the number, and this is the one on the screen that means the platform is
+                  holding something it should not. */}
+              {records.some((r) => daysUntil(r.retentionUntil) < 0) && (
+                <div>
+                  <p className="text-4xl font-bold text-[#ffb0b0]">
+                    <CountUp
+                      value={records.filter((r) => daysUntil(r.retentionUntil) < 0).length}
+                    />
+                  </p>
+                  <p className="text-xs text-white/60">{t.awaitingErasure}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Band>
+
+      <div className="mt-6" />
 
       {error && (
         <div className="mb-4">
@@ -179,7 +245,12 @@ export default function RecordsPage() {
                   const remaining = daysUntil(record.retentionUntil);
                   const expired = remaining < 0;
                   return (
-                    <tr key={record.id} className="border-b border-line last:border-0">
+                    <tr
+                      key={record.id}
+                      className={`border-b border-l-4 border-line last:border-b-0 transition hover:bg-soft/60 ${
+                        expired ? "border-l-error bg-error/5" : STATUS_EDGE[record.status]
+                      }`}
+                    >
                       <th scope="row" className="py-3.5 pr-4 font-bold text-navy">
                         <Link
                           href={`/app/subjects/${record.subjectId}`}
@@ -204,7 +275,13 @@ export default function RecordsPage() {
                       <td className="py-3.5">
                         <span className="tabular-nums text-ink">{record.retentionUntil}</span>
                         <span
-                          className={`ml-2 text-xs ${expired ? "text-[#b45309]" : "text-muted"}`}
+                          className={`ml-2 text-xs ${
+                            expired
+                              ? "font-bold text-error"
+                              : remaining <= 30
+                                ? "font-semibold text-[#7c4a03]"
+                                : "text-muted"
+                          }`}
                         >
                           {expired
                             ? t.awaitingErasure
