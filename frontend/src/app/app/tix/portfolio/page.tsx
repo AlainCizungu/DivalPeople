@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { ApiError, tixApi, type Portfolio } from "@/api/client";
-import { Card, EmptyState, ErrorNotice, Metric, PageHeader, Pill } from "@/components/ui";
+import { Card, EmptyState, ErrorNotice, PageHeader, Pill } from "@/components/ui";
+import { Band, CountUp, HoverTile, Ring } from "@/components/visual/motion";
 
 /**
  * Chart geometry, in the SVG's own coordinate space.
@@ -18,6 +19,21 @@ const BANDS_WIDTH = 9 * (BAR_WIDTH + BAR_GAP);
 const CHART_TOP = 18;
 const PLOT_HEIGHT = 120;
 const CHART_HEIGHT = CHART_TOP + PLOT_HEIGHT;
+
+/**
+ * How a band is coloured, by how late it is.
+ *
+ * <p>Derived from the position in the series rather than from the band's name, so adding a band to
+ * {@code AgingBand} recolours the chart correctly instead of falling through to the default and
+ * quietly drawing a year-old debt in the colour of a fresh one.
+ */
+function agingColour(index: number, bands: number): string {
+  const share = bands <= 1 ? 1 : index / (bands - 1);
+  if (share >= 0.85) return "var(--color-error)";
+  if (share >= 0.6) return "var(--color-orange)";
+  if (share >= 0.3) return "var(--color-warning)";
+  return "var(--color-success)";
+}
 
 /**
  * What this operator is owed, aged.
@@ -118,27 +134,60 @@ export default function PortfolioPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader
-        title={t.title}
-        subtitle={t.subtitle}
-        action={
-          <p className="text-sm text-muted">
-            {t.asOf} <span className="font-semibold text-ink">{portfolio.asOf}</span>
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
           </p>
-        }
-      />
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="mb-6 max-w-2xl text-sm text-white/70">{t.subtitle}</p>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Metric
+          {/* The headline figures, animated. Not the exposure total: this book can hold more than
+              one currency, and a single number across two of them is not a number. The currency
+              table below says what is owed, per currency, and refuses to add them. */}
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+            <div>
+              <p className="text-4xl font-bold">
+                <CountUp value={portfolio.recordCount} />
+              </p>
+              <p className="text-xs text-white/60">{t.records}</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold">
+                <CountUp value={portfolio.aging.reduce((sum, band) => sum + band.count, 0)} />
+              </p>
+              <p className="text-xs text-white/60">{t.agedRecords}</p>
+            </div>
+            <div>
+              <p
+                className={`text-4xl font-bold ${
+                  portfolio.awaitingErasure > 0 ? "text-[#ffb0b0]" : ""
+                }`}
+              >
+                <CountUp value={portfolio.awaitingErasure} />
+              </p>
+              <p className="text-xs text-white/60">{t.awaitingErasure}</p>
+            </div>
+            <p className="ml-auto text-sm text-white/60">
+              {t.asOf} <span className="font-semibold text-white">{portfolio.asOf}</span>
+            </p>
+          </div>
+        </div>
+      </Band>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <HoverTile
+          href="/app/tix/records"
           label={t.records}
-          value={String(portfolio.recordCount)}
-          note={t.recordsNote}
+          value={portfolio.recordCount}
+          reveal={t.recordsNote}
         />
-        <Metric
+        <HoverTile
+          href="/app/tix/records"
           label={t.awaitingErasure}
-          value={String(portfolio.awaitingErasure)}
-          note={t.awaitingErasureNote}
-          tone={portfolio.awaitingErasure > 0 ? "warning" : "plain"}
+          value={portfolio.awaitingErasure}
+          reveal={t.awaitingErasureNote}
+          tone={portfolio.awaitingErasure > 0 ? "serious" : "plain"}
         />
       </div>
 
@@ -250,7 +299,12 @@ export default function PortfolioPage() {
                         width={BAR_WIDTH}
                         height={height}
                         rx="2"
-                        className={band.band === "OVER_270" ? "fill-error" : "fill-blue"}
+                        // Warms as the debt ages, rather than one blue with a red exception at
+                        // the end. The whole point of an aging profile is that later is worse, and
+                        // a chart that says so in colour is read before it is read in labels — the
+                        // same ramp the aged strip on the search screen uses, so a reader who has
+                        // learned one has learned the other.
+                        fill={agingColour(index, portfolio.aging.length)}
                       />
                       {band.count > 0 && (
                         <text
@@ -317,43 +371,52 @@ export default function PortfolioPage() {
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <Card title={t.statusTitle} description={t.statusDescription}>
-              <ul className="flex flex-col divide-y divide-line">
-                {portfolio.byStatus.map((entry) => (
-                  <li
-                    key={entry.status}
-                    className="flex items-center justify-between gap-4 py-3"
-                  >
-                    <Pill
-                      tone={
-                        entry.status === "OUTSTANDING"
-                          ? "serious"
-                          : entry.status === "SETTLED" || entry.status === "CLEARED"
-                            ? "positive"
-                            : "review"
-                      }
-                    >
-                      {messages.tix.statuses[entry.status]}
-                    </Pill>
-                    <span className="font-bold tabular-nums text-navy">{entry.count}</span>
-                  </li>
-                ))}
-              </ul>
+              {/* The same ring the dashboard draws, over the same statuses and the same colours.
+                  Two screens showing one book in two visual languages is how a reader ends up
+                  believing they are looking at two books. */}
+              <Ring
+                total={portfolio.byStatus.reduce((sum, entry) => sum + entry.count, 0)}
+                caption={t.records}
+                segments={portfolio.byStatus.map((entry) => ({
+                  label: messages.tix.statuses[entry.status],
+                  value: entry.count,
+                  colour:
+                    entry.status === "OUTSTANDING"
+                      ? "var(--color-error)"
+                      : entry.status === "SETTLED" || entry.status === "CLEARED"
+                        ? "var(--color-success)"
+                        : "var(--color-warning)",
+                }))}
+              />
             </Card>
 
             <Card title={t.serviceTitle} description={t.serviceDescription}>
-              <ul className="flex flex-col divide-y divide-line">
-                {portfolio.byService.map((entry) => (
-                  <li
-                    key={entry.label}
-                    className="flex items-center justify-between gap-4 py-3"
-                  >
-                    {/* Free text submitted by the declaring operator, so it is rendered as
-                        given rather than translated — a label invented here would hide that
-                        two operators are spelling the same service differently. */}
-                    <span className="text-sm text-ink">{entry.label}</span>
-                    <span className="font-bold tabular-nums text-navy">{entry.count}</span>
-                  </li>
-                ))}
+              <ul className="flex flex-col gap-3">
+                {portfolio.byService.map((entry) => {
+                  // Proportional to the largest service, not to the total. This reads as "which
+                  // service dominates", and scaling to the total would flatten every bar on a
+                  // book spread evenly across six of them.
+                  const widest = Math.max(1, ...portfolio.byService.map((one) => one.count));
+                  return (
+                    <li key={entry.label}>
+                      <div className="flex items-baseline justify-between gap-4">
+                        {/* Free text submitted by the declaring operator, so it is rendered as
+                            given rather than translated — a label invented here would hide that
+                            two operators are spelling the same service differently. */}
+                        <span className="text-sm text-ink">{entry.label}</span>
+                        <span className="text-sm font-bold tabular-nums text-navy">
+                          {entry.count}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-line">
+                        <span
+                          className="block h-full rounded-full bg-blue"
+                          style={{ width: `${Math.max(2, (entry.count / widest) * 100)}%` }}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </Card>
           </div>

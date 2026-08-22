@@ -1056,7 +1056,9 @@
     "provenanceImported": "Derived from an imported file",
     "provenanceNote": "Records derived from an uploaded file, counted separately from those declared through the API. Both are real records held to the same rules; the distinction is provenance, so an auditor asking where a figure came from gets an answer on the screen.",
     "empty": "Your organisation has not declared anything yet, so there is nothing to age.",
-    "noAccess": "Your account can make inquiries but not declare records, so there is no portfolio to show."
+    "noAccess": "Your account can make inquiries but not declare records, so there is no portfolio to show.",
+    "eyebrow": "Portfolio intelligence",
+    "agedRecords": "Unpaid and aged"
   },
   "subjectRights": {
     "title": "Subject requests",

@@ -1056,7 +1056,9 @@
     "provenanceImported": "Issus d’un fichier importé",
     "provenanceNote": "Enregistrements issus d’un fichier déposé, comptés séparément de ceux déclarés via l’API. Les deux sont de véritables enregistrements soumis aux mêmes règles ; la distinction porte sur la provenance, afin qu’un auditeur demandant d’où vient un chiffre obtienne une réponse à l’écran.",
     "empty": "Votre organisation n’a encore rien déclaré : il n’y a donc rien à classer.",
-    "noAccess": "Votre compte peut interroger l’échange mais pas déclarer d’enregistrements ; il n’y a donc pas d’encours à afficher."
+    "noAccess": "Votre compte peut interroger l’échange mais pas déclarer d’enregistrements ; il n’y a donc pas d’encours à afficher.",
+    "eyebrow": "Intelligence de portefeuille",
+    "agedRecords": "Impayés et vieillis"
   },
   "subjectRights": {
     "title": "Demandes des personnes concernées",
