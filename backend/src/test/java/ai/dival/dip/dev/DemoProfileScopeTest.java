@@ -2,16 +2,18 @@ package ai.dival.dip.dev;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.type.filter.AssignableTypeFilter;
 
 /**
  * What the demo profile is allowed to put on a public host.
@@ -88,19 +90,54 @@ class DemoProfileScopeTest {
         return answering;
     }
 
-    /** Every {@link org.springframework.boot.ApplicationRunner} in the dev package. */
+    /**
+     * Every {@link ApplicationRunner} in the dev package, whether or not it would start.
+     *
+     * <p>Walks the compiled class files rather than using Spring's component scanner, and the
+     * first attempt is worth recording: {@code ClassPathScanningCandidateComponentProvider}
+     * evaluates {@code @Conditional} annotations while it scans, and {@code @Profile} is one.
+     * It therefore excluded every seeder for not matching the active profile — a scanner whose
+     * job is to apply conditions, used in a test whose job is to inspect them. It returned
+     * nothing and both assertions would have passed by vacuity.
+     *
+     * <p>The emptiness check below is what caught that, on the first run, which is the whole
+     * argument for having it.
+     *
+     * <p>{@code getResources} rather than {@code getResource}: this test lives in the package it
+     * is scanning, so the test output directory shadows the main one and the singular form finds
+     * only this file.
+     */
     private static List<Class<?>> scan() {
-        var scanner = new ClassPathScanningCandidateComponentProvider(false);
-        scanner.addIncludeFilter(new AssignableTypeFilter(
-                org.springframework.boot.ApplicationRunner.class));
-
-        List<Class<?>> found = scanner.findCandidateComponents(PACKAGE).stream()
-                .map(BeanDefinition::getBeanClassName)
-                .map(DemoProfileScopeTest::load)
-                .toList();
+        List<Class<?>> found = new ArrayList<>();
+        try {
+            Enumeration<URL> roots =
+                    DemoProfileScopeTest.class.getClassLoader().getResources(PACKAGE.replace('.', '/'));
+            while (roots.hasMoreElements()) {
+                File directory = new File(roots.nextElement().toURI());
+                File[] files = directory.listFiles();
+                if (files == null) {
+                    continue;
+                }
+                for (File file : files) {
+                    String name = file.getName();
+                    // Nested and synthetic classes are not components and would be loaded twice.
+                    if (!name.endsWith(".class") || name.contains("$")) {
+                        continue;
+                    }
+                    Class<?> type = load(PACKAGE + "." + name.substring(0, name.length() - 6));
+                    if (ApplicationRunner.class.isAssignableFrom(type)) {
+                        found.add(type);
+                    }
+                }
+            }
+        } catch (Exception unreadable) {
+            throw new IllegalStateException("could not read the compiled classes of " + PACKAGE,
+                    unreadable);
+        }
 
         // A scan that silently found nothing would make both tests pass by vacuity, which is the
-        // classic way a guard like this stops guarding without anybody noticing.
+        // classic way a guard like this stops guarding without anybody noticing. It has already
+        // earned its place once; see above.
         assertThat(found)
                 .as("found no ApplicationRunner in %s — the scan is broken, not the code", PACKAGE)
                 .isNotEmpty();
