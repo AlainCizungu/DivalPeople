@@ -23,6 +23,7 @@ import {
   inputClass,
   type Tone,
 } from "@/components/ui";
+import { Band, CountUp } from "@/components/visual/motion";
 
 /**
  * The Identity Resolution Center.
@@ -123,11 +124,43 @@ export default function ResolutionPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title={t.title} subtitle={t.subtitle} />
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="mb-6 max-w-2xl text-sm text-white/70">{t.subtitle}</p>
 
-      <p className="mb-5 rounded border border-line bg-soft px-4 py-3 text-sm text-muted">
-        {t.why}
-      </p>
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+            <div>
+              <p className="text-4xl font-bold">
+                <CountUp value={cases?.length ?? 0} />
+              </p>
+              <p className="text-xs text-white/60">{t.openCases}</p>
+            </div>
+            <div className="ml-auto flex flex-wrap items-center gap-3">
+              {outcomeMessage && (
+                <span className="text-sm text-white/70">{outcomeMessage}</span>
+              )}
+              <button
+                type="button"
+                onClick={() => void onScan()}
+                disabled={scanning}
+                className={`rounded-full bg-white px-5 py-2.5 text-sm font-bold text-navy transition hover:bg-white/90 disabled:opacity-60 ${
+                  forbidden ? "hidden" : ""
+                }`}
+              >
+                {scanning ? t.scanning : t.scan}
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-5 max-w-3xl text-sm text-white/60">{t.why}</p>
+        </div>
+      </Band>
+
+      <div className="mt-6" />
 
       {forbidden && (
         <Card title={t.title}>
@@ -144,13 +177,6 @@ export default function ResolutionPage() {
           </p>
         </Card>
       )}
-
-      <div className={forbidden ? "hidden" : "mb-6 flex flex-wrap items-center gap-3"}>
-        <Button type="button" onClick={() => void onScan()} disabled={scanning}>
-          {scanning ? t.scanning : t.scan}
-        </Button>
-        {outcomeMessage && <span className="text-sm text-muted">{outcomeMessage}</span>}
-      </div>
 
       {failure && (
         <ErrorNotice>
@@ -204,11 +230,23 @@ function CaseCard({
 
   return (
     <div className="rounded-lg border border-line bg-white p-5">
-      <div className="mb-5 flex flex-wrap items-center gap-3">
+      <div className="mb-5 flex flex-wrap items-center gap-4">
         <Pill tone="review">{t.possibleMatch}</Pill>
-        <span className="ml-auto text-right">
-          <span className="block text-xs text-muted">{t.confidence}</span>
-          <span className="text-3xl font-bold tabular-nums text-navy">{percent}%</span>
+        <span className="ml-auto w-48 text-right">
+          <span className="flex items-baseline justify-between">
+            <span className="text-xs text-muted">{t.confidence}</span>
+            <span className="text-3xl font-bold tabular-nums text-navy">{percent}%</span>
+          </span>
+          {/* A bar with NO THRESHOLD MARKED, and the absence is the point. There is no confidence
+              at which this platform merges on its own — a line drawn anywhere on this scale would
+              invent a cutoff and tell a reviewer that above it the decision is made for them. The
+              number is context for a person, not a verdict. */}
+          <span className="mt-1.5 block h-2 w-full overflow-hidden rounded-full bg-line">
+            <span
+              className="block h-full rounded-full bg-blue"
+              style={{ width: `${Math.max(2, percent)}%` }}
+            />
+          </span>
         </span>
       </div>
 
@@ -300,7 +338,14 @@ function RecordCard({
   const identifiers = Object.entries(subject.nationalIdentifiers);
 
   return (
-    <div className="rounded-lg border border-line bg-soft p-4">
+    // The record that survives a confirmation is drawn as the survivor rather than labelled as
+    // one. A reviewer choosing between two names is deciding which of them the registry keeps,
+    // and that fact was a pill on an otherwise identical card.
+    <div
+      className={`rounded-lg border p-4 ${
+        kept ? "border-success/50 bg-success/5" : "border-line bg-soft"
+      }`}
+    >
       <div className="mb-1.5 flex items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-wide text-muted">{label}</span>
         {kept && <Pill tone="positive">{t.keptOnConfirm}</Pill>}
@@ -375,7 +420,16 @@ function SignalRow({
 
   return (
     <li className="flex items-center gap-2.5 text-sm">
-      <span aria-hidden className="w-4 text-center font-bold text-muted">
+      <span
+        aria-hidden
+        className={`w-4 text-center font-bold ${
+          signal.verdict === "AGREES"
+            ? "text-success"
+            : signal.verdict === "CONFLICTS"
+              ? "text-error"
+              : "text-muted"
+        }`}
+      >
         {MARK[signal.verdict]}
       </span>
       <span className={muted ? "text-muted" : "text-ink"}>{t.signals[signal.code]}</span>
