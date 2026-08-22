@@ -2,6 +2,9 @@
 
 How to run DIP somewhere other than a laptop, and what to do when it goes wrong.
 
+Provider-neutral. For the AWS instance at `dip.dival.ai` — sizing, security group, Route 53,
+getting archives into S3 — read this first and then [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md).
+
 This describes a single-host deployment with Docker Compose behind Caddy. It is deliberately the
 simplest thing that is defensible: one server, TLS, private networking, separate database roles,
 and images built by CI rather than on the box. It will carry a pilot and a demo comfortably. It
@@ -125,6 +128,17 @@ imported into a deployment.
 ## Deploying a new version
 
 ```bash
+sh infra/redeploy.sh <40-character commit sha>
+```
+
+It backs up, pulls while the old version keeps serving, swaps, waits for the frontend to answer,
+and prints the line that puts it back. It refuses `latest` and short SHAs, and it **stops without
+deploying anything if the backup fails** — which is the one place in this stack where a failed
+backup is fatal rather than logged, because the next step runs migrations that cannot be undone.
+
+By hand, if you would rather see each step:
+
+```bash
 # Edit IMAGE_TAG to the new commit SHA, then:
 docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml pull
 docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml up -d
@@ -132,7 +146,9 @@ docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml up
 
 **Take a backup first** (below). Migrations run automatically and there is no automatic rollback:
 Flyway has no `down` migration in this project, deliberately, because a generated rollback that
-has never been tested is worse than not having one.
+has never been tested is worse than not having one. The script does not roll back on failure for
+the same reason — an automatic rollback across a migration that has already run restores an image
+that cannot read its own schema, at speed, without asking.
 
 To go back to a previous version, set `IMAGE_TAG` to the older SHA — but only if no migration ran
 in between. If one did, restore the backup instead. The schema is what makes a rollback
@@ -387,9 +403,12 @@ worse than none.
 
 - **One host, no redundancy.** Lose the server and the service is down until you rebuild it.
   Restoring from a backup onto a new host is the recovery plan, and it is manual.
-- **No automatic backups.** See above. This is the first thing to fix.
-- **Deployment is manual.** CI publishes images; a person pulls them. There is no continuous
-  deployment, and no automated rollback.
+- **Nothing moves the backups off the host.** They are taken automatically, encrypted, on the
+  schedule in `BACKUP_CRON` — but `BACKUP_HOST_DIR` is a bind mount and copying it somewhere else
+  is yours to arrange. Until you have, a lost host is a lost database and a lost week.
+- **Deployment is a person running a command.** CI publishes images from green builds only;
+  nothing deploys them until somebody asks. `infra/redeploy.sh` makes that one line and does not
+  make it automatic. There is no continuous deployment and no automated rollback.
 - **No log aggregation and no alerting.** If something breaks at night, you find out in the
   morning. `docker logs` on the host is the whole story.
 - **Migrations have no tested rollback path.** Backup first, every time.

@@ -30,6 +30,11 @@ node_modules/
 deploy.env
 *.deploy.env
 !deploy.env.example
+
+# Written by infra/redeploy.sh on the server: the SHA that was running before the last deploy.
+# It is per-host state, not a fact about the repository, and committing it would mean one
+# server's rollback target following everybody else around.
+infra/.last-deploy
 *.pem
 *.key
 secrets/
