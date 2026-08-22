@@ -320,8 +320,10 @@ public class WatchlistService {
 
         audit.record("TIX_WATCH_ADDED", "Subject", subjectId.toString(),
                 AuditService.OUTCOME_SUCCESS, actorId, purpose.trim());
+        // Never checked, never scored, unfiled. Six nulls that all mean "not yet" rather than
+        // "zero", which is the distinction the whole monitoring feature rests on.
         return new Watch(entry.getId(), subject.getId(), subject.getFullName(),
-                entry.getPurpose(), entry.getExpiresAt(), null, null, null);
+                entry.getPurpose(), entry.getExpiresAt(), null, null, null, null, null, null);
     }
 
     @Transactional
