@@ -1226,7 +1226,9 @@
       "FAILURE": "Échec"
     },
     "actorNote": "Les comptes sont affichés par identifiant et non par nom. Le journal n’appartient à aucune partie de la plateforme en particulier : il ne dépend donc délibérément pas de celle qui connaît le nom des personnes.",
-    "immutableNote": "Les lignes sont ajoutées et jamais modifiées. Une correction est un nouvel événement, jamais une retouche — c’est pourquoi une tentative refusée y figure toujours."
+    "immutableNote": "Les lignes sont ajoutées et jamais modifiées. Une correction est un nouvel événement, jamais une retouche — c’est pourquoi une tentative refusée y figure toujours.",
+    "eyebrow": "Gouvernance",
+    "shapeNote": "Ce dont se compose l'activité de cet opérateur. Sélectionnez-en une pour filtrer les événements ci-dessous."
   },
   "risk": {
     "title": "Indicateur de risque DIP",

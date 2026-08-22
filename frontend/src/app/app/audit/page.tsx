@@ -15,9 +15,9 @@ import {
   Metric,
   PageHeader,
   Pill,
-  inputClass,
   type Tone,
 } from "@/components/ui";
+import { Band, CountUp } from "@/components/visual/motion";
 
 /**
  * The trail, finally readable.
@@ -96,7 +96,35 @@ export default function AuditPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title={t.title} subtitle={t.subtitle} />
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="mb-6 max-w-2xl text-sm text-white/70">{t.subtitle}</p>
+
+          {/* Only figures counted over the WHOLE trail. Refusals are counted from the page below
+              and stay down there with the sentence that says so — a refusal count in a band reads
+              as a total, and this one is not one. */}
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+            <div>
+              <p className="text-4xl font-bold">
+                <CountUp value={total} />
+              </p>
+              <p className="text-xs text-white/60">{t.totalEvents}</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold">
+                <CountUp value={inquiries} />
+              </p>
+              <p className="text-xs text-white/60">{t.inquiries}</p>
+            </div>
+          </div>
+        </div>
+      </Band>
+
+      <div className="mt-6" />
 
       {error && (
         <div className="mb-4">
@@ -104,8 +132,7 @@ export default function AuditPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Metric label={t.totalEvents} value={entries === null ? "—" : String(total)} />
+      <div className="grid gap-4 sm:grid-cols-2">
         <Metric
           label={t.inquiries}
           value={entries === null ? "—" : String(inquiries)}
@@ -120,20 +147,60 @@ export default function AuditPage() {
       </div>
 
       <div className="mt-6">
-        <Card title={t.filterTitle}>
-          <select
-            aria-label={t.filterTitle}
-            className={inputClass}
-            value={action}
-            onChange={(event) => setAction(event.target.value)}
-          >
-            <option value="">{t.filterAll}</option>
-            {summary.map((entry) => (
-              <option key={entry.action} value={entry.action}>
-                {entry.action} ({entry.count})
-              </option>
-            ))}
-          </select>
+        <Card title={t.filterTitle} description={t.shapeNote}>
+          {/* The distribution, drawn and clickable. A select hides the shape of an operator's
+              activity behind a click, and the shape is the thing an auditor reads first: a month
+              that is nine-tenths inquiries looks different from one that is nine-tenths imports,
+              and neither is visible in a dropdown. */}
+          <ul className="flex flex-col gap-2">
+            <li>
+              <button
+                type="button"
+                onClick={() => setAction("")}
+                aria-pressed={action === ""}
+                className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
+                  action === ""
+                    ? "border-blue bg-blue/5 font-semibold text-navy"
+                    : "border-line hover:bg-soft"
+                }`}
+              >
+                {t.filterAll}
+                <span className="ml-2 tabular-nums text-muted">{total}</span>
+              </button>
+            </li>
+            {summary.map((entry) => {
+              const busiest = Math.max(1, ...summary.map((one) => one.count));
+              return (
+                <li key={entry.action}>
+                  <button
+                    type="button"
+                    onClick={() => setAction(entry.action)}
+                    aria-pressed={action === entry.action}
+                    className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                      action === entry.action
+                        ? "border-blue bg-blue/5"
+                        : "border-line hover:bg-soft"
+                    }`}
+                  >
+                    <span className="flex items-baseline justify-between gap-4">
+                      <span className="font-mono text-xs font-semibold text-navy">
+                        {entry.action}
+                      </span>
+                      <span className="text-sm font-bold tabular-nums text-navy">
+                        {entry.count}
+                      </span>
+                    </span>
+                    <span className="mt-1.5 block h-1.5 w-full overflow-hidden rounded-full bg-line">
+                      <span
+                        className="block h-full rounded-full bg-blue"
+                        style={{ width: `${Math.max(2, (entry.count / busiest) * 100)}%` }}
+                      />
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </Card>
       </div>
 
@@ -159,7 +226,19 @@ export default function AuditPage() {
                 </thead>
                 <tbody>
                   {entries.map((entry) => (
-                    <tr key={entry.id} className="border-b border-line last:border-0">
+                    // A refusal gets a red edge and a tinted row. An audit trail is scanned, not
+                    // read, and the rows worth stopping on are the ones where the platform said
+                    // no — the whole reason the trail records denials as well as successes.
+                    <tr
+                      key={entry.id}
+                      className={`border-b border-line last:border-0 ${
+                        entry.outcome === "DENIED"
+                          ? "border-l-4 border-l-error bg-error/5"
+                          : entry.outcome !== "SUCCESS"
+                            ? "border-l-4 border-l-warning bg-warning/5"
+                            : ""
+                      }`}
+                    >
                       <td className="py-3 pr-4 font-mono text-xs whitespace-nowrap text-muted">
                         {when(entry.occurredAt)}
                       </td>

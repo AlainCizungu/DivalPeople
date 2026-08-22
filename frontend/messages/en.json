@@ -1226,7 +1226,9 @@
       "FAILURE": "Failed"
     },
     "actorNote": "Accounts are shown by identifier rather than by name. The trail belongs to no single part of the platform, so it deliberately does not depend on the part that knows people's names.",
-    "immutableNote": "Rows are appended and never changed. A correction is a further event, never an edit — which is why a refused attempt is still here."
+    "immutableNote": "Rows are appended and never changed. A correction is a further event, never an edit — which is why a refused attempt is still here.",
+    "eyebrow": "Governance",
+    "shapeNote": "What this operator's activity consists of. Select one to filter the events below."
   },
   "risk": {
     "title": "DIP Risk Indicator",
