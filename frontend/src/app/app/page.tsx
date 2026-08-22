@@ -14,6 +14,7 @@ import {
   type Overview,
   type SearchResult,
 } from "@/api/client";
+import { Directory } from "@/components/dashboard/Directory";
 import { Spotlight } from "@/components/dashboard/Spotlight";
 import { HoverTile, Ring, Sparkline } from "@/components/visual/motion";
 import { Button, Card, EmptyState, inputClass } from "@/components/ui";
@@ -34,6 +35,16 @@ import { Button, Card, EmptyState, inputClass } from "@/components/ui";
  * visual pass unchanged and constrains it: the ring, the bars and the tiles are all openable, and
  * nothing was added that draws a number this platform did not compute. A dashboard that is more
  * pleasant to look at and less checkable would be a worse dashboard.
+ *
+ * <p><strong>It ends with what exists, not with what is happening.</strong> Everything above the
+ * directory is a count, and a count is only legible to somebody who already knows the platform.
+ * The seven areas of work were previously discoverable only by reading the left menu, where the
+ * grouping is grey capitals and "Data import lives under Data management" is expressed as four
+ * pixels of indentation. The directory is drawn from the same list the menu is drawn from, so the
+ * two cannot come to disagree about what DIP contains.
+ *
+ * <p>It replaced a row of six identical grey buttons headed "Quick actions", which named screens
+ * and said nothing about them, showed only what the signed-in roles permitted, and stopped at six.
  *
  * <p>The activity series comes from the executive briefing rather than a second endpoint built for
  * this page. It is the same thirteen months the executive screen draws, so two screens cannot
@@ -81,14 +92,6 @@ export default function DashboardPage() {
   const deliveries = overview?.deliveries ?? null;
 
   const roles = profile?.roles ?? [];
-  const actions = [
-    { href: "/app/tix", label: t.actionInquire, role: "TIX_INQUIRER" },
-    { href: "/app/tix/declare", label: t.actionDeclare, role: "TIX_DECLARANT" },
-    { href: "/app/imports", label: t.actionImports, role: "TIX_DECLARANT" },
-    { href: "/app/tix/portfolio", label: t.actionPortfolio, role: "TIX_DECLARANT" },
-    { href: "/app/subject-requests", label: t.actionCases, role: "TIX_DECLARANT" },
-    { href: "/app/audit", label: t.actionAudit, role: "TENANT_ADMIN" },
-  ].filter((action) => roles.includes(action.role));
 
   /**
    * What the band rotates through, in the order somebody should deal with it.
@@ -312,22 +315,13 @@ export default function DashboardPage() {
               )}
             </Card>
           </div>
-
-          <Card title={t.actionsTitle} description={t.actionsDescription}>
-            <div className="mt-0 flex flex-wrap gap-3">
-              {actions.map((action) => (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="rounded-lg border border-line px-4 py-3 text-sm font-bold text-navy transition hover:-translate-y-0.5 hover:border-blue hover:shadow-sm"
-                >
-                  {action.label} →
-                </Link>
-              ))}
-            </div>
-          </Card>
         </>
       )}
+
+      {/* Last, and unconditional. The counts above are what is happening; this is what exists,
+          and it renders even when the overview call failed — a page that cannot reach the server
+          should still be able to tell somebody where everything is. */}
+      <Directory />
     </div>
   );
 }

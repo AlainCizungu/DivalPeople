@@ -9,6 +9,7 @@ import { useMessages } from "@/i18n/LocaleProvider";
 import { BrandMark } from "./BrandMark";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { AskDipLauncher } from "./AskDipLauncher";
+import { activeHref, buildNavigation, itemKey, keyOfFirst } from "./navigation";
 
 /**
  * Application shell: left navigation, top utility bar, main content area.
@@ -74,123 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isPlatformAdmin = profile?.roles.includes("PLATFORM_ADMIN") ?? false;
 
-  /**
-   * The platform's shape.
-   *
-   * <p>An item with no href is designed and not built. Two items may share an href — Exposure
-   * and Portfolio intelligence are one screen today, as are Subject requests and Disputes &
-   * corrections — and that is recorded here rather than hidden, because the day either one grows
-   * its own screen this is the list that has to change.
-   */
-  const groups: NavGroup[] = [
-    {
-      heading: t.groupIntelligence,
-      items: [
-        { href: "/app", label: t.home },
-        { href: "/app/search", label: t.search },
-        { href: "/app/executive", label: t.executive },
-        { href: "/app/tix/portfolio", label: t.portfolioIntelligence },
-      ],
-    },
-    {
-      heading: t.groupSubjects,
-      items: [
-        // Two entries, one screen behind them, differing in a query parameter and in what an
-        // empty list means. Individuals is empty on the data that exists and says why — an empty
-        // list that names what would fill it makes the ask concrete in a way a roadmap does not.
-        // Businesses and Individuals used to be two entries here, over one component that
-        // differed in a query parameter. That made "is this company in our book?" and "is this
-        // person in our book?" two places to look for one question, and neither of them named the
-        // amount owed. Records answers both, with the kind as a filter.
-        { href: "/app/tix/records", label: t.records },
-        { href: "/app/tix", label: t.inquiries },
-        { href: "/app/tix/declare", label: t.declare },
-        { href: "/app/subject-requests", label: t.subjectRequests },
-      ],
-    },
-    {
-      heading: t.groupRisk,
-      items: [
-        // Where risk is actually assessed today: submit an identifier and the DIP Risk Indicator
-        // comes back with the verdict. It will grow its own screen — a ranked view of an
-        // operator's own book — and until it does, pointing this at the assessment that exists
-        // is truer than marking it unbuilt.
-        { href: "/app/tix", label: t.riskIntelligence },
-        { href: "/app/tix/portfolio", label: t.portfolio },
-        // Compliance officer or tenant administrator only, and shown to everybody like entity
-        // resolution: the page explains that reading colleagues' behaviour is a supervisory
-        // function rather than leaving a built screen looking unbuilt.
-        { href: "/app/anomalies", label: t.fraud },
-        // A watch is an inquiry asked on a schedule, so the entry sits beside the risk screens
-        // rather than under Subjects: what it produces is an answer about exposure, not a record.
-        { href: "/app/watchlists", label: t.watchlists },
-        // Beside the watchlist and not inside it. One screen answers "who do I care about" and the
-        // other "what happened to them", and they are worked by different people on different days.
-        { href: "/app/monitoring", label: t.monitoring },
-      ],
-    },
-    {
-      heading: t.groupNetwork,
-      items: [
-        // "TIX — Telecom intelligence" was here as a Soon chip, and it is gone. Everything the
-        // exchange does today already happens under Intelligence, Subjects and Risk: an operator
-        // declares, enquires, watches and is monitored, and all of it is the network working. A
-        // separate entry promising telecom intelligence described a thing that is not a separate
-        // thing, and a chip that never becomes a screen is a promise the menu keeps making.
-        //
-        // The group now holds only the platform administrator's view and disappears for everybody
-        // else, which the render below already handles.
-        // Platform administration. Hidden rather than shown-and-refused, because a menu item
-        // that always 403s teaches people to ignore refusals.
-        ...(isPlatformAdmin
-          ? [{ href: "/app/participants", label: t.participants }]
-          : []),
-      ],
-    },
-    {
-      heading: t.groupData,
-      items: [
-        { href: "/app/imports", label: t.imports },
-        // Data sources and Data quality used to sit here and next door. Neither was a screen:
-        // sources are a card on this one, and quality is the column profile inside a delivery,
-        // which cannot be reached without a batch to ask about. Two menu entries for one screen
-        // and one for a thing that is not a screen at all — both gone rather than promised.
-        //
-        // Entity resolution is shown to everybody, unlike Participants, and the two are treated
-        // differently on purpose. Participants is administration: an operator has no reason to
-        // want it and hiding it costs them nothing. Entity resolution is the product — a
-        // participant asking where it went is asking a fair question, and answering with a "Soon"
-        // chip tells them a built feature does not exist yet. That is a worse lie than a refusal.
-        //
-        // So the page opens for anybody and says whose work this is: the registry resolves,
-        // because a case puts one operator's record beside another's with both names visible.
-        // The API still refuses everybody else, and the screen shows that refusal rather than an
-        // empty queue.
-        { href: "/app/resolution", label: t.entityResolution },
-      ],
-    },
-    {
-      heading: t.groupGovernance,
-      items: [
-        { href: "/app/audit", label: t.audit },
-        // Reachable by anybody signed in, not only an administrator. Its more useful half is
-        // the answer to "why can I not open that screen", and refusing that question to the
-        // people who have it would be the wrong way round.
-        { href: "/app/access", label: t.access },
-        { href: "/app/subject-requests", label: t.disputes },
-      ],
-    },
-    {
-      heading: t.groupSystem,
-      items: [
-        { href: "/app/notifications", label: t.notifications, badge: unreadCount },
-        { href: "/app/organization", label: t.organization },
-        // The last System entry to get a screen, and the one with the most already behind it:
-        // every value it shows existed in a yaml file that only a deployer could read.
-        { href: "/app/settings", label: t.settings },
-      ],
-    },
-  ];
+  const groups = buildNavigation(t, { isPlatformAdmin, unreadCount });
 
   const current = activeHref(
     pathname,
@@ -227,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             // would be worse than printing neither.
             if (group.items.length === 0) return null;
             return (
-              <div key={group.heading} className="mb-4 last:mb-0">
+              <div key={group.id} className="mb-4 last:mb-0">
                 <p className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-muted">
                   {group.heading}
                 </p>
@@ -320,59 +205,4 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
-}
-
-/** An item with no href is designed and not built, and the nav says so rather than linking. */
-type NavItem = { href?: string; label: string; badge?: number };
-
-type NavGroup = { heading: string; items: NavItem[] };
-
-/** Unique per entry rather than per route, because a route can appear twice. */
-function itemKey(group: NavGroup, item: NavItem): string {
-  return `${group.heading}/${item.label}`;
-}
-
-/** The first entry pointing at this route, reading down the menu as somebody reads it. */
-function keyOfFirst(
-  groups: NavGroup[],
-  href: string | undefined,
-): string | undefined {
-  if (!href) return undefined;
-  for (const group of groups) {
-    for (const item of group.items) {
-      if (item.href === href) return itemKey(group, item);
-    }
-  }
-  return undefined;
-}
-
-/**
- * Which entry the current URL belongs to.
- *
- * <p>Exact matching left every nested page with nothing selected: open a delivery and the whole
- * menu went dark, so the one screen where somebody is deepest in a task was the one screen that
- * stopped telling them where they were.
- *
- * <p>Longest prefix rather than first match, and the difference is the whole function. Both
- * {@code /app/tix} and {@code /app/tix/declare} are prefixes of the declaration page, and only
- * the longer one is the right answer. {@code /app} is a prefix of everything, which is why the
- * boundary check matters: {@code /app/imports} must not be treated as living under it by
- * accident of string length alone.
- */
-function activeHref(
-  pathname: string,
-  hrefs: (string | undefined)[],
-): string | undefined {
-  let best: string | undefined;
-  for (const href of hrefs) {
-    if (!href) continue;
-    const matches =
-      pathname === href ||
-      // The slash is what stops /app/tix matching a future /app/tixture.
-      pathname.startsWith(href.endsWith("/") ? href : `${href}/`);
-    if (matches && (best === undefined || href.length > best.length)) {
-      best = href;
-    }
-  }
-  return best;
 }
