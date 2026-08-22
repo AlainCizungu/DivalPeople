@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,17 +51,38 @@ public class WatchlistService {
     /** More than this and it is a feed rather than a watchlist. */
     private static final int MAX_WATCHES = 200;
 
+    /**
+     * How many subjects one sweep checks.
+     *
+     * <p><strong>A sweep is a slice, not a pass over everything.</strong> Every check is a real
+     * inquiry — charged to the hourly allowance, rate-limited, audited — because a monitoring path
+     * that reached the exchange without spending the allowance would be a way to query it with the
+     * throttle off, and it would look identical from the outside.
+     *
+     * <p>So a watchlist larger than the allowance cannot be swept in one night, and pretending
+     * otherwise would mean either exempting monitoring from the limit or silently dropping the
+     * remainder. It takes the stalest rows each night and continues tomorrow: every subject is
+     * reached in turn, none is starved, and the arithmetic is visible to whoever sizes a
+     * deployment rather than buried.
+     */
+    private static final int SWEEP_SLICE = 100;
+
     private final WatchlistRepository watches;
+    private final WatchlistGroupRepository groups;
+    private final MonitoringAlertRepository alerts;
     private final SubjectRepository subjects;
     private final ExchangeService exchange;
     private final NotificationService notifications;
     private final AuditService audit;
     private final Clock clock;
 
-    public WatchlistService(WatchlistRepository watches, SubjectRepository subjects,
+    public WatchlistService(WatchlistRepository watches, WatchlistGroupRepository groups,
+                            MonitoringAlertRepository alerts, SubjectRepository subjects,
                             ExchangeService exchange, NotificationService notifications,
                             AuditService audit, Clock clock) {
         this.watches = watches;
+        this.groups = groups;
+        this.alerts = alerts;
         this.subjects = subjects;
         this.exchange = exchange;
         this.notifications = notifications;
@@ -164,10 +186,12 @@ public class WatchlistService {
         UUID tenantId = TenantContext.require();
         Instant now = clock.instant();
 
-        List<WatchlistEntry> live = watches.findByTenantIdAndExpiresAtAfter(tenantId, now);
+        long live = watches.countByTenantIdAndExpiresAtAfter(tenantId, now);
+        List<WatchlistEntry> slice =
+                watches.findDueForSweep(tenantId, now, Limit.of(SWEEP_SLICE));
         List<UUID> changed = new ArrayList<>();
 
-        for (WatchlistEntry entry : live) {
+        for (WatchlistEntry entry : slice) {
             Subject subject = entry.getSubject();
 
             // Through the exchange, not around it. This is where the rate limit is charged and the
@@ -183,24 +207,64 @@ public class WatchlistService {
                             entry.getPurpose()),
                     actorId);
 
-            if (entry.observe(answer.outcome(), answer.institutionCount(), now)) {
+            // Null rather than zero when the exchange withheld the indicator. It withholds one for
+            // any answer it is not confident about, and recording that as a score of nought would
+            // make the next sweep read a recovery from a company that never moved.
+            Integer score = answer.indicator() == null ? null : answer.indicator().score();
+
+            WatchlistEntry.Change change = entry.observe(
+                    answer.outcome(), answer.institutionCount(), score, now);
+
+            if (change.isSomething()) {
                 changed.add(subject.getId());
-                if (entry.getAddedBy() != null) {
-                    notifications.notify(entry.getAddedBy(), "watchedSubjectChanged",
-                            Map.of("name", subject.getFullName(),
-                                    "outcome", answer.outcome().name(),
-                                    "institutions", String.valueOf(answer.institutionCount())),
-                            answer.outcome() == InquiryResult.Outcome.OUTSTANDING_DEBT
-                                    ? Notification.Severity.WARNING
-                                    : Notification.Severity.INFO,
-                            "Subject", subject.getId().toString());
-                }
+                raise(entry, subject, change, now, actorId);
             }
         }
 
         audit.record("TIX_WATCH_SWEPT", "Subject", null, AuditService.OUTCOME_SUCCESS, actorId,
-                live.size() + " watch(es), " + changed.size() + " changed");
-        return new Sweep(live.size(), changed.size());
+                slice.size() + " of " + live + " watch(es) checked, " + changed.size()
+                        + " changed");
+        return new Sweep((int) live, slice.size(), changed.size());
+    }
+
+    /**
+     * Writes the alert, and tells whoever opened the watch.
+     *
+     * <p>Both, and they are not the same thing. The notification is how somebody finds out today;
+     * the alert is what an institution produces in a year when asked to show what it knew and
+     * when. A notification cannot serve as the second — it is a sentence sent once, with no record
+     * of what the figures had been before it.
+     *
+     * <p>The alert is written first. If the notification fails there is still a record of the
+     * change; the other order would lose the evidence and keep the nudge.
+     */
+    private void raise(WatchlistEntry entry, Subject subject, WatchlistEntry.Change change,
+                       Instant now, UUID actorId) {
+        MonitoringAlert.Severity severity = ChangeGrading.grade(change);
+
+        alerts.save(new MonitoringAlert(entry, subject, now,
+                change.previousOutcome(), change.currentOutcome(),
+                change.previousInstitutions(), change.currentInstitutions(),
+                change.previousScore(), change.currentScore(), severity));
+
+        audit.record("TIX_MONITORING_ALERT", "Subject", subject.getId().toString(),
+                AuditService.OUTCOME_SUCCESS, actorId,
+                severity + ": " + change.previousOutcome() + " to " + change.currentOutcome()
+                        + ", institutions " + change.previousInstitutions() + " to "
+                        + change.currentInstitutions() + ", score " + change.previousScore()
+                        + " to " + change.currentScore());
+
+        if (entry.getAddedBy() == null) {
+            return;
+        }
+        notifications.notify(entry.getAddedBy(), "watchedSubjectChanged",
+                Map.of("name", subject.getFullName(),
+                        "outcome", change.currentOutcome().name(),
+                        "institutions", String.valueOf(change.currentInstitutions())),
+                severity == MonitoringAlert.Severity.MATERIAL
+                        ? Notification.Severity.WARNING
+                        : Notification.Severity.INFO,
+                "Subject", subject.getId().toString());
     }
 
     /**
@@ -220,8 +284,17 @@ public class WatchlistService {
                 .orElseGet(List::of);
     }
 
-    /** @param changed how many answers differ from the last sweep, which is what gets told */
-    public record Sweep(int watched, int changed) {
+    /**
+     * What one night's slice did.
+     *
+     * @param watched how many live watches this operator holds in total
+     * @param checked how many of them this sweep actually reached. Less than {@code watched} when
+     *                the list is larger than a slice, which is the honest shape: every check is a
+     *                charged inquiry, so a big watchlist takes several nights and the screen says
+     *                so rather than implying a full pass
+     * @param changed how many answers differ from the last sweep, which is what gets told
+     */
+    public record Sweep(int watched, int checked, int changed) {
     }
 
     /** Deliberately does not reveal whether the watch exists under another operator. */

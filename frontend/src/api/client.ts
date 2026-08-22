@@ -1164,10 +1164,18 @@ export const watchlistApi = {
   },
 
   /** Costs one inquiry per watch against this operator's hourly allowance. */
-  sweep(): Promise<{ watched: number; changed: number }> {
-    return request<{ watched: number; changed: number }>("/api/v1/tix/watchlist/sweep", {
-      method: "POST",
-    });
+  /**
+   * One night's slice.
+   *
+   * `checked` is less than `watched` when the list is larger than a slice — every check is a
+   * charged inquiry, so a big watchlist takes several nights. The screen says so rather than
+   * implying a full pass.
+   */
+  sweep(): Promise<{ watched: number; checked: number; changed: number }> {
+    return request<{ watched: number; checked: number; changed: number }>(
+      "/api/v1/tix/watchlist/sweep",
+      { method: "POST" },
+    );
   },
 };
 
