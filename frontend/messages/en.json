@@ -1472,7 +1472,13 @@
     "newGroupName": "Corporate loan customers",
     "newGroupPurpose": "Monitored for the life of the facility",
     "create": "Create",
-    "fileUnder": "File under"
+    "fileUnder": "File under",
+    "eyebrow": "Continuous monitoring",
+    "watchedCount": "Companies watched",
+    "listCount": "Watchlists",
+    "groupEmpty": "Nothing in this list yet. File a watch into it from the row below.",
+    "openMonitoring": "See what changed",
+    "indicator": "Indicator"
   },
   "executive": {
     "title": "Executive intelligence",

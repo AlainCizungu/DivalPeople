@@ -1472,7 +1472,13 @@
     "newGroupName": "Clients crédit entreprises",
     "newGroupPurpose": "Surveillés pendant toute la durée du concours",
     "create": "Créer",
-    "fileUnder": "Classer dans"
+    "fileUnder": "Classer dans",
+    "eyebrow": "Surveillance continue",
+    "watchedCount": "Entreprises surveillées",
+    "listCount": "Listes",
+    "groupEmpty": "Rien dans cette liste pour l'instant. Classez-y une surveillance depuis une ligne ci-dessous.",
+    "openMonitoring": "Voir ce qui a changé",
+    "indicator": "Indicateur"
   },
   "executive": {
     "title": "Intelligence de direction",

@@ -15,11 +15,11 @@ import {
   Card,
   EmptyState,
   ErrorNotice,
-  PageHeader,
   Pill,
   inputClass,
   type Tone,
 } from "@/components/ui";
+import { Band, CountUp } from "@/components/visual/motion";
 
 /**
  * Companies this institution is asking the exchange about on a schedule.
@@ -130,15 +130,63 @@ export default function WatchlistsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <PageHeader title={t.title} subtitle={t.subtitle} />
+    <div className="mx-auto max-w-5xl">
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="mb-6 max-w-2xl text-sm text-white/70">{t.subtitle}</p>
 
-      <p className="mb-3 rounded border border-line bg-soft px-4 py-3 text-sm text-muted">
-        {t.why}
-      </p>
-      <p className="mb-6 rounded border border-line bg-soft px-4 py-3 text-sm text-muted">
-        {t.whyNightly}
-      </p>
+          {/* The counts, and then the button that spends them. Watching two hundred companies
+              costs two hundred inquiries a night, and a screen that hid the arithmetic would be
+              the reason somebody finds their own inquiries refused at nine in the morning. */}
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+            <div>
+              <p className="text-3xl font-bold">
+                <CountUp value={watches?.length ?? 0} />
+              </p>
+              <p className="text-xs text-white/60">{t.watchedCount}</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold">
+                <CountUp value={(groups ?? []).filter((g) => g.id !== null).length} />
+              </p>
+              <p className="text-xs text-white/60">{t.listCount}</p>
+            </div>
+            <div className="ml-auto flex flex-wrap items-center gap-3">
+              {outcome && <span className="text-sm text-white/70">{outcome}</span>}
+              <button
+                type="button"
+                onClick={() => void onSweep()}
+                disabled={sweeping}
+                className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-navy transition hover:bg-white/90 disabled:opacity-60"
+              >
+                {sweeping ? t.sweeping : t.sweep}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Band>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <p className="rounded-lg border border-line bg-soft px-4 py-3 text-sm text-muted">
+          {t.why}
+        </p>
+        <Link
+          href="/app/monitoring"
+          className="group rounded-lg border border-blue/30 bg-blue/5 px-4 py-3 text-sm text-muted transition hover:border-blue/60"
+        >
+          {t.whyNightly}
+          <span className="mt-1 block font-semibold text-blue">
+            {t.openMonitoring}
+            <span aria-hidden="true" className="ml-1 inline-block transition group-hover:translate-x-0.5">
+              →
+            </span>
+          </span>
+        </Link>
+      </div>
 
       {failure && (
         <ErrorNotice>
@@ -163,46 +211,68 @@ export default function WatchlistsPage() {
 
       {!forbidden && watches !== null && watches.length > 0 && (
         <>
-          <Card title={t.title} description={t.expiryNote}>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" onClick={() => void onSweep()} disabled={sweeping}>
-                {sweeping ? t.sweeping : t.sweep}
-              </Button>
-              {outcome && <span className="text-sm text-muted">{outcome}</span>}
-            </div>
-          </Card>
-
           {/* Grouped, and the unfiled section is last and named rather than hidden. A watch nobody
               put in a list is still being monitored, and a screen that only showed groups would
               quietly stop showing it. */}
-          <div className="mt-6 flex flex-col gap-6">
-            {sections(watches, groups).map((section) => (
-              <Card
-                key={section.id ?? "unfiled"}
-                title={section.name ?? t.unfiled}
-                description={section.purpose ?? t.unfiledHint}
-              >
-                <div className="flex flex-col divide-y divide-line">
-                  {section.watches.map((watch) => (
-                    <Row
-                      key={watch.id}
-                      watch={watch}
-                      t={t}
-                      groups={groups ?? []}
-                      onRemove={onRemove}
-                      onFile={onFile}
+          <div className="mt-6 flex flex-col gap-5">
+            {sections(watches, groups).map((section) => {
+              const accent = section.id ? accentFor(section.id) : null;
+              return (
+                <section
+                  key={section.id ?? "unfiled"}
+                  className={`overflow-hidden rounded-lg border bg-white ${
+                    section.id ? "border-line" : "border-dashed border-line"
+                  }`}
+                >
+                  <header className="flex flex-wrap items-start gap-3 border-b border-line px-5 py-4">
+                    {/* Identity, not severity. See accentFor — these four hues are deliberately
+                        not the ones that mean anything elsewhere on this screen. */}
+                    <span
+                      aria-hidden="true"
+                      className="mt-1 h-8 w-1.5 shrink-0 rounded-full"
+                      style={{ background: accent ?? "var(--color-line)" }}
                     />
-                  ))}
-                </div>
-              </Card>
-            ))}
+                    <div className="min-w-0">
+                      <h2 className="font-bold text-navy">{section.name ?? t.unfiled}</h2>
+                      <p className="mt-0.5 text-sm text-muted">
+                        {section.purpose ?? t.unfiledHint}
+                      </p>
+                    </div>
+                    <span className="ml-auto rounded-full bg-soft px-3 py-1 text-sm font-bold tabular-nums text-navy">
+                      {section.watches.length}
+                    </span>
+                  </header>
+
+                  {section.watches.length === 0 ? (
+                    // A list somebody made and has not filled. Not an error, and not hidden — the
+                    // alternative makes "create" look like it did nothing.
+                    <div className="px-5 py-6">
+                      <EmptyState>{t.groupEmpty}</EmptyState>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col divide-y divide-line">
+                      {section.watches.map((watch) => (
+                        <Row
+                          key={watch.id}
+                          watch={watch}
+                          t={t}
+                          groups={groups ?? []}
+                          onRemove={onRemove}
+                          onFile={onFile}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
           </div>
         </>
       )}
 
       {!forbidden && watches !== null && (
         <div className="mt-6">
-          <Card title={t.newGroup} description={t.newGroupHint}>
+          <Card title={t.newGroup} description={t.newGroupHint} footer={t.expiryNote}>
             <form
               className="flex flex-col gap-3 sm:flex-row"
               onSubmit={(event) => {
@@ -250,6 +320,31 @@ export default function WatchlistsPage() {
  * <p>Unfiled last, and only when there is something in it — a section that materialises the first
  * time somebody forgets to file a watch is stranger than one that is simply absent.
  */
+/**
+ * A stable colour for a group, used as identity and never as a verdict.
+ *
+ * <p><strong>Four hues, and none of them is green, amber or red.</strong> Everywhere else on this
+ * screen colour means severity — the outcome pill, the indicator bar, the alert queue next door —
+ * and a group card in green beside a company in trouble would read as a judgement about the
+ * companies in it. These are brand hues that carry no rating.
+ *
+ * <p>Derived from the id so it survives a rename and a reload. A colour that shuffled on refresh
+ * would be decoration pretending to be a label.
+ */
+function accentFor(id: string): string {
+  const hues = [
+    "var(--color-blue)",
+    "var(--color-teal)",
+    "var(--color-purple)",
+    "var(--color-navy)",
+  ];
+  let sum = 0;
+  for (let index = 0; index < id.length; index += 1) {
+    sum = (sum + id.charCodeAt(index)) % 4096;
+  }
+  return hues[sum % hues.length] ?? hues[0]!;
+}
+
 function sections(watches: Watch[], groups: WatchlistGroup[] | null) {
   const named = (groups ?? []).filter((group) => group.id !== null);
   const built = named.map((group) => ({
@@ -291,11 +386,11 @@ function Row({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5 transition hover:bg-soft/60">
       <div className="min-w-0">
         <Link
           href={`/app/subjects/${watch.subjectId}`}
-          className="font-semibold text-navy hover:text-blue"
+          className="font-semibold text-navy hover:text-blue hover:underline"
         >
           {watch.name}
         </Link>
@@ -303,6 +398,33 @@ function Row({
           {t.purpose}: {watch.purpose}
         </p>
       </div>
+
+      {/* The indicator as it stood at the last sweep, drawn. A bare number tells a reader nothing
+          about where 61 sits on a scale they have not memorised. Null is left blank rather than
+          drawn as an empty bar: the exchange withholds a score for any answer it is not confident
+          about, and a bar at zero would read as a company with nothing against it. */}
+      {watch.lastScore !== null && (
+        <div className="w-28 shrink-0">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs text-muted">{t.indicator}</span>
+            <span className="text-sm font-bold tabular-nums text-navy">{watch.lastScore}</span>
+          </div>
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-line">
+            <span
+              className="block h-full rounded-full"
+              style={{
+                width: `${Math.min(100, Math.max(2, watch.lastScore))}%`,
+                background:
+                  watch.lastScore >= 70
+                    ? "var(--color-error)"
+                    : watch.lastScore >= 40
+                      ? "var(--color-warning)"
+                      : "var(--color-success)",
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {/* Filing moves a watch between lists. It never stops one — that is the remove button, and
@@ -331,8 +453,18 @@ function Row({
               {outcomes[watch.lastOutcome]}
             </Pill>
             {watch.lastInstitutions !== null && (
-              <span className="text-xs text-muted tabular-nums">
-                {watch.lastInstitutions} {t.institutions}
+              <span className="flex items-center gap-1.5 text-xs text-muted">
+                {/* Marks rather than a numeral, as on the inquiry result. Identical, unlabelled,
+                    in no meaningful order: three of them say three institutions and refuse to say
+                    which, which is exactly what the number does. */}
+                <span aria-hidden="true" className="flex gap-0.5">
+                  {Array.from({ length: Math.min(watch.lastInstitutions, 5) }, (_, index) => (
+                    <span key={index} className="h-3 w-1.5 rounded-sm bg-blue" />
+                  ))}
+                </span>
+                <span className="tabular-nums">
+                  {watch.lastInstitutions} {t.institutions}
+                </span>
               </span>
             )}
           </>
@@ -341,7 +473,14 @@ function Row({
         )}
 
         <span className="text-xs text-muted">
-          {t.expires}: {watch.expiresAt.slice(0, 10)}
+          {watch.lastCheckedAt && (
+            <span className="block">
+              {t.lastChecked}: {watch.lastCheckedAt.slice(0, 10)}
+            </span>
+          )}
+          <span className="block">
+            {t.expires}: {watch.expiresAt.slice(0, 10)}
+          </span>
         </span>
 
         <button
