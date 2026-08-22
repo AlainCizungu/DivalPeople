@@ -1139,7 +1139,9 @@
     "withdrawDescription": "Clôt le dossier sans le trancher et rétablit ce qu’il avait suspendu. Possible tant qu’aucune décision n’a été prise.",
     "withdrawNote": "Comment elle vous l’a fait savoir",
     "withdrawNoteHint": "Quelque chose qu’un régulateur pourrait vérifier — « Appel du 14 mai, elle indique avoir réglé directement avec le commerçant ». Un dossier clos sans décision et sans trace de qui l’a demandé ne se distingue pas d’un dossier abandonné en silence.",
-    "withdraw": "Enregistrer le retrait"
+    "withdraw": "Enregistrer le retrait",
+    "eyebrow": "Droits des personnes",
+    "daysLeft": "{days} jours restants"
   },
   "search": {
     "title": "Recherche",

@@ -1139,7 +1139,9 @@
     "withdrawDescription": "Closes the case without deciding it, and puts back anything it suppressed. Available until a decision is made.",
     "withdrawNote": "How they told you",
     "withdrawNoteHint": "Something a regulator could check — \"Called on 14 May, said she had settled directly with the shop\". A case closed with no decision and no record of who asked is indistinguishable from one quietly dropped.",
-    "withdraw": "Record withdrawal"
+    "withdraw": "Record withdrawal",
+    "eyebrow": "Subject rights",
+    "daysLeft": "{days} days left"
   },
   "search": {
     "title": "Search",

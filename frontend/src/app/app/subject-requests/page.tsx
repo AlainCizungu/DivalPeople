@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
+import { interpolate } from "@/i18n/interpolate";
 import {
   ApiError,
   subjectRightsApi,
@@ -24,6 +25,7 @@ import {
   inputClass,
   type Tone,
 } from "@/components/ui";
+import { CountUp } from "@/components/visual/motion";
 
 /**
  * The queue for the people in the registry.
@@ -138,9 +140,24 @@ export default function SubjectRequestsPage() {
   const openCases = cases?.filter((entry) => !entry.decidedAt).length ?? 0;
   const overdue = cases?.filter((entry) => entry.overdue).length ?? 0;
   const decided = cases?.filter((entry) => entry.decidedAt).length ?? 0;
-  const value = (n: number) => (cases === null ? "—" : String(n));
 
   const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "—");
+
+  /**
+   * How many days until a deadline, for display only.
+   *
+   * <p><strong>The server decides whether a case is overdue; this only says how far away.</strong>
+   * `entry.overdue` is computed against the platform's own clock, and a browser in a different
+   * zone can disagree with it by a day at the boundary. So an overdue row is styled from the flag
+   * and never from this number, and this number is never allowed to render a negative — a screen
+   * that called a case overdue while the server had not would have somebody chasing a deadline
+   * that has not arrived, and the reverse would be worse.
+   */
+  const daysLeft = (iso: string) => {
+    const due = new Date(`${iso.slice(0, 10)}T00:00:00Z`).getTime();
+    const today = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
+    return Math.round((due - today) / 86_400_000);
+  };
 
   if (refused) {
     return (
@@ -153,24 +170,57 @@ export default function SubjectRequestsPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title={t.title} subtitle={t.subtitle} />
+      {/* Amber-edged rather than the house gradient, and it is not decoration. A missed deadline
+          under Article 214 is grounds for a complaint in itself, so the count of overdue cases is
+          the loudest thing on this screen when it is not zero — and unremarkable when it is. */}
+      <div
+        className={`overflow-hidden rounded-2xl bg-navy text-white ${
+          overdue > 0 ? "border-l-4 border-l-error" : ""
+        }`}
+      >
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="mb-6 max-w-2xl text-sm text-white/70">{t.subtitle}</p>
+
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+            <div>
+              <p className="text-4xl font-bold">
+                <CountUp value={openCases} />
+              </p>
+              <p className="text-xs text-white/60">{t.open}</p>
+            </div>
+            <div>
+              <p className={`text-4xl font-bold ${overdue > 0 ? "text-[#ffb0b0]" : ""}`}>
+                <CountUp value={overdue} />
+              </p>
+              <p className="text-xs text-white/60">{t.overdue}</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold">
+                <CountUp value={decided} />
+              </p>
+              <p className="text-xs text-white/60">{t.decided}</p>
+            </div>
+          </div>
+
+          {overdue > 0 && (
+            <p className="mt-5 rounded-lg bg-error/20 px-4 py-3 text-sm text-white">
+              {t.overdueNote}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6" />
 
       {error && (
         <div className="mb-4">
           <ErrorNotice>{error}</ErrorNotice>
         </div>
       )}
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Metric label={t.open} value={value(openCases)} />
-        <Metric
-          label={t.overdue}
-          value={value(overdue)}
-          note={t.overdueNote}
-          tone={overdue > 0 ? "warning" : "plain"}
-        />
-        <Metric label={t.decided} value={value(decided)} />
-      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <Card title={t.queueTitle} description={t.queueDescription}>
@@ -201,9 +251,16 @@ export default function SubjectRequestsPage() {
                           setEvidence("");
                           setReason("");
                         }}
-                        className={`cursor-pointer border-b border-line last:border-0 ${
-                          entry.id === selectedId ? "bg-soft" : "hover:bg-soft"
-                        }`}
+                        // The edge is the urgency, read before the row is. Overdue comes from
+                        // the server's flag; "soon" is this browser's arithmetic and is only ever
+                        // allowed to say a deadline is approaching, never that one has passed.
+                        className={`cursor-pointer border-b border-l-4 border-line last:border-b-0 ${
+                          entry.overdue
+                            ? "border-l-error bg-error/5"
+                            : !entry.decidedAt && daysLeft(entry.dueAt) <= 7
+                              ? "border-l-warning bg-warning/5"
+                              : "border-l-transparent"
+                        } ${entry.id === selectedId ? "bg-soft" : "hover:bg-soft"}`}
                       >
                         <th scope="row" className="py-3.5 font-semibold text-navy">
                           {t.types[entry.requestType]}
@@ -215,14 +272,23 @@ export default function SubjectRequestsPage() {
                         </td>
                         <td className="py-3.5 text-muted tabular-nums">{day(entry.raisedAt)}</td>
                         <td className="py-3.5 tabular-nums">
-                          <span className={entry.overdue ? "font-bold text-[#b45309]" : "text-muted"}>
-                            {day(entry.dueAt)}
+                          {/* The countdown, not just the date. What a case worker needs is "four
+                              days left", and a bare 2026-09-14 makes them do the subtraction on
+                              every row of the queue. */}
+                          <span
+                            className={
+                              entry.overdue ? "font-bold text-error" : "font-semibold text-navy"
+                            }
+                          >
+                            {entry.overdue
+                              ? t.overdue
+                              : entry.decidedAt
+                                ? day(entry.dueAt)
+                                : interpolate(t.daysLeft, t.daysLeft, {
+                                    days: String(Math.max(0, daysLeft(entry.dueAt))),
+                                  })}
                           </span>
-                          {entry.overdue && (
-                            <span className="ml-2">
-                              <Pill tone="review">{t.overdue}</Pill>
-                            </span>
-                          )}
+                          <span className="ml-2 text-xs text-muted">{day(entry.dueAt)}</span>
                         </td>
                       </tr>
                     ))}
