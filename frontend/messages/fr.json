@@ -981,7 +981,8 @@
     "mappingNoIdentifierNote": "Cette livraison n’identifie personne par un numéro : la colonne du nom identifie donc le sujet. Cela ne vaut qu’au sein de votre propre organisation — un autre opérateur interrogeant la même entreprise ne trouvera rien, car rien dans le fichier ne dit qu’il s’agit de la même entreprise. Si deux lignes portent le même nom, la livraison entière est refusée : les importer reviendrait à enregistrer deux entreprises comme une seule.",
     "deriveTook": "Durée",
     "rowsFailed": "Les lignes enregistrées n’ont pas pu être chargées.",
-    "mappingFailed": "La correspondance de cette source n’a pas pu être chargée."
+    "mappingFailed": "La correspondance de cette source n’a pas pu être chargée.",
+    "eyebrow": "Échange de données"
   },
   "participants": {
     "title": "Organisations participantes",

@@ -21,13 +21,32 @@ import {
   inputClass,
   type Tone,
 } from "@/components/ui";
+import { Band, CountUp } from "@/components/visual/motion";
 
+/**
+ * How each state is painted.
+ *
+ * <p><strong>REVERTED is not REJECTED, and it stopped being red.</strong> Rejected means the
+ * platform refused a delivery; reverted means somebody deliberately took one back, which is the
+ * feature working and a decision being exercised. Painting both in the colour of failure told an
+ * operator that its own correct action was an error, and made a screen full of reverts look like a
+ * screen full of problems.
+ */
 const STATUS_TONE: Record<BatchStatus, Tone> = {
   RECEIVED: "neutral",
   VALIDATED: "review",
   PUBLISHED: "positive",
   REJECTED: "serious",
-  REVERTED: "serious",
+  REVERTED: "neutral",
+};
+
+/** The edge on a row, matching the pill beside it. */
+const STATUS_EDGE: Record<BatchStatus, string> = {
+  RECEIVED: "border-l-line",
+  VALIDATED: "border-l-warning",
+  PUBLISHED: "border-l-success",
+  REJECTED: "border-l-error",
+  REVERTED: "border-l-muted",
 };
 
 /**
@@ -119,7 +138,62 @@ export default function ImportsPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title={t.title} subtitle={t.subtitle} />
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
+          <p className="mb-6 max-w-2xl text-sm text-white/70">{t.subtitle}</p>
+
+          {/* The lifecycle, drawn, with the count at each stage. A delivery moves received →
+              validated → published, and the stage it is stuck at is the whole question an operator
+              opens this screen with. Counted over every batch, not a page: listBatches returns the
+              lot. */}
+          {batches !== null && (
+            <div className="flex flex-wrap items-center gap-3">
+              {(["RECEIVED", "VALIDATED", "PUBLISHED"] as const).map((stage, index) => (
+                <span key={stage} className="flex items-center gap-3">
+                  {index > 0 && (
+                    <span aria-hidden="true" className="text-white/30">
+                      →
+                    </span>
+                  )}
+                  <span className="rounded-lg bg-white/10 px-4 py-2.5">
+                    <span className="block text-2xl font-bold">
+                      <CountUp
+                        value={batches.filter((batch) => batch.status === stage).length}
+                      />
+                    </span>
+                    <span className="block text-xs text-white/60">{t.statuses[stage]}</span>
+                  </span>
+                </span>
+              ))}
+
+              {/* Off to the side, because they are not stages of the same journey. A rejection is
+                  the platform refusing; a revert is somebody deciding. Neither is on the way to
+                  being published. */}
+              {(["REJECTED", "REVERTED"] as const)
+                .filter((stage) => batches.some((batch) => batch.status === stage))
+                .map((stage) => (
+                  <span
+                    key={stage}
+                    className="ml-2 rounded-lg border border-white/20 px-4 py-2.5"
+                  >
+                    <span className="block text-2xl font-bold">
+                      <CountUp
+                        value={batches.filter((batch) => batch.status === stage).length}
+                      />
+                    </span>
+                    <span className="block text-xs text-white/60">{t.statuses[stage]}</span>
+                  </span>
+                ))}
+            </div>
+          )}
+        </div>
+      </Band>
+
+      <div className="mt-6" />
 
       {error && (
         <div className="mb-4">
@@ -257,7 +331,12 @@ export default function ImportsPage() {
                 </thead>
                 <tbody>
                   {batches.map((batch) => (
-                    <tr key={batch.id} className="border-b border-line last:border-0">
+                    <tr
+                      key={batch.id}
+                      className={`border-b border-l-4 border-line last:border-b-0 transition hover:bg-soft/60 ${
+                        STATUS_EDGE[batch.status]
+                      }`}
+                    >
                       <th scope="row" className="py-3.5 font-semibold text-navy">
                         {batch.filename}
                       </th>
