@@ -35,6 +35,35 @@
 # afford to introduce quietly.
 
 dip:
+  tix:
+    # A CDF floor, and an invented one.
+    #
+    # application.yml deliberately configures USD only, and says why: setting a CDF threshold means
+    # choosing a USD/CDF rate, that rate moves, and somebody accountable has to own it. An invented
+    # constant there would be a stale exchange rate dressed up as policy. That reasoning is intact
+    # and this file does not overturn it.
+    #
+    # It is here because LocalTixPortfolioSeeder seeds two currencies on purpose — the exposure view
+    # refuses to add them together, and a single-currency book cannot demonstrate that. Without a
+    # CDF floor the seeder is refused mid-run and the application exits, which is the platform
+    # working correctly and is still an instance nobody can look at.
+    #
+    # Safe because it is scoped to this profile and nothing else. Drop 'demo' from
+    # SPRING_PROFILES_ACTIVE and the floor disappears with it, so CDF is refused again the moment
+    # this instance might hold something real. The number cannot outlive the invented data it
+    # exists for.
+    #
+    # It is not the number DIP should use. That decision is still open and still belongs to a
+    # person; see docs/OLIVIER_ANSWERS.md.
+    # USD is repeated deliberately. Whether Spring merges map entries across property sources or
+    # lets the highest-precedence source replace the map wholesale is version-dependent and I have
+    # not verified it for this one. Repeating the value costs a line and removes the question; the
+    # failure it guards against is USD silently becoming undeclarable on the demo instance, which
+    # would look like the seeder breaking for a different reason entirely.
+    minimum-declarable:
+      USD: 100
+      CDF: 250000
+
   local:
     # The two operators plus the participants that make the network look like a network.
     seed-tenants: true
