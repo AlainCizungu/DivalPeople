@@ -114,6 +114,21 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:?set KEYCLOAK_ADMIN}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD}
+    # Bound to the loopback address of the host and nowhere else, so the admin console is reachable
+    # over `ssh -L 8081:localhost:8081` and by nothing on the network.
+    #
+    # This reverses an earlier decision, and the reversal is the point. The argument against was
+    # that "a port that exists is a port somebody eventually binds to 0.0.0.0 in a hurry", so the
+    # documented route was to forward to the container's address on the Docker bridge instead.
+    # That address changes every time the container is recreated, which is several times an hour
+    # during a first deployment, and each stale copy fails as a connection refused that looks like
+    # Keycloak being down. It cost five attempts to reach a login page.
+    #
+    # The `127.0.0.1:` prefix is explicit, greppable, and does not publish anything: the firewall
+    # and the security group both refuse 8081 regardless. Weigh the hypothetical edit against the
+    # certainty that the correct procedure is unusable, and this is the safer of the two.
+    ports:
+      - "127.0.0.1:8081:8081"
     depends_on:
       postgres:
         condition: service_healthy

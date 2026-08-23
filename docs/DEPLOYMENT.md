@@ -96,29 +96,19 @@ imported into a deployment.
 
 1. Reach the admin console over an SSH tunnel, because the proxy blocks it.
 
-   **Forward to the container, not to the host.** Keycloak publishes no port —
-   `docker compose ps` shows `8081/tcp` with nothing on the left of the arrow, which means the
-   port exists inside the container and on no interface of the machine. An earlier version of
-   this document said `ssh -L 8081:localhost:8081`, which tunnels to a port on the server that
-   nothing is listening on, and fails with a connection refused that looks like Keycloak being
-   down. It is not: it was never reachable that way.
-
-   On the server, ask Docker where the container is:
+   Keycloak publishes port 8081 on the host's loopback address only — `127.0.0.1:8081:8081` in
+   the compose file. Nothing on the network can reach it; the firewall and the security group
+   both refuse that port. An SSH tunnel is the only way in:
 
    ```bash
-   docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dip-keycloak-1
+   ssh -i <your-key.pem> -L 8081:localhost:8081 ubuntu@<host>
    ```
 
-   Then from your machine, forwarding to that address rather than to localhost:
-
-   ```bash
-   ssh -i <your-key.pem> -L 8081:<container ip>:8081 ubuntu@<host>
-   ```
-
-   The address is on Docker's bridge network and changes whenever the container is recreated, so
-   read it again rather than remembering it. Publishing the port on `127.0.0.1` instead would
-   also work and would survive recreation; it is not done here because a port that exists is a
-   port somebody eventually binds to `0.0.0.0` in a hurry.
+   An earlier version of this document had you forward to the container's address on the Docker
+   bridge, on the argument that publishing a port at all was the greater risk. That address
+   changes every time the container is recreated — several times an hour during a first
+   deployment — and each stale copy fails as a connection refused that reads as Keycloak being
+   down. The procedure was unusable, which is worse than the edit it was guarding against.
 
    Then open `http://localhost:8081/admin` through the tunnel.
 
