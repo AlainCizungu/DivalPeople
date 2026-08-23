@@ -66,7 +66,18 @@ services:
     restart: unless-stopped
     # `start`, not `start-dev`. The development mode disables HTTPS requirements and caching and
     # is not something to discover in production.
-    command: ["start", "--optimized", "--http-port=8081", "--proxy-headers=xforwarded"]
+    #
+    # NOT `--optimized`, and that flag cost an afternoon. It means "a build has already been run,
+    # use the persisted build-time configuration and skip the build step" — which is right only
+    # for an image you built yourself with `kc.sh build`. This is the stock image, where kc.db is
+    # still the default and kc.health-enabled is off, so --optimized made Keycloak ignore
+    # KC_DB=postgres and KC_HEALTH_ENABLED, say so in a warning, and then exit in three seconds,
+    # over and over. The warning names the two options it is discarding and does not say it is
+    # fatal, so the log reads as noise rather than as the cause.
+    #
+    # Without it, `start` runs the build itself on each boot: about fifteen seconds added to a
+    # start-up that already takes forty, in exchange for a configuration that is actually applied.
+    command: ["start", "--http-port=8081", "--proxy-headers=xforwarded"]
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB:?set KEYCLOAK_DB}
