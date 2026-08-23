@@ -114,6 +114,21 @@ for ROLE in PLATFORM_ADMIN TENANT_ADMIN HR_ADMIN HR_MANAGER PAYROLL_OFFICER FINA
         || echo "  \$ROLE (exists)"
 done
 
+echo "--- user profile"
+# Without this the next command silently does nothing useful.
+#
+# Keycloak 26 always runs the declarative user profile, and an attribute the profile does not
+# declare is discarded on write without an error. tenant_id is not declared, so creating a user
+# with attributes.tenant_id=[...] returns 201, reports success, and stores no attribute. The
+# mapper below then reads a field that does not exist, the access token carries no claim, and
+# TenantResolutionFilter refuses every request — so every sign-in works and every screen says
+# "Authentication is required". Nothing in that chain points at the realm.
+#
+# ADMIN_EDIT rather than ENABLED: administrators may read and write unmanaged attributes, the
+# account holder may not see or change them. tenant_id decides whose book this account opens and
+# is not something the person it constrains should be able to edit.
+$KC update users/profile -r $REALM -s 'unmanagedAttributePolicy=ADMIN_EDIT'
+
 echo "--- user"
 $KC create users -r $REALM \\
     -s username='$MY_USER' \\
@@ -128,6 +143,19 @@ $KC set-password -r $REALM --userid \$UID_ --new-password '$MY_PASSWORD'
 
 $KC add-roles -r $REALM --uid \$UID_ \\
     --rolename TENANT_ADMIN --rolename TIX_INQUIRER --rolename TIX_DECLARANT
+
+echo "--- checking the claim was actually stored"
+# Read it back rather than trusting the create. The failure this catches is a write that reports
+# success and stores nothing, which is how it was found: the realm looked correct in every listing
+# and the application was unusable. A create that cannot be verified is not a create.
+$KC get users/\$UID_ -r $REALM --fields attributes | grep -q '$TENANT_A' || {
+    echo >&2
+    echo "tenant_id was not stored on \$MY_USER." >&2
+    echo "Every sign-in will succeed and every screen will say 'Authentication is required'." >&2
+    echo "The user profile rejected the attribute; check unmanagedAttributePolicy above." >&2
+    exit 1
+}
+echo "  tenant_id=$TENANT_A"
 
 echo
 echo "=== client secret, for OIDC_CLIENT_SECRET in deploy.env ==="

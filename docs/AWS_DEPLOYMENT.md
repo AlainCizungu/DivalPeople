@@ -172,12 +172,47 @@ sudo mkdir -p /var/backups/dip && sudo chown $USER /var/backups/dip
 sudo mkdir -p /var/lib/dip/files && sudo chown 10001:10001 /var/lib/dip/files
 ```
 
-Then the realm, by hand, exactly as DEPLOYMENT.md describes. The redirect URI is
-`https://dip.dival.ai/api/auth/callback` and it must match to the character.
+Then the realm:
+
+```bash
+sh infra/keycloak/setup-realm.sh
+```
+
+It builds the realm, the client, the `tenant_id` mapper, every role in `Roles.java` and one account
+for you, and prints the client secret at the end — put that in `OIDC_CLIENT_SECRET` and restart the
+frontend. It talks to the admin API over the container's own loopback, so it needs no tunnel and
+cannot be blocked by the proxy. Re-running it is safe.
+
+**Do not use the admin console for this.** It is served at whatever `hostname-admin` says,
+authenticates against the master realm, and the proxy blocks `/realms/master*` on the public name
+on purpose — so it loads from one origin and signs in at another. That cost most of a day and
+produced nothing the script does not.
 
 **Do not import `infra/keycloak/realm-dip.json`.** It is a development fixture with a known client
 secret and four users whose passwords are in the repository. On a public hostname that is not a
 shortcut, it is an open door.
+
+### If every screen says "Authentication is required"
+
+Sign-in works, the backend is up, and every screen is empty with a 401. The account is missing its
+`tenant_id` attribute, so the access token carries no tenant claim and `TenantResolutionFilter`
+refuses the request before any handler sees it.
+
+Keycloak 26 always runs the declarative user profile, and an attribute the profile does not declare
+is **discarded on write without an error** — creating a user with `attributes.tenant_id=[...]`
+returns 201 and stores nothing. `setup-realm.sh` now sets `unmanagedAttributePolicy=ADMIN_EDIT`
+first and reads the attribute back afterwards, so a realm built by the current script cannot land
+in this state. A realm built before that fix can. To check:
+
+```bash
+docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml \
+  exec -T keycloak /opt/keycloak/bin/kcadm.sh get users -r dip \
+  -q username=<your username> --fields username,attributes
+```
+
+An empty `attributes` is the fault. Either re-run `setup-realm.sh`, or set the policy and the
+attribute by hand. **Then sign out completely and sign in again** — an existing session holds a
+token minted before the attribute existed, and nothing about it changes until it is replaced.
 
 ---
 
