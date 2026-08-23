@@ -98,6 +98,18 @@ services:
       KC_DB_USERNAME: ${KEYCLOAK_DB_USER:?set KEYCLOAK_DB_USER}
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set KEYCLOAK_DB_PASSWORD}
       KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:?set KEYCLOAK_HOSTNAME}
+
+      # The admin console lives at localhost, reachable only through an SSH tunnel.
+      #
+      # Without this the console is unreachable by any route. KC_HOSTNAME makes Keycloak build
+      # absolute URLs at the public name, so a request arriving as localhost:8081/admin is
+      # answered with a redirect to https://id.dival.ai/admin — which the proxy deliberately 404s.
+      # Blocked in front, redirected from behind: the runbook told you to open a console that this
+      # configuration could not serve, and the symptom is a 404 that looks like the tunnel failing.
+      #
+      # Pointing hostname-admin at localhost keeps the console off the public name — the property
+      # exists for exactly this — while making the tunnel the way in rather than a way in.
+      KC_HOSTNAME_ADMIN: http://localhost:8081
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:?set KEYCLOAK_ADMIN}
