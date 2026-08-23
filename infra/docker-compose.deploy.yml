@@ -28,6 +28,20 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_OWNER_PASSWORD:?set POSTGRES_OWNER_PASSWORD}
       # Deterministic collation, so an index built on one host behaves identically on another.
       POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+
+      # Read by postgres-init/10-keycloak-database.sh, and absent until the first real deployment
+      # went looking for them. The script requires all three and the container was given none, so
+      # on a fresh data directory it exited at its first line.
+      #
+      # That failure is silent, which is the part worth remembering. A failed init script aborts
+      # the entrypoint — but initdb has already populated PGDATA by then, so the automatic restart
+      # finds a non-empty data directory, skips initialisation entirely, and comes up healthy with
+      # no Keycloak role in it. The symptom surfaces minutes later and two containers away, as
+      # "password authentication failed for user keycloak", which is Postgres being discreet about
+      # a role that does not exist.
+      KEYCLOAK_DB: ${KEYCLOAK_DB:?set KEYCLOAK_DB}
+      KEYCLOAK_DB_USER: ${KEYCLOAK_DB_USER:?set KEYCLOAK_DB_USER}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set KEYCLOAK_DB_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       # Runs once, on an empty data directory only. Keycloak needs its own database and the
