@@ -173,6 +173,16 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
 
       DIP_OIDC_ISSUER_URI: ${OIDC_ISSUER:?set OIDC_ISSUER}
+
+      # Uploaded files: employee documents, import spreadsheets. Inside the container this path is
+      # fixed; the host side is configurable, in the same shape as BACKUP_HOST_DIR.
+      DIP_FILES_LOCAL_ROOT: /var/lib/dip/files
+    volumes:
+      # A bind mount rather than a named volume, and the reason is ownership. A named volume for a
+      # path the image does not contain is created owned by root, and the process runs as uid
+      # 10001 — so it would fail exactly as the default path did. A host directory can be chowned
+      # once, visibly, and stays correct across every recreation. See docs/AWS_DEPLOYMENT.md.
+      - ${FILES_HOST_DIR:?set FILES_HOST_DIR}:/var/lib/dip/files
     depends_on:
       postgres:
         condition: service_healthy

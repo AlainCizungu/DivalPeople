@@ -165,6 +165,11 @@ BACKUP_HOST_DIR=/var/backups/dip
 
 ```bash
 sudo mkdir -p /var/backups/dip && sudo chown $USER /var/backups/dip
+
+# Uploaded files. Owned by uid 10001 — the unprivileged account inside the backend container, not
+# a user on this host. Without the chown the application starts, reaches the file-storage bean and
+# exits with an access-denied error from a constructor, minutes into a boot that looked healthy.
+sudo mkdir -p /var/lib/dip/files && sudo chown 10001:10001 /var/lib/dip/files
 ```
 
 Then the realm, by hand, exactly as DEPLOYMENT.md describes. The redirect URI is

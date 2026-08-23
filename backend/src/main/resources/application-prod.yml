@@ -56,6 +56,17 @@ spring:
           issuer-uri: ${DIP_OIDC_ISSUER_URI}
 
 dip:
+  files:
+    # No default, like everything else in this file. The property's own default is
+    # ./build/file-storage — a Gradle output directory, which is right on a laptop and is a
+    # directory the container cannot create: WORKDIR is /app, owned by root, and the process runs
+    # as uid 10001. The application therefore failed to start with AccessDeniedException: /app/build
+    # on the first real deployment, several minutes into a boot that had otherwise gone perfectly.
+    #
+    # Stated here so the next deployment that forgets it is stopped by a missing variable rather
+    # than by a permission error thrown from a constructor.
+    local-root: ${DIP_FILES_LOCAL_ROOT}
+
   cors:
     # Empty since ADR 0003 and it should stay empty. The browser talks only to the Next.js
     # application, which calls this API server-to-server. An allowed origin here would open a
