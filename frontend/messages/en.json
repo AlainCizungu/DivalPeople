@@ -43,7 +43,12 @@
     "tenant": "Organization",
     "loading": "Loading…",
     "noResults": "No results",
-    "unexpectedError": "Something went wrong. Try again, and tell us if it keeps happening."
+    "unexpectedError": "Something went wrong. Try again, and tell us if it keeps happening.",
+    "help": "Help",
+    "profile": "Profile",
+    "exploreDip": "Explore DIP",
+    "signedInAs": "Signed in as",
+    "openMenu": "Open menu"
   },
   "dashboard": {
     "title": "Overview",
@@ -151,7 +156,33 @@
       "partial": "Complete months only — {current} is still running."
     },
     "activityDeclared": "Declared",
-    "activityInquiries": "Inquiries made"
+    "activityInquiries": "Inquiries made",
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}",
+      "organisation": "Your organisation: {name}",
+      "organisationUnknown": "Organisation not resolved",
+      "refreshed": "Last refreshed {time}",
+      "refreshing": "Loading…"
+    },
+    "network": {
+      "title": "DIP network",
+      "subtitle": "The exchange as a whole. Counted from the same records an inquiry reaches, and never resolvable to a participant.",
+      "action": "See the participants",
+      "institutions": "Participating institutions",
+      "contributingNote": "{count} holding records an inquiry can reach today",
+      "sectors": "Industries represented",
+      "sectorsNote": "Distinct sectors recorded against subjects in the network",
+      "sectorsAbsent": "No operator has mapped a sector column yet. This fills in as imports carry one.",
+      "subjects": "Network subjects",
+      "subjectsNote": "Businesses and people with at least one live record",
+      "shared": "Cross-institution matches",
+      "sharedNote": "Subjects owing two or more institutions — the figure no single operator can produce",
+      "today": "Declared today",
+      "todayNote": "Records added across the network since midnight",
+      "boundary": "These are counts and nothing else. The exchange holds no figure that says which institutions overlap, and this strip is computed so that pairing never leaves the database."
+    }
   },
   "tix": {
     "title": "Check a business",

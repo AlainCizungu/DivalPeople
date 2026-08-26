@@ -827,8 +827,28 @@ export const ingestApi = {
  * "no overdue cases" and "you may not see the overdue cases" are different statements and only
  * one of them is reassuring.
  */
+/**
+ * The exchange as a whole, shown to everybody in it.
+ *
+ * <p>Every field is a count and the shape has nowhere to put a name — that is enforced on the
+ * server, where it matters, and mirrored here so the same property is visible from the screen.
+ * `sectors` reads 0 until an operator maps a sector column on an import, which is why the strip
+ * distinguishes "none recorded" from "none".
+ */
+export type Network = {
+  institutions: number;
+  contributing: number;
+  subjects: number;
+  sectors: number;
+  sharedSubjects: number;
+  declaredToday: number;
+};
+
 export type Overview = {
   asOf: string;
+  /** What this operator calls itself. Null only if its tenant row has gone. */
+  organisation: string | null;
+  network: Network;
   register: {
     total: number;
     outstanding: number;

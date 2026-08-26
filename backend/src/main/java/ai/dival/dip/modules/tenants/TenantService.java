@@ -5,6 +5,7 @@ import ai.dival.dip.common.error.ConflictException;
 import ai.dival.dip.common.error.ResourceNotFoundException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -51,6 +52,24 @@ public class TenantService {
     @Transactional(readOnly = true)
     public Tenant get(UUID id) {
         return tenants.findById(id).orElseThrow(() -> new TenantNotFoundException(id));
+    }
+
+    /**
+     * What an operator calls itself, for showing that operator its own name.
+     *
+     * <p>Deliberately not routed through {@code TenantDirectory}, which exists to be the single
+     * chokepoint for naming <em>other</em> operators inside the exchange. Telling somebody the
+     * name of the organisation they signed into is not a disclosure in that sense at all, and
+     * putting it through the same door would add a caller to the list of "places an operator can
+     * be named" that has nothing to do with the rule that list exists to police.
+     *
+     * <p>Empty rather than throwing. The header calls this on every page load, and a tenant row
+     * that has been tidied up under a live session should degrade to a bar without an
+     * organisation name — not to a five hundred on the screen somebody lands on after signing in.
+     */
+    @Transactional(readOnly = true)
+    public Optional<String> nameOf(UUID id) {
+        return tenants.findById(id).map(Tenant::getName);
     }
 
     /** Creates a tenant with a generated identifier. */

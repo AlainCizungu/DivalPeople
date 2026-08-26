@@ -43,7 +43,12 @@
     "tenant": "Organisation",
     "loading": "Chargement…",
     "noResults": "Aucun résultat",
-    "unexpectedError": "Une erreur est survenue. Réessayez, et signalez-le si cela persiste."
+    "unexpectedError": "Une erreur est survenue. Réessayez, et signalez-le si cela persiste.",
+    "help": "Aide",
+    "profile": "Profil",
+    "exploreDip": "Explorer DIP",
+    "signedInAs": "Connecté en tant que",
+    "openMenu": "Ouvrir le menu"
   },
   "dashboard": {
     "title": "Vue d’ensemble",
@@ -151,7 +156,33 @@
       "partial": "Mois complets uniquement — {current} est encore en cours."
     },
     "activityDeclared": "Déclarés",
-    "activityInquiries": "Interrogations effectuées"
+    "activityInquiries": "Interrogations effectuées",
+    "greeting": {
+      "morning": "Bonjour, {name}",
+      "afternoon": "Bon après-midi, {name}",
+      "evening": "Bonsoir, {name}",
+      "organisation": "Votre organisation : {name}",
+      "organisationUnknown": "Organisation non résolue",
+      "refreshed": "Actualisé à {time}",
+      "refreshing": "Chargement…"
+    },
+    "network": {
+      "title": "Réseau DIP",
+      "subtitle": "L'échange dans son ensemble. Compté sur les mêmes enregistrements qu'une interrogation atteint, et jamais rattachable à un participant.",
+      "action": "Voir les participants",
+      "institutions": "Institutions participantes",
+      "contributingNote": "{count} détenant des enregistrements atteignables aujourd'hui",
+      "sectors": "Secteurs représentés",
+      "sectorsNote": "Secteurs distincts enregistrés pour les sujets du réseau",
+      "sectorsAbsent": "Aucun opérateur n'a encore associé une colonne de secteur. Ce chiffre se remplit dès qu'un import en porte une.",
+      "subjects": "Sujets du réseau",
+      "subjectsNote": "Entreprises et personnes ayant au moins un enregistrement actif",
+      "shared": "Correspondances inter-institutions",
+      "sharedNote": "Sujets devant à deux institutions ou plus — le chiffre qu'aucun opérateur seul ne peut produire",
+      "today": "Déclarés aujourd'hui",
+      "todayNote": "Enregistrements ajoutés dans le réseau depuis minuit",
+      "boundary": "Ce ne sont que des comptages. L'échange ne détient aucun chiffre indiquant quelles institutions se recoupent, et cette bande est calculée de sorte que cette association ne quitte jamais la base."
+    }
   },
   "tix": {
     "title": "Vérifier une entreprise",

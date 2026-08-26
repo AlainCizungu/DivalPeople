@@ -1,7 +1,10 @@
 package ai.dival.dip.modules.overview;
 
+import ai.dival.dip.common.tenancy.TenantContext;
 import ai.dival.dip.modules.ingest.IngestService;
+import ai.dival.dip.modules.tenants.TenantService;
 import ai.dival.dip.modules.tix.DebtRecordService;
+import ai.dival.dip.modules.tix.NetworkService;
 import ai.dival.dip.modules.tix.SubjectRightsService;
 import java.time.Clock;
 import java.time.Instant;
@@ -53,13 +56,18 @@ public class OverviewService {
     private final DebtRecordService debtRecords;
     private final SubjectRightsService rights;
     private final IngestService ingest;
+    private final NetworkService network;
+    private final TenantService tenants;
     private final Clock clock;
 
     public OverviewService(DebtRecordService debtRecords, SubjectRightsService rights,
-                           IngestService ingest, Clock clock) {
+                           IngestService ingest, NetworkService network, TenantService tenants,
+                           Clock clock) {
         this.debtRecords = debtRecords;
         this.rights = rights;
         this.ingest = ingest;
+        this.network = network;
+        this.tenants = tenants;
         this.clock = clock;
     }
 
@@ -81,24 +89,37 @@ public class OverviewService {
         // queried, so the refusal costs nothing and leaves no trace of the question.
         return new Overview(
                 today,
+                // Not gated on a role. It is the name of the organisation the caller is signed
+                // into, which they already know; withholding it would only make the header worse
+                // for somebody with narrow permissions.
+                tenants.nameOf(TenantContext.require()).orElse(null),
                 canDeclare
                         ? debtRecords.register(today, today.plusDays(RETENTION_HORIZON_DAYS))
                         : null,
                 canSeeCases
                         ? rights.queue(now, now.plus(RIGHTS_HORIZON_DAYS, ChronoUnit.DAYS))
                         : null,
-                canDeclare ? ingest.deliverySummary() : null);
+                canDeclare ? ingest.deliverySummary() : null,
+                // Also ungated, and that is the decision this section rests on. These are counts
+                // of the exchange as a whole, and the argument for showing them to everybody is
+                // that none of them can be turned into the identity of a participant — see
+                // NetworkService, which is where that is actually enforced.
+                network.summarise());
     }
 
     /**
-     * @param asOf       the date the figures were counted on, so a stale tab is obvious
-     * @param register   null when the caller may not see the operator's own records
-     * @param rights     null when the caller may not see the rights queue
-     * @param deliveries null when the caller may not see imports
+     * @param asOf         the date the figures were counted on, so a stale tab is obvious
+     * @param organisation what this operator calls itself; null if its row has gone
+     * @param register     null when the caller may not see the operator's own records
+     * @param rights       null when the caller may not see the rights queue
+     * @param deliveries   null when the caller may not see imports
+     * @param network      the exchange as a whole, and the only section not about the caller
      */
     public record Overview(LocalDate asOf,
+                           String organisation,
                            DebtRecordService.RegisterSummary register,
                            SubjectRightsService.RightsQueue rights,
-                           IngestService.DeliverySummary deliveries) {
+                           IngestService.DeliverySummary deliveries,
+                           NetworkService.Network network) {
     }
 }

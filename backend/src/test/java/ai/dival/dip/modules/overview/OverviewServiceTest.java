@@ -177,6 +177,41 @@ class OverviewServiceTest extends AbstractIntegrationTest {
         assertThat(overview.forCaller(false, false).asOf()).isEqualTo(LocalDate.now(clock));
     }
 
+    @Test
+    @DisplayName("the organisation is the caller's own, whatever their roles")
+    void theOrganisationIsResolvedAndIsTheCallersOwn() {
+        // The header used to label the signed-in person's name "Organization", which asserted
+        // something false about whose book was on screen on a platform whose premise is that an
+        // operator sees its own and no other. This is the figure that replaced it.
+        assertThat(overview.forCaller(true, true).organisation()).isEqualTo("Overview A");
+
+        // Ungated on purpose: it is the name of the organisation the caller signed into, which
+        // they already know. Withholding it from an inquirer would leave the header worse for
+        // exactly the accounts with the narrowest permissions.
+        assertThat(overview.forCaller(false, false).organisation()).isEqualTo("Overview A");
+
+        assertThat(TenantContext.runAsResult(other, () -> overview.forCaller(true, true))
+                .organisation())
+                .as("the name follows the bound tenant, not the row that happens to be first")
+                .isEqualTo("Overview B");
+    }
+
+    @Test
+    @DisplayName("the network section is present for a caller entitled to nothing else")
+    void theNetworkIsShownToEverybody() {
+        declare("1");
+
+        OverviewService.Overview result = overview.forCaller(false, false);
+
+        // Every other section of this response is null for this caller. The network is not, and
+        // that is the disclosure decision the strip rests on: these are counts of the exchange as
+        // a whole, and none of them can be resolved to a participant. NetworkServiceUnderRlsTest
+        // is where that property is actually held down.
+        assertThat(result.network()).isNotNull();
+        assertThat(result.network().institutions()).isPositive();
+        assertThat(result.network().subjects()).isPositive();
+    }
+
     private String rccm(String n) {
         return "CD/KIN/RCCM/" + suffix + "-" + n;
     }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/auth/SessionProvider";
 import { notificationsApi } from "@/api/client";
 import { useMessages } from "@/i18n/LocaleProvider";
@@ -319,25 +319,53 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="font-bold text-navy">{messages.app.name}</span>
           </div>
 
-          <p className="hidden text-sm text-muted md:block">
-            {messages.common.tenant}:{" "}
-            <span className="font-semibold text-ink">{displayName}</span>
-            {tenantId && (
-              <span className="ml-2 rounded bg-soft px-2 py-0.5 font-mono text-xs">
-                {tenantId.slice(0, 8)}
-              </span>
-            )}
-          </p>
+          {/* The label used to read "Organization" and the value was the signed-in person's
+              name. Not a styling problem: the bar asserted something false about which
+              institution's book was on screen, on a platform whose entire premise is that an
+              operator sees its own book and no other. The organisation's real name is on the
+              overview, where the server actually resolves it; this is now the person, labelled
+              as the person. */}
+          <div className="hidden min-w-0 md:block" />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <LanguageSwitcher />
-            <button
-              type="button"
-              onClick={() => void signOut()}
-              className="rounded px-3 py-1.5 text-sm font-semibold text-ink transition hover:text-blue"
+
+            <TopBarLink
+              href="/app/notifications"
+              label={messages.nav.notifications}
+              badge={unreadCount}
             >
-              {messages.common.signOut}
-            </button>
+              <path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 01-3.4 0" />
+            </TopBarLink>
+
+            <TopBarMenu label={messages.common.help}>
+              {(close) => (
+                <MenuLink href="/app#everything" onClick={close}>
+                  {messages.common.exploreDip}
+                </MenuLink>
+              )}
+            </TopBarMenu>
+
+            <TopBarMenu label={messages.common.profile}>
+              {() => (
+                <>
+                  <div className="border-b border-line px-4 py-3">
+                    <p className="text-xs text-muted">{messages.common.signedInAs}</p>
+                    <p className="truncate text-sm font-semibold text-navy">{displayName}</p>
+                    {tenantId && (
+                      <p className="mt-1 font-mono text-xs text-muted">{tenantId.slice(0, 8)}</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void signOut()}
+                    className="w-full px-4 py-2.5 text-left text-sm font-semibold text-ink transition hover:bg-soft hover:text-blue"
+                  >
+                    {messages.common.signOut}
+                  </button>
+                </>
+              )}
+            </TopBarMenu>
           </div>
         </header>
 
@@ -348,5 +376,144 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <AskDipLauncher />
       </div>
     </div>
+  );
+}
+
+/**
+ * An icon in the top bar that goes somewhere, with a count on it when there is one.
+ *
+ * <p>The notifications entry now appears twice — here and in the left menu under Governance — and
+ * that duplication is deliberate rather than an oversight. The menu entry says where the screen
+ * lives in the platform's shape; this one is the thing people look at without reading. Both draw
+ * their badge from the same state, so they cannot disagree about the number.
+ *
+ * <p>The count is in the accessible name, not only in a coloured circle. "Notifications" and
+ * "Notifications, 3 unread" are different facts and a screen reader is entitled to the second.
+ */
+function TopBarLink({
+  href,
+  label,
+  badge,
+  children,
+}: {
+  href: string;
+  label: string;
+  badge: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-label={badge > 0 ? `${label} (${badge})` : label}
+      title={label}
+      className="relative rounded p-2 text-ink transition hover:bg-soft hover:text-blue"
+    >
+      <svg
+        aria-hidden="true"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {children}
+      </svg>
+      {badge > 0 && (
+        <span
+          aria-hidden="true"
+          className="absolute top-0.5 right-0.5 min-w-[16px] rounded-full bg-blue px-1 text-center text-[10px] leading-4 font-bold text-white tabular-nums"
+        >
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+/**
+ * A labelled button that opens a small panel beneath it.
+ *
+ * <p>Closes on Escape, on a click anywhere outside, and on any navigation from inside — the
+ * children are given the close function so a link can dismiss the panel it lives in rather than
+ * leaving it hanging open over the new page.
+ *
+ * <p>Escape and outside-click are not decoration. A menu that can only be closed by clicking its
+ * own button is a keyboard trap for somebody who opened it by accident, and this one sits in the
+ * bar of every screen.
+ */
+function TopBarMenu({
+  label,
+  children,
+}: {
+  label: string;
+  children: (close: () => void) => React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const holder = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    const onClick = (event: MouseEvent) => {
+      if (holder.current && !holder.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onClick);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onClick);
+    };
+  }, [open]);
+
+  return (
+    <div ref={holder} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="rounded px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-soft hover:text-blue"
+      >
+        {label}
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-20 mt-1 w-60 overflow-hidden rounded-lg border border-line bg-white shadow-lg"
+        >
+          {children(() => setOpen(false))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenuLink({
+  href,
+  onClick,
+  children,
+}: {
+  href: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      role="menuitem"
+      onClick={onClick}
+      className="block px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-soft hover:text-blue"
+    >
+      {children}
+    </Link>
   );
 }

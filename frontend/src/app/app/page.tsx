@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
 import { monthLabel } from "@/i18n/month";
+import type { Messages } from "@/i18n/messages";
 import { useSession } from "@/auth/SessionProvider";
 import {
   executiveApi,
@@ -17,6 +18,7 @@ import {
   type SearchResult,
 } from "@/api/client";
 import { Directory } from "@/components/dashboard/Directory";
+import { NetworkStrip } from "@/components/dashboard/NetworkStrip";
 import { Spotlight } from "@/components/dashboard/Spotlight";
 import { CountUp, HoverTile, MiniSpark, Ring, Sparkline, Trend } from "@/components/visual/motion";
 import { Button, Card, EmptyState, SectionHeading, inputClass } from "@/components/ui";
@@ -37,6 +39,37 @@ const TIER = {
   book: "#0a7f8c",
   activity: "#5b4bd6",
 } as const;
+
+/**
+ * Morning, afternoon or evening, by the reader's own clock.
+ *
+ * <p>The browser's clock and not the server's, deliberately. The server runs in UTC and DIP's
+ * users are in Kinshasa and Lubumbashi; a greeting computed there would say good evening to
+ * somebody having lunch. This is the one figure on the page that should not come from the
+ * backend, because it is about the reader rather than about the data.
+ *
+ * <p>Boundaries at 12 and 18. There is no correct answer and any choice is wrong for somebody, so
+ * this is the conventional one rather than a considered one.
+ */
+function greetingFor(now: Date, t: Messages["dashboard"]["greeting"]): string {
+  const hour = now.getHours();
+  if (hour < 12) return t.morning;
+  if (hour < 18) return t.afternoon;
+  return t.evening;
+}
+
+/**
+ * The name somebody would answer to.
+ *
+ * <p>"Alain CIZUNGU" greeted in full reads like a letter from a bank. Taking the first
+ * whitespace-separated token is right for the names this platform actually holds and wrong for
+ * some it may meet — a two-part given name, a name written family-first. It degrades to the whole
+ * string when there is nothing to split, which is the safe direction: greeting somebody by their
+ * full name is stiff, and greeting them by the wrong half is worse.
+ */
+function firstNameOf(displayName: string): string {
+  return displayName.trim().split(/\s+/)[0] ?? displayName;
+}
 
 /**
  * The platform's front door.
@@ -91,13 +124,28 @@ export default function DashboardPage() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [briefing, setBriefing] = useState<ExecutiveBriefing | null>(null);
   const [failed, setFailed] = useState(false);
+  /**
+   * When the figures on screen arrived.
+   *
+   * <p>Every count in this response is computed at request time, so the moment the fetch returned
+   * is the moment the figures were true — which makes "last refreshed" an honest label rather
+   * than an approximation. It is deliberately not {@code asOf}, which is a date and answers a
+   * different question: which day the retention and deadline windows were measured against.
+   *
+   * <p>Its real job is a tab left open since yesterday. Counts do not visibly age, and a screen
+   * that cannot say when it last spoke to the server is one somebody acts on hours late.
+   */
+  const [loadedAt, setLoadedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
         const loaded = await overviewApi.load();
-        if (!cancelled) setOverview(loaded);
+        if (!cancelled) {
+          setOverview(loaded);
+          setLoadedAt(new Date());
+        }
       } catch {
         if (!cancelled) setFailed(true);
       }
@@ -123,6 +171,13 @@ export default function DashboardPage() {
   const deliveries = overview?.deliveries ?? null;
 
   const roles = profile?.roles ?? [];
+
+  // Recomputed on every render, which is what makes the greeting correct for somebody who leaves
+  // the tab open across noon. It costs a Date and nothing else.
+  const now = new Date();
+  const firstName = firstNameOf(
+    profile?.name ?? profile?.preferredUsername ?? profile?.email ?? "",
+  );
 
   /**
    * What the band rotates through, in the order somebody should deal with it.
@@ -213,13 +268,42 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-navy">{t.title}</h1>
-          <p className="mt-1 text-sm text-muted">
-            {t.subtitle.replace("{date}", overview?.asOf ?? "…")}
-          </p>
-        </div>
+      {/* The greeting lives here rather than in the top bar, and the reason is a cost rather
+          than a preference: the organisation's name comes from the overview response, and the
+          top bar is on every screen. Fetching it app-wide would make every page pay for the
+          network aggregation this endpoint now does, to draw a line that only makes sense on the
+          page somebody lands on after signing in. */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight text-navy">
+          {interpolate(greetingFor(now, t.greeting), greetingFor(now, t.greeting), {
+            name: firstName,
+          })}
+        </h1>
+        <p className="mt-1 text-sm font-semibold text-muted">{messages.app.platform}</p>
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+          <span>
+            {overview?.organisation
+              ? interpolate(t.greeting.organisation, t.greeting.organisation, {
+                  name: overview.organisation,
+                })
+              : loading
+                ? t.greeting.refreshing
+                : t.greeting.organisationUnknown}
+          </span>
+          {loadedAt && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>
+                {interpolate(t.greeting.refreshed, t.greeting.refreshed, {
+                  time: loadedAt.toLocaleTimeString(locale, {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                })}
+              </span>
+            </>
+          )}
+        </p>
       </div>
 
       {loading ? (
@@ -400,10 +484,19 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* TIER FOUR, and unconditional. The counts above are what is happening; this is what
+      {/* The exchange itself, after the caller's own book and before the directory. Deliberately
+          not at the top: what is waiting on somebody this morning outranks how large the network
+          is, however good the second one looks in a demonstration. */}
+      {overview && <NetworkStrip network={overview.network} />}
+
+      {/* TIER FIVE, and unconditional. The counts above are what is happening; this is what
           exists, and it renders even when the overview call failed — a page that cannot reach the
-          server should still be able to tell somebody where everything is. */}
-      <Directory />
+          server should still be able to tell somebody where everything is.
+
+          The id is the target of Help → Explore DIP in the top bar. */}
+      <div id="everything" className="scroll-mt-6">
+        <Directory />
+      </div>
     </div>
   );
 }

@@ -192,6 +192,77 @@ public interface DebtRecordRepository extends JpaRepository<DebtRecord, UUID> {
             + "group by 1 order by 1", nativeQuery = true)
     List<Object[]> countByMonth(@Param("tenantId") UUID tenantId, @Param("since") Instant since);
 
+    /**
+     * The size of the network: contributing operators, subjects, and sectors.
+     *
+     * <p><strong>Every one of these is a count and none of them can become a name.</strong> That
+     * is the property that makes the figures showable to every operator: {@code COUNT(DISTINCT
+     * tenant_id)} answers "how many institutions" and cannot be persuaded to answer "which". A
+     * query that selected the ids and let the caller count them would return the same number and
+     * would put the ids in a process that has no business holding them.
+     *
+     * <p>Three counts in one statement because they share a scan and a filter. Split across three
+     * queries they could also disagree with each other — a record settled between the first and
+     * the third would give a subject count that does not match the operator count that produced
+     * it, which is exactly the kind of inconsistency nobody can reproduce.
+     *
+     * <p>{@code retention_until >= today} is what "in the network" means. A record past its
+     * retention date is invisible to the exchange and counting it here would advertise a network
+     * larger than any inquiry can actually reach. Merged subjects are excluded for the same
+     * reason: they are one company counted twice.
+     *
+     * <p>{@code COUNT(DISTINCT sector)} skips nulls in Postgres, so this counts sectors somebody
+     * actually recorded rather than treating "unknown" as an industry. It reads zero until an
+     * operator maps a sector column on an import, which is the truth and not a defect.
+     *
+     * <p>Requires exchange mode. Without it the RLS policy narrows every count to the caller's own
+     * tenant and the network appears to be one institution — a wrong answer that looks entirely
+     * plausible, which is why {@link NetworkService} turns the flag on in the same transaction
+     * rather than trusting a caller to have done it.
+     */
+    @Query(value = "select count(distinct d.tenant_id), count(distinct d.subject_id), "
+            + "count(distinct s.sector) "
+            + "from tix_debt_record d join tix_subject s on s.id = d.subject_id "
+            + "where d.retention_until >= :today and s.merged_into_subject_id is null",
+            nativeQuery = true)
+    List<Object[]> networkTotals(@Param("today") LocalDate today);
+
+    /**
+     * Subjects that owe two or more operators at once.
+     *
+     * <p>The one figure that only exists because the exchange does. An operator can count its own
+     * defaulters from its own book; nobody can count the companies defaulting on several
+     * institutions simultaneously without a shared registry, and that number is the argument for
+     * DIP existing.
+     *
+     * <p>Aggregated to a single count in the database on purpose. The intermediate rows pair a
+     * subject with a set of operators, which is precisely the disclosure the exchange refuses —
+     * so it is collapsed by {@code count(*)} before anything leaves Postgres rather than being
+     * fetched and reduced in Java, where the pairing would exist in memory and in a heap dump.
+     */
+    @Query(value = "select count(*) from ("
+            + "  select d.subject_id from tix_debt_record d "
+            + "  join tix_subject s on s.id = d.subject_id "
+            + "  where d.retention_until >= :today and s.merged_into_subject_id is null "
+            + "  group by d.subject_id having count(distinct d.tenant_id) >= 2"
+            + ") shared", nativeQuery = true)
+    long countSubjectsOwingTwoOrMoreOperators(@Param("today") LocalDate today);
+
+    /**
+     * Records declared across the whole network in a window.
+     *
+     * <p>Half-open — {@code >= from} and {@code < to} — so a record written at exactly midnight is
+     * counted by one day and not by both.
+     *
+     * <p>Declarations only, and the omission is deliberate rather than an oversight: inquiries
+     * would make this a better figure and they live in {@code audit_event}, whose policy is tenant
+     * isolation with no exchange clause. Counting them network-wide means changing that policy,
+     * which is a decision about the audit trail and too large to make for a dashboard tile.
+     */
+    @Query(value = "select count(*) from tix_debt_record "
+            + "where created_at >= :from and created_at < :to", nativeQuery = true)
+    long countDeclaredBetween(@Param("from") Instant from, @Param("to") Instant to);
+
     // mode — and exchange mode appears in the policy's USING clause, which governs DELETE as well
     // as SELECT. Turning it on inside the write transaction that declares a debt would open a
     // window in which a cross-tenant delete was possible, to answer a question that has a purely
