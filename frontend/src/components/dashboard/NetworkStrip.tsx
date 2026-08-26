@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMessages } from "@/i18n/LocaleProvider";
+import { useSession } from "@/auth/SessionProvider";
 import { interpolate } from "@/i18n/interpolate";
 import { CountUp } from "@/components/visual/motion";
 import type { Network } from "@/api/client";
@@ -33,6 +34,8 @@ const ACCENT = "#0b1f3a";
 
 export function NetworkStrip({ network }: { network: Network }) {
   const t = useMessages().dashboard.network;
+  const { profile } = useSession();
+  const isPlatformAdmin = profile?.roles.includes("PLATFORM_ADMIN") ?? false;
 
   /**
    * Five figures, in the order somebody meets the idea.
@@ -103,9 +106,21 @@ export function NetworkStrip({ network }: { network: Network }) {
           </div>
           <p className="mt-1.5 max-w-2xl text-sm text-muted">{t.subtitle}</p>
         </div>
-        <Link href="/app/participants" className="text-sm font-bold text-blue hover:underline">
-          {t.action} →
-        </Link>
+        {/* Only for whoever runs the network.
+            This link shipped ungated and sent every operator to a screen that refuses them: the
+            participants list is PLATFORM_ADMIN, and both the menu and the directory already knew
+            that — they are built from buildNavigation, which drops the entry. This was the one
+            link on the platform written by hand, and it went straight past the rule the shared
+            list exists to enforce.
+
+            No substitute link when the caller is not an administrator. The obvious candidates —
+            the inquiry, the exchange — are already on this page above, and an action invented to
+            fill the space would be worse than a heading without one. */}
+        {isPlatformAdmin && (
+          <Link href="/app/participants" className="text-sm font-bold text-blue hover:underline">
+            {t.action} →
+          </Link>
+        )}
       </div>
 
       <div
