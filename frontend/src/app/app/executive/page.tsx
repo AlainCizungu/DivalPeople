@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useMessages, useLocale } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
+import { monthLabel } from "@/i18n/month";
 import {
   ApiError,
   executiveApi,
@@ -257,12 +258,8 @@ function ActivityChart({
     ...months.map((m) => Math.max(m.declared, m.inquiries, m.refused)),
   );
 
-  const monthLabel = (iso: string) => {
-    const [year, month] = iso.split("-");
-    return new Intl.DateTimeFormat(locale, { month: "short" }).format(
-      new Date(Number(year), Number(month) - 1, 1),
-    );
-  };
+  // Shared with the overview's trend caption, so the two screens cannot name a month differently.
+  const label = (iso: string) => monthLabel(iso, locale);
 
   if (months.every((m) => m.declared === 0 && m.inquiries === 0 && m.refused === 0)) {
     return <EmptyState>{t.activityEmpty}</EmptyState>;
@@ -303,7 +300,7 @@ function ActivityChart({
             {months.map((m) => (
               <tr key={m.month} className="border-b border-line/60 last:border-0">
                 <td className="py-2 pr-3 whitespace-nowrap text-muted">
-                  {monthLabel(m.month)}{" "}
+                  {label(m.month)}{" "}
                   <span className="text-xs">{m.month.slice(0, 4)}</span>
                 </td>
                 <Bar value={m.declared} peak={peak} className="bg-navy" />

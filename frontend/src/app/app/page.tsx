@@ -3,21 +3,40 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMessages } from "@/i18n/LocaleProvider";
+import { useLocale, useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
+import { monthLabel } from "@/i18n/month";
 import { useSession } from "@/auth/SessionProvider";
 import {
   executiveApi,
   overviewApi,
   tixApi,
   type ExecutiveBriefing,
+  type ExecutiveMonth,
   type Overview,
   type SearchResult,
 } from "@/api/client";
 import { Directory } from "@/components/dashboard/Directory";
 import { Spotlight } from "@/components/dashboard/Spotlight";
-import { HoverTile, Ring, Sparkline } from "@/components/visual/motion";
-import { Button, Card, EmptyState, inputClass } from "@/components/ui";
+import { CountUp, HoverTile, MiniSpark, Ring, Sparkline, Trend } from "@/components/visual/motion";
+import { Button, Card, EmptyState, SectionHeading, inputClass } from "@/components/ui";
+
+/**
+ * One colour per tier, and none of them from the severity palette.
+ *
+ * <p>Taken from the directory's seven, so a reader who learns that teal is the register down here
+ * meets the same teal in the directory tile that opens it. The alternative — picking four fresh
+ * colours for this page — would give DIP two colour systems that agree about nothing.
+ *
+ * <p>Green, amber and red are absent on purpose and the omission is the point of the whole
+ * scheme: those three say something is wrong, and a section heading never is.
+ */
+const TIER = {
+  ask: "#1f6feb",
+  waiting: "#0b1f3a",
+  book: "#0a7f8c",
+  activity: "#5b4bd6",
+} as const;
 
 /**
  * The platform's front door.
@@ -50,10 +69,22 @@ import { Button, Card, EmptyState, inputClass } from "@/components/ui";
  * this page. It is the same thirteen months the executive screen draws, so two screens cannot
  * disagree about a month, and it is fetched separately so that a caller entitled to one and not
  * the other still gets a working page.
+ *
+ * <p><strong>Three tiers, and the gaps between them are wider than the gaps inside them.</strong>
+ * The page was previously a column of boxes at one weight — a missed statutory deadline was drawn
+ * the same size as a delivery somebody had not got round to — so it had to be read in full to be
+ * read at all. Now: ask a question, then what is waiting, then the book, then the directory, each
+ * under a heading with one accent colour and separated by more air than anything within it.
+ *
+ * <p><strong>Colour is spent only where something is wrong.</strong> Amber means a statutory
+ * deadline falls this week; red means one has already passed, or records are sitting past their
+ * retention date. Nothing else on this page is ever coloured — deliveries in particular used to
+ * render amber merely for existing, which is how a palette stops meaning anything.
  */
 export default function DashboardPage() {
   const messages = useMessages();
   const t = messages.dashboard;
+  const { locale } = useLocale();
   const { profile } = useSession();
   const router = useRouter();
 
@@ -182,7 +213,7 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-navy">{t.title}</h1>
           <p className="mt-1 text-sm text-muted">
@@ -199,129 +230,300 @@ export default function DashboardPage() {
         <Spotlight slides={slides} />
       )}
 
-      {/* Two questions, side by side, and the pairing is the teaching. "Is this company in OUR
+      {/* TIER ONE — the thing somebody opens this platform to do.
+          Two questions, side by side, and the pairing is the teaching. "Is this company in OUR
           book?" is free and instant; "does anybody else report them?" costs an inquiry and is
           recorded. People conflate the two constantly, and putting them next to each other with
           different weights says which is which without a paragraph. */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <LookupBar />
-        {roles.includes("TIX_INQUIRER") && <InquiryCta />}
-      </div>
+      <section className="mt-12">
+        <SectionHeading
+          title={t.sections.lookupTitle}
+          note={t.sections.lookupNote}
+          accent={TIER.ask}
+        />
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <LookupBar />
+          {roles.includes("TIX_INQUIRER") && <InquiryCta />}
+        </div>
+      </section>
 
       {!loading && (
         <>
-          <h2 className="mt-8 mb-3 text-xs font-semibold tracking-[0.16em] text-muted uppercase">
-            {t.waitingTitle}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <HoverTile
-              href="/app/subject-requests"
-              label={t.overdue}
-              value={rights?.overdue ?? null}
-              reveal={t.overdueNote}
-              tone={(rights?.overdue ?? 0) > 0 ? "serious" : "plain"}
+          {/* TIER TWO — what is waiting, and the only place on the page that spends colour. */}
+          <section className="mt-16">
+            <SectionHeading
+              title={t.waitingTitle}
+              note={t.sections.waitingNote}
+              accent={TIER.waiting}
+              action={
+                <Link
+                  href="/app/subject-requests"
+                  className="text-sm font-bold text-blue hover:underline"
+                >
+                  {t.actions.openCases} →
+                </Link>
+              }
             />
-            <HoverTile
-              href="/app/subject-requests"
-              label={t.dueSoon}
-              value={rights?.dueSoon ?? null}
-              reveal={t.dueSoonNote}
-              tone={(rights?.dueSoon ?? 0) > 0 ? "warning" : "plain"}
-            />
-            <HoverTile
-              href="/app/imports"
-              label={t.awaitingValidation}
-              value={deliveries?.awaitingValidation ?? null}
-              reveal={t.awaitingValidationNote}
-              tone={(deliveries?.awaitingValidation ?? 0) > 0 ? "warning" : "plain"}
-            />
-            <HoverTile
-              href="/app/imports"
-              label={t.awaitingPublication}
-              value={deliveries?.awaitingPublication ?? null}
-              reveal={t.awaitingPublicationNote}
-              tone={(deliveries?.awaitingPublication ?? 0) > 0 ? "warning" : "plain"}
-            />
-          </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <Card title={t.registerTitle} description={t.registerDescription}>
-              {register === null ? (
-                // Absent, not nought. "You have declared nothing" and "this is not yours to see"
-                // are different statements, and showing the first when you mean the second is a
-                // false reassurance.
-                <EmptyState>{t.noRegister}</EmptyState>
-              ) : (
-                <>
-                  <Ring
-                    total={register.total}
-                    caption={t.declaredRecords}
-                    segments={[
-                      {
-                        label: t.openRecords,
-                        value: register.outstanding,
-                        colour: "var(--color-error)",
-                      },
-                      {
-                        label: t.contestedRecords,
-                        value: register.contested,
-                        colour: "var(--color-warning)",
-                      },
-                      {
-                        label: t.settledRecords,
-                        value: register.settled,
-                        colour: "var(--color-success)",
-                      },
-                    ]}
-                  />
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <HoverTile
-                      href="/app/tix/portfolio"
-                      label={t.expiringSoon}
-                      value={register.expiringSoon}
-                      reveal={t.expiringNote}
-                    />
-                    <HoverTile
-                      href="/app/tix/portfolio"
-                      label={t.awaitingErasure}
-                      value={register.awaitingErasure}
-                      reveal={t.awaitingErasureNote}
-                      tone={register.awaitingErasure > 0 ? "serious" : "plain"}
-                    />
-                  </div>
-                </>
-              )}
-            </Card>
+            {/* The two statutory figures, at lead size. They are the only counts here that carry
+                a legal consequence for being ignored: Article 214 makes a missed deadline grounds
+                in itself for a complaint. Everything else in this section is work. */}
+            <div className="grid gap-5 lg:grid-cols-2">
+              <HoverTile
+                size="lead"
+                href="/app/subject-requests"
+                label={t.overdue}
+                value={rights?.overdue ?? null}
+                reveal={t.overdueNote}
+                action={t.actions.investigate}
+                tone={(rights?.overdue ?? 0) > 0 ? "serious" : "plain"}
+              />
+              <HoverTile
+                size="lead"
+                href="/app/subject-requests"
+                label={t.dueSoon}
+                value={rights?.dueSoon ?? null}
+                reveal={t.dueSoonNote}
+                action={t.actions.openCases}
+                tone={(rights?.dueSoon ?? 0) > 0 ? "warning" : "plain"}
+              />
+            </div>
 
-            <Card title={t.activityTitle} description={t.activityDescription}>
-              {activity === null || activity.length === 0 ? (
-                <EmptyState>{t.noActivity}</EmptyState>
-              ) : (
-                <>
-                  <Sparkline
-                    label={t.activityTitle}
-                    months={activity.map((month) => ({
-                      month: month.month,
-                      value: month.declared,
-                    }))}
-                  />
+            {/* Deliveries, deliberately quieter and deliberately never coloured. A file somebody
+                uploaded and has not validated yet is the ordinary state of a working queue; it
+                was rendering amber merely for being non-zero, which taught people that amber on
+                this page means nothing in particular and cost the two figures above their
+                loudness. */}
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <HoverTile
+                href="/app/imports"
+                label={t.awaitingValidation}
+                value={deliveries?.awaitingValidation ?? null}
+                reveal={t.awaitingValidationNote}
+              />
+              <HoverTile
+                href="/app/imports"
+                label={t.awaitingPublication}
+                value={deliveries?.awaitingPublication ?? null}
+                reveal={t.awaitingPublicationNote}
+              />
+            </div>
+          </section>
+
+          {/* TIER THREE — the book. Counts rather than obligations: nothing here is money. */}
+          <section className="mt-16">
+            <SectionHeading
+              title={t.sections.bookTitle}
+              note={t.sections.bookNote}
+              accent={TIER.book}
+            />
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card
+                title={t.registerTitle}
+                description={t.registerDescription}
+                accent={TIER.book}
+                emphasis
+                action={
+                  <Link
+                    href="/app/tix/records"
+                    className="text-sm font-bold whitespace-nowrap text-blue hover:underline"
+                  >
+                    {t.actions.openRecords} →
+                  </Link>
+                }
+              >
+                {register === null ? (
+                  // Absent, not nought. "You have declared nothing" and "this is not yours to see"
+                  // are different statements, and showing the first when you mean the second is a
+                  // false reassurance.
+                  <EmptyState>{t.noRegister}</EmptyState>
+                ) : (
+                  <>
+                    <Ring
+                      total={register.total}
+                      caption={t.declaredRecords}
+                      segments={[
+                        {
+                          label: t.openRecords,
+                          value: register.outstanding,
+                          colour: "var(--color-error)",
+                        },
+                        {
+                          label: t.contestedRecords,
+                          value: register.contested,
+                          colour: "var(--color-warning)",
+                        },
+                        {
+                          label: t.settledRecords,
+                          value: register.settled,
+                          colour: "var(--color-success)",
+                        },
+                      ]}
+                    />
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      <HoverTile
+                        href="/app/tix/portfolio"
+                        label={t.expiringSoon}
+                        value={register.expiringSoon}
+                        reveal={t.expiringNote}
+                      />
+                      <HoverTile
+                        href="/app/tix/portfolio"
+                        label={t.awaitingErasure}
+                        value={register.awaitingErasure}
+                        reveal={t.awaitingErasureNote}
+                        tone={register.awaitingErasure > 0 ? "serious" : "plain"}
+                      />
+                    </div>
+                  </>
+                )}
+              </Card>
+
+              <Card
+                title={t.activityTitle}
+                description={t.activityDescription}
+                accent={TIER.activity}
+                action={
                   <Link
                     href="/app/executive"
-                    className="mt-4 inline-block text-sm font-semibold text-blue hover:underline"
+                    className="text-sm font-bold whitespace-nowrap text-blue hover:underline"
                   >
                     {t.openExecutive} →
                   </Link>
-                </>
-              )}
-            </Card>
-          </div>
+                }
+              >
+                <Activity months={activity} locale={locale} t={t} />
+              </Card>
+            </div>
+          </section>
         </>
       )}
 
-      {/* Last, and unconditional. The counts above are what is happening; this is what exists,
-          and it renders even when the overview call failed — a page that cannot reach the server
-          should still be able to tell somebody where everything is. */}
+      {/* TIER FOUR, and unconditional. The counts above are what is happening; this is what
+          exists, and it renders even when the overview call failed — a page that cannot reach the
+          server should still be able to tell somebody where everything is. */}
       <Directory />
+    </div>
+  );
+}
+
+/**
+ * Thirteen months, and what the last complete one did.
+ *
+ * <p><strong>The comparison skips the current month, and that is the whole reason this is a
+ * component rather than three lines inline.</strong> The series ends on the month we are standing
+ * in, which is partial by definition — on the 3rd it holds three days of work. Comparing it to a
+ * full month would draw a collapse every month and a recovery every month, and the arrow would be
+ * measuring the calendar rather than the operator. So the trend compares the last two *complete*
+ * months and the caption names them both, which means a reader can see which pair was used instead
+ * of assuming it was the sensible one.
+ *
+ * <p>The partial month is still in the chart. Removing it would hide work that has actually
+ * happened; it is only excluded from the arithmetic, and the line beneath says so.
+ *
+ * <p>Inquiries are shown beside declarations because the overview never showed them and they are
+ * the other half of what an operator does here — one is what you tell the exchange, the other is
+ * what you ask it. Neither arrow is coloured: see {@link Trend}.
+ */
+function Activity({
+  months,
+  locale,
+  t,
+}: {
+  months: ExecutiveMonth[] | null;
+  locale: string;
+  t: ReturnType<typeof useMessages>["dashboard"];
+}) {
+  if (months === null || months.length === 0) {
+    return <EmptyState>{t.noActivity}</EmptyState>;
+  }
+
+  const current = months[months.length - 1];
+  const complete = months.slice(0, -1);
+  const latest = complete[complete.length - 1];
+  const prior = complete[complete.length - 2];
+
+  // Two complete months are needed before anything can be compared to anything. A new operator in
+  // its first weeks gets the chart and no arrows, rather than an arrow measured against a month
+  // that does not exist.
+  const comparable = latest !== undefined && prior !== undefined;
+  const caption = comparable
+    ? interpolate(t.trend.caption, t.trend.caption, {
+        to: monthLabel(latest.month, locale, "long"),
+        from: monthLabel(prior.month, locale, "long"),
+      })
+    : "";
+
+  return (
+    <>
+      {comparable && (
+        <div className="mb-5 grid gap-4 sm:grid-cols-2">
+          <Figure
+            label={t.activityDeclared}
+            value={latest.declared}
+            previous={prior.declared}
+            caption={caption}
+            series={complete.map((month) => month.declared)}
+            colour="var(--color-blue)"
+          />
+          <Figure
+            label={t.activityInquiries}
+            value={latest.inquiries}
+            previous={prior.inquiries}
+            caption={caption}
+            series={complete.map((month) => month.inquiries)}
+            colour="#5b4bd6"
+          />
+        </div>
+      )}
+
+      <Sparkline
+        label={t.activityTitle}
+        months={months.map((month) => ({ month: month.month, value: month.declared }))}
+      />
+
+      {current && (
+        <p className="mt-3 text-xs text-muted">
+          {interpolate(t.trend.partial, t.trend.partial, {
+            current: monthLabel(current.month, locale, "long"),
+          })}
+        </p>
+      )}
+    </>
+  );
+}
+
+/** One series: its last complete month, which way it moved, and its shape. */
+function Figure({
+  label,
+  value,
+  previous,
+  caption,
+  series,
+  colour,
+}: {
+  label: string;
+  value: number;
+  previous: number;
+  caption: string;
+  series: number[];
+  colour: string;
+}) {
+  return (
+    <div className="rounded-lg border border-line bg-soft/60 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs text-muted">{label}</p>
+          <p className="mt-0.5 text-4xl font-bold text-navy">
+            <CountUp value={value} />
+          </p>
+        </div>
+        <MiniSpark values={series} colour={colour} />
+      </div>
+      <div className="mt-2">
+        <Trend previous={previous} current={value} caption={caption} />
+      </div>
     </div>
   );
 }
@@ -336,23 +538,29 @@ export default function DashboardPage() {
  * <p>It says what it costs. An inquiry charges the hourly allowance and writes an audit row with
  * the purpose typed against it, and somebody arriving from a dashboard tile should know that
  * before they click rather than when the form asks them why.
+ *
+ * <p><strong>No longer a gradient.</strong> It was a second dark panel on a page that already had
+ * one at the top, and two of them competing meant neither read as the loudest thing — while the
+ * figures between them, which are the page's actual content, sat in the trough. It keeps its
+ * prominence from a solid navy button and one accent rule, which is enough on a white page and
+ * is what the design system asks for in the first place.
  */
 function InquiryCta() {
   const t = useMessages().dashboard.inquiry;
   return (
     <Link
       href="/app/tix"
-      className="group flex flex-col justify-between rounded-lg p-6 text-white transition hover:-translate-y-0.5 hover:shadow-lg"
-      style={{ background: "linear-gradient(140deg,#0b1f3a 0%,#0a4f5c 100%)" }}
+      className="group flex flex-col justify-between rounded-lg border border-line bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue hover:shadow-md"
+      style={{ borderTop: `3px solid ${TIER.ask}` }}
     >
       <div>
-        <p className="mb-2 text-xs font-semibold tracking-[0.16em] text-blue uppercase">
+        <p className="mb-2 text-xs font-semibold tracking-[0.16em] uppercase" style={{ color: TIER.ask }}>
           {t.eyebrow}
         </p>
-        <h2 className="mb-2 text-xl font-bold">{t.title}</h2>
-        <p className="text-sm text-white/70">{t.note}</p>
+        <h2 className="mb-2 text-xl font-bold text-navy">{t.title}</h2>
+        <p className="text-sm leading-relaxed text-muted">{t.note}</p>
       </div>
-      <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold">
+      <span className="mt-6 inline-flex items-center gap-2 self-start rounded bg-navy px-4 py-2.5 text-sm font-bold text-white transition group-hover:bg-navy/90">
         {t.action}
         <span aria-hidden="true" className="transition group-hover:translate-x-1">
           →

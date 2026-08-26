@@ -131,7 +131,27 @@
       "notifications": "Alerts and reminders addressed to you.",
       "organization": "Your units, and the people who work in them.",
       "settings": "What this deployment is configured to do, and where each value came from."
-    }
+    },
+    "sections": {
+      "lookupTitle": "Ask a question",
+      "lookupNote": "Two questions, and they are not the same one. Your own book is free and instant; the exchange costs an inquiry and is recorded against your stated purpose.",
+      "waitingNote": "Statutory deadlines first. These are the only figures on this page that are ever coloured.",
+      "bookTitle": "Your book",
+      "bookNote": "What this organisation has declared, and what it has been doing month by month."
+    },
+    "actions": {
+      "openCases": "Open the cases",
+      "reviewDeliveries": "Review deliveries",
+      "openRecords": "Open your records",
+      "openPortfolio": "Open the portfolio",
+      "investigate": "Investigate"
+    },
+    "trend": {
+      "caption": "{to} against {from}",
+      "partial": "Complete months only — {current} is still running."
+    },
+    "activityDeclared": "Declared",
+    "activityInquiries": "Inquiries made"
   },
   "tix": {
     "title": "Check a business",

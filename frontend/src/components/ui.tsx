@@ -36,23 +36,94 @@ export function Card({
   description,
   children,
   footer,
+  accent,
+  emphasis = false,
+  action,
 }: {
   title?: string;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
+  /**
+   * One colour for this card, drawn as a rule along the top.
+   *
+   * <p>The same device the directory uses for its seven areas, and the same restraint applies:
+   * this is identity, not severity. Passing a red here would say "this card is the red one" on a
+   * platform where red means a deadline has been missed, so callers pass blues, teals and navy
+   * and let the figures inside spend the severity palette.
+   */
+  accent?: string;
+  /**
+   * Whether this card outranks the ones beside it.
+   *
+   * <p>A shadow and a slightly darker edge, and nothing else — the difference has to survive
+   * being seen out of the corner of an eye, and has to not look like a second kind of card.
+   */
+  emphasis?: boolean;
+  /** A link in the header, opposite the title. "Open the register", "Investigate". */
+  action?: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-line bg-white">
-      {(title || description) && (
-        <div className="border-b border-line px-5 py-4">
-          {title && <h2 className="font-bold text-navy">{title}</h2>}
-          {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+    <section
+      className={`overflow-hidden rounded-lg border bg-white ${
+        emphasis ? "border-line/80 shadow-sm" : "border-line"
+      }`}
+      style={accent ? { borderTop: `3px solid ${accent}` } : undefined}
+    >
+      {(title || description || action) && (
+        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+          <div>
+            {title && <h2 className="font-bold text-navy">{title}</h2>}
+            {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+          </div>
+          {action && <div className="shrink-0 pt-0.5">{action}</div>}
         </div>
       )}
       <div className="p-5">{children}</div>
       {footer && <div className="border-t border-line bg-soft px-5 py-3">{footer}</div>}
     </section>
+  );
+}
+
+/**
+ * The line that starts a tier of the page.
+ *
+ * <p>The overview had four sections and one of them had a heading. Everything else began by simply
+ * being the next thing, which is why the page reads as one long list of equally important boxes —
+ * whitespace alone cannot say "this group is subordinate to that one", it can only say "these are
+ * apart".
+ *
+ * <p>The accent rule is the second half of it. One colour per section, carried nowhere else in
+ * that section, so a reader who has scrolled knows which tier they are in without re-reading the
+ * heading. Chosen from blue through navy for the same reason the directory's are: severity owns
+ * green, amber and red on every other screen here, and a heading is never severe.
+ */
+export function SectionHeading({
+  title,
+  note,
+  accent,
+  action,
+}: {
+  title: string;
+  note?: string;
+  accent: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <div className="flex items-center gap-2.5">
+          <span
+            aria-hidden="true"
+            className="h-3.5 w-1 rounded-full"
+            style={{ background: accent }}
+          />
+          <h2 className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">{title}</h2>
+        </div>
+        {note && <p className="mt-1.5 max-w-2xl text-sm text-muted">{note}</p>}
+      </div>
+      {action}
+    </div>
   );
 }
 

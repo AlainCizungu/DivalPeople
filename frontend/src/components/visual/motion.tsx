@@ -257,35 +257,166 @@ export function HoverTile({
   value,
   reveal,
   tone = "plain",
+  size = "normal",
+  action,
 }: {
   href: string;
   label: string;
   value: number | null;
   reveal: string;
   tone?: "plain" | "warning" | "serious";
+  /**
+   * `lead` is for a figure somebody is meant to act on this morning.
+   *
+   * <p>It is not merely bigger. It states its meaning permanently instead of on hover, and it
+   * carries a named action. The distinction is the hierarchy: a tile that hides what it means
+   * behind a pointer is asking to be scanned past, which is correct for a secondary count and
+   * wrong for a missed statutory deadline.
+   */
+  size?: "normal" | "lead";
+  /** "Open the cases", "Review deliveries". Always visible when given, and only on `lead` tiles. */
+  action?: string;
 }) {
-  const accent =
+  const lead = size === "lead";
+
+  // Border and figure are coloured together or not at all. A red number in a grey box reads as a
+  // typo; a red box around a navy number reads as decoration.
+  const edge =
     tone === "serious"
-      ? "border-error/40 hover:border-error"
+      ? "border-error/50 hover:border-error"
       : tone === "warning"
-        ? "border-warning/50 hover:border-warning"
+        ? "border-warning/60 hover:border-warning"
         : "border-line hover:border-blue";
+
+  const ink =
+    tone === "serious" ? "text-[#b91c1c]" : tone === "warning" ? "text-[#b45309]" : "text-navy";
 
   return (
     <a
       href={href}
-      className={`group block rounded-lg border bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md ${accent}`}
+      className={`group flex flex-col rounded-lg border bg-white transition hover:-translate-y-0.5 hover:shadow-md ${edge} ${
+        lead ? "p-6 shadow-sm" : "p-4"
+      }`}
     >
-      <p className="text-xs text-muted">{label}</p>
-      <p className="mt-1 text-3xl font-bold text-navy">
+      <p className={`text-muted ${lead ? "text-sm font-semibold" : "text-xs"}`}>{label}</p>
+      <p className={`mt-1 font-bold ${ink} ${lead ? "text-5xl" : "text-3xl"}`}>
         {value === null ? <span className="text-muted">—</span> : <CountUp value={value} />}
       </p>
-      {/* Reserved height rather than appearing from nothing: a tile that grows on hover pushes
-          the row below it and the whole grid twitches as the pointer crosses it. */}
-      <p className="mt-1 h-4 text-xs text-muted opacity-0 transition group-hover:opacity-100">
-        {reveal}
-      </p>
+
+      {lead ? (
+        <>
+          {/* Stated, not revealed. See the note on `size`. */}
+          <p className="mt-2 text-xs leading-relaxed text-muted">{reveal}</p>
+          {action && (
+            <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue">
+              {action}
+              <span aria-hidden="true" className="transition group-hover:translate-x-0.5">
+                →
+              </span>
+            </span>
+          )}
+        </>
+      ) : (
+        // Reserved height rather than appearing from nothing: a tile that grows on hover pushes
+        // the row below it and the whole grid twitches as the pointer crosses it.
+        <p className="mt-1 h-4 text-xs text-muted opacity-0 transition group-hover:opacity-100">
+          {reveal}
+        </p>
+      )}
     </a>
+  );
+}
+
+/**
+ * Which way a series moved, between two months named out loud.
+ *
+ * <p><strong>Neutral by default, and that is the whole design.</strong> An arrow is the fastest
+ * way to say "more" and the fastest way to imply "better", and on this platform they are not the
+ * same thing. More declarations is more work done, or a worse quarter for the operator's
+ * customers, depending on who is reading. More inquiries is a busier credit desk, or somebody
+ * mining the exchange. So the arrow points and the colour says nothing, unless a caller who knows
+ * the direction's meaning passes {@code meaning} — which today nothing on the overview does.
+ *
+ * <p>{@code from} and {@code to} are labels rather than an implied "vs last month", because the
+ * caller is not comparing the last two months. The last month in this platform's activity series
+ * is the current one and is therefore partial; comparing it to a complete month invents a fall
+ * that is really just the calendar. The caption names the two months so the reader can see what
+ * was compared instead of trusting that it was the right pair.
+ *
+ * <p>A rise from nothing has no percentage — a denominator of zero is an infinity, not a number —
+ * so it shows the absolute change instead.
+ */
+export function Trend({
+  previous,
+  current,
+  caption,
+  meaning = "neutral",
+}: {
+  previous: number;
+  current: number;
+  caption: string;
+  /** `up-is-good` and `up-is-bad` colour the arrow. `neutral` leaves it navy. */
+  meaning?: "neutral" | "up-is-good" | "up-is-bad";
+}) {
+  const delta = current - previous;
+  const direction = delta === 0 ? "flat" : delta > 0 ? "up" : "down";
+
+  const colour =
+    meaning === "neutral" || direction === "flat"
+      ? "text-navy"
+      : (direction === "up") === (meaning === "up-is-good")
+        ? "text-[#14532d]"
+        : "text-[#b91c1c]";
+
+  const magnitude =
+    previous === 0
+      ? `${delta > 0 ? "+" : ""}${delta}`
+      : `${delta > 0 ? "+" : delta < 0 ? "−" : ""}${Math.abs(Math.round((delta / previous) * 100))}%`;
+
+  return (
+    <p className={`flex items-baseline gap-1.5 text-sm font-bold ${colour}`}>
+      <span aria-hidden="true">
+        {direction === "up" ? "▲" : direction === "down" ? "▼" : "▬"}
+      </span>
+      <span className="tabular-nums">{direction === "flat" ? "0%" : magnitude}</span>
+      <span className="text-xs font-normal text-muted">{caption}</span>
+    </p>
+  );
+}
+
+/**
+ * A dozen bars, an inch wide, beside a figure.
+ *
+ * <p>Not a small {@link Sparkline}: that one is a chart with an axis and a hover value, and this
+ * one is punctuation. It says "and here is the shape of it" in the space after a number, and it
+ * carries no labels at all — the card it sits in already links to the screen where the same series
+ * is drawn properly with its months on it.
+ *
+ * <p>{@code aria-hidden}, deliberately. The figure beside it and the trend beneath it are both
+ * text, so a reader who cannot see this loses nothing; announcing twelve unlabelled magnitudes
+ * would be noise standing in for information.
+ */
+export function MiniSpark({ values, colour = "var(--color-blue)" }: {
+  values: number[];
+  colour?: string;
+}) {
+  const peak = Math.max(1, ...values);
+  return (
+    <span aria-hidden="true" className="flex h-7 items-end gap-[2px]">
+      {values.map((value, index) => (
+        <span
+          key={index}
+          className="w-1 rounded-sm"
+          style={{
+            height: `${Math.max(2, Math.round((value / peak) * 28))}px`,
+            background: colour,
+            // The recent months read stronger than the old ones, so the eye starts at the end,
+            // which is the only part anybody is actually asking about.
+            opacity: 0.35 + 0.65 * (index / Math.max(1, values.length - 1)),
+          }}
+        />
+      ))}
+    </span>
   );
 }
 

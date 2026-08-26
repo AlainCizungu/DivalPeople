@@ -65,8 +65,15 @@ export function Spotlight({
 
   return (
     <Band>
+      {/* Compact on purpose, and it used to be twice this.
+          A full-bleed dark gradient panel is the heaviest thing the design system allows, and it
+          was spending that weight on a headline that is at most two lines. Everything below it —
+          the figures somebody actually works from — began below the fold on a laptop, so the
+          loudest element on the page was also the one that pushed the useful part off it. It is
+          now a bar: same words, same rotation, roughly half the height, and on a wide screen the
+          action sits beside the headline rather than under it. */}
       <div
-        className="relative px-6 py-8 md:px-10 md:py-10"
+        className="relative px-6 py-5 md:px-8 md:py-6"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocus={() => setPaused(true)}
@@ -76,22 +83,26 @@ export function Spotlight({
         aria-live="polite"
         aria-roledescription={t.roleDescription}
       >
-        <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
-          {slide.eyebrow}
-        </p>
-        <h2 className="mb-5 max-w-3xl text-2xl leading-tight font-bold md:text-3xl">
-          {slide.headline}
-        </h2>
-        <Link
-          href={slide.href}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-navy transition hover:bg-white/90"
-        >
-          {slide.action}
-          <span aria-hidden="true">→</span>
-        </Link>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-8">
+          <div className="min-w-0">
+            <p className="mb-1.5 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+              {slide.eyebrow}
+            </p>
+            <h2 className="max-w-3xl text-xl leading-snug font-bold md:text-2xl">
+              {slide.headline}
+            </h2>
+          </div>
+          <Link
+            href={slide.href}
+            className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-white px-5 py-2.5 text-sm font-bold text-navy transition hover:bg-white/90 md:self-auto"
+          >
+            {slide.action}
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
 
         {slides.length > 1 && (
-          <div className="mt-6 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2">
             {slides.map((option, position) => (
               <button
                 key={option.key}

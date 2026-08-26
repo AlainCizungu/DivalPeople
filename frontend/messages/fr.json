@@ -131,7 +131,27 @@
       "notifications": "Alertes et rappels qui vous sont adressés.",
       "organization": "Vos unités, et les personnes qui y travaillent.",
       "settings": "Ce que ce déploiement est configuré pour faire, et l'origine de chaque valeur."
-    }
+    },
+    "sections": {
+      "lookupTitle": "Poser une question",
+      "lookupNote": "Deux questions, et ce ne sont pas les mêmes. Votre propre livre est gratuit et immédiat ; l'échange coûte une interrogation et est enregistré avec la finalité que vous déclarez.",
+      "waitingNote": "Les délais légaux d'abord. Ce sont les seuls chiffres de cette page qui prennent une couleur.",
+      "bookTitle": "Votre livre",
+      "bookNote": "Ce que votre organisation a déclaré, et ce qu'elle a fait mois par mois."
+    },
+    "actions": {
+      "openCases": "Ouvrir les dossiers",
+      "reviewDeliveries": "Examiner les livraisons",
+      "openRecords": "Ouvrir vos enregistrements",
+      "openPortfolio": "Ouvrir le portefeuille",
+      "investigate": "Enquêter"
+    },
+    "trend": {
+      "caption": "{to} par rapport à {from}",
+      "partial": "Mois complets uniquement — {current} est encore en cours."
+    },
+    "activityDeclared": "Déclarés",
+    "activityInquiries": "Interrogations effectuées"
   },
   "tix": {
     "title": "Vérifier une entreprise",

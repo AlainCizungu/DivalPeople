@@ -108,7 +108,9 @@ export function Directory() {
     .filter((group) => group.items.length > 0);
 
   return (
-    <section className="mt-10">
+    // Furthest from the top and separated by the widest gap on the page. This is a reference, not
+    // a queue: nothing here is waiting on anybody, and it should be the last thing the eye reaches.
+    <section className="mt-16 border-t border-line pt-10">
       <h2 className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
         {t.title}
       </h2>
