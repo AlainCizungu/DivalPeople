@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useSession } from "@/auth/SessionProvider";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { SocialRow } from "./social";
@@ -158,6 +159,30 @@ export function RiskSection() {
           </div>
         </div>
       </div>
+
+      {/* DIP Credit Intelligence, as a design.
+          Below the section rather than inside the two-column grid: the panel above is drawn from
+          what the product does today and this is a picture of a module that does not exist yet.
+          Putting them side by side would invite a reader to take them as the same kind of claim.
+
+          The caption is not decoration. This section sits on a page whose capabilities block
+          promises "everything below is running today, not a roadmap", so an unlabelled screenshot
+          of an unbuilt module reads as a fourth thing that is running. */}
+      <figure className="mx-auto mt-14 max-w-5xl">
+        <div className="overflow-hidden rounded-2xl border border-[#e6edf5] bg-white shadow-xl">
+          <Image
+            src="/credit-intelligence.png"
+            alt={risk.previewCaption}
+            width={1536}
+            height={1024}
+            className="h-auto w-full"
+            sizes="(max-width: 1024px) 100vw, 1024px"
+          />
+        </div>
+        <figcaption className="mt-3 text-center text-xs text-muted">
+          {risk.previewCaption}
+        </figcaption>
+      </figure>
       </div>
     </section>
   );

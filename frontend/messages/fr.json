@@ -530,7 +530,8 @@
           "tone": "neutral"
         }
       ],
-      "notAssessedNote": "Deux facteurs ne sont délibérément jamais pondérés, et la raison de chacun est imprimée à côté de l'évaluation : les contestations, déjà retirées de toutes les réponses de l'échange, et les indicateurs de fraude, dont le signal est rendu impossible par les règles d'unicité du registre. L'encours impayé les a rejoints jusqu'en août 2026, date à laquelle le conseil a confirmé que les fichiers des opérateurs sont libellés en dollars américains ; il est désormais pondéré selon quatre tranches assez larges pour qu'aucune série de consultations n'en restitue le montant."
+      "notAssessedNote": "Deux facteurs ne sont délibérément jamais pondérés, et la raison de chacun est imprimée à côté de l'évaluation : les contestations, déjà retirées de toutes les réponses de l'échange, et les indicateurs de fraude, dont le signal est rendu impossible par les règles d'unicité du registre. L'encours impayé les a rejoints jusqu'en août 2026, date à laquelle le conseil a confirmé que les fichiers des opérateurs sont libellés en dollars américains ; il est désormais pondéré selon quatre tranches assez larges pour qu'aucune série de consultations n'en restitue le montant.",
+      "previewCaption": "DIP Credit Intelligence, en conception — une vérification pré-crédit réunissant l'identité, les signaux du réseau et l'indicateur de risque pour un prêteur."
     },
     "entity": {
       "eyebrow": "Intelligence sur les entités",
