@@ -73,7 +73,21 @@ class RelationshipUnderRlsTest extends AbstractIntegrationTest {
 
     // --- fixtures -----------------------------------------------------------
 
-    /** Resolves a subject into existence without declaring a debt against it. */
+    /**
+     * Resolves a subject into existence without declaring a debt against it.
+     *
+     * <p>Inside a transaction because {@link SubjectResolver#resolve} is
+     * {@code @Transactional(propagation = MANDATORY)} and refuses to run without one. That is the
+     * resolver protecting a real invariant rather than an inconvenience: resolving creates the
+     * subject and learns its identifiers, and if it opened its own transaction a declaration that
+     * was later refused — below the reporting threshold, no dunning evidence — would leave a
+     * person in the registry that nobody ever declared anything about.
+     *
+     * <p>The template rather than {@code @Transactional} on the test method, because the tenant has
+     * to be bound before the transaction begins: {@code TenantAwareDataSource} reads
+     * {@code TenantContext} as it hands out each connection, and a test-managed transaction starts
+     * before the body runs.
+     */
     private Subject subjectNamed(String name) {
         DeclarationRequest request = new DeclarationRequest(
                 List.of(new DeclarationRequest.SubmittedIdentifier(
@@ -82,7 +96,8 @@ class RelationshipUnderRlsTest extends AbstractIntegrationTest {
                 new BigDecimal("500.00"), "USD", "POSTPAID",
                 LocalDate.now().minusDays(30), true);
 
-        return TenantContext.runAsResult(operatorA, () -> resolver.resolve(request).subject());
+        return TenantContext.runAsResult(operatorA, () ->
+                inOneTransaction.execute(status -> resolver.resolve(request).subject()));
     }
 
     private void report(UUID operator, Subject subject, String reference, ObligationEvent code) {
