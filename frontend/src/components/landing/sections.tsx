@@ -171,7 +171,7 @@ export function RiskSection() {
       <figure className="mx-auto mt-14 max-w-5xl">
         <div className="overflow-hidden rounded-2xl border border-[#e6edf5] bg-white shadow-xl">
           <Image
-            src="/credit-intelligence.png"
+            src="/credit-intelligence.webp"
             alt={risk.previewCaption}
             width={1536}
             height={1024}
