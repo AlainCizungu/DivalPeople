@@ -14,9 +14,17 @@ import type { Messages } from "@/i18n/messages";
  * French. The id is the same string as the catalogue key it renders, which means adding an entry
  * here and forgetting its label is a compile error rather than a blank tile.
  *
- * <p><strong>Two items may share an href.</strong> Exposure and Portfolio intelligence are one
- * screen today, as are Subject requests and Disputes & corrections. That is recorded rather than
- * hidden, because the day either grows its own screen this is the list that has to change.
+ * <p><strong>No two items share an href, and a guardrail enforces it.</strong> Three pairs used to:
+ * Exposure and Portfolio intelligence over one screen, Inquiries and Risk intelligence over
+ * another, Subject requests and Disputes & corrections over a third — plus Notifications in the
+ * menu and again in the top bar. Each was recorded honestly as a duplicate and each was still a
+ * second place to look for one thing, with two blurbs on the front door saying nearly the same
+ * sentence in different words. {@code scripts/check_architecture.py} now fails the build on a
+ * repeated href, so the next one has to be argued for rather than commented.
+ *
+ * <p>An entry for a screen that does not exist yet is marked unbuilt. It is <em>not</em> pointed at
+ * a neighbouring screen so that it can look built — that is what "Risk intelligence" was doing at
+ * {@code /app/tix}, and it turned a promise into something indistinguishable from a link.
  *
  * <p>An item with no href is designed and not built. None are today — the last one, the TIX chip,
  * was removed — but the shape is kept because the rule it enforces is the important part: no entry
@@ -29,6 +37,14 @@ export type NavItem = {
   id: ItemId;
   href?: string;
   label: string;
+  /**
+   * A count beside the label.
+   *
+   * <p>Dormant: nothing sets one today. Notifications did, and it now lives in the top bar
+   * instead. Kept because the machinery that sums hidden badges onto a collapsed heading is the
+   * part that would be missed — a menu that can tidy away an unread count without saying so is
+   * the defect, and rebuilding that later is harder than leaving the field.
+   */
   badge?: number;
 };
 
@@ -51,12 +67,10 @@ export type ItemId =
   | "home"
   | "search"
   | "executive"
-  | "portfolioIntelligence"
   | "records"
   | "inquiries"
   | "declare"
   | "subjectRequests"
-  | "riskIntelligence"
   | "portfolio"
   | "fraud"
   | "watchlists"
@@ -66,8 +80,6 @@ export type ItemId =
   | "entityResolution"
   | "audit"
   | "access"
-  | "disputes"
-  | "notifications"
   | "organization"
   | "settings";
 
@@ -92,13 +104,11 @@ export type GroupId = (typeof GROUP_IDS)[number];
 
 export type NavAudience = {
   isPlatformAdmin: boolean;
-  /** Shown on the Notifications entry. Zero renders nothing. */
-  unreadCount: number;
 };
 
 export function buildNavigation(
   t: Messages["nav"],
-  { isPlatformAdmin, unreadCount }: NavAudience,
+  { isPlatformAdmin }: NavAudience,
 ): NavGroup[] {
   return [
     {
@@ -108,11 +118,6 @@ export function buildNavigation(
         { id: "home", href: "/app", label: t.home },
         { id: "search", href: "/app/search", label: t.search },
         { id: "executive", href: "/app/executive", label: t.executive },
-        {
-          id: "portfolioIntelligence",
-          href: "/app/tix/portfolio",
-          label: t.portfolioIntelligence,
-        },
       ],
     },
     {
@@ -126,18 +131,18 @@ export function buildNavigation(
         { id: "records", href: "/app/tix/records", label: t.records },
         { id: "inquiries", href: "/app/tix", label: t.inquiries },
         { id: "declare", href: "/app/tix/declare", label: t.declare },
-        { id: "subjectRequests", href: "/app/subject-requests", label: t.subjectRequests },
       ],
     },
     {
       id: "risk",
       heading: t.groupRisk,
       items: [
-        // Where risk is actually assessed today: submit an identifier and the DIP Risk Indicator
-        // comes back with the verdict. It will grow its own screen — a ranked view of an
-        // operator's own book — and until it does, pointing this at the assessment that exists
-        // is truer than marking it unbuilt.
-        { id: "riskIntelligence", href: "/app/tix", label: t.riskIntelligence },
+        // Exposure, and the only entry that opens it. There were two: this one and "Portfolio
+        // intelligence" under Intelligence, over one screen, with directory blurbs that said the
+        // same thing in different words. "Risk intelligence" pointed here too — an entry for the
+        // ranked view of a book that does not exist yet, aimed at the inquiry form so that it
+        // would not have to be marked unbuilt. That is a promise wearing a link's clothes, and
+        // the rule it was dodging is the one worth keeping.
         { id: "portfolio", href: "/app/tix/portfolio", label: t.portfolio },
         // Compliance officer or tenant administrator only, and shown to everybody like entity
         // resolution: the page explains that reading colleagues' behaviour is a supervisory
@@ -200,19 +205,24 @@ export function buildNavigation(
         // the answer to "why can I not open that screen", and refusing that question to the
         // people who have it would be the wrong way round.
         { id: "access", href: "/app/access", label: t.access },
-        { id: "disputes", href: "/app/subject-requests", label: t.disputes },
+        // Here rather than under Subjects, because this queue is a legal obligation worked by
+        // whoever answers for compliance, next to the audit trail and the permission catalogue.
+        //
+        // Labelled "Subject requests" and not "Disputes & corrections", which is what it was
+        // called when it sat here as a second entry over the same screen. A dispute is one kind
+        // of request; the screen also holds access and erasure, and its own title says so. A menu
+        // that names a screen more narrowly than the screen names itself sends people looking for
+        // the other one.
+        { id: "subjectRequests", href: "/app/subject-requests", label: t.subjectRequests },
       ],
     },
     {
       id: "system",
       heading: t.groupSystem,
       items: [
-        {
-          id: "notifications",
-          href: "/app/notifications",
-          label: t.notifications,
-          badge: unreadCount,
-        },
+        // Notifications is not here. It is in the top bar of every screen, with its unread
+        // count, which is where somebody actually looks for it — and two entries for one screen
+        // is the thing this pass was for. The catalogue key stays: the bell renders it.
         { id: "organization", href: "/app/organization", label: t.organization },
         // The last System entry to get a screen, and the one with the most already behind it:
         // every value it shows existed in a yaml file that only a deployer could read.

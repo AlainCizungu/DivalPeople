@@ -76,12 +76,10 @@ export function Directory() {
   const blurb: Record<Exclude<ItemId, "home">, string> = {
     search: t.search,
     executive: t.executive,
-    portfolioIntelligence: t.portfolioIntelligence,
     records: t.records,
     inquiries: t.inquiries,
     declare: t.declare,
     subjectRequests: t.subjectRequests,
-    riskIntelligence: t.riskIntelligence,
     portfolio: t.portfolio,
     fraud: t.fraud,
     watchlists: t.watchlists,
@@ -91,18 +89,12 @@ export function Directory() {
     entityResolution: t.entityResolution,
     audit: t.audit,
     access: t.access,
-    disputes: t.disputes,
-    notifications: t.notifications,
     organization: t.organization,
     settings: t.settings,
   };
 
-  // The badge is the menu's job. A directory tile that reads "Notifications 3" and a menu entry
-  // that reads the same thing are two places to keep one number correct, and this page is not
-  // polling for it.
   const groups = buildNavigation(messages.nav, {
     isPlatformAdmin: profile?.roles.includes("PLATFORM_ADMIN") ?? false,
-    unreadCount: 0,
   })
     .map((group) => ({ ...group, items: group.items.filter((item) => item.id !== "home") }))
     .filter((group) => group.items.length > 0);

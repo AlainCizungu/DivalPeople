@@ -43,8 +43,9 @@ const KNOWN_GROUPS: readonly GroupId[] = GROUP_IDS;
  * says where you are defeats the point of the menu.
  *
  * <p>What was open is remembered per browser, and a collapsed heading carries the sum of its
- * items' badges so that tidying the menu cannot hide the unread count that is most of the reason
- * anybody opens System.
+ * items' badges so that tidying the menu can never hide a count. Nothing sets a badge today —
+ * Notifications did, and now lives in the top bar — so that machinery is dormant rather than
+ * removed: a menu able to hide an unread count without saying so is the defect it exists for.
  *
  * <p><strong>The unbuilt items are shown, and shown as unbuilt.</strong> That is a deliberate
  * reversal of the note that used to stand here, which said a nav full of links to nothing makes
@@ -103,25 +104,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isPlatformAdmin = profile?.roles.includes("PLATFORM_ADMIN") ?? false;
 
-  const groups = buildNavigation(t, { isPlatformAdmin, unreadCount });
+  const groups = buildNavigation(t, { isPlatformAdmin });
 
   const current = activeHref(
     pathname,
     groups.flatMap((group) => group.items.map((item) => item.href)),
   );
 
-  // Two entries can share a route, so the highlight goes to the first of them and no other.
-  // Lighting both would read as a rendering fault rather than as the deliberate duplication it
-  // is, and the reader has no way to tell those apart from the outside.
+  // No two entries share a route any more — check_architecture.py fails the build if they do —
+  // so this now resolves a route to the single entry that owns it. Kept as first-match rather
+  // than assuming uniqueness: the guard is the thing that holds the property, and a highlight
+  // that throws when the guard is wrong would be a worse way to find out.
   const currentKey = keyOfFirst(groups, current);
 
   /**
    * Which heading the page you are on lives under.
    *
-   * <p>Found by the entry, not by the route, because two groups can share a route: Inquiries and
-   * Risk intelligence are both {@code /app/tix}. The highlight already resolves that to one
-   * entry, and the open group has to be the same one or the menu would open a heading whose
-   * contents are not lit.
+   * <p>Found by the entry rather than by the route. It made the difference when two groups could
+   * share a route — Inquiries and Risk intelligence were both {@code /app/tix} — and it is kept
+   * now that they cannot, because the alternative is matching on an href in two places and
+   * hoping they agree.
    */
   const currentGroup = groups.find((group) =>
     group.items.some((item) => itemKey(group, item) === currentKey),

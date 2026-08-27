@@ -672,6 +672,62 @@ def check_tix_reads_the_injected_clock() -> None:
                         "decides whether a record is still visible.")
 
 
+def check_no_screen_appears_twice_in_the_menu() -> None:
+    """
+    One screen, one entry.
+
+    The navigation permitted two items to share an href and said so in its own header, honestly,
+    as a thing to be recorded rather than avoided. Four pairs accumulated: Exposure and Portfolio
+    intelligence over one screen; Inquiries and Risk intelligence over another; Subject requests
+    and Disputes & corrections over a third; Notifications in the menu and again in the top bar.
+
+    None of it was a bug in the sense of anything breaking. It was worse than that — the front
+    door's directory is generated from this list, so each duplicate produced two tiles describing
+    one screen in slightly different words, and a reader comparing them has to work out whether
+    they are two features. Nobody can tell a deliberate duplicate from a mistaken one from the
+    outside, which is the whole reason to have none.
+
+    An entry for something not built yet carries no href and is marked unbuilt. Pointing it at a
+    neighbouring screen so that it looks finished is what "Risk intelligence" was doing, and this
+    check would not have caught it — but the rule above is what makes that the obvious next
+    question when a route turns out to be claimed twice.
+
+    Read with a regex rather than by parsing TypeScript, deliberately. The alternative is a Node
+    toolchain in a check that has to run before anything is installed, to police a list that is
+    twenty-odd literal lines long.
+    """
+    source_file = REPO / "frontend/src/components/navigation.ts"
+    if not source_file.exists():
+        raise Failure(f"    {source_file.relative_to(REPO)} is missing — the menu's single source "
+                      "of truth moved, and this check no longer guards anything.")
+
+    source = source_file.read_text(encoding="utf-8")
+    # Only the entries: `id: "records", href: "/app/tix/records"`. The comments in this file quote
+    # routes while explaining why an entry was removed, so matching bare strings would fail on its
+    # own history.
+    entries = re.findall(r'id:\s*"(\w+)"[^\n]*?href:\s*"([^"]+)"', source)
+    if not entries:
+        raise Failure(f"    found no navigation entries in {source_file.relative_to(REPO)} — the "
+                      "shape of the list changed and this check is reading nothing. That would "
+                      "pass silently, which is the failure it is here to prevent.")
+
+    seen: dict[str, str] = {}
+    offenders = []
+    for item_id, href in entries:
+        if href in seen:
+            offenders.append(f"    {href} is claimed by both '{seen[href]}' and '{item_id}'")
+        else:
+            seen[href] = item_id
+
+    if offenders:
+        raise Failure("\n".join(offenders)
+                      + "\n  Two menu entries opening one screen also produce two tiles on the "
+                        "front door's directory, describing the same thing in different words. "
+                        "Decide which entry owns the route and delete the other; if the second is "
+                        "a screen that does not exist yet, give it no href so it renders as "
+                        "unbuilt rather than borrowing this one.")
+
+
 CHECKS = [
     ("common/ does not import modules/", check_common_does_not_import_modules),
     ("annotations are attached to a declaration", check_annotations_are_attached),
@@ -684,6 +740,7 @@ CHECKS = [
     ("every table is granted to the application role", check_every_table_is_granted_to_the_app),
     ("no annotation is repeated on one declaration", check_no_repeated_annotation),
     ("the exchange reads the injected clock", check_tix_reads_the_injected_clock),
+    ("no screen appears twice in the menu", check_no_screen_appears_twice_in_the_menu),
 ]
 
 
