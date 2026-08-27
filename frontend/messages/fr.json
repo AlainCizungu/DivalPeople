@@ -784,7 +784,8 @@
           "body": "Consulter quelqu’un ne le crée jamais. Une personne qui se présente pour savoir si elle est inscrite ne le devient pas en le demandant."
         }
       ],
-      "note": "Les durées de conservation sont des paramètres et non des constantes, car ce sont des durées légales. Le conseil a préconisé cinq ans en août 2026 et c'est ce que la plateforme applique ; l'écran des paramètres indique l'origine de chaque valeur, et la seule sur laquelle personne n'a encore été interrogé le signale toujours."
+      "note": "Les durées de conservation sont des paramètres et non des constantes, car ce sont des durées légales. Le conseil a préconisé cinq ans en août 2026 et c'est ce que la plateforme applique ; l'écran des paramètres indique l'origine de chaque valeur, et la seule sur laquelle personne n'a encore été interrogé le signale toujours.",
+      "household": "Derrière une inscription dans ce registre, il y a un foyer. C'est toute la raison pour laquelle les droits ci-dessus sont construits plutôt que promis — et la raison pour laquelle un registre qui fonctionne compte, dans un marché où la plupart des gens n'ont aucun historique de crédit sur lequel être jugés."
     },
     "governance": {
       "eyebrow": "Gouvernance par conception",

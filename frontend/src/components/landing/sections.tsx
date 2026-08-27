@@ -596,6 +596,31 @@ export function SubjectRightsSection() {
         ))}
       </div>
 
+      {/* The one photograph on this site that is of somebody who is not at work.
+          It sits here and nowhere else, and the sentence beside it is the reason. A picture of a
+          child on a page about a bad-payer registry either carries an argument or it is bait, and
+          bait is expensive on a page whose entire posture is that its claims can be checked — a
+          bank's risk director notices.
+
+          The argument this section already makes is that a shared list decides who can open a
+          line, take a loan or win a contract, over people who did not choose to be in it. What is
+          behind an entry is a household. That is why the rights are built rather than promised,
+          and it is also the case FOR a working registry in a market where most people have no
+          credit file at all. Both halves are true and the second is the one banks forget. */}
+      <div className="mt-10 grid items-center gap-8 rounded-xl border border-line bg-soft p-6 md:grid-cols-[1fr_1fr] md:p-8">
+        <p className="text-lg leading-relaxed text-ink">{subjects.household}</p>
+        <div className="overflow-hidden rounded-lg">
+          <Image
+            src="/a-household.webp"
+            alt=""
+            width={1536}
+            height={1024}
+            className="h-auto w-full"
+            sizes="(max-width: 768px) 100vw, 480px"
+          />
+        </div>
+      </div>
+
       {/* White on soft now that the section itself is soft; the note has to sit apart from
           the surface it is written on or it stops reading as an aside. */}
       <p className="mt-6 rounded-xl border border-line bg-white px-5 py-4 text-sm text-muted">
