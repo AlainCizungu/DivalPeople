@@ -4,6 +4,7 @@ import static ai.dival.dip.modules.tix.ObligationEvent.CLOSED;
 import static ai.dival.dip.modules.tix.ObligationEvent.DEFAULTED;
 import static ai.dival.dip.modules.tix.ObligationEvent.DISPUTED;
 import static ai.dival.dip.modules.tix.ObligationEvent.LATE_30;
+import static ai.dival.dip.modules.tix.ObligationEvent.LATE_60;
 import static ai.dival.dip.modules.tix.ObligationEvent.LATE_90_PLUS;
 import static ai.dival.dip.modules.tix.ObligationEvent.OPENED;
 import static ai.dival.dip.modules.tix.ObligationEvent.PAID_AS_AGREED;
