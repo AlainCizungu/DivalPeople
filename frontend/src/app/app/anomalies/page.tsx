@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
 import {
@@ -10,7 +9,13 @@ import {
   type BehaviourReport,
   type InquiryBehaviour,
 } from "@/api/client";
-import { Card, EmptyState, ErrorNotice, Pill, type Tone } from "@/components/ui";
+import {
+  Card,
+  EmptyState,
+  ErrorNotice,
+  Pill,
+  type Tone,
+} from "@/components/ui";
 import { Band, CountUp } from "@/components/visual/motion";
 
 /**
@@ -65,7 +70,10 @@ export default function AnomaliesPage() {
 
   const people = report?.people ?? [];
   const flagged = people.filter((person) => person.flags.length > 0);
-  const totalInquiries = people.reduce((running, person) => running + person.inquiries, 0);
+  const totalInquiries = people.reduce(
+    (running, person) => running + person.inquiries,
+    0,
+  );
 
   /**
    * Flagged first, then busiest.
@@ -92,46 +100,33 @@ export default function AnomaliesPage() {
           was previously buried in a sentence inside a card description: "unusual" here means
           unusual *for this institution*, and a reader cannot judge a flag without seeing what it
           was judged against. */}
-      <Band>
-        <div className="grid gap-8 px-6 py-8 md:grid-cols-[1.3fr_1fr] md:px-10 md:py-9">
-          <div>
-            <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
-              {t.eyebrow}
-            </p>
-            <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h1>
-            <p className="mb-6 max-w-xl text-sm text-white/70">{t.subtitle}</p>
+      <Band image="/anomaly-watch.webp">
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">
+            {t.title}
+          </h1>
+          <p className="mb-6 max-w-xl text-sm text-white/70">{t.subtitle}</p>
 
-            {report !== null && (
-              <div className="flex flex-wrap gap-x-8 gap-y-4">
-                {[
-                  [people.length, t.statPeople],
-                  [totalInquiries, t.statInquiries],
-                  [flagged.length, t.statFlagged],
-                  [report.medianInquiries, t.statMedian],
-                ].map(([value, label]) => (
-                  <div key={label as string}>
-                    <p className="text-3xl font-bold">
-                      <CountUp value={value as number} />
-                    </p>
-                    <p className="text-xs text-white/60">{label as string}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Beside the words, not above them. This screen has no form to push down, but the
-              figures are what somebody came for and they stay in the first column. */}
-          <div className="hidden overflow-hidden rounded-xl md:block">
-            <Image
-              src="/anomaly-watch.webp"
-              alt=""
-              width={1536}
-              height={1024}
-              className="h-full w-full object-cover"
-              sizes="400px"
-            />
-          </div>
+          {report !== null && (
+            <div className="flex flex-wrap gap-x-8 gap-y-4">
+              {[
+                [people.length, t.statPeople],
+                [totalInquiries, t.statInquiries],
+                [flagged.length, t.statFlagged],
+                [report.medianInquiries, t.statMedian],
+              ].map(([value, label]) => (
+                <div key={label as string}>
+                  <p className="text-3xl font-bold">
+                    <CountUp value={value as number} />
+                  </p>
+                  <p className="text-xs text-white/60">{label as string}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Band>
 
@@ -188,11 +183,17 @@ export default function AnomaliesPage() {
 
           <div className="flex flex-col divide-y divide-line">
             {ordered.map((person, index) => (
-              <PersonRow key={person.actorId ?? `unknown-${index}`} person={person} t={t} />
+              <PersonRow
+                key={person.actorId ?? `unknown-${index}`}
+                person={person}
+                t={t}
+              />
             ))}
           </div>
 
-          <p className="mt-4 border-t border-line pt-3 text-xs text-muted">{t.notAccusation}</p>
+          <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
+            {t.notAccusation}
+          </p>
         </Card>
       )}
     </div>
@@ -213,7 +214,8 @@ function PersonRow({
   };
 
   const flagged = person.flags.length > 0;
-  const noMatchShare = person.inquiries === 0 ? 0 : person.noMatch / person.inquiries;
+  const noMatchShare =
+    person.inquiries === 0 ? 0 : person.noMatch / person.inquiries;
 
   return (
     <div className={`py-3.5 ${flagged ? "-mx-3 rounded-lg bg-soft px-3" : ""}`}>

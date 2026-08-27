@@ -124,7 +124,7 @@ export default function ResolutionPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <Band>
+      <Band image="/reviewing-a-match.webp">
         <div className="px-6 py-8 md:px-10 md:py-9">
           <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
             {t.eyebrow}

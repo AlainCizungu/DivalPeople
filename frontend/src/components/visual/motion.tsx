@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Image from "next/image";
 
 /**
  * Movement, and the one rule all of it obeys.
@@ -420,11 +421,45 @@ export function MiniSpark({ values, colour = "var(--color-blue)" }: {
   );
 }
 
-/** A band that fills the width and holds the spotlight. Kept here so the page file stays readable. */
-export function Band({ children }: { children: ReactNode }) {
+/**
+ * A band that fills the width and holds a screen's heading and its headline figures.
+ *
+ * <p>Optionally with a photograph beside it. That lives here rather than being pasted into each
+ * screen because it was about to be pasted into four, and four copies of a grid drift: one gets a
+ * different breakpoint, another forgets to hide the image on a phone, and the app quietly stops
+ * looking like one product.
+ *
+ * @param image a path under {@code public/}, or nothing. Decorative by definition — the alt text
+ *              is deliberately empty, because everything the picture conveys is already in the
+ *              heading beside it, and a screen reader announcing "man at a laptop" before the
+ *              figures somebody came for is noise standing in front of content.
+ */
+export function Band({ children, image }: { children: ReactNode; image?: string }) {
+  const shell =
+    "overflow-hidden rounded-2xl bg-[linear-gradient(120deg,#0b1f3a_0%,#123a63_55%,#0a4f5c_100%)] text-white";
+
+  if (!image) {
+    return <div className={shell}>{children}</div>;
+  }
+
   return (
-    <div className="overflow-hidden rounded-2xl bg-[linear-gradient(120deg,#0b1f3a_0%,#123a63_55%,#0a4f5c_100%)] text-white">
-      {children}
+    <div className={shell}>
+      {/* Hidden below the medium breakpoint, and that is not a detail. These bands carry the
+          counts a screen exists to show; on a phone a photograph above them would push every
+          figure off the first screenful, which is the opposite of what the band is for. */}
+      <div className="grid md:grid-cols-[1.35fr_1fr]">
+        <div>{children}</div>
+        <div className="hidden md:block">
+          <Image
+            src={image}
+            alt=""
+            width={1536}
+            height={1024}
+            className="h-full w-full object-cover"
+            sizes="480px"
+          />
+        </div>
+      </div>
     </div>
   );
 }

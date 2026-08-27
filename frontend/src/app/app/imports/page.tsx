@@ -138,7 +138,7 @@ export default function ImportsPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <Band>
+      <Band image="/delivering-a-file.webp">
         <div className="px-6 py-8 md:px-10 md:py-9">
           <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
             {t.eyebrow}
