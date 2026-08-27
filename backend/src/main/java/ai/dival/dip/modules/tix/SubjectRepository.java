@@ -45,7 +45,18 @@ public interface SubjectRepository extends JpaRepository<Subject, UUID> {
      * the subquery returns nothing for every subject alive. The caller is what makes this safe,
      * which is a fragile arrangement, so it is stated here as loudly as it can be stated.
      */
+    /**
+     * <p><strong>Accounts count as well as debts</strong>, and forgetting that was a real defect
+     * rather than a hypothetical one. When {@code tix_relationship} arrived, a subject with a
+     * spotless payment history and no adverse record satisfied "no debt records" and was swept as
+     * an orphan — which is exactly the company DIP built the lifecycle model to be able to
+     * describe. The foreign key turned a silent erasure into a loud one, and five purge tests went
+     * red; without it the sweep would have deleted good customers nightly and nothing would have
+     * said so.
+     */
     @Query("select s from Subject s where not exists "
-            + "(select 1 from DebtRecord d where d.subject.id = s.id)")
-    List<Subject> findWithNoDebtRecords();
+            + "(select 1 from DebtRecord d where d.subject.id = s.id) "
+            + "and not exists "
+            + "(select 1 from Relationship r where r.subject.id = s.id)")
+    List<Subject> findWithNothingHeldAgainstThem();
 }

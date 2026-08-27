@@ -38,11 +38,17 @@ public interface RelationshipRepository extends JpaRepository<Relationship, UUID
                                                      @Param("today") LocalDate today);
 
     /**
-     * Accounts whose retention has run out.
+     * One operator's accounts whose retention has run out.
      *
      * <p>Deleting one cascades to its events, which is how erasure of a payment history happens:
      * at the account, all at once, so no single inconvenient event can be removed on its own.
+     *
+     * <p><strong>Scoped to a tenant, and there is deliberately no cross-tenant version.</strong>
+     * The policy on this table reads {@code USING (tenant_id = app_current_tenant() OR
+     * app_exchange_mode())}, and a USING clause governs DELETE as well as SELECT — so a query that
+     * found every expired account everywhere would, run inside exchange mode, hand somebody a
+     * cross-tenant delete. {@link RetentionPurge} binds each operator in turn for exactly this
+     * reason and this method exists in the shape that purge needs.
      */
-    @Query("select r from Relationship r where r.retentionUntil < :today")
-    List<Relationship> findExpired(@Param("today") LocalDate today);
+    List<Relationship> findByTenantIdAndRetentionUntilBefore(UUID tenantId, LocalDate today);
 }

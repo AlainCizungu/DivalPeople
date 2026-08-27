@@ -123,19 +123,6 @@ public class RelationshipService {
         return ObligationHistory.of(accounts);
     }
 
-    /**
-     * Accounts whose retention has run out, for the nightly purge.
-     *
-     * <p>Deleting the account cascades to its events. That is the only way a payment history is
-     * erased, and it is all-or-nothing on purpose: the application holds no DELETE privilege on the
-     * event table, so nobody can remove the single event that made a record look bad and leave the
-     * account standing.
-     */
-    @Transactional(readOnly = true)
-    public List<Relationship> expired() {
-        return relationships.findExpired(LocalDate.now(clock));
-    }
-
     /** For the importer, which needs to know whether it is about to open an account or extend one. */
     @Transactional(readOnly = true)
     public Optional<Relationship> findOwn(String accountReference) {

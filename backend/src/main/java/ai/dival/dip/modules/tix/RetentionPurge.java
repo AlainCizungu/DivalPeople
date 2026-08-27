@@ -31,11 +31,18 @@ import org.springframework.transaction.support.TransactionTemplate;
  * So this binds each tenant in turn and erases inside that tenant's own boundary. It is slower
  * and it keeps the boundary a boundary.
  *
- * <p>Subjects are erased too, once nothing refers to them. A subject exists only to carry debt
- * records; deleting every record about a person while keeping their name, date of birth and
- * national ID number would leave personal data with no lawful basis and nothing left to explain
- * why it is held. That cleanup runs outside the per-tenant loop because subjects are shared and
- * carry no tenant of their own.
+ * <p>Subjects are erased too, once nothing refers to them. A subject exists to carry what
+ * operators assert about somebody; deleting every one of those while keeping their name, date of
+ * birth and national ID number would leave personal data with no lawful basis and nothing left to
+ * explain why it is held. That cleanup runs outside the per-tenant loop because subjects are
+ * shared and carry no tenant of their own.
+ *
+ * <p><strong>"Nothing refers to them" means accounts as well as debts</strong>, and that was
+ * learned the hard way. When {@code tix_relationship} arrived this sweep still asked only about
+ * debt records, so a company with a spotless payment history and no adverse record read as an
+ * orphan — precisely the borrower the lifecycle model exists to be able to describe. The foreign
+ * key from the account turned a silent nightly erasure of good customers into five loudly failing
+ * tests, which is the only reason anybody found out.
  */
 @Component
 public class RetentionPurge {
@@ -44,6 +51,7 @@ public class RetentionPurge {
 
     private final TenantService tenants;
     private final DebtRecordRepository debtRecords;
+    private final RelationshipRepository relationships;
     private final SubjectRepository subjects;
     private final AuditService audit;
     private final TransactionTemplate transactionTemplate;
@@ -51,11 +59,13 @@ public class RetentionPurge {
     private final Clock clock;
 
     public RetentionPurge(TenantService tenants, DebtRecordRepository debtRecords,
+                          RelationshipRepository relationships,
                           SubjectRepository subjects, AuditService audit,
                           TransactionTemplate transactionTemplate, EntityManager entityManager,
                           Clock clock) {
         this.tenants = tenants;
         this.debtRecords = debtRecords;
+        this.relationships = relationships;
         this.subjects = subjects;
         this.audit = audit;
         this.transactionTemplate = transactionTemplate;
@@ -76,10 +86,12 @@ public class RetentionPurge {
      */
     public int purgeAsOf(LocalDate today) {
         int erased = 0;
+        int accounts = 0;
 
         for (Tenant tenant : tenants.list()) {
             try {
                 erased += purgeTenant(tenant.getId(), today);
+                accounts += purgeExpiredAccounts(tenant.getId(), today);
             } catch (RuntimeException ex) {
                 // One operator's data problem must not stop every other operator's erasure. A
                 // purge that aborts halfway leaves the platform holding data past its period, and
@@ -90,8 +102,9 @@ public class RetentionPurge {
 
         int orphaned = purgeOrphanedSubjects();
 
-        if (erased > 0 || orphaned > 0) {
-            log.info("Retention purge erased {} debt records and {} subjects", erased, orphaned);
+        if (erased > 0 || accounts > 0 || orphaned > 0) {
+            log.info("Retention purge erased {} debt records, {} accounts and {} subjects",
+                    erased, accounts, orphaned);
         }
         return erased;
     }
@@ -117,6 +130,44 @@ public class RetentionPurge {
                     }
 
                     debtRecords.deleteAll(expired);
+                    return expired.size();
+                }));
+        return erased == null ? 0 : erased;
+    }
+
+    /**
+     * Erases this operator's accounts whose retention has run out.
+     *
+     * <p>Deleting the account takes its events with it by cascade, and that is the only way a
+     * payment history is erased. The application holds no DELETE on {@code tix_relationship_event},
+     * so it is all of an account's history or none of it — nobody can remove the single event that
+     * made a record look bad and leave the account standing and apparently clean.
+     *
+     * <p>Not audited per event, unlike debt records. An account can carry years of monthly rows and
+     * writing an audit line for each would make the trail unreadable to defend the erasure of a
+     * "still performing" from three years ago. One row per account, naming the account, which is
+     * the thing that was actually erased.
+     *
+     * <p><strong>Runs before subjects are judged orphaned.</strong> Otherwise an account expiring
+     * tonight would still hold its subject in the registry until tomorrow's sweep, and a person
+     * whose last trace was a lapsed account would linger a day longer than the policy allows.
+     */
+    private int purgeExpiredAccounts(UUID tenantId, LocalDate today) {
+        Integer erased = TenantContext.runAsResult(tenantId, () ->
+                transactionTemplate.execute(status -> {
+                    List<Relationship> expired =
+                            relationships.findByTenantIdAndRetentionUntilBefore(tenantId, today);
+                    if (expired.isEmpty()) {
+                        return 0;
+                    }
+
+                    for (Relationship account : expired) {
+                        audit.record("TIX_ACCOUNT_ERASED", "Relationship",
+                                account.getId().toString(), AuditService.OUTCOME_SUCCESS, null,
+                                "Retention period ended " + account.getRetentionUntil());
+                    }
+
+                    relationships.deleteAll(expired);
                     return expired.size();
                 }));
         return erased == null ? 0 : erased;
@@ -149,7 +200,7 @@ public class RetentionPurge {
             entityManager.createNativeQuery("SELECT set_config('app.exchange', 'on', true)")
                     .getSingleResult();
 
-            List<Subject> orphans = subjects.findWithNoDebtRecords();
+            List<Subject> orphans = subjects.findWithNothingHeldAgainstThem();
             if (orphans.isEmpty()) {
                 return 0;
             }

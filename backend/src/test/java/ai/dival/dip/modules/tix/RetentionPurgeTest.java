@@ -40,6 +40,8 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
     @Autowired
     private RetentionPurge purge;
     @Autowired
+    private RelationshipService relationships;
+    @Autowired
     private org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     private UUID operatorA;
@@ -163,6 +165,71 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
     private List<String> auditActionsFor(UUID recordId) {
         return jdbc.queryForList("select action from audit_event where resource_id = ?",
                 String.class, recordId.toString());
+    }
+
+    // --- accounts, which the sweep learned about late ------------------------
+
+    @Test
+    @DisplayName("a clean payer is not an orphan, even with no debt record anywhere")
+    void anAccountHoldsSomebodyInTheRegistry() {
+        String document = document();
+        UUID subjectId = TenantContext.runAsResult(operatorA,
+                () -> debtRecordService.declare(declaration(document), null)
+                        .record().getSubject().getId());
+
+        // An account that runs for years yet, on a subject whose only adverse record is about to
+        // expire. This is the company the lifecycle model exists to describe: a spotless payer,
+        // known to the network, with nothing held against them.
+        // Opened today, so the interim retention — the adverse rule, borrowed until § 4 of
+        // docs/CREDIT_INTELLIGENCE.md is answered — leaves it live for three years. The purge
+        // below runs at one year, by which time the four-year-old debt record has expired and
+        // this has not. Getting these two clocks the wrong way round makes the test pass for the
+        // wrong reason, or fail for one.
+        TenantContext.runAs(operatorA, () -> relationships.report(
+                subjects.findById(subjectId).orElseThrow(),
+                "ACC-" + UUID.randomUUID(), "POSTPAID", "USD",
+                PlatformDate.today(),
+                ObligationEvent.PAID_AS_AGREED, PlatformDate.today().minusMonths(1),
+                DateSource.REPORTED, null));
+
+        purge.purgeAsOf(PlatformDate.today().plusYears(1));
+
+        // Before accounts were added to the orphan query this swept them away nightly, and the
+        // only reason anybody noticed is that the foreign key made it fail loudly instead.
+        assertThat(subjects.findById(subjectId))
+                .as("a good payment history is a reason to keep somebody, not to forget them")
+                .isPresent();
+    }
+
+    @Test
+    @DisplayName("an account past its own retention is erased, and takes its history with it")
+    void expiredAccountsAreErased() {
+        String document = document();
+        UUID subjectId = TenantContext.runAsResult(operatorA,
+                () -> debtRecordService.declare(declaration(document), null)
+                        .record().getSubject().getId());
+
+        UUID accountId = TenantContext.runAsResult(operatorA, () -> relationships.report(
+                        subjects.findById(subjectId).orElseThrow(),
+                        "ACC-" + UUID.randomUUID(), "POSTPAID", "USD",
+                        // Opened four years ago: the three-year period ran out a year back.
+                        PlatformDate.today().minusYears(4),
+                        ObligationEvent.PAID_AS_AGREED, PlatformDate.today().minusYears(4),
+                        DateSource.REPORTED, null)
+                .getRelationship().getId());
+
+        purge.purgeAsOf(PlatformDate.today().plusYears(1));
+
+        assertThat(jdbc.queryForObject(
+                "select count(*) from tix_relationship where id = ?", Integer.class, accountId))
+                .as("the account itself is gone, not merely hidden")
+                .isZero();
+        assertThat(jdbc.queryForObject(
+                "select count(*) from tix_relationship_event where relationship_id = ?",
+                Integer.class, accountId))
+                .as("and its events went with it, by cascade — erasure is all of a history or "
+                        + "none of it, because nobody may remove one inconvenient event")
+                .isZero();
     }
 
     private static String document() {
