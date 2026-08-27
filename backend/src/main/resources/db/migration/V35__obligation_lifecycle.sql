@@ -122,7 +122,20 @@ CREATE TABLE tix_relationship_event (
     -- Where it came from, when it came from a delivery rather than a form.
     raw_record_id   UUID,
 
-    created_at      TIMESTAMPTZ NOT NULL
+    created_at      TIMESTAMPTZ NOT NULL,
+
+    -- Never incremented, and here anyway.
+    --
+    -- TenantOwnedEntity carries an @Version field, so Hibernate's schema validator requires the
+    -- column on every table backing one — and this table was written without it, which failed
+    -- validation at context startup and took all 556 integration tests down together. Nothing in
+    -- the error names the offending table.
+    --
+    -- An append-only row is never updated, so the value stays zero forever. The alternative was
+    -- to stop extending TenantOwnedEntity and hand-roll tenant_id, created_at and the @PrePersist
+    -- that binds them, which is three chances to get tenant binding wrong to avoid one unused
+    -- eight-byte column.
+    version         BIGINT      NOT NULL DEFAULT 0
 );
 
 -- Reading a relationship means reading its events in order, always.

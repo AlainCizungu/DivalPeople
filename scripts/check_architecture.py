@@ -672,6 +672,71 @@ def check_tix_reads_the_injected_clock() -> None:
                         "decides whether a record is still visible.")
 
 
+def check_tenant_owned_tables_carry_the_base_columns() -> None:
+    """
+    Every table behind a TenantOwnedEntity has the three columns that class declares.
+
+    TenantOwnedEntity maps id, tenant_id, created_at and an @Version field. Hibernate validates
+    the schema at startup, so a table missing any of them does not fail the test that uses it —
+    it fails *context creation*, which means every integration test in the suite fails at once
+    with SchemaManagementException and nothing in the output names the table or the column.
+
+    That is exactly what tix_relationship_event did: 556 tests red, one missing `version`.
+
+    Reading CREATE TABLE bodies with a regex rather than parsing SQL, deliberately. The
+    alternative is a Postgres instance in a check that has to run before anything is installed, to
+    answer a question about four column names.
+    """
+    tables: dict[str, Path] = {}
+    for path in java_sources():
+        source = path.read_text(encoding="utf-8")
+        if "extends TenantOwnedEntity" not in source:
+            continue
+        named = re.search(r'@Table\s*\(\s*name\s*=\s*"([^"]+)"', source)
+        if not named:
+            raise Failure(f"    {path.relative_to(REPO)} extends TenantOwnedEntity with no "
+                          "@Table(name = ...), so this check cannot find its table.")
+        tables[named.group(1)] = path
+
+    if not tables:
+        raise Failure("    found no TenantOwnedEntity subclasses — the base class moved or was "
+                      "renamed, and this check is now guarding nothing.")
+
+    migrations = "\n".join(
+        p.read_text(encoding="utf-8") for p in sorted(MIGRATIONS.glob("*.sql")))
+
+    required = ("tenant_id", "created_at", "version")
+    offenders = []
+    for table, path in sorted(tables.items()):
+        created = re.search(
+            r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?" + re.escape(table) + r"\s*\((.*?)\n\);",
+            migrations, re.S | re.I)
+        if not created:
+            offenders.append(f"    {table} — no CREATE TABLE found "
+                             f"({path.relative_to(REPO)})")
+            continue
+
+        # Columns added later count too.
+        added = " ".join(re.findall(
+            r"ALTER\s+TABLE\s+" + re.escape(table) + r"\s+ADD\s+COLUMN\s+(\w+)",
+            migrations, re.I))
+        body = created.group(1) + " " + added
+
+        missing = [column for column in required
+                   if not re.search(r"\b" + column + r"\b", body)]
+        if missing:
+            offenders.append(f"    {table} is missing {', '.join(missing)} "
+                             f"({path.relative_to(REPO).name})")
+
+    if offenders:
+        raise Failure("\n".join(offenders)
+                      + "\n  TenantOwnedEntity declares id, tenant_id, created_at and @Version, "
+                        "and Hibernate validates the schema at startup. A missing column here "
+                        "does not fail one test — it fails context creation, so every "
+                        "integration test in the suite goes red at once and none of them says "
+                        "which table is wrong.")
+
+
 def check_no_screen_appears_twice_in_the_menu() -> None:
     """
     One screen, one entry.
@@ -741,6 +806,8 @@ CHECKS = [
     ("no annotation is repeated on one declaration", check_no_repeated_annotation),
     ("the exchange reads the injected clock", check_tix_reads_the_injected_clock),
     ("no screen appears twice in the menu", check_no_screen_appears_twice_in_the_menu),
+    ("tenant-owned tables carry the base columns",
+     check_tenant_owned_tables_carry_the_base_columns),
 ]
 
 
