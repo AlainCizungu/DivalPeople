@@ -716,7 +716,8 @@
             "Cross-institution inquiry returning a status and a count — never a name, never an amount",
             "Declare a default, with a reporting floor below which nothing enters the registry",
             "Rate-limited and purpose-stamped: every question recorded with why it was asked",
-            "Watchlists that re-ask nightly and charge like the inquiries they are"
+            "Watchlists that re-ask nightly, and alerts graded so a night of good news does not read like a night of bad",
+            "How large the network is, told to every participant and resolvable to none: institutions, subjects, and the businesses owing more than one"
           ]
         },
         {

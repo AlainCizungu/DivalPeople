@@ -716,7 +716,8 @@
             "Consultation inter-institutions renvoyant un statut et un décompte — jamais un nom, jamais un montant",
             "Déclarer un défaut, avec un seuil en dessous duquel rien n'entre au registre",
             "Quota et motif : chaque question enregistrée avec la raison invoquée",
-            "Listes de surveillance interrogées chaque nuit et décomptées comme les consultations qu'elles sont"
+            "Listes de surveillance interrogées chaque nuit, et alertes graduées pour qu'une nuit de bonnes nouvelles ne se lise pas comme une mauvaise",
+            "La taille du réseau, communiquée à chaque participant et rattachable à aucun : institutions, sujets, et les entreprises devant à plus d'un"
           ]
         },
         {
