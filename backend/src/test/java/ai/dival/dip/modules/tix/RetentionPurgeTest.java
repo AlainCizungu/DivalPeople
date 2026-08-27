@@ -180,11 +180,14 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
         // An account that runs for years yet, on a subject whose only adverse record is about to
         // expire. This is the company the lifecycle model exists to describe: a spotless payer,
         // known to the network, with nothing held against them.
-        // Opened today, so the interim retention — the adverse rule, borrowed until § 4 of
-        // docs/CREDIT_INTELLIGENCE.md is answered — leaves it live for three years. The purge
-        // below runs at one year, by which time the four-year-old debt record has expired and
-        // this has not. Getting these two clocks the wrong way round makes the test pass for the
-        // wrong reason, or fail for one.
+        // Two clocks, staged deliberately. The configured period is FIVE years — the interim
+        // retention borrowed from the adverse rule until § 4 of docs/CREDIT_INTELLIGENCE.md is
+        // answered — so an account opened today lives until today+5, and the debt record declared
+        // four years ago expires at today+1. Sweeping at today+2 puts the purge between them.
+        //
+        // The first version of this test read "three years" from a display name in
+        // RetentionPolicyTest instead of the configured value, swept at today+1, and passed
+        // because the debt record had NOT expired either. It proved nothing at all.
         TenantContext.runAs(operatorA, () -> relationships.report(
                 subjects.findById(subjectId).orElseThrow(),
                 "ACC-" + UUID.randomUUID(), "POSTPAID", "USD",
@@ -192,7 +195,13 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
                 ObligationEvent.PAID_AS_AGREED, PlatformDate.today().minusMonths(1),
                 DateSource.REPORTED, null));
 
-        purge.purgeAsOf(PlatformDate.today().plusYears(1));
+        purge.purgeAsOf(PlatformDate.today().plusYears(2));
+
+        // Asserted, not assumed. If the adverse record survives, this test says nothing about
+        // whether an account holds somebody in the registry.
+        assertThat(debtRecords.findByTenantIdAndSubjectId(operatorA, subjectId))
+                .as("the debt record must really be gone, or the subject is being held by it")
+                .isEmpty();
 
         // Before accounts were added to the orphan query this swept them away nightly, and the
         // only reason anybody noticed is that the foreign key made it fail loudly instead.
@@ -212,13 +221,16 @@ class RetentionPurgeTest extends AbstractIntegrationTest {
         UUID accountId = TenantContext.runAsResult(operatorA, () -> relationships.report(
                         subjects.findById(subjectId).orElseThrow(),
                         "ACC-" + UUID.randomUUID(), "POSTPAID", "USD",
-                        // Opened four years ago: the three-year period ran out a year back.
+                        // Opened four years ago, so the five-year period runs out at today+1.
                         PlatformDate.today().minusYears(4),
                         ObligationEvent.PAID_AS_AGREED, PlatformDate.today().minusYears(4),
                         DateSource.REPORTED, null)
                 .getRelationship().getId());
 
-        purge.purgeAsOf(PlatformDate.today().plusYears(1));
+        // Today+2, not today+1. A record is live on its final day — "retention_until < today", not
+        // "<=" — so sweeping exactly on the expiry date leaves the account standing, which is the
+        // rule working and looked like the purge being broken.
+        purge.purgeAsOf(PlatformDate.today().plusYears(2));
 
         assertThat(jdbc.queryForObject(
                 "select count(*) from tix_relationship where id = ?", Integer.class, accountId))
