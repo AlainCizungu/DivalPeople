@@ -1517,7 +1517,14 @@
       "HIGH_VOLUME": "Plus de quatre fois la médiane de l'institution, et au-dessus du seuil en deçà duquel un après-midi chargé n'est pas une tendance.",
       "MOSTLY_NO_MATCH": "Le plus fort des trois et le plus difficile à écarter. Qui vérifie ses clients les trouve ; qui parcourt un format d'identifiant pour voir quelles valeurs existent ne trouve presque personne.",
       "HIT_THE_RATE_LIMIT": "Une personne faisant son travail n'atteint pour ainsi dire jamais un plafond horaire. Un traitement automatisé l'atteint aussitôt."
-    }
+    },
+    "eyebrow": "Supervision",
+    "statPeople": "Personnes ayant interrogé",
+    "statInquiries": "Interrogations",
+    "statFlagged": "Portant un signalement",
+    "statMedian": "Médiane par personne",
+    "shareLabel": "{noMatch} interrogations sur {total} n'ont trouvé personne",
+    "flaggedFirst": "Les signalements d'abord, puis les plus actifs. Tout le monde figure dans la liste."
   },
   "watchlist": {
     "title": "Listes de surveillance",

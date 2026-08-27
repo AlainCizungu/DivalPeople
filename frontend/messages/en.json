@@ -1517,7 +1517,14 @@
       "HIGH_VOLUME": "More than four times the institution's median, and above the floor below which one busy afternoon is not a pattern.",
       "MOSTLY_NO_MATCH": "The strongest of the three and the hardest to explain away. Somebody checking customers finds them; somebody walking an identifier format to see which values exist finds almost nobody.",
       "HIT_THE_RATE_LIMIT": "A person doing their job reaches an hourly cap approximately never. Something automated reaches it immediately."
-    }
+    },
+    "eyebrow": "Supervision",
+    "statPeople": "People who asked",
+    "statInquiries": "Inquiries",
+    "statFlagged": "Carrying a flag",
+    "statMedian": "Median per person",
+    "shareLabel": "{noMatch} of {total} inquiries found nobody",
+    "flaggedFirst": "Flagged first, then busiest. Everybody is listed either way."
   },
   "watchlist": {
     "title": "Watchlists",
