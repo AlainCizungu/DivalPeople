@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useMessages } from "@/i18n/LocaleProvider";
 import {
   ApiError,
@@ -180,6 +181,37 @@ export default function CreditCheckPage() {
           </div>
         </form>
       </Card>
+
+      {/* Before an inquiry has been run, and replaced by the answer.
+          Same rule as the search screen: nothing goes above the form, because the form is what
+          people came for. This fills the space that is empty anyway and disappears on the first
+          answer.
+
+          The words are doing real work here, not captioning a picture. The image shows a search
+          box over a map of institutions, which reads as browsing the network — and browsing is
+          the one thing this exchange is built to refuse. So the panel states what actually comes
+          back, on the screen where somebody is about to ask: a status and a count, never which
+          institution, never how much, never a list. A caption on a marketing page could only say
+          that to people already reading the small print; here it is next to the button. */}
+      {!result && !error && (
+        <div className="mt-6 overflow-hidden rounded-lg border border-line bg-white">
+          <div className="grid items-center gap-6 md:grid-cols-[1fr_1fr]">
+            <div className="px-6 py-8 md:px-8">
+              <h2 className="text-lg font-bold text-navy">{t.beforeTitle}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{t.beforeBody}</p>
+              <p className="mt-4 text-xs leading-relaxed text-muted">{t.beforeGrowth}</p>
+            </div>
+            <Image
+              src="/network-reach.webp"
+              alt=""
+              width={1536}
+              height={1024}
+              className="h-full w-full object-cover"
+              sizes="(max-width: 768px) 100vw, 480px"
+            />
+          </div>
+        </div>
+      )}
 
       {result && (
         <div className="mt-6 flex flex-col gap-6">

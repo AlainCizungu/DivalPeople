@@ -305,7 +305,10 @@
       "INDIVIDUAL": "Individual"
     },
     "eyebrow": "Trusted Data Exchange",
-    "pipsNote": "{count} institution(s), each mark one of them. DIP does not say which."
+    "pipsNote": "{count} institution(s), each mark one of them. DIP does not say which.",
+    "beforeTitle": "One question, every participating institution",
+    "beforeBody": "The exchange asks all of them at once and answers with a status and a count: whether an adverse record exists, and how many institutions hold one. Never which institution, never how much, and never a list of companies to browse.",
+    "beforeGrowth": "Telecoms today. The same question reaches banks, microfinance, insurers and utilities as they join."
   },
   "auth": {
     "signIn": "Sign in",
@@ -583,8 +586,7 @@
           "title": "Built to Grow Nationwide",
           "body": "The architecture supports growth from initial telecom datasets to a broader multi-industry national intelligence ecosystem."
         }
-      ],
-      "previewCaption": "The network as it grows beyond telecoms — banks, microfinance, insurers, utilities and lenders. Illustrative: an inquiry is answered with a status and a count, never a list of companies."
+      ]
     },
     "industries": {
       "eyebrow": "Industry Solutions",

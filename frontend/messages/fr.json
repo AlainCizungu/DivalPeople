@@ -305,7 +305,10 @@
       "INDIVIDUAL": "Particulier"
     },
     "eyebrow": "Échange de données de confiance",
-    "pipsNote": "{count} institution(s), chaque marque en représente une. DIP ne dit pas lesquelles."
+    "pipsNote": "{count} institution(s), chaque marque en représente une. DIP ne dit pas lesquelles.",
+    "beforeTitle": "Une seule question, toutes les institutions participantes",
+    "beforeBody": "L'échange les interroge toutes à la fois et répond par un statut et un décompte : s'il existe un enregistrement défavorable, et combien d'institutions en détiennent un. Jamais laquelle, jamais combien, et jamais une liste d'entreprises à parcourir.",
+    "beforeGrowth": "Les télécoms aujourd'hui. La même question atteindra les banques, la microfinance, les assureurs et les services publics à mesure qu'ils rejoindront le réseau."
   },
   "auth": {
     "signIn": "Se connecter",
@@ -583,8 +586,7 @@
           "title": "Conçu pour évoluer à l’échelle nationale",
           "body": "L’architecture permet d’évoluer des premières données télécoms vers un écosystème national multi-sectoriel d’intelligence."
         }
-      ],
-      "previewCaption": "Le réseau tel qu'il s'étendra au-delà des télécoms — banques, microfinance, assureurs, services publics et prêteurs. Illustration : une interrogation reçoit un statut et un décompte, jamais une liste d'entreprises."
+      ]
     },
     "industries": {
       "eyebrow": "Solutions sectorielles",
