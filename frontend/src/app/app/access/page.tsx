@@ -10,7 +10,8 @@ import {
   type AccessMember,
   type RoleAccess,
 } from "@/api/client";
-import { Card, EmptyState, ErrorNotice, PageHeader, Pill } from "@/components/ui";
+import { Card, EmptyState, ErrorNotice, Pill } from "@/components/ui";
+import { Band, CountUp } from "@/components/visual/motion";
 
 /**
  * Who may do what here.
@@ -60,11 +61,63 @@ export default function AccessPage() {
     return b.endpoints - a.endpoints;
   });
 
+  /**
+   * The widest role's reach, used to scale every bar.
+   *
+   * <p>Relative, not absolute, and deliberately so. Endpoint counts cannot be added together —
+   * one endpoint guarded by three roles would be counted three times — so there is no honest
+   * total to draw a percentage against. Comparing each role to the widest one is a real
+   * comparison, and it is the one somebody about to grant a role actually wants.
+   */
+  const widest = Math.max(
+    1,
+    ...(access?.roles ?? []).map((role) => role.endpoints),
+  );
+  const held = roles.filter((role) => role.held).length;
+  const guardNothing = roles.filter((role) => role.endpoints === 0).length;
+
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title={t.title} subtitle={t.subtitle} />
+      {/* The band the other working screens carry. This one opened with a plain heading and a
+          grey slab of caveats, so the first thing on a governance screen was two sentences of
+          disclaimer and no figures at all. */}
+      <Band>
+        <div className="px-6 py-8 md:px-10 md:py-9">
+          <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
+            {t.eyebrow}
+          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">
+            {t.title}
+          </h1>
+          <p className="mb-6 max-w-2xl text-sm text-white/70">{t.subtitle}</p>
 
-      <p className="mb-6 rounded border border-line bg-soft px-4 py-3 text-sm text-muted">
+          {access && (
+            <div className="flex flex-wrap gap-x-10 gap-y-4">
+              {[
+                [held, t.statHeld],
+                [roles.length, t.statRoles],
+                // Absent, not nought: a caller who may not see the member list is a different
+                // thing from an organisation with nobody in it.
+                ...(access.members === null
+                  ? []
+                  : [[access.members.length, t.statPeople] as const]),
+                [guardNothing, t.statEmpty],
+              ].map(([value, label]) => (
+                <div key={label as string}>
+                  <p className="text-3xl font-bold">
+                    <CountUp value={value as number} />
+                  </p>
+                  <p className="text-xs text-white/60">{label as string}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Band>
+
+      {/* Two sentences rather than a grey box. They are caveats about how the page is built, and
+          a caveat set in the same weight as the content competes with it. */}
+      <p className="mt-6 mb-6 text-sm leading-relaxed text-muted">
         {t.derivedNote} {t.readOnlyNote}
       </p>
 
@@ -74,14 +127,16 @@ export default function AccessPage() {
           <span className="mt-1 block font-mono text-xs">{failure}</span>
         </ErrorNotice>
       )}
-      {!failure && access === null && <EmptyState>{messages.common.loading}</EmptyState>}
+      {!failure && access === null && (
+        <EmptyState>{messages.common.loading}</EmptyState>
+      )}
 
       {access && (
         <div className="flex flex-col gap-6">
           <Card title={t.rolesTitle} description={t.rolesDescription}>
             <div className="flex flex-col gap-3">
               {roles.map((role) => (
-                <RoleRow key={role.role} role={role} t={t} />
+                <RoleRow key={role.role} role={role} widest={widest} t={t} />
               ))}
             </div>
           </Card>
@@ -109,35 +164,71 @@ export default function AccessPage() {
 
 function RoleRow({
   role,
+  widest,
   t,
 }: {
   role: RoleAccess;
+  widest: number;
   t: ReturnType<typeof useMessages>["access"];
 }) {
   const authenticated = role.role === "AUTHENTICATED";
   const grantsNothing = role.endpoints === 0;
 
   return (
-    <div className="rounded-lg border border-line p-4">
+    <div
+      className={`rounded-lg border p-4 ${
+        role.held ? "border-blue/40 bg-blue/[0.03]" : "border-line"
+      }`}
+    >
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-bold text-navy">
           {authenticated ? t.authenticatedRole : role.role}
         </span>
         {role.held && <Pill tone="positive">{t.yours}</Pill>}
         <span className="ml-auto text-xs text-muted tabular-nums">
-          {interpolate(t.endpoints, t.endpoints, { count: String(role.endpoints) })}
+          {interpolate(t.endpoints, t.endpoints, {
+            count: String(role.endpoints),
+          })}
           {role.heldBy !== null && (
             <>
               {" · "}
               {role.heldBy === 0
                 ? t.heldByNobody
-                : interpolate(t.heldBy, t.heldBy, { count: String(role.heldBy) })}
+                : interpolate(t.heldBy, t.heldBy, {
+                    count: String(role.heldBy),
+                  })}
             </>
           )}
         </span>
       </div>
 
-      {authenticated && <p className="mt-1.5 text-xs text-muted">{t.authenticatedNote}</p>}
+      {authenticated && (
+        <p className="mt-1.5 text-xs text-muted">{t.authenticatedNote}</p>
+      )}
+
+      {/* How far this role reaches, against the widest one. Somebody about to grant a role is
+          asking how much they are handing over, and "41 endpoints" answers that only for a reader
+          who already knows what the numbers run to.
+
+          Never coloured. Reach is not severity — a wide role is not a problem, it is a wide role
+          — and this platform spends amber and red on things that are wrong. */}
+      {!grantsNothing && (
+        <div
+          className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-line"
+          role="img"
+          aria-label={interpolate(t.reachLabel, t.reachLabel, {
+            count: String(role.endpoints),
+            most: String(widest),
+          })}
+        >
+          <div
+            className={`h-full rounded-full ${role.held ? "bg-blue" : "bg-blue/35"}`}
+            style={{
+              width: `${Math.max(2, Math.round((role.endpoints / widest) * 100))}%`,
+            }}
+          />
+        </div>
+      )}
 
       {grantsNothing ? (
         // A role with nothing behind it is worth a sentence rather than an empty row. It can be
@@ -151,7 +242,9 @@ function RoleRow({
               className="rounded-full border border-line bg-soft px-2.5 py-0.5 text-xs text-ink"
             >
               {area.name}
-              <span className="ml-1.5 text-muted tabular-nums">{area.endpoints}</span>
+              <span className="ml-1.5 text-muted tabular-nums">
+                {area.endpoints}
+              </span>
             </li>
           ))}
         </ul>
@@ -170,7 +263,11 @@ function MemberRow({
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3">
       <div className="min-w-0">
-        <p className={member.active ? "font-semibold text-ink" : "text-muted line-through"}>
+        <p
+          className={
+            member.active ? "font-semibold text-ink" : "text-muted line-through"
+          }
+        >
           {member.displayName || member.email}
         </p>
         <p className="text-xs text-muted">{member.email}</p>

@@ -1430,7 +1430,13 @@
     "authenticatedRole": "Toute personne connectée",
     "authenticatedNote": "Ce n'est pas un rôle. Points d'accès ouverts à tout compte connecté, chacun étant une décision délibérée, listés pour que le catalogue ne les omette pas en silence.",
     "never": "Jamais",
-    "inactive": "Inactif"
+    "inactive": "Inactif",
+    "eyebrow": "Gouvernance",
+    "statHeld": "Rôles que vous détenez",
+    "statRoles": "Rôles définis",
+    "statPeople": "Personnes ici",
+    "statEmpty": "Ne gardant rien",
+    "reachLabel": "{count} des {most} points d'accès que le rôle le plus large atteint"
   },
   "resolution": {
     "title": "Centre de résolution d'identité",

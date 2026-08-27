@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useMessages } from "@/i18n/LocaleProvider";
@@ -20,8 +21,21 @@ import {
 import { Directory } from "@/components/dashboard/Directory";
 import { NetworkStrip } from "@/components/dashboard/NetworkStrip";
 import { Spotlight } from "@/components/dashboard/Spotlight";
-import { CountUp, HoverTile, MiniSpark, Ring, Sparkline, Trend } from "@/components/visual/motion";
-import { Button, Card, EmptyState, SectionHeading, inputClass } from "@/components/ui";
+import {
+  CountUp,
+  HoverTile,
+  MiniSpark,
+  Ring,
+  Sparkline,
+  Trend,
+} from "@/components/visual/motion";
+import {
+  Button,
+  Card,
+  EmptyState,
+  SectionHeading,
+  inputClass,
+} from "@/components/ui";
 
 /**
  * One colour per tier, and none of them from the severity palette.
@@ -222,20 +236,33 @@ export default function DashboardPage() {
       built.push({
         key: "erasure",
         eyebrow: t.spotlight.retention,
-        headline: interpolate(t.spotlight.awaitingErasure, t.spotlight.awaitingErasure, {
-          count: String(register.awaitingErasure),
-        }),
+        headline: interpolate(
+          t.spotlight.awaitingErasure,
+          t.spotlight.awaitingErasure,
+          {
+            count: String(register.awaitingErasure),
+          },
+        ),
         action: t.spotlight.openPortfolio,
         href: "/app/tix/portfolio",
       });
     }
-    if (deliveries && deliveries.awaitingPublication + deliveries.awaitingValidation > 0) {
+    if (
+      deliveries &&
+      deliveries.awaitingPublication + deliveries.awaitingValidation > 0
+    ) {
       built.push({
         key: "deliveries",
         eyebrow: t.spotlight.deliveries,
-        headline: interpolate(t.spotlight.awaitingDelivery, t.spotlight.awaitingDelivery, {
-          count: String(deliveries.awaitingPublication + deliveries.awaitingValidation),
-        }),
+        headline: interpolate(
+          t.spotlight.awaitingDelivery,
+          t.spotlight.awaitingDelivery,
+          {
+            count: String(
+              deliveries.awaitingPublication + deliveries.awaitingValidation,
+            ),
+          },
+        ),
         action: t.spotlight.openImports,
         href: "/app/imports",
       });
@@ -244,9 +271,13 @@ export default function DashboardPage() {
       built.push({
         key: "contested",
         eyebrow: t.spotlight.contested,
-        headline: interpolate(t.spotlight.contestedRecords, t.spotlight.contestedRecords, {
-          count: String(register.contested),
-        }),
+        headline: interpolate(
+          t.spotlight.contestedRecords,
+          t.spotlight.contestedRecords,
+          {
+            count: String(register.contested),
+          },
+        ),
         action: t.spotlight.openRecords,
         href: "/app/tix/records",
       });
@@ -273,37 +304,66 @@ export default function DashboardPage() {
           top bar is on every screen. Fetching it app-wide would make every page pay for the
           network aggregation this endpoint now does, to draw a line that only makes sense on the
           page somebody lands on after signing in. */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-navy">
-          {interpolate(greetingFor(now, t.greeting), greetingFor(now, t.greeting), {
-            name: firstName,
-          })}
-        </h1>
-        <p className="mt-1 text-sm font-semibold text-muted">{messages.app.platform}</p>
-        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
-          <span>
-            {overview?.organisation
-              ? interpolate(t.greeting.organisation, t.greeting.organisation, {
-                  name: overview.organisation,
-                })
-              : loading
-                ? t.greeting.refreshing
-                : t.greeting.organisationUnknown}
-          </span>
-          {loadedAt && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span>
-                {interpolate(t.greeting.refreshed, t.greeting.refreshed, {
-                  time: loadedAt.toLocaleTimeString(locale, {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }),
-                })}
-              </span>
-            </>
-          )}
-        </p>
+      {/* Beside the greeting, not above it. Everything below this block is work waiting on
+          somebody, and the one rule the images in this product follow is that none of them push a
+          figure or a form further down the page. On a phone the photograph is not rendered at
+          all — the greeting is three short lines there and a picture beside it would become a
+          picture above it. */}
+      <div className="mb-6 grid items-center gap-6 md:grid-cols-[1.6fr_1fr]">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-navy">
+            {interpolate(
+              greetingFor(now, t.greeting),
+              greetingFor(now, t.greeting),
+              {
+                name: firstName,
+              },
+            )}
+          </h1>
+          <p className="mt-1 text-sm font-semibold text-muted">
+            {messages.app.platform}
+          </p>
+          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+            <span>
+              {overview?.organisation
+                ? interpolate(
+                    t.greeting.organisation,
+                    t.greeting.organisation,
+                    {
+                      name: overview.organisation,
+                    },
+                  )
+                : loading
+                  ? t.greeting.refreshing
+                  : t.greeting.organisationUnknown}
+            </span>
+            {loadedAt && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>
+                  {interpolate(t.greeting.refreshed, t.greeting.refreshed, {
+                    time: loadedAt.toLocaleTimeString(locale, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }),
+                  })}
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+
+        <div className="hidden overflow-hidden rounded-xl md:block">
+          <Image
+            src="/overview-welcome.webp"
+            alt=""
+            width={1536}
+            height={1024}
+            className="h-auto w-full"
+            sizes="380px"
+            priority
+          />
+        </div>
       </div>
 
       {loading ? (
@@ -457,7 +517,9 @@ export default function DashboardPage() {
                         label={t.awaitingErasure}
                         value={register.awaitingErasure}
                         reveal={t.awaitingErasureNote}
-                        tone={register.awaitingErasure > 0 ? "serious" : "plain"}
+                        tone={
+                          register.awaitingErasure > 0 ? "serious" : "plain"
+                        }
                       />
                     </div>
                   </>
@@ -573,7 +635,10 @@ function Activity({
 
       <Sparkline
         label={t.activityTitle}
-        months={months.map((month) => ({ month: month.month, value: month.declared }))}
+        months={months.map((month) => ({
+          month: month.month,
+          value: month.declared,
+        }))}
       />
 
       {current && (
@@ -647,7 +712,10 @@ function InquiryCta() {
       style={{ borderTop: `3px solid ${TIER.ask}` }}
     >
       <div>
-        <p className="mb-2 text-xs font-semibold tracking-[0.16em] uppercase" style={{ color: TIER.ask }}>
+        <p
+          className="mb-2 text-xs font-semibold tracking-[0.16em] uppercase"
+          style={{ color: TIER.ask }}
+        >
           {t.eyebrow}
         </p>
         <h2 className="mb-2 text-xl font-bold text-navy">{t.title}</h2>
@@ -655,7 +723,10 @@ function InquiryCta() {
       </div>
       <span className="mt-6 inline-flex items-center gap-2 self-start rounded bg-navy px-4 py-2.5 text-sm font-bold text-white transition group-hover:bg-navy/90">
         {t.action}
-        <span aria-hidden="true" className="transition group-hover:translate-x-1">
+        <span
+          aria-hidden="true"
+          className="transition group-hover:translate-x-1"
+        >
           →
         </span>
       </span>
@@ -730,9 +801,13 @@ function LookupBar() {
                 onClick={() => router.push(`/app/subjects/${result.subjectId}`)}
                 className="w-full rounded-lg border border-line px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-blue hover:shadow-sm"
               >
-                <span className="block font-semibold text-navy">{result.name}</span>
+                <span className="block font-semibold text-navy">
+                  {result.name}
+                </span>
                 <span className="text-sm text-muted">
-                  {interpolate(t.records, t.records, { count: String(result.recordCount) })}
+                  {interpolate(t.records, t.records, {
+                    count: String(result.recordCount),
+                  })}
                 </span>
               </button>
             </li>

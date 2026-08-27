@@ -1430,7 +1430,13 @@
     "authenticatedRole": "Anybody signed in",
     "authenticatedNote": "Not a role. Endpoints open to every signed-in account, each one a deliberate decision, listed so the catalogue does not silently omit them.",
     "never": "Never",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "eyebrow": "Governance",
+    "statHeld": "Roles you hold",
+    "statRoles": "Roles defined",
+    "statPeople": "People here",
+    "statEmpty": "Guarding nothing",
+    "reachLabel": "{count} of the {most} endpoints the widest role reaches"
   },
   "resolution": {
     "title": "Identity Resolution Center",
