@@ -583,7 +583,8 @@
           "title": "Built to Grow Nationwide",
           "body": "The architecture supports growth from initial telecom datasets to a broader multi-industry national intelligence ecosystem."
         }
-      ]
+      ],
+      "previewCaption": "The network as it grows beyond telecoms — banks, microfinance, insurers, utilities and lenders. Illustrative: an inquiry is answered with a status and a count, never a list of companies."
     },
     "industries": {
       "eyebrow": "Industry Solutions",
@@ -1258,7 +1259,9 @@
       "EXPOSURE": "Owed",
       "OLDEST": "Oldest",
       "NAME": "Name"
-    }
+    },
+    "beforeTitle": "Start with a name or a number",
+    "beforeBody": "A trading name, an RCCM, a tax number, a phone number, or one of your own account references. Three characters is enough to begin."
   },
   "audit": {
     "title": "Audit trail",

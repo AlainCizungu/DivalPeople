@@ -583,7 +583,8 @@
           "title": "Conçu pour évoluer à l’échelle nationale",
           "body": "L’architecture permet d’évoluer des premières données télécoms vers un écosystème national multi-sectoriel d’intelligence."
         }
-      ]
+      ],
+      "previewCaption": "Le réseau tel qu'il s'étendra au-delà des télécoms — banques, microfinance, assureurs, services publics et prêteurs. Illustration : une interrogation reçoit un statut et un décompte, jamais une liste d'entreprises."
     },
     "industries": {
       "eyebrow": "Solutions sectorielles",
@@ -1258,7 +1259,9 @@
       "EXPOSURE": "Dû",
       "OLDEST": "Ancienneté",
       "NAME": "Nom"
-    }
+    },
+    "beforeTitle": "Commencez par un nom ou un numéro",
+    "beforeBody": "Une dénomination commerciale, un RCCM, un numéro d'impôt, un numéro de téléphone, ou l'une de vos propres références de compte. Trois caractères suffisent pour commencer."
   },
   "audit": {
     "title": "Journal d’audit",

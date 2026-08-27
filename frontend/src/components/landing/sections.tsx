@@ -237,6 +237,31 @@ export function NationalTrustSection() {
             </article>
           ))}
         </div>
+
+        {/* The network reaching past telecoms, in the section that is already written in the
+            future tense — "designed to become a trusted reference across institutions".
+
+            The caption carries a clause the picture does not: an inquiry answers with a status and
+            a count, never a list. The image shows a search box over a map of institutions, which
+            reads as browsing the network, and browsing is the one thing the exchange is built to
+            refuse — a prefix is not a match, two companies sharing a name stop the answer rather
+            than producing a list, and the anomaly module watches for exactly that pattern. Putting
+            the correction in the caption is cheaper than an image nobody can quote back at us. */}
+        <figure className="mx-auto mt-14 max-w-5xl">
+          <div className="overflow-hidden rounded-2xl border border-[#1e3d63]">
+            <Image
+              src="/network-reach.webp"
+              alt={trust.previewCaption}
+              width={1536}
+              height={1024}
+              className="h-auto w-full"
+              sizes="(max-width: 1024px) 100vw, 1024px"
+            />
+          </div>
+          <figcaption className="mt-3 text-center text-xs text-[#9ec5e8]">
+            {trust.previewCaption}
+          </figcaption>
+        </figure>
       </div>
     </section>
   );

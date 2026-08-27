@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMessages } from "@/i18n/LocaleProvider";
 import { interpolate } from "@/i18n/interpolate";
@@ -161,6 +162,35 @@ export default function SearchPage() {
       {error && (
         <div className="mt-6">
           <ErrorNotice>{error}</ErrorNotice>
+        </div>
+      )}
+
+      {/* Before anybody has searched, and only then.
+          A working screen is not a place for a photograph — an operator opens this to type a name,
+          and anything above the box pushes the tool down the page on every visit forever. This
+          sits in the space that is empty anyway, and the first search replaces it. Somebody who
+          uses this screen daily sees it for about two seconds and then never again.
+
+          It is also the one moment the screen has nothing to say, so the words beside it earn
+          their place: what you can type in that box is genuinely not obvious. */}
+      {results === null && !error && (
+        <div className="mt-6 overflow-hidden rounded-lg border border-line bg-white">
+          <div className="grid items-center gap-6 md:grid-cols-[1fr_1fr]">
+            <div className="px-6 py-8 md:px-8">
+              <h2 className="text-lg font-bold text-navy">{t.beforeTitle}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{t.beforeBody}</p>
+              <p className="mt-4 text-xs leading-relaxed text-muted">{t.noResultsHint}</p>
+            </div>
+            <Image
+              src="/analyst-at-work.webp"
+              alt=""
+              width={1536}
+              height={1024}
+              className="h-full w-full object-cover"
+              sizes="(max-width: 768px) 100vw, 480px"
+              priority={false}
+            />
+          </div>
         </div>
       )}
 
