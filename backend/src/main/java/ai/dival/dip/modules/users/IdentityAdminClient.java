@@ -14,6 +14,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -207,7 +208,7 @@ public class IdentityAdminClient {
                     .getHeaders()
                     .getLocation();
         } catch (RestClientException failed) {
-            throw new IdentityAdminException(refusal(failed));
+            throw refusal(failed);
         }
     }
 
@@ -221,7 +222,7 @@ public class IdentityAdminClient {
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException failed) {
-            throw new IdentityAdminException(refusal(failed));
+            throw refusal(failed);
         }
     }
 
@@ -235,7 +236,7 @@ public class IdentityAdminClient {
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException failed) {
-            throw new IdentityAdminException(refusal(failed));
+            throw refusal(failed);
         }
     }
 
@@ -249,7 +250,7 @@ public class IdentityAdminClient {
                     .body(Map.class);
             return body == null ? Map.of() : body;
         } catch (RestClientException failed) {
-            throw new IdentityAdminException(refusal(failed));
+            throw refusal(failed);
         }
     }
 
@@ -263,7 +264,7 @@ public class IdentityAdminClient {
                     .body(List.class);
             return body == null ? List.of() : body;
         } catch (RestClientException failed) {
-            throw new IdentityAdminException(refusal(failed));
+            throw refusal(failed);
         }
     }
 
@@ -294,16 +295,56 @@ public class IdentityAdminClient {
                 : new String[] {cleaned.substring(0, space), cleaned.substring(space + 1)};
     }
 
-    private static String refusal(RestClientException failed) {
-        // The message, never the exception. Keycloak's error bodies are quoted back verbatim by
-        // some client versions, and the request that produced them carries the bearer token.
-        return "The identity provider refused the change: " + failed.getMessage();
+    /**
+     * A refusal, carrying its status and not its body.
+     *
+     * <p>The status is kept because it is the only part a caller can act on: a 409 means the
+     * address is taken and the person should try another, a 401 means this deployment's service
+     * account is wrong and the person can do nothing about it. Without it every failure arrived as
+     * the same opaque runtime exception and left the web layer no choice but a 500.
+     *
+     * <p>The body is dropped. It used to be interpolated into the message, which put Keycloak's
+     * own JSON — {@code {"errorMessage":"User exists with same email"}} — into an API response and
+     * a log line, and it is Keycloak's wording about Keycloak's data model, not DIP's about the
+     * caller's problem. Callers that want to say something useful match on the status and write
+     * their own sentence.
+     */
+    private static IdentityAdminException refusal(RestClientException failed) {
+        int status = failed instanceof HttpStatusCodeException coded
+                ? coded.getStatusCode().value()
+                : 0;
+        // The status only. Not failed.getMessage(), which embeds the response body, and not the
+        // exception as a cause, because the request it carries carries the bearer token.
+        return new IdentityAdminException(status == 0
+                ? "The identity provider could not be reached."
+                : "The identity provider refused the change with status " + status + ".", status);
     }
 
-    /** Something went wrong at the identity provider, said without quoting a credential. */
+    /**
+     * Something went wrong at the identity provider, said without quoting a credential.
+     *
+     * @param status the HTTP status the provider answered with, or 0 if it never answered
+     */
     public static class IdentityAdminException extends RuntimeException {
+
+        private final int status;
+
         public IdentityAdminException(String message) {
+            this(message, 0);
+        }
+
+        public IdentityAdminException(String message, int status) {
             super(message);
+            this.status = status;
+        }
+
+        public int status() {
+            return status;
+        }
+
+        /** True when the provider said the account already exists. */
+        public boolean isConflict() {
+            return status == 409;
         }
     }
 }
