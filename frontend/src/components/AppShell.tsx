@@ -145,37 +145,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex items-center gap-3 border-b border-line bg-white px-4 py-3 md:px-6">
+      <header className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line bg-white px-4 py-3 md:px-6">
         {/* Home, and the only way back to it now that the menu is gone.
 
             It points at /app rather than at the marketing site, which is where the menu's brand
             used to go. Inside the product the useful meaning of the logo is "take me to the
             overview"; a link out to the public page is a thing somebody clicks once by accident
             and then avoids. */}
+        {/* Larger than everything beside it, and set apart from it.
+
+            It was the same size and weight as the seven area labels, in the same row, with the
+            same gap — so the product's name read as an eighth menu. A wordmark is not a
+            navigation item: it says whose product this is and it is the way home, and both of
+            those are lost the moment it looks like a peer of "Governance". */}
         <Link
           href="/app"
           aria-label={messages.app.name}
-          className="flex shrink-0 items-center gap-2"
+          className="mr-3 flex shrink-0 items-center gap-2.5 border-r border-line pr-5"
         >
-          <BrandMark size={24} />
-          <span className="hidden font-bold text-navy sm:inline">
+          <BrandMark size={30} />
+          <span className="hidden text-xl font-bold tracking-tight text-navy sm:inline">
             {messages.app.name}
           </span>
         </Link>
 
         {/* Every area of the platform, at every width.
 
-            Scrolls sideways rather than wrapping or hiding. Seven headings, some of them two words
-            and longer again in French, will not fit a phone — and the two alternatives are worse
-            than a scrollbar: wrapping makes the bar grow a second row and shove the page down,
-            hiding is what the old menu did and it is why a phone had no navigation at all.
+            WRAPS, AND MUST NOT SCROLL. The first version put overflow-x-auto here so the row could
+            slide sideways on a narrow screen. That silently broke every dropdown: CSS makes
+            overflow-y compute to auto when overflow-x is anything but visible, so the bar became a
+            clipping context and the absolutely-positioned panels were cut off at its bottom edge.
+            The menus opened correctly and were invisible, which reads as "the labels are not
+            clickable" — and there is no way to see the cause by looking at the markup for either
+            piece on its own.
 
-            min-w-0 is what makes the shrinking work. A flex child defaults to min-width:auto and
-            refuses to become narrower than its content, so without it this pushes the profile
-            menu off the right-hand edge instead of scrolling. */}
+            So it wraps to a second row when it has to. That pushes the page down slightly on
+            narrow screens, which was the objection to wrapping in the first place, and is a great
+            deal better than navigation that appears broken. A one-line bar that scrolls needs the
+            panels rendered in a portal, which is the correct fix and a bigger one than this. */}
         <nav
           aria-label={t.topBarLandmark}
-          className="-mx-1 flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-1 flex-wrap items-center gap-x-0.5 gap-y-1"
         >
           {menus.map((group) => (
             <TopBarMenu
@@ -217,7 +227,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 01-3.4 0" />
             </TopBarLink>
 
-            <TopBarMenu label={messages.common.help}>
+            <TopBarMenu label={messages.common.help} align="right">
               {(close) => (
                 <MenuLink
                   // Was /app#everything, an anchor into the bottom of the overview. That section
@@ -232,7 +242,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </TopBarMenu>
 
-            <TopBarMenu label={messages.common.profile}>
+            <TopBarMenu label={messages.common.profile} align="right">
               {() => (
                 <>
                   <div className="border-b border-line px-4 py-3">
@@ -334,9 +344,12 @@ function TopBarLink({
 function TopBarMenu({
   label,
   current,
+  align = "left",
   children,
 }: {
   label: string;
+  /** Which edge the panel hangs from. Right for the controls at the end of the bar. */
+  align?: "left" | "right";
   /**
    * Whether the page open right now lives inside this menu.
    *
@@ -380,7 +393,7 @@ function TopBarMenu({
         onClick={() => setOpen((isOpen) => !isOpen)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className={`shrink-0 rounded px-2.5 py-1.5 text-sm font-semibold whitespace-nowrap transition ${
+        className={`rounded px-2.5 py-1.5 text-sm font-semibold whitespace-nowrap transition ${
           current
             ? "text-blue underline decoration-2 underline-offset-8 hover:bg-soft"
             : "text-ink hover:bg-soft hover:text-blue"
@@ -391,7 +404,13 @@ function TopBarMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-1 w-60 overflow-hidden rounded-lg border border-line bg-white shadow-lg"
+          // Anchored left, not right. These used to be only the three controls at the far end of
+          // the bar, where right alignment kept a panel on screen; the area menus sit at the other
+          // end, and right-anchoring makes each one open leftwards away from the label it belongs
+          // to. align is passed so the controls keep the behaviour that suits them.
+          className={`absolute z-20 mt-1 w-60 overflow-hidden rounded-lg border border-line bg-white shadow-lg ${
+            align === "right" ? "right-0" : "left-0"
+          }`}
         >
           {children(() => setOpen(false))}
         </div>
