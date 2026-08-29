@@ -69,6 +69,11 @@ public class MembershipService {
         return identity.configured();
     }
 
+    /** Whether an invitation travels as an emailed link rather than a password on screen. */
+    public boolean invitesByEmail() {
+        return identity.invitesByEmail();
+    }
+
     /** Roles this institution may hand out, for the form. Never includes the platform's own. */
     public List<String> grantableRoles() {
         return MembershipRules.grantable();
@@ -102,15 +107,40 @@ public class MembershipService {
         audit.record(INVITE_ATTEMPTED, "UserAccount", address, AuditService.OUTCOME_SUCCESS,
                 actorId, "Roles: " + String.join(", ", granted));
 
+        boolean byEmail = identity.invitesByEmail();
         String token = identity.token();
         UUID created = null;
-        String password;
+        String password = null;
         try {
             created = identity.createUser(token, address, displayName, tenant);
             identity.setRoles(token, created, granted);
 
-            password = identity.freshPassword();
-            identity.setTemporaryPassword(token, created, password);
+            if (byEmail) {
+                // No password is ever set. Until the person follows the link there is nothing to
+                // steal and no way in, which is the whole difference between this path and the
+                // other one.
+                try {
+                    identity.sendInvitation(token, created);
+                } catch (IdentityAdminClient.IdentityAdminException notSent) {
+                    // Named separately because it is the failure this path will actually hit, and
+                    // the generic "a problem with the deployment" would cost somebody an hour.
+                    // Keycloak reports only that it could not hand the message over; whether the
+                    // realm has no mail server, the credentials are wrong, or the provider refused
+                    // this particular recipient are indistinguishable from here.
+                    log.warn("Could not send an invitation to {}: status={}", address,
+                            notSent.status());
+                    undo(token, created, address, actorId);
+                    throw new PolicyRefusedException(
+                            "The account could not be created because the invitation email could "
+                                    + "not be sent, so nothing was left behind. Either this "
+                                    + "deployment's mail server is not working, or the provider "
+                                    + "refused this address — a new sending account often will "
+                                    + "not deliver to addresses it has not been told about yet.");
+                }
+            } else {
+                password = identity.freshPassword();
+                identity.setTemporaryPassword(token, created, password);
+            }
         } catch (IdentityAdminClient.IdentityAdminException refused) {
             audit.record(INVITED, "UserAccount", address, AuditService.OUTCOME_FAILURE, actorId,
                     "Status " + refused.status());
@@ -118,9 +148,10 @@ public class MembershipService {
         }
 
         audit.record(INVITED, "UserAccount", address, AuditService.OUTCOME_SUCCESS, actorId,
-                "Roles: " + String.join(", ", granted));
+                "Roles: " + String.join(", ", granted)
+                        + (byEmail ? "; invitation emailed" : "; password shown once"));
 
-        return new Invitation(created, address, List.copyOf(granted), password);
+        return new Invitation(created, address, List.copyOf(granted), password, byEmail);
     }
 
     /**
@@ -310,8 +341,16 @@ public class MembershipService {
     }
 
     /**
-     * @param password shown once, stored nowhere, and useless after first sign-in
+     * What happened, and what the administrator now has to do about it.
+     *
+     * @param password shown once, stored nowhere, useless after first sign-in — and <b>null</b>
+     *                 when the invitation was emailed, because in that case no password was ever
+     *                 set on the account at all. The screen must branch on {@code emailed} rather
+     *                 than on this being present, so that a bug producing a null password on the
+     *                 other path shows as a fault instead of quietly reading as "check your mail"
+     * @param emailed  true when a link was sent and the administrator has nothing to pass on
      */
-    public record Invitation(UUID userId, String email, List<String> roles, String password) {
+    public record Invitation(UUID userId, String email, List<String> roles, String password,
+                             boolean emailed) {
     }
 }

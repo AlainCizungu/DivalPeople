@@ -2,7 +2,9 @@ package ai.dival.dip.modules.users;
 
 import ai.dival.dip.common.security.Roles;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -217,6 +219,43 @@ public class IdentityAdminClient {
      */
     public void deleteUser(String token, UUID userId) {
         delete(token, "/admin/realms/" + properties.realm() + "/users/" + userId, null);
+    }
+
+    /** Whether this deployment sends invitations rather than showing a password. */
+    public boolean invitesByEmail() {
+        return properties.invitesByEmail();
+    }
+
+    /**
+     * Emails a link that lets somebody set their own password, and verifies the address on the way.
+     *
+     * <p>Nothing about the credential passes through DIP, an administrator, or a chat window. The
+     * account is created with no password at all, so until the person follows the link there is
+     * nothing to steal and no way in.
+     *
+     * <p>Both actions matter and for different reasons. {@code UPDATE_PASSWORD} is the point.
+     * {@code VERIFY_EMAIL} is what makes a mistyped address fail loudly: without it, an invitation
+     * to {@code alian@} instead of {@code alain@} creates a working account belonging to whoever
+     * happens to own the typo, and nothing anywhere says so.
+     *
+     * <p>The link expires. A long lifespan feels kinder and is the wrong instinct here — this sets
+     * the password on an account that can read other institutions' credit records, so a link
+     * sitting in an inbox is a credential sitting in an inbox. Re-sending is two clicks.
+     *
+     * @throws IdentityAdminException when the realm has no mail server, or the send fails
+     */
+    public void sendInvitation(String token, UUID userId) {
+        String path = "/admin/realms/" + properties.realm() + "/users/" + userId
+                + "/execute-actions-email"
+                + "?client_id=" + encode(properties.inviteClientId())
+                + "&redirect_uri=" + encode(properties.inviteRedirectUri())
+                + "&lifespan=" + properties.inviteLifespanSeconds();
+
+        put(token, path, List.of("UPDATE_PASSWORD", "VERIFY_EMAIL"));
+    }
+
+    private static String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     /** Sets a temporary password. The account must change it at first sign-in. */

@@ -189,6 +189,7 @@ export default function AccessPage() {
           {membership?.available && access.members !== null && (
             <InvitePanel
               grantable={membership.grantable}
+              emailInvites={membership.emailInvites}
               t={t}
               onInvited={() => setReloads((n) => n + 1)}
             />
@@ -417,10 +418,12 @@ function MemberRow({
  */
 function InvitePanel({
   grantable,
+  emailInvites,
   t,
   onInvited,
 }: {
   grantable: string[];
+  emailInvites: boolean;
   t: ReturnType<typeof useMessages>["access"];
   onInvited: () => void;
 }) {
@@ -476,27 +479,50 @@ function InvitePanel({
           email: created.email,
         })}
       >
-        <p className="text-xs font-bold tracking-wide text-muted uppercase">
-          {t.invitedPassword}
-        </p>
-        <div className="mt-1.5 flex flex-wrap items-center gap-3">
-          <code className="rounded border border-line bg-soft px-3 py-2 font-mono text-sm text-ink">
-            {created.password}
-          </code>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              void navigator.clipboard?.writeText(created.password);
-              setCopied(true);
-            }}
-          >
-            {copied ? t.invitedCopied : t.invitedCopy}
-          </Button>
-        </div>
+        {/*
+          Branching on `emailed`, not on whether a password came back.
 
-        <p className="mt-4 text-sm leading-relaxed text-muted">
-          {t.invitedOnce}
-        </p>
+          Those are the same thing today and would stop being the same thing the first time a bug
+          returns a null password on the password path — and then this would quietly render "an
+          email is on its way" for an invitation nobody sent, which is the failure the
+          administrator has no way to detect. The server states which happened; the screen
+          believes it.
+        */}
+        {created.emailed ? (
+          <>
+            <p className="text-sm leading-relaxed text-ink">{t.invitedEmailed}</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              {t.invitedEmailedExpiry}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-bold tracking-wide text-muted uppercase">
+              {t.invitedPassword}
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-3">
+              <code className="rounded border border-line bg-soft px-3 py-2 font-mono text-sm text-ink">
+                {created.password}
+              </code>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (created.password) {
+                    void navigator.clipboard?.writeText(created.password);
+                    setCopied(true);
+                  }
+                }}
+              >
+                {copied ? t.invitedCopied : t.invitedCopy}
+              </Button>
+            </div>
+
+            <p className="mt-4 text-sm leading-relaxed text-muted">
+              {t.invitedOnce}
+            </p>
+          </>
+        )}
+
         <p className="mt-2 text-sm leading-relaxed text-muted">
           {t.invitedAppears}
         </p>
@@ -516,7 +542,13 @@ function InvitePanel({
   }
 
   return (
-    <Card title={t.inviteTitle} description={t.inviteDescription}>
+    // The description says which of the two things is about to happen. An administrator who
+    // expects to copy a password and is instead told to check somebody's inbox has no way to
+    // know whether that worked, and the moment to set that expectation is before the button.
+    <Card
+      title={t.inviteTitle}
+      description={emailInvites ? t.inviteDescriptionEmail : t.inviteDescription}
+    >
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label={t.inviteName} htmlFor="member-name">

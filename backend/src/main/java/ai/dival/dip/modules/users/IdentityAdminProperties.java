@@ -35,7 +35,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "dip.identity-admin")
 public record IdentityAdminProperties(String baseUrl, String realm, String clientId,
-                                      String clientSecret, int timeoutMs) {
+                                      String clientSecret, int timeoutMs,
+                                      boolean inviteByEmail, String inviteClientId,
+                                      String inviteRedirectUri, int inviteLifespanSeconds) {
 
     public IdentityAdminProperties {
         realm = blankToNull(realm) == null ? "dip" : realm.trim();
@@ -43,6 +45,26 @@ public record IdentityAdminProperties(String baseUrl, String realm, String clien
         clientId = blankToNull(clientId);
         clientSecret = blankToNull(clientSecret);
         timeoutMs = timeoutMs > 0 ? timeoutMs : 5_000;
+
+        inviteClientId = blankToNull(inviteClientId) == null ? "dip-web" : inviteClientId.trim();
+        inviteRedirectUri = blankToNull(inviteRedirectUri);
+        inviteLifespanSeconds = inviteLifespanSeconds > 0 ? inviteLifespanSeconds : 86_400;
+
+        // A redirect that is not set means Keycloak has nowhere to send the person after they
+        // choose a password, and it refuses the send rather than guessing. Treating that as "not
+        // configured" keeps the password path working instead of failing at the moment somebody
+        // invites a colleague — the same rule the four settings above follow.
+        inviteByEmail = inviteByEmail && inviteRedirectUri != null;
+    }
+
+    /**
+     * Whether an invitation should travel as a link rather than as a password read off a screen.
+     *
+     * <p>False is a working configuration, not a broken one. It means the administrator is the
+     * delivery mechanism, which is what every deployment does until it has a mail server.
+     */
+    public boolean invitesByEmail() {
+        return inviteByEmail;
     }
 
     /**

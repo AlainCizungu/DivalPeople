@@ -116,6 +116,21 @@ dip:
     client-secret: ${DIP_IDENTITY_ADMIN_CLIENT_SECRET:}
     timeout-ms: ${DIP_IDENTITY_ADMIN_TIMEOUT_MS:5000}
 
+    # Invitation by link rather than by password.
+    #
+    # OFF, and off is a working configuration rather than a degraded one: the administrator sees a
+    # temporary password and passes it on themselves. Turning it on requires the realm to have a
+    # mail server, which is a separate step (infra/keycloak/setup-email.sh) precisely so sending can
+    # be proven before an invitation depends on it.
+    #
+    # The redirect URI must be listed on the web client or Keycloak refuses to send. The lifespan
+    # is short on purpose: this link sets the password on an account that can read other
+    # institutions' credit records, so a link left in an inbox is a credential left in an inbox.
+    invite-by-email: ${DIP_IDENTITY_ADMIN_INVITE_BY_EMAIL:false}
+    invite-client-id: ${DIP_IDENTITY_ADMIN_INVITE_CLIENT_ID:dip-web}
+    invite-redirect-uri: ${DIP_IDENTITY_ADMIN_INVITE_REDIRECT_URI:}
+    invite-lifespan-seconds: ${DIP_IDENTITY_ADMIN_INVITE_LIFESPAN_SECONDS:86400}
+
   ai:
     enabled: ${DIP_AI_ENABLED:false}
     narrate: ${DIP_AI_NARRATE:false}

@@ -55,7 +55,8 @@ public class MembershipController {
     @GetMapping("/options")
     @PreAuthorize(TENANT_ADMIN)
     public Options options() {
-        return new Options(membership.available(), membership.grantableRoles());
+        return new Options(membership.available(), membership.grantableRoles(),
+                membership.invitesByEmail());
     }
 
     /**
@@ -111,10 +112,13 @@ public class MembershipController {
     }
 
     /**
-     * @param available    false when the deployment has no service account configured
-     * @param grantable    every role this institution may assign; never the platform's own
+     * @param available     false when the deployment has no service account configured
+     * @param grantable     every role this institution may assign; never the platform's own
+     * @param emailInvites  true when the invitation travels as a link the person follows, so the
+     *                      form can say what will happen before it happens rather than surprising
+     *                      the administrator with a password they were not expecting to handle
      */
-    public record Options(boolean available, List<String> grantable) {
+    public record Options(boolean available, List<String> grantable, boolean emailInvites) {
     }
 
     public record InviteRequest(

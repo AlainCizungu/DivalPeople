@@ -1293,14 +1293,27 @@ export type MembershipOptions = {
   available: boolean;
   /** Every role this institution may assign. Never includes the platform's own. */
   grantable: string[];
+  /**
+   * True when the invitation is emailed as a link rather than shown as a password.
+   *
+   * Read before the form is submitted, so it can say what is about to happen. An administrator
+   * who expects to copy a password and instead gets "check their inbox" has no way to know
+   * whether that worked.
+   */
+  emailInvites: boolean;
 };
 
-/** @param password shown once and retrievable never. Temporary at the identity provider. */
 export type Invitation = {
   userId: string;
   email: string;
   roles: string[];
-  password: string;
+  /**
+   * Shown once, retrievable never — and **null when the invitation was emailed**, because on that
+   * path no password is ever set on the account.
+   */
+  password: string | null;
+  /** True when a link was sent, so the administrator has nothing to pass on. */
+  emailed: boolean;
 };
 
 export const accessApi = {

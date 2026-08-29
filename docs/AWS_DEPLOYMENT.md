@@ -240,6 +240,43 @@ sentence saying the deployment has not configured it, and the screen shows the m
 a form. The four values are all-or-nothing, so a half-filled `deploy.env` leaves the feature off
 rather than failing at the moment somebody invites a colleague.
 
+### Optional: send invitations instead of showing passwords
+
+Without this, an administrator reads a generated password off the screen and passes it on by hand
+— which works, and means the password now exists in a chat window, a screenshot, or on paper. With
+it, the person gets a link, chooses their own password, and no credential passes through anybody.
+
+It also brings two things this deployment has never had: **self-service password reset** (today
+every forgotten password is somebody running `kcadm` on the server) and **address verification**
+(today an invitation to a mistyped address quietly creates a working account for whoever owns the
+typo).
+
+Fill in the `SMTP_` block in `deploy.env`, then:
+
+```bash
+sh infra/keycloak/setup-email.sh
+```
+
+It writes the mail server into the realm, turns on "Forgot password?", and adds the site root to
+`dip-web`'s redirect URIs so the invitation link can return the person to the app. Then set
+`DIP_IDENTITY_ADMIN_INVITE_BY_EMAIL=true` and `DIP_IDENTITY_ADMIN_INVITE_REDIRECT_URI=$SITE_URL/`
+and recreate the backend.
+
+**Two steps on purpose.** The realm learning to send mail and the application relying on it are
+separate, so sending can be proven before an invitation depends on it. Until the variable is true,
+DIP keeps showing passwords, which is a working configuration and not a degraded one.
+
+**On the provider.** Any SMTP server works; Amazon SES in `eu-west-3` needs no extra host to keep
+running. What matters more is the FROM domain: it must be one you control with SPF and DKIM
+published. Invitations to a credit registry that land in spam are invitations nobody acts on, and
+a domain anybody can send as is a phishing kit aimed at your own participants. The script refuses
+a free mailbox as the sender for that reason.
+
+**SES starts in a sandbox** and will only deliver to individually verified addresses until you
+request production access. Fine for testing, useless for real invitations, and not instant — ask
+early. An invitation that cannot be delivered fails the whole operation and removes the
+half-created account, so the symptom is a refusal rather than a silent no-show.
+
 ### If every screen says "Authentication is required"
 
 Sign-in works, the backend is up, and every screen is empty with a 401. The account is missing its

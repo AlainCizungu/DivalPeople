@@ -66,7 +66,17 @@ fail() { echo "setup-identity-admin: $1" >&2; exit 1; }
 
 [ -f "$ENV_FILE" ] || fail "run this from the repository root; $ENV_FILE not found"
 
-value() { grep "^$1=" "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"' '; }
+# Trims surrounding whitespace and one layer of quotes, and nothing else.
+#
+# The first version deleted every space in the value, which is fine for a hostname and silently
+# wrong for anything a person wrote: "Dival Intelligence Platform" arrived as one word, and a
+# password containing a space would have been corrupted into something that simply fails to
+# authenticate, with no indication that the file said otherwise.
+value() {
+    grep "^$1=" "$ENV_FILE" | head -1 | cut -d= -f2- \
+        | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+              -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'\$/\1/"
+}
 
 ADMIN=$(value KEYCLOAK_ADMIN)
 ADMIN_PASSWORD=$(value KEYCLOAK_ADMIN_PASSWORD)

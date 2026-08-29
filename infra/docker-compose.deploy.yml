@@ -189,6 +189,16 @@ services:
       DIP_IDENTITY_ADMIN_CLIENT_ID: ${DIP_IDENTITY_ADMIN_CLIENT_ID:-}
       DIP_IDENTITY_ADMIN_CLIENT_SECRET: ${DIP_IDENTITY_ADMIN_CLIENT_SECRET:-}
 
+      # Invitation by link rather than by password. Off unless the realm has a mail server; see
+      # infra/keycloak/setup-email.sh. Off is the working fallback, not a degraded one.
+      DIP_IDENTITY_ADMIN_INVITE_BY_EMAIL: ${DIP_IDENTITY_ADMIN_INVITE_BY_EMAIL:-false}
+      DIP_IDENTITY_ADMIN_INVITE_REDIRECT_URI: ${DIP_IDENTITY_ADMIN_INVITE_REDIRECT_URI:-}
+      DIP_IDENTITY_ADMIN_INVITE_LIFESPAN_SECONDS: ${DIP_IDENTITY_ADMIN_INVITE_LIFESPAN_SECONDS:-86400}
+      # The client the invitation link comes back through. Same web client the person will sign in
+      # with; a link that returned through a different client would land them somewhere with no
+      # session.
+      DIP_IDENTITY_ADMIN_INVITE_CLIENT_ID: ${OIDC_CLIENT_ID:?set OIDC_CLIENT_ID}
+
       # Uploaded files: employee documents, import spreadsheets. Inside the container this path is
       # fixed; the host side is configurable, in the same shape as BACKUP_HOST_DIR.
       DIP_FILES_LOCAL_ROOT: /var/lib/dip/files
