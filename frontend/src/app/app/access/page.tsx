@@ -8,9 +8,19 @@ import {
   accessApi,
   type Access,
   type AccessMember,
+  type Invitation,
+  type MembershipOptions,
   type RoleAccess,
 } from "@/api/client";
-import { Card, EmptyState, ErrorNotice, Pill } from "@/components/ui";
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorNotice,
+  Field,
+  Pill,
+  inputClass,
+} from "@/components/ui";
 import { Band, CountUp } from "@/components/visual/motion";
 
 /**
@@ -25,6 +35,16 @@ import { Band, CountUp } from "@/components/visual/motion";
  * what each role can do is right on the day it is written and wrong from the first guard anybody
  * changes, silently and in the reassuring direction. This is read off the annotations Spring is
  * enforcing, so the page and the behaviour cannot disagree — they are the same thing.
+ *
+ * <p><strong>It is no longer read-only, and the note at the top still says it is.</strong> That
+ * sentence is about roles held in the identity provider, which is still where they live — what
+ * changed is that DIP can now ask the provider to change them on this institution's behalf. The
+ * form appears only when a deployment has configured a service account for that, so on a
+ * deployment without one this screen reads exactly as it did before.
+ *
+ * <p>The grantable roles come from the server. A copy of that list here would eventually disagree
+ * with the rule the backend enforces — quietly, and in the direction of offering something that is
+ * then refused.
  */
 export default function AccessPage() {
   const messages = useMessages();
@@ -32,6 +52,19 @@ export default function AccessPage() {
 
   const [access, setAccess] = useState<Access | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+
+  /**
+   * Whether this deployment lets an institution manage its own accounts.
+   *
+   * <p>Asked before anything is drawn, and its own failure is silent. A deployment with no service
+   * account configured is a deployment decision rather than a fault, and the form is simply not
+   * offered — a form that refuses at the moment somebody uses it teaches them the product is
+   * broken instead.
+   */
+  const [membership, setMembership] = useState<MembershipOptions | null>(null);
+
+  /** Bumped after a change, so the member list is re-read rather than patched in the browser. */
+  const [reloads, setReloads] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,10 +81,18 @@ export default function AccessPage() {
         );
       }
     })();
+    void (async () => {
+      try {
+        const options = await accessApi.membershipOptions();
+        if (!cancelled) setMembership(options);
+      } catch {
+        // Older deployment, or a caller without the role. Either way the form stays away.
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloads]);
 
   // Roles the caller holds first, then roles that grant something, then the rest. Somebody
   // opening this page is usually asking one of two questions — what do I have, or what would I be
@@ -141,6 +182,26 @@ export default function AccessPage() {
             </div>
           </Card>
 
+          {/* Only when the deployment can actually do it, and only for somebody entitled to see
+              the member list at all. A form that appears and then refuses is worse than no form:
+              it teaches an administrator that the product is unreliable rather than that this
+              deployment has not been configured. */}
+          {membership?.available && access.members !== null && (
+            <InvitePanel
+              grantable={membership.grantable}
+              t={t}
+              onInvited={() => setReloads((n) => n + 1)}
+            />
+          )}
+
+          {membership !== null &&
+            !membership.available &&
+            access.members !== null && (
+              <p className="rounded border border-line bg-soft px-4 py-3 text-sm text-muted">
+                {t.inviteUnavailable}
+              </p>
+            )}
+
           <Card title={t.membersTitle} description={t.membersDescription}>
             {access.members === null ? (
               // Absent rather than empty. "Nobody is in your organisation" and "this is not
@@ -151,9 +212,20 @@ export default function AccessPage() {
             ) : (
               <div className="flex flex-col divide-y divide-line">
                 {access.members.map((member) => (
-                  <MemberRow key={member.email} member={member} t={t} />
+                  <MemberRow
+                    key={member.email}
+                    member={member}
+                    canManage={membership?.available ?? false}
+                    t={t}
+                    onChanged={() => setReloads((n) => n + 1)}
+                  />
                 ))}
               </div>
+            )}
+            {membership?.available && (
+              <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
+                {t.memberNoDelete}
+              </p>
             )}
           </Card>
         </div>
@@ -255,11 +327,31 @@ function RoleRow({
 
 function MemberRow({
   member,
+  canManage,
   t,
+  onChanged,
 }: {
   member: AccessMember;
+  canManage: boolean;
   t: ReturnType<typeof useMessages>["access"];
+  onChanged: () => void;
 }) {
+  const [working, setWorking] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  async function toggle() {
+    setWorking(true);
+    setFailed(null);
+    try {
+      await accessApi.setMemberActive(member.userId, !member.active);
+      onChanged();
+    } catch (caught) {
+      setFailed(caught instanceof ApiError ? caught.message : String(caught));
+    } finally {
+      setWorking(false);
+    }
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3">
       <div className="min-w-0">
@@ -283,6 +375,210 @@ function MemberRow({
       <span className="ml-auto text-xs text-muted">
         {member.lastSeenAt ? member.lastSeenAt.slice(0, 10) : t.never}
       </span>
+
+      {/* Suspend, never delete. The wording is the product's position rather than a euphemism:
+          this person is the actor on every audit row they wrote, and removing the account makes
+          that history unattributable. */}
+      {canManage && (
+        <button
+          type="button"
+          onClick={() => void toggle()}
+          disabled={working}
+          className={`rounded border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50 ${
+            member.active
+              ? "border-line text-ink hover:border-error hover:text-[#b91c1c]"
+              : "border-line text-ink hover:border-blue hover:text-blue"
+          }`}
+        >
+          {working
+            ? t.memberChanging
+            : member.active
+              ? t.memberDisable
+              : t.memberEnable}
+        </button>
+      )}
+
+      {failed && <p className="w-full text-xs text-[#b91c1c]">{failed}</p>}
     </div>
+  );
+}
+
+/**
+ * Creating an account for a colleague.
+ *
+ * <p>The roles come from the server, never from a list in this file. Which roles may be granted is
+ * a rule the backend enforces, and a copy of it here would disagree with it eventually — quietly,
+ * and in the direction of offering something that is then refused.
+ *
+ * <p>The password is shown once. There is no way to ask for it again, which is the honest
+ * consequence of not storing it: an administrator who loses it suspends the account and invites
+ * again. That is worse than an email and better than a password this platform could be compelled
+ * to produce later.
+ */
+function InvitePanel({
+  grantable,
+  t,
+  onInvited,
+}: {
+  grantable: string[];
+  t: ReturnType<typeof useMessages>["access"];
+  onInvited: () => void;
+}) {
+  const messages = useMessages();
+  const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [created, setCreated] = useState<Invitation | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setFailed(null);
+    try {
+      const invitation = await accessApi.invite({
+        email: email.trim(),
+        displayName: displayName.trim(),
+        roles,
+      });
+      setCreated(invitation);
+      setEmail("");
+      setDisplayName("");
+      setRoles([]);
+      // The list is re-read rather than patched: the person appears only once they have signed
+      // in, and pretending otherwise in the browser would be a lie the next reload corrects.
+      onInvited();
+    } catch (caught) {
+      // The server's sentence, not a generic one. It says which role was refused and why, and
+      // that is the whole value of refusing the request rather than dropping what it disliked.
+      setFailed(caught instanceof ApiError ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (created) {
+    return (
+      <Card
+        title={interpolate(t.invitedTitle, t.invitedTitle, {
+          email: created.email,
+        })}
+      >
+        <p className="text-xs font-bold tracking-wide text-muted uppercase">
+          {t.invitedPassword}
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-3">
+          <code className="rounded border border-line bg-soft px-3 py-2 font-mono text-sm text-ink">
+            {created.password}
+          </code>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void navigator.clipboard?.writeText(created.password);
+              setCopied(true);
+            }}
+          >
+            {copied ? t.invitedCopied : t.invitedCopy}
+          </Button>
+        </div>
+
+        <p className="mt-4 text-sm leading-relaxed text-muted">
+          {t.invitedOnce}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted">
+          {t.invitedAppears}
+        </p>
+
+        <div className="mt-5">
+          <Button
+            onClick={() => {
+              setCreated(null);
+              setCopied(false);
+            }}
+          >
+            {t.invitedDone}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title={t.inviteTitle} description={t.inviteDescription}>
+      <form onSubmit={submit} className="flex flex-col gap-5">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label={t.inviteName} htmlFor="member-name">
+            <input
+              id="member-name"
+              className={inputClass}
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              required
+            />
+          </Field>
+          <Field label={t.inviteEmail} htmlFor="member-email">
+            <input
+              id="member-email"
+              type="email"
+              className={inputClass}
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </Field>
+        </div>
+
+        <Field label={t.inviteRoles} hint={t.inviteRolesHint}>
+          <div className="flex flex-wrap gap-2">
+            {grantable.map((role) => {
+              const chosen = roles.includes(role);
+              return (
+                <button
+                  key={role}
+                  type="button"
+                  aria-pressed={chosen}
+                  onClick={() =>
+                    setRoles((current) =>
+                      chosen
+                        ? current.filter((r) => r !== role)
+                        : [...current, role],
+                    )
+                  }
+                  className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
+                    chosen
+                      ? "border-blue bg-blue text-white"
+                      : "border-line bg-white text-ink hover:border-blue/50 hover:bg-soft"
+                  }`}
+                >
+                  {role}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        {failed && (
+          <ErrorNotice>
+            {t.inviteFailed} {failed}
+          </ErrorNotice>
+        )}
+
+        <div>
+          <Button
+            type="submit"
+            disabled={
+              busy ||
+              roles.length === 0 ||
+              email.trim() === "" ||
+              displayName.trim() === ""
+            }
+          >
+            {busy ? messages.common.loading : t.inviteSubmit}
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }

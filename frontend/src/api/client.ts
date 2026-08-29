@@ -1044,6 +1044,13 @@ export type RoleAccess = {
 };
 
 export type AccessMember = {
+  /**
+   * The account's identifier at the identity provider.
+   *
+   * Exposed only to a tenant administrator, only for their own organisation, and only because a
+   * screen that can disable somebody needs a way to say which somebody. See AccessService.Member.
+   */
+  userId: string;
   email: string;
   displayName: string;
   roles: string[];
@@ -1281,9 +1288,49 @@ export const anomaliesApi = {
   },
 };
 
+export type MembershipOptions = {
+  /** False when this deployment has no identity-provider service account configured. */
+  available: boolean;
+  /** Every role this institution may assign. Never includes the platform's own. */
+  grantable: string[];
+};
+
+/** @param password shown once and retrievable never. Temporary at the identity provider. */
+export type Invitation = {
+  userId: string;
+  email: string;
+  roles: string[];
+  password: string;
+};
+
 export const accessApi = {
   load(): Promise<Access> {
     return request<Access>("/api/v1/access");
+  },
+
+  membershipOptions(): Promise<MembershipOptions> {
+    return request<MembershipOptions>("/api/v1/users/members/options");
+  },
+
+  invite(body: { email: string; displayName: string; roles: string[] }): Promise<Invitation> {
+    return request<Invitation>("/api/v1/users/members", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  setMemberRoles(userId: string, roles: string[]): Promise<void> {
+    return request<void>(`/api/v1/users/members/${userId}/roles`, {
+      method: "PUT",
+      body: JSON.stringify({ roles }),
+    });
+  },
+
+  setMemberActive(userId: string, active: boolean): Promise<void> {
+    return request<void>(`/api/v1/users/members/${userId}/active`, {
+      method: "PUT",
+      body: JSON.stringify({ active }),
+    });
   },
 };
 

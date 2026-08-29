@@ -232,13 +232,30 @@ public class AccessService {
     public record Area(String name, int endpoints) {
     }
 
-    /** @param roles as recorded when this person last signed in, not as Keycloak holds them now */
-    public record Member(String email, String displayName, List<String> roles, boolean active,
-                         Instant lastSeenAt) {
+    /**
+     * @param userId     the account's identifier at the identity provider
+     * @param roles      as recorded when this person last signed in, not as Keycloak holds them now
+     * @param lastSeenAt null for somebody who has never signed in
+     */
+    public record Member(String userId, String email, String displayName, List<String> roles,
+                         boolean active, Instant lastSeenAt) {
 
+        /**
+         * <p><strong>The identifier is exposed now, and it was deliberately withheld before.</strong>
+         * {@code UserController} said it plainly: the OIDC subject is an internal join key, not
+         * something clients need. That was true while this list was only ever read. It stopped
+         * being true when a tenant administrator gained the ability to change somebody's roles or
+         * take their access away, because a screen that can act on a person needs a way to name
+         * which person — and naming them by email address would mean the server searching the
+         * identity provider by address, which is a way to ask whether an address exists.
+         *
+         * <p>It is not a secret. The subject appears in every token its owner holds, this list is
+         * already {@code TENANT_ADMIN}-only, and it is scoped to the caller's own organisation.
+         * What it is not is a licence to expose it anywhere else.
+         */
         static Member from(UserAccount user) {
-            return new Member(user.getEmail(), user.getDisplayName(), user.getRoleList(),
-                    user.isActive(), user.getLastSeenAt());
+            return new Member(user.getSubject(), user.getEmail(), user.getDisplayName(),
+                    user.getRoleList(), user.isActive(), user.getLastSeenAt());
         }
     }
 }
