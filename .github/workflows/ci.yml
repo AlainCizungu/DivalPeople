@@ -69,6 +69,14 @@ jobs:
       - name: Check module boundaries and tenant isolation policies
         run: python3 scripts/check_architecture.py
 
+      # The deployment host runs these under dash, and bash accepts things dash refuses. A setup
+      # script that parses on a laptop and not on the server is a broken deployment discovered by
+      # the person doing the deploying, which has now happened.
+      - name: Check every shell script under the shell it declares
+        run: |
+          sudo apt-get install -y --no-install-recommends dash > /dev/null
+          sh scripts/check_shell.sh
+
   backup:
     name: Backup script
     runs-on: ubuntu-latest

@@ -77,7 +77,10 @@ echo "--- mail server"
 # Checked rather than assumed. Registration with no way to send a verification message produces
 # accounts that can never be verified and therefore never join anything — a sign-up form that
 # silently leads nowhere, which is worse than no sign-up form.
-$KC get realms/$REALM --fields smtpServer | grep -q 'host' || {
+# Without --fields: see the note in setup-email.sh. The projected form of this field comes back
+# empty whatever the realm actually holds, so a check written against it refuses a correctly
+# configured deployment.
+$KC get realms/$REALM | tr ',' '\n' | grep -q '"host"' || {
     echo >&2
     echo "This realm has no mail server, so no address could ever be confirmed." >&2
     echo >&2

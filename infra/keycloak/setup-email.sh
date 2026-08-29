@@ -156,11 +156,31 @@ $KC update clients/\$CID -r $REALM \\
     -s 'redirectUris=["$SITE_URL/api/auth/callback","$SITE_URL/"]'
 
 echo "--- checking it was stored"
-$KC get realms/$REALM --fields smtpServer | grep -q "$SMTP_HOST" || {
+# READ BACK WITHOUT --fields, because --fields is what was lying.
+#
+# Asking kcadm for the realm with --fields smtpServer returns an empty object even when the mail
+# server is fully configured: the projection drops the contents of a nested map. A curl GET against
+# the same endpoint shows every value.
+#
+# That check produced three rounds of fixes for a configuration that may have been correct from the
+# first attempt. A verification step that can report failure for a healthy system is worse than no
+# verification: it does not merely fail to catch a bug, it manufactures one, and everything done in
+# response is work on the wrong problem.
+#
+# NO BACKTICKS ANYWHERE BELOW, and none in any comment inside this heredoc. A here-document whose
+# delimiter is unquoted performs command substitution on its whole body, comments included — there
+# are no comments in a heredoc, only text. An earlier version of this note quoted a kcadm command
+# in backticks and dash tried to RUN it, failing on a brace inside. Under a shell less strict it
+# would have run silently instead.
+# No escaped double quotes in here either. An unquoted heredoc treats backslash differently in
+# bash and in dash, and this script runs under sh, which on the deployment host is dash — so a
+# pattern that parses on a laptop can be a syntax error on the server. Matching the hostname alone
+# is enough and needs no quoting at all.
+$KC get realms/$REALM | grep -q "$SMTP_HOST" || {
     echo >&2
     echo "The mail server did not save, and Keycloak reported no error." >&2
-    echo "This is what it holds instead (password masked):" >&2
-    $KC get realms/$REALM --fields smtpServer | sed 's/"password".*/"password" : "<set>",/' >&2
+    echo "This is what the realm holds for SMTP (password masked):" >&2
+    $KC get realms/$REALM | grep -i smtp | sed 's/password.*/password: <set>/' >&2
     exit 1
 }
 echo "  ok"
