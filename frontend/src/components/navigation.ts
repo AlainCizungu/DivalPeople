@@ -37,15 +37,6 @@ export type NavItem = {
   id: ItemId;
   href?: string;
   label: string;
-  /**
-   * A count beside the label.
-   *
-   * <p>Dormant: nothing sets one today. Notifications did, and it now lives in the top bar
-   * instead. Kept because the machinery that sums hidden badges onto a collapsed heading is the
-   * part that would be missed — a menu that can tidy away an unread count without saying so is
-   * the defect, and rebuilding that later is harder than leaving the field.
-   */
-  badge?: number;
 };
 
 export type NavGroup = {
@@ -103,23 +94,25 @@ export const GROUP_IDS = [
 export type GroupId = (typeof GROUP_IDS)[number];
 
 /**
- * The groups that live in the top bar rather than the left menu.
+ * The order the groups are drawn in the top bar.
  *
- * <p>Named here rather than in {@code AppShell}, so the catalogue stays the one place that says
- * what the platform contains and where each part of it is reached. The front-door directory reads
- * the same list and is unaffected by this: it draws every group wherever the menu happens to put
- * it, which is the point of having one catalogue.
+ * <p>There is no left menu any more. Every group is a dropdown in the bar, which is why this list
+ * has to be complete rather than a selection — and why it is computed from {@link GROUP_IDS}
+ * rather than written out. A group added to the catalogue appears in the bar without anybody
+ * remembering to add it here, which is the failure a second hand-written list of the same thing
+ * always eventually has.
  *
- * <p><strong>These two and not others.</strong> Subjects and Data management are the two areas
- * somebody uses continuously while working — looking a company up, declaring against it, checking
- * what a delivery did — and both were behind a collapsed heading in a menu that is itself hidden
- * on anything narrower than a tablet. The rest are visited deliberately and can stay a click away.
- *
- * <p>The order is the order they are drawn, left to right, and it is not the catalogue order.
- * Deliberate: these two sit beside each other in the bar and reading them as one pair matters more
- * than agreeing with a list nobody sees.
+ * <p>Data management and Subjects lead because they were the pair moved up first and the ordering
+ * proved itself: they are what somebody has open while working. The rest follow in catalogue
+ * order, which is the order the front-door directory draws them, so the two renderings of the
+ * platform's shape agree.
  */
-export const TOP_BAR_GROUP_IDS: readonly GroupId[] = ["data", "subjects"];
+const LEADING: readonly GroupId[] = ["data", "subjects"];
+
+export const TOP_BAR_ORDER: readonly GroupId[] = [
+  ...LEADING,
+  ...GROUP_IDS.filter((id) => !LEADING.includes(id)),
+];
 
 export type NavAudience = {
   isPlatformAdmin: boolean;
