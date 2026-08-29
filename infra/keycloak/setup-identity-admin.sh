@@ -161,20 +161,33 @@ fi
 # and no chance of a "(exists)" ending up in deploy.env as a credential.
 echo "--- secret"
 if [ "$MODE" = rotate ]; then
-    echo "  generating a new one; the previous secret stops working now"
-    SECRET_VERB=create
+    echo "  generating a new one; the previous secret stops working immediately"
+    # Regenerate, then read back through the same path the setup case uses.
+    #
+    # Not one command, because `kcadm create` and `kcadm get` do not take the same options: create
+    # has no --format or --noquotes, so asking it for a csv value fails with "Unknown options" —
+    # AFTER authenticating and BEFORE regenerating anything, which is a rotation that reports
+    # failure and silently leaves the exposed secret live. Regenerating and reading are two
+    # different verbs and are now written as two.
+    # Single-quoted so $KC and $CID survive this shell and are resolved by the one in the
+    # container, where they are defined. Only $REALM is substituted here.
+    ROTATE='$KC create clients/$CID/client-secret -r '"$REALM"' >&2'
 else
     echo "  reading the existing one"
-    SECRET_VERB=get
+    ROTATE=:
 fi
 
 SECRET=$($COMPOSE exec -T keycloak sh -s <<INNER
 set -eu
-$KC config credentials --server http://localhost:8081 --realm master \\
+KC=$KC
+\$KC config credentials --server http://localhost:8081 --realm master \\
     --user '$ADMIN' --password '$ADMIN_PASSWORD' > /dev/null
-CID=\$($KC get clients -r $REALM -q clientId=$CLIENT --fields id --format csv --noquotes)
+CID=\$(\$KC get clients -r $REALM -q clientId=$CLIENT --fields id --format csv --noquotes)
 [ -n "\$CID" ] || { echo "no client called $CLIENT; run this without 'rotate' first" >&2; exit 1; }
-$KC $SECRET_VERB clients/\$CID/client-secret -r $REALM --fields value --format csv --noquotes
+# Anything this prints goes to stderr on purpose. Only the secret may reach stdout, because stdout
+# is what gets captured and written into deploy.env.
+$ROTATE
+\$KC get clients/\$CID/client-secret -r $REALM --fields value --format csv --noquotes
 INNER
 )
 
@@ -198,11 +211,26 @@ SECRET=$(printf '%s' "$SECRET" | tr -d ' \t\r\n')
 umask 077
 TMP=$(mktemp)
 trap 'rm -f "$TMP"' EXIT INT TERM
-grep -v '^DIP_IDENTITY_ADMIN_' "$ENV_FILE" > "$TMP" || true
+
+# The marker comment is stripped along with the values. Stripping only the assignments left the
+# comment behind, so a second run wrote a second copy of it — a cosmetic version of exactly the
+# accumulation this replace exists to prevent, and the reason to dry-run a script that edits a
+# file full of secrets before pointing it at the real one.
+grep -v -e '^# setup-identity-admin:' -e '^DIP_IDENTITY_ADMIN_' "$ENV_FILE" > "$TMP" || true
+
+# Command substitution drops trailing newlines, which is what stops the blank separator below
+# accumulating one line per run.
+KEPT=$(cat "$TMP")
+printf '%s\n' "$KEPT" > "$TMP"
+
 {
     echo ""
-    echo "# Written by infra/keycloak/setup-identity-admin.sh. The secret belongs to the"
-    echo "# $CLIENT service account and nothing else uses it."
+    # EVERY line carries the marker, because the strip above matches on it. A two-line comment
+    # with the marker only on the first left its second line behind on every run — one orphan per
+    # invocation, which is the same accumulation bug in a smaller costume.
+    echo "# setup-identity-admin: written by the script. The secret belongs to the $CLIENT"
+    echo "# setup-identity-admin: service account; nothing else uses it. Replace it with:"
+    echo "# setup-identity-admin:   sh infra/keycloak/setup-identity-admin.sh rotate"
     echo "DIP_IDENTITY_ADMIN_BASE_URL=http://keycloak:8081"
     echo "DIP_IDENTITY_ADMIN_REALM=$REALM"
     echo "DIP_IDENTITY_ADMIN_CLIENT_ID=$CLIENT"
