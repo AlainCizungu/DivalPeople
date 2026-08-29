@@ -32,12 +32,16 @@
 # thing holding them up.
 #
 # THE TRAP THIS SCRIPT EXISTS TO AVOID. Realm-level verifyEmail applies to EVERY account, not just
-# new ones. Turn it on with an account that has no email address, or an unverified one, and that
-# person is prompted at their next sign-in — and an account with no address at all cannot complete
-# the prompt. The accounts created by setup-realm.sh have usernames and no addresses, so this
-# would lock out the operator who runs it, immediately, and the fix requires the admin access they
-# have just lost. So the check below runs first and refuses to apply anything until every enabled
-# account can survive it.
+# new ones. An account with NO email address is prompted to verify one at its next sign-in and has
+# nothing to type into the form — it is locked out. The accounts setup-realm.sh creates have
+# usernames and no addresses, so applying this blind locks out the operator running it along with
+# the admin access needed to undo it. The check below refuses on exactly that.
+#
+# It does NOT refuse on an account whose address is merely unverified. An earlier version did, and
+# that made the script impossible to run from the only state any realm is ever in beforehand:
+# nothing verified, because verification was off and nothing was ever asked. Those accounts are
+# prompted once, receive a link, and are fine. A guard that cannot be satisfied from the starting
+# position is not a guard, it is a wall.
 set -eu
 
 MODE=${1:-check}
@@ -97,17 +101,28 @@ $KC get realms/$REALM | tr ',' '\n' | grep -q '"host"' || {
 }
 echo "  present"
 
-echo "--- accounts that realm-wide email verification would affect"
-# The whole reason this script has a check mode, listed by username so the operator can act on
-# them. One account at a time, with grep rather than a JSON parser. The list endpoint returns a brief
-# representation and an account with no address simply has no "email" key at all, which cannot be
-# told apart from the next account's in a flat text search of the whole array. Reading each user
-# individually is a few more calls and gives an answer that is actually about that user.
+echo "--- accounts realm-wide email verification would affect"
+# TWO DIFFERENT SITUATIONS, AND ONLY ONE OF THEM IS A PROBLEM.
 #
-# Deliberately no python3: it is not in the Keycloak image, and a check that silently degrades to
-# "found nothing" when its interpreter is missing would report all clear on the one question this
-# script exists to ask.
-STRANDED=""
+# An account with NO email address cannot complete the verification prompt. It is shown a form it
+# has nothing to type into, on every sign-in, and the person is locked out — including the operator
+# running this, along with the admin access needed to undo it. That is the trap this check exists
+# for and it still refuses.
+#
+# An account with an address that is merely UNVERIFIED is fine. It is prompted once, Keycloak sends
+# the message, the person follows the link. That is the feature working, not a failure — and the
+# first version of this check refused it too, which made the script unusable in exactly the state
+# every realm is in before verification is turned on: nothing verified, because nothing was ever
+# asked to be. A guard that cannot be satisfied from the starting position is not a guard, it is a
+# wall.
+#
+# One account at a time, with grep rather than a JSON parser: the list endpoint returns a brief
+# representation where an account with no address simply has no "email" key, which a flat search of
+# the whole array cannot attribute to the right user. Deliberately no python3 — it is not in the
+# Keycloak image, and a check that degrades to "found nothing" when its interpreter is missing
+# would report all clear on the one question this script exists to ask.
+NO_ADDRESS=""
+UNVERIFIED=""
 for U in \$($KC get users -r $REALM --fields username --format csv --noquotes | tr -d '\r'); do
     [ -n "\$U" ] || continue
     ID=\$($KC get users -r $REALM -q username="\$U" --fields id --format csv --noquotes | tr -d '\r')
@@ -115,30 +130,39 @@ for U in \$($KC get users -r $REALM --fields username --format csv --noquotes | 
 
     INFO=\$($KC get users/\$ID -r $REALM --fields username,email,emailVerified,enabled)
 
-    # Disabled accounts cannot be locked out of anything, so they are not this script's problem.
+    # Disabled accounts cannot be locked out of anything.
     echo "\$INFO" | grep -q '"enabled" : true' || continue
 
-    # Covers both cases at once: no address means no emailVerified true either.
-    echo "\$INFO" | grep -q '"emailVerified" : true' || STRANDED="\$STRANDED \$U"
+    if ! echo "\$INFO" | grep -q '"email" :'; then
+        NO_ADDRESS="\$NO_ADDRESS \$U"
+    elif ! echo "\$INFO" | grep -q '"emailVerified" : true'; then
+        UNVERIFIED="\$UNVERIFIED \$U"
+    fi
 done
 
-if [ -n "\$STRANDED" ]; then
+if [ -n "\$NO_ADDRESS" ]; then
     echo >&2
-    echo "  These accounts have no address, or an unverified one:" >&2
-    echo "   \$STRANDED" >&2
+    echo "  These enabled accounts have no email address at all:" >&2
+    echo "   \$NO_ADDRESS" >&2
     echo >&2
-    echo "  Turning on realm-wide email verification would prompt each of them at their next" >&2
-    echo "  sign-in, and an account with NO address cannot complete that prompt — it would be" >&2
-    echo "  locked out, including yours, including the admin access needed to undo this." >&2
+    echo "  Realm-wide verification would prompt each of them at their next sign-in, and an" >&2
+    echo "  account with no address cannot complete that prompt. It would be locked out —" >&2
+    echo "  including yours, including the admin access needed to undo this." >&2
     echo >&2
-    echo "  Give each one an address and mark it verified, then run this again:" >&2
+    echo "  Give each one an address, then run this again:" >&2
     echo >&2
     echo "    ID=\\\$($KC get users -r $REALM -q username=NAME --fields id --format csv --noquotes)" >&2
-    echo "    $KC update users/\\\$ID -r $REALM -s email=someone@example.cd -s emailVerified=true" >&2
+    echo "    $KC update users/\\\$ID -r $REALM -s email=someone@example.cd" >&2
     echo >&2
     exit 1
 fi
-echo "  none; every enabled account has a verified address"
+
+if [ -n "\$UNVERIFIED" ]; then
+    echo "  unverified, and that is fine — each will be asked once and emailed a link:"
+    echo "   \$UNVERIFIED"
+else
+    echo "  none; every enabled account already has a verified address"
+fi
 
 if [ "\$MODE" != apply ]; then
     echo
