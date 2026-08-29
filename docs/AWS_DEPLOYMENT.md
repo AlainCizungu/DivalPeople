@@ -192,6 +192,38 @@ produced nothing the script does not.
 secret and four users whose passwords are in the repository. On a public hostname that is not a
 shortcut, it is an open door.
 
+### Optional: let institutions manage their own accounts
+
+Skip this and every account is created by hand with `kcadm`, which is fine for two operators and a
+demonstration. It does not survive fifteen banks, because then the platform operator is a helpdesk
+for fifteen companies' staff turnover.
+
+```bash
+sh infra/keycloak/setup-identity-admin.sh
+```
+
+It creates a second confidential client, `dip-identity-admin`, with a service account, grants that
+account `manage-users` and `view-users` on `realm-management` and nothing else, reads the grants
+back and fails if anything else is attached, then prints four lines for `deploy.env`. Restart the
+backend and the invite form appears on **Access & permissions** for anyone with `TENANT_ADMIN`.
+
+Three things about it are deliberate:
+
+- **A different client from `dip-web`.** One leak should not cost both sign-in and user management.
+- **Not `realm-admin`.** It is one line and it always works, which is the temptation. With
+  `manage-users` a stolen secret can create a user inside a tenant — bad, and bounded, because
+  `MembershipRules` refuses `PLATFORM_ADMIN` and the tenant comes from the caller's bound context.
+  With `realm-admin` it can rewrite the protocol mapper that puts `tenant_id` in the access token
+  at all, and tokens minted afterwards would be genuinely valid. Nothing in the application could
+  detect that.
+- **The base URL is the container name**, `http://keycloak:8081`, not the public hostname. Admin
+  traffic stays on the private network.
+
+Leaving the variables empty is a supported state, not a broken one: the endpoints refuse with a
+sentence saying the deployment has not configured it, and the screen shows the member list without
+a form. The four values are all-or-nothing, so a half-filled `deploy.env` leaves the feature off
+rather than failing at the moment somebody invites a colleague.
+
 ### If every screen says "Authentication is required"
 
 Sign-in works, the backend is up, and every screen is empty with a 401. The account is missing its

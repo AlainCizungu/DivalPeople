@@ -174,6 +174,21 @@ services:
 
       DIP_OIDC_ISSUER_URI: ${OIDC_ISSUER:?set OIDC_ISSUER}
 
+      # Letting an institution manage its own accounts. Optional, and empty by default: with no
+      # client id or secret the endpoints refuse and accounts are made by hand, which is where
+      # every deployment starts. See infra/keycloak/setup-identity-admin.sh.
+      #
+      # Defaults rather than `:?`, unlike almost everything else here, because the restrictive
+      # answer is the empty one. A missing value cannot accidentally grant anybody the ability to
+      # create accounts; it can only leave the feature off.
+      #
+      # The base URL is the container name. Keycloak's admin API has no business being reached
+      # over the public hostname, through the proxy, from a service sitting on the same network.
+      DIP_IDENTITY_ADMIN_BASE_URL: ${DIP_IDENTITY_ADMIN_BASE_URL:-}
+      DIP_IDENTITY_ADMIN_REALM: ${DIP_IDENTITY_ADMIN_REALM:-dip}
+      DIP_IDENTITY_ADMIN_CLIENT_ID: ${DIP_IDENTITY_ADMIN_CLIENT_ID:-}
+      DIP_IDENTITY_ADMIN_CLIENT_SECRET: ${DIP_IDENTITY_ADMIN_CLIENT_SECRET:-}
+
       # Uploaded files: employee documents, import spreadsheets. Inside the container this path is
       # fixed; the host side is configurable, in the same shape as BACKUP_HOST_DIR.
       DIP_FILES_LOCAL_ROOT: /var/lib/dip/files
