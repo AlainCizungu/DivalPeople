@@ -3,8 +3,6 @@ package ai.dival.dip.modules.access;
 import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.users.CurrentUserService;
 import ai.dival.dip.modules.users.UserAccount;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -119,7 +117,7 @@ public class AccessService {
         // page that has not finished loading; a zero reads as a role that grants nothing, which
         // is a thing somebody should know before assigning it to a member of staff.
         Map<String, Map<String, Integer>> byRole = new TreeMap<>();
-        for (String role : declaredRoles()) {
+        for (String role : Roles.all()) {
             byRole.put(role, new TreeMap<>());
         }
         byRole.put(AUTHENTICATED, new TreeMap<>());
@@ -212,27 +210,6 @@ public class AccessService {
         return null;
     }
 
-    /**
-     * The role names the platform declares.
-     *
-     * <p>Read reflectively off {@link Roles} so that adding a constant there is enough. The
-     * alternative is a second list here that has to be remembered, and a role invented on a
-     * Friday afternoon that no screen ever mentions.
-     */
-    private static List<String> declaredRoles() {
-        List<String> names = new ArrayList<>();
-        for (Field field : Roles.class.getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers()) && field.getType() == String.class) {
-                try {
-                    names.add((String) field.get(null));
-                } catch (IllegalAccessException unreachable) {
-                    throw new IllegalStateException(
-                            "Roles constants are public; this cannot happen", unreachable);
-                }
-            }
-        }
-        return List.copyOf(names);
-    }
 
     /**
      * @param roles   every declared role, and the authenticated-only pseudo-role
