@@ -1445,6 +1445,7 @@
     "inviteRoles": "Roles",
     "inviteRolesHint": "At least one. An account with none can sign in and see nothing.",
     "inviteSubmit": "Create the account",
+    "inviteNeedsRole": "Choose at least one role above before creating the account.",
     "inviteFailed": "The account was not created.",
     "invitedTitle": "Account created for {email}",
     "invitedPassword": "First password",

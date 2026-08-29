@@ -435,6 +435,16 @@ function InvitePanel({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+
+    // Answered here rather than by the server, because the server's answer to this arrives as a
+    // bean-validation 400 on `@Size(min = 1)` — a generic message about a field name, not the
+    // sentence MembershipRules would have given. The rule is the server's; this is only the part
+    // that saves a round trip to be told something the form already knows.
+    if (roles.length === 0) {
+      setFailed(t.inviteNeedsRole);
+      return;
+    }
+
     setBusy(true);
     setFailed(null);
     try {
@@ -565,18 +575,26 @@ function InvitePanel({
           </ErrorNotice>
         )}
 
-        <div>
-          <Button
-            type="submit"
-            disabled={
-              busy ||
-              roles.length === 0 ||
-              email.trim() === "" ||
-              displayName.trim() === ""
-            }
-          >
+        {/*
+          The button stays enabled when something is missing, and says what.
+
+          It used to disable itself until a role was chosen, which produced the worst possible
+          behaviour: filling in both fields, pressing the button, and having nothing happen at
+          all. No error, no request, no clue that the role chips above were the thing standing in
+          the way — they read as decoration rather than a required field. A control that refuses
+          silently is indistinguishable from a broken one, and the person's next move is to
+          conclude the product does not work.
+
+          The empty-name and empty-address cases are left to the browser, which already points at
+          the offending field. Roles have no native equivalent, so they get a sentence.
+        */}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" disabled={busy}>
             {busy ? messages.common.loading : t.inviteSubmit}
           </Button>
+          {roles.length === 0 && (
+            <span className="text-sm text-muted">{t.inviteNeedsRole}</span>
+          )}
         </div>
       </form>
     </Card>

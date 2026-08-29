@@ -1445,6 +1445,7 @@
     "inviteRoles": "Rôles",
     "inviteRolesHint": "Au moins un. Un compte sans rôle peut se connecter et ne rien voir.",
     "inviteSubmit": "Créer le compte",
+    "inviteNeedsRole": "Choisissez au moins un rôle ci-dessus avant de créer le compte.",
     "inviteFailed": "Le compte n'a pas été créé.",
     "invitedTitle": "Compte créé pour {email}",
     "invitedPassword": "Premier mot de passe",
