@@ -102,6 +102,25 @@ export const GROUP_IDS = [
 
 export type GroupId = (typeof GROUP_IDS)[number];
 
+/**
+ * The groups that live in the top bar rather than the left menu.
+ *
+ * <p>Named here rather than in {@code AppShell}, so the catalogue stays the one place that says
+ * what the platform contains and where each part of it is reached. The front-door directory reads
+ * the same list and is unaffected by this: it draws every group wherever the menu happens to put
+ * it, which is the point of having one catalogue.
+ *
+ * <p><strong>These two and not others.</strong> Subjects and Data management are the two areas
+ * somebody uses continuously while working — looking a company up, declaring against it, checking
+ * what a delivery did — and both were behind a collapsed heading in a menu that is itself hidden
+ * on anything narrower than a tablet. The rest are visited deliberately and can stay a click away.
+ *
+ * <p>The order is the order they are drawn, left to right, and it is not the catalogue order.
+ * Deliberate: these two sit beside each other in the bar and reading them as one pair matters more
+ * than agreeing with a list nobody sees.
+ */
+export const TOP_BAR_GROUP_IDS: readonly GroupId[] = ["data", "subjects"];
+
 export type NavAudience = {
   isPlatformAdmin: boolean;
 };

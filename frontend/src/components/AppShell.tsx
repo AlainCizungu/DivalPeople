@@ -13,9 +13,11 @@ import {
   activeHref,
   buildNavigation,
   GROUP_IDS,
+  TOP_BAR_GROUP_IDS,
   itemKey,
   keyOfFirst,
   type GroupId,
+  type NavGroup,
 } from "./navigation";
 
 /**
@@ -105,6 +107,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isPlatformAdmin = profile?.roles.includes("PLATFORM_ADMIN") ?? false;
 
   const groups = buildNavigation(t, { isPlatformAdmin });
+
+  /**
+   * The same catalogue, drawn in two places.
+   *
+   * <p>Split rather than duplicated: an entry appears in the bar or in the menu and never in both,
+   * which is what keeps `check_architecture.py`'s no-screen-twice rule satisfied without it having
+   * to know about the bar at all.
+   *
+   * <p>Ordered by TOP_BAR_GROUP_IDS rather than by the catalogue, because these two sit next to
+   * each other and read as a pair. A group that is empty for this caller — Network, for anybody
+   * who is not a platform administrator — is dropped here as well as in the menu.
+   */
+  const topBarGroups = TOP_BAR_GROUP_IDS.map((id) =>
+    groups.find((group) => group.id === id),
+  ).filter((group): group is NavGroup => group !== undefined && group.items.length > 0);
+
+  const sideGroups = groups.filter(
+    (group) => !TOP_BAR_GROUP_IDS.includes(group.id),
+  );
 
   const current = activeHref(
     pathname,
@@ -210,7 +231,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Still scrolls, because every heading can be opened at once and somebody will. The
             brand and the footer stay put. */}
         <div className="flex-1 overflow-y-auto p-3">
-          {groups.map((group) => {
+          {sideGroups.map((group) => {
             // A group can empty out entirely — Network does, for anybody who is not a platform
             // administrator, once its unbuilt items are gone. Printing the heading over nothing
             // would be worse than printing neither.
@@ -327,7 +348,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               operator sees its own book and no other. The organisation's real name is on the
               overview, where the server actually resolves it; this is now the person, labelled
               as the person. */}
-          <div className="hidden min-w-0 md:block" />
+          {/* Where the spacer was. Two areas people work in continuously — looking a company up,
+              declaring against it, checking what a delivery did — brought out of a collapsed
+              heading inside a menu that is itself hidden below tablet width.
+
+              md: and above only, which leaves the phone exactly as it was. That is not a defence
+              of the phone: below md there is no navigation at all beyond the brand, and these
+              menus would be the obvious fix. It is a bigger change than was asked for and it
+              would land untested on the narrowest screens, so it stays a separate piece of work
+              rather than a side effect of this one. */}
+          {/* Its own name, not one of the group headings. Two <nav> landmarks on a page need
+              distinguishable labels or a screen reader announces the second as whichever heading
+              happened to be reused — this one was briefly called "Data management", which is the
+              name of something inside it. */}
+          <nav
+            aria-label={t.topBarLandmark}
+            className="hidden min-w-0 items-center gap-1 md:flex"
+          >
+            {topBarGroups.map((group) => (
+              <TopBarMenu key={group.id} label={group.heading}>
+                {(close) => (
+                  <>
+                    {group.items.map((item) =>
+                      item.href ? (
+                        <MenuLink
+                          key={itemKey(group, item)}
+                          href={item.href}
+                          onClick={close}
+                          current={itemKey(group, item) === currentKey}
+                        >
+                          {item.label}
+                        </MenuLink>
+                      ) : null,
+                    )}
+                  </>
+                )}
+              </TopBarMenu>
+            ))}
+          </nav>
 
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
@@ -502,10 +560,19 @@ function TopBarMenu({
 function MenuLink({
   href,
   onClick,
+  current,
   children,
 }: {
   href: string;
   onClick: () => void;
+  /**
+   * Whether this is the page already open.
+   *
+   * <p>Marked with aria-current as well as colour. The left menu says where you are with a border
+   * and a weight; a dropdown that closes the moment you look away has to say it too, or the two
+   * renderings of one catalogue disagree about something the user can see.
+   */
+  current?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -513,7 +580,12 @@ function MenuLink({
       href={href}
       role="menuitem"
       onClick={onClick}
-      className="block px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-soft hover:text-blue"
+      aria-current={current ? "page" : undefined}
+      className={
+        current
+          ? "block bg-soft px-4 py-2.5 text-sm font-semibold text-blue"
+          : "block px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-soft hover:text-blue"
+      }
     >
       {children}
     </Link>
