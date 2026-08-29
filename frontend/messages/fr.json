@@ -93,6 +93,7 @@
       "openRecords": "Ouvrir vos enregistrements"
     },
     "lookup": {
+      "eyebrow": "Votre propre registre",
       "title": "Rechercher une entreprise",
       "note": "Votre propre portefeuille, par nom ou identifiant. Trois caractères minimum. Ouvre le dossier de l'entreprise — le profil 360° est un clic plus loin, car celui-là interroge l'échange.",
       "placeholder": "Trans-Congo, ou CD/KIN/RCCM/16-B-5150",

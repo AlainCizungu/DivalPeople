@@ -93,6 +93,7 @@
       "openRecords": "Open your records"
     },
     "lookup": {
+      "eyebrow": "Your own book",
       "title": "Look up a company",
       "note": "Your own book, by name or identifier. Three characters minimum. Opens the company's file — the 360° profile is one click further, because that one asks the exchange.",
       "placeholder": "Trans-Congo, or CD/KIN/RCCM/16-B-5150",

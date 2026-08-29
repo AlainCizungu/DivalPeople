@@ -33,7 +33,6 @@ import {
   Card,
   EmptyState,
   SectionHeading,
-  inputClass,
 } from "@/components/ui";
 
 /**
@@ -373,20 +372,21 @@ export default function DashboardPage() {
         <Spotlight slides={slides} />
       )}
 
-      {/* TIER ONE — the thing somebody opens this platform to do.
-          Two questions, side by side, and the pairing is the teaching. "Is this company in OUR
-          book?" is free and instant; "does anybody else report them?" costs an inquiry and is
-          recorded. People conflate the two constantly, and putting them next to each other with
-          different weights says which is which without a paragraph. */}
-      <section className="mt-12">
-        <SectionHeading
-          title={t.sections.lookupTitle}
-          note={t.sections.lookupNote}
-          accent={TIER.ask}
-        />
-        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <LookupBar />
-          {roles.includes("TIX_INQUIRER") && <InquiryCta />}
+      {/* TIER ONE — the thing somebody opens this platform to do, and now the face of the page.
+
+          ONE PANEL, TWO HALVES, rather than two cards beside each other. The pairing is the
+          teaching: "is this company in OUR book?" is free and instant, "does anybody else report
+          them?" reaches the network, costs an inquiry and is recorded. People conflate those two
+          constantly. Drawing them as one object split down the middle says they are two answers to
+          one question far better than a paragraph or a gap does, and the filled half says which of
+          them costs something without anybody reading a word. */}
+      <section className="mt-10">
+        <div
+          className="grid overflow-hidden rounded-2xl border border-line bg-white shadow-sm lg:grid-cols-[1.55fr_1fr]"
+          style={{ borderTop: `3px solid ${TIER.ask}` }}
+        >
+          <LookupPanel />
+          {roles.includes("TIX_INQUIRER") && <InquiryPanel />}
         </div>
       </section>
 
@@ -695,40 +695,41 @@ function Figure({
  * the purpose typed against it, and somebody arriving from a dashboard tile should know that
  * before they click rather than when the form asks them why.
  *
- * <p><strong>No longer a gradient.</strong> It was a second dark panel on a page that already had
- * one at the top, and two of them competing meant neither read as the loudest thing — while the
- * figures between them, which are the page's actual content, sat in the trough. It keeps its
- * prominence from a solid navy button and one accent rule, which is enough on a white page and
- * is what the design system asks for in the first place.
+ * <p><strong>Solid navy, and it is now the only dark thing on the page.</strong> It was a gradient
+ * once, competing with a second dark panel at the top, and neither read as the loudest thing while
+ * the figures between them — the page's actual content — sat in the trough. That panel is gone, so
+ * this one can be filled without competing with anything: it is the single dark shape on a white
+ * page, which is as loud as an element gets without shouting.
+ *
+ * <p>It is half of an object rather than a card beside one. No border and no gap between it and
+ * the lookup, because they are two answers to the same question and a gap would make them a list
+ * of two unrelated things.
  */
-function InquiryCta() {
+function InquiryPanel() {
   const t = useMessages().dashboard.inquiry;
   return (
     <Link
       href="/app/tix"
-      // Filled, where its neighbour is white. The two sit side by side because the pairing is the
-      // teaching — "is this company in OUR book" is free and instant, "does anybody else report
-      // them" costs an inquiry and is recorded — and drawing them as two equal white cards left
-      // the difference to be read rather than seen. This one is the one that reaches the network,
-      // so it is the one that looks like it costs something.
+      // The filled half. Not a card beside another card — the right-hand side of one object, with
+      // no border between them and no gap, so the two read as a pair rather than as a list of two.
       //
-      // Navy rather than a colour from the severity palette. Nothing here is wrong; it is
-      // important, and on this platform red and amber mean a deadline has passed.
-      className="group flex flex-col justify-between rounded-lg bg-navy p-7 shadow-md ring-1 ring-navy/20 transition hover:-translate-y-0.5 hover:shadow-lg"
+      // Navy rather than anything from the severity palette. Nothing here is wrong; it is the
+      // thing that costs an inquiry, and on this platform amber and red mean a deadline has
+      // passed.
+      className="group flex flex-col justify-between bg-navy p-7 transition hover:bg-navy/95 md:p-9"
     >
       <div>
-        <p className="mb-2 text-xs font-semibold tracking-[0.16em] text-blue uppercase">
+        <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-blue uppercase">
           {t.eyebrow}
         </p>
-        <h2 className="mb-2 text-2xl font-bold text-white">{t.title}</h2>
-        <p className="text-base leading-relaxed text-white/75">{t.note}</p>
+        <h2 className="mb-3 text-2xl font-bold tracking-tight text-white">
+          {t.title}
+        </h2>
+        <p className="text-base leading-relaxed text-white/70">{t.note}</p>
       </div>
-      <span className="mt-7 inline-flex items-center gap-2 self-start rounded bg-white px-5 py-3 text-base font-bold text-navy transition group-hover:bg-white/90">
+      <span className="mt-8 inline-flex items-center gap-2 self-start rounded-lg bg-white px-6 py-3.5 text-base font-bold text-navy transition group-hover:bg-white/90">
         {t.action}
-        <span
-          aria-hidden="true"
-          className="transition group-hover:translate-x-1"
-        >
+        <span aria-hidden="true" className="transition group-hover:translate-x-1">
           →
         </span>
       </span>
@@ -747,7 +748,7 @@ function InquiryCta() {
  * asks the exchange, which charges an inquiry and needs a stated purpose, and a box on a dashboard
  * is exactly where somebody would spend one by accident.
  */
-function LookupBar() {
+function LookupPanel() {
   const messages = useMessages();
   const t = messages.dashboard.lookup;
   const router = useRouter();
@@ -768,7 +769,21 @@ function LookupBar() {
   }
 
   return (
-    <Card title={t.title} description={t.note}>
+    <div className="p-7 md:p-9">
+      <p className="mb-3 text-xs font-semibold tracking-[0.18em] uppercase" style={{ color: TIER.ask }}>
+        {t.eyebrow}
+      </p>
+      <h2 className="mb-2 text-2xl font-bold tracking-tight text-navy">
+        {t.title}
+      </h2>
+      <p className="mb-6 max-w-lg text-base leading-relaxed text-muted">
+        {t.note}
+      </p>
+
+      {/* One field, and it is the largest control on the page.
+          It was a 14px input in a card header, the same size as a filter on a table three screens
+          away — for the thing somebody signs in to do. Size here is not decoration: it is the
+          page saying what it is for. */}
       <form
         className="flex flex-col gap-3 sm:flex-row"
         onSubmit={(event) => {
@@ -776,32 +791,50 @@ function LookupBar() {
           void run(query.trim());
         }}
       >
-        <input
-          className={inputClass}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t.placeholder}
-          aria-label={t.title}
-        />
-        <Button type="submit" disabled={busy || query.trim().length < 3}>
+        <div className="relative flex-1">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            className="w-full rounded-lg border border-line bg-white py-4 pr-4 pl-12 text-base text-ink transition focus:border-blue focus:ring-2 focus:ring-blue/30 focus:outline-none"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t.placeholder}
+            aria-label={t.title}
+          />
+        </div>
+        <Button
+          type="submit"
+          size="lead"
+          disabled={busy || query.trim().length < 3}
+        >
           {busy ? messages.common.loading : t.action}
         </Button>
       </form>
 
       {results !== null && results.length === 0 && (
-        <div className="mt-4">
+        <div className="mt-5">
           <EmptyState>{t.noResults}</EmptyState>
         </div>
       )}
 
       {results !== null && results.length > 0 && (
-        <ul className="mt-4 flex flex-col gap-2">
+        <ul className="mt-5 flex flex-col gap-2">
           {results.slice(0, 5).map((result) => (
             <li key={result.subjectId}>
               <button
                 type="button"
                 onClick={() => router.push(`/app/subjects/${result.subjectId}`)}
-                className="w-full rounded-lg border border-line px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-blue hover:shadow-sm"
+                className="w-full rounded-lg border border-line px-4 py-3.5 text-left transition hover:-translate-y-0.5 hover:border-blue hover:shadow-sm"
               >
                 <span className="block font-semibold text-navy">
                   {result.name}
@@ -816,6 +849,6 @@ function LookupBar() {
           ))}
         </ul>
       )}
-    </Card>
+    </div>
   );
 }

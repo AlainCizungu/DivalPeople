@@ -228,12 +228,26 @@ export const inputClass =
 export function Button({
   children,
   variant = "primary",
+  size = "normal",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "quiet";
+  /**
+   * "lead" for the one control a page exists for.
+   *
+   * <p>Added rather than letting the overview hand-roll a bigger button beside a search field it
+   * had also hand-rolled. Two button styles in a product is how a product ends up with five, and
+   * the second one always starts as a reasonable exception on one screen.
+   *
+   * <p>Deliberately one extra size and not a scale. There is the ordinary button and there is the
+   * one at the front door; a set of five would be a set somebody has to choose from.
+   */
+  size?: "normal" | "lead";
 }) {
   const base =
-    "rounded px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
+    size === "lead"
+      ? "rounded-lg px-7 py-4 text-base font-bold transition disabled:cursor-not-allowed disabled:opacity-40"
+      : "rounded px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
   const variants = {
     primary: "bg-blue text-white hover:bg-blue-dark",
     secondary: "border border-ink text-ink hover:bg-soft",
