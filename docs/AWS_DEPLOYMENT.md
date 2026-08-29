@@ -277,6 +277,43 @@ request production access. Fine for testing, useless for real invitations, and n
 early. An invitation that cannot be delivered fails the whole operation and removes the
 half-created account, so the symptom is a refusal rather than a silent no-show.
 
+### Optional: let people create their own accounts
+
+The last step that takes the operator out of the loop entirely. Without it, every joiner is
+invited by hand by somebody. With it, a person registers with their work address and DIP works out
+which institution they belong to.
+
+```bash
+sh infra/keycloak/setup-registration.sh          # checks, changes nothing
+sh infra/keycloak/setup-registration.sh apply
+```
+
+**Run the check first, and read what it says.** Realm-level email verification applies to *every*
+account, not just new ones — and an account with no email address at all cannot complete the
+verification prompt. The accounts `setup-realm.sh` creates have usernames and no addresses, so
+applying this blind would lock out the operator running it, along with the admin access needed to
+undo it. The check refuses to proceed until every enabled account has a verified address, and
+prints the command to fix each one.
+
+**What a stranger can do once this is on: nothing.** Three separate things have to be true before
+they read a single record.
+
+1. They verify their address. Until then it is a string in a form.
+2. Its domain is mapped to an institution — by you, on **Participant organisations**. No
+   institution can claim its own domain, because a competitor's would be just as easy to type.
+3. An administrator at that institution grants them a role. Joining gives membership and nothing
+   else, because a work address proves employment, not authorisation.
+
+A person between steps sees a page saying which step they are on, rather than the empty screens and
+"Authentication is required" that this state used to produce.
+
+**Free mail providers are refused as domain mappings.** Mapping `gmail.com` would put every Gmail
+user on earth inside one institution's records, and it would look like it was working. Staff who
+use a personal address have to be invited individually.
+
+To close registration again: `kcadm.sh update realms/dip -s registrationAllowed=false`. Existing
+accounts are unaffected.
+
 ### If every screen says "Authentication is required"
 
 Sign-in works, the backend is up, and every screen is empty with a 401. The account is missing its

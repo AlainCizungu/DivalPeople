@@ -2,13 +2,16 @@ package ai.dival.dip.modules.users;
 
 import ai.dival.dip.common.audit.AuditService;
 import ai.dival.dip.common.error.PolicyRefusedException;
+import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.tenants.EmailDomainService;
 import ai.dival.dip.modules.tenants.JoiningRules;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -72,12 +75,21 @@ public class JoiningService {
     public Standing standing() {
         Optional<Jwt> token = currentJwt();
         if (token.isEmpty()) {
-            return new Standing(false, false, false, false);
+            return new Standing(false, false, false, false, false);
         }
         Jwt jwt = token.get();
 
-        boolean member = jwt.getClaimAsString("tenant_id") != null
-                && !jwt.getClaimAsString("tenant_id").isBlank();
+        // The platform operator belongs to no institution ON PURPOSE — TenantService says so in as
+        // many words — so every test below would find them homeless and offer to help them join
+        // one. Without this line the screen that exists to explain a pending account would lock the
+        // only person who can approve anything out of their own platform, and the first person it
+        // happened to would be whoever deployed it.
+        if (holdsRole(Roles.PLATFORM_ADMIN)) {
+            return new Standing(true, true, true, false, true);
+        }
+
+        String tenant = jwt.getClaimAsString("tenant_id");
+        boolean member = tenant != null && !tenant.isBlank();
         String email = jwt.getClaimAsString("email");
         boolean verified = Boolean.TRUE.equals(jwt.getClaimAsBoolean("email_verified"));
         boolean joinable = !member && verified
@@ -85,7 +97,46 @@ public class JoiningService {
                         .flatMap(domains::institutionFor)
                         .isPresent();
 
-        return new Standing(member, verified, email != null, joinable);
+        return new Standing(member, verified, email != null, joinable, holdsAnyRole());
+    }
+
+    /**
+     * Whether the caller has been granted anything at all yet.
+     *
+     * <p>Read from the granted authorities rather than by asking the identity provider, because
+     * this is the same list Spring is about to enforce with — so the screen and the guards cannot
+     * disagree. Asking Keycloak would be a second source of truth, one network call, and eventually
+     * a screen that says somebody has access to something the server then refuses.
+     *
+     * <p>Compared against {@link Roles#all()} rather than counting authorities, because every
+     * account carries authorities that mean nothing here: Keycloak's own {@code offline_access} and
+     * {@code uma_authorization} are on everybody from the moment they exist, and treating those as
+     * access would tell a person waiting for approval that they already have it.
+     */
+    private boolean holdsAnyRole() {
+        Set<String> declared = Set.copyOf(Roles.all());
+        return granted().anyMatch(declared::contains);
+    }
+
+    private boolean holdsRole(String role) {
+        return granted().anyMatch(role::equals);
+    }
+
+    /**
+     * The roles Spring will actually enforce with, stripped of its {@code ROLE_} prefix.
+     *
+     * <p>Read from the authorities rather than from the token's claims, so the screen and the
+     * guards cannot disagree — they are reading the same list.
+     */
+    private java.util.stream.Stream<String> granted() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return java.util.stream.Stream.empty();
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(authority ->
+                        authority.startsWith("ROLE_") ? authority.substring(5) : authority);
     }
 
     /**
@@ -168,9 +219,13 @@ public class JoiningService {
      * @param member    already belongs to an institution
      * @param verified  the address on the account has been confirmed
      * @param hasEmail  there is an address at all, which accounts made before this existed may not
-     * @param joinable  an institution uses this address's domain, so joining would succeed
+     * @param joinable   an institution uses this address's domain, so joining would succeed
+     * @param hasAccess  at least one DIP role has been granted. False for everybody who has just
+     *                   joined, which is the whole design: membership first, access when somebody
+     *                   at their own institution decides
      */
-    public record Standing(boolean member, boolean verified, boolean hasEmail, boolean joinable) {
+    public record Standing(boolean member, boolean verified, boolean hasEmail, boolean joinable,
+                           boolean hasAccess) {
     }
 
     /**

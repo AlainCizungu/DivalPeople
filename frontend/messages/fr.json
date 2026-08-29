@@ -1778,5 +1778,21 @@
       "NOTABLE": "Changement notable",
       "INFORMATIONAL": "Pour information"
     }
+  },
+  "joining": {
+    "joinTitle": "Rejoignez votre organisation",
+    "joinBody": "Votre adresse appartient à une organisation présente sur DIP. En la rejoignant, votre compte y sera rattaché. Vous ne verrez encore rien : un administrateur y décide de ce que vous pouvez faire, et c'est une étape distincte.",
+    "joinAction": "Rejoindre",
+    "joinedTitle": "Vous y êtes",
+    "joinedBody": "Reconnectez-vous pour que votre compte prenne en compte le changement, puis attendez qu'un administrateur de votre organisation vous accorde un accès. Il vous voit désormais.",
+    "signInAgain": "Se reconnecter",
+    "pendingTitle": "En attente d'accès",
+    "pendingBody": "Votre compte appartient à votre organisation et n'a encore reçu aucun droit. Un administrateur y décide de ce que chacun peut consulter, et cette plateforme contient les dossiers de crédit d'autres institutions : personne ne reçoit d'accès automatiquement. Adressez-vous à la personne qui gère DIP dans votre organisation.",
+    "noOrganisationTitle": "Aucune organisation n'utilise cette adresse",
+    "noOrganisationBody": "Aucune organisation présente sur DIP n'utilise le domaine de l'adresse avec laquelle vous vous êtes connecté. Si votre organisation participe, demandez à un administrateur de vous inviter directement — une adresse chez un fournisseur gratuit comme Gmail doit toujours faire l'objet d'une invitation, car elle n'identifie aucune organisation.",
+    "unverifiedTitle": "Confirmez d'abord votre adresse",
+    "unverifiedBody": "Suivez le lien du message envoyé lors de votre inscription, puis reconnectez-vous. Tant qu'une adresse n'est pas confirmée, elle n'est qu'une saisie dans un formulaire et non quelque chose dont vous avez montré que vous pouviez la lire — or c'est elle qui détermine votre organisation.",
+    "noAddressTitle": "Ce compte n'a pas d'adresse",
+    "noAddressBody": "Aucune adresse électronique n'est associée à ce compte : il n'y a donc rien pour identifier une organisation. Un administrateur doit en ajouter une."
   }
 }

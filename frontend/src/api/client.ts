@@ -1316,6 +1316,45 @@ export type Invitation = {
   emailed: boolean;
 };
 
+/**
+ * Where the caller stands before they belong to anything.
+ *
+ * Every other type in this file describes something inside an institution. This one describes
+ * somebody who may not be in one yet, which is why it is the only shape here with no tenant behind
+ * it.
+ */
+export type Standing = {
+  /** Belongs to an institution. False for anybody who has just registered. */
+  member: boolean;
+  /** The address on the account has been confirmed by following a link. */
+  verified: boolean;
+  /** There is an address at all. Accounts made before self-registration existed may have none. */
+  hasEmail: boolean;
+  /** An institution uses this address's domain, so joining would succeed. */
+  joinable: boolean;
+  /**
+   * At least one DIP role has been granted.
+   *
+   * False for everybody immediately after joining, which is the design rather than a delay:
+   * membership comes from a proven address, access comes from a person at that institution
+   * deciding.
+   */
+  hasAccess: boolean;
+};
+
+/** @param signInAgain the tenant rides in the access token, and the one in the browser predates it */
+export type JoinOutcome = { member: boolean; signInAgain: boolean };
+
+export const usersApi = {
+  standing(): Promise<Standing> {
+    return request<Standing>("/api/v1/users/me/standing");
+  },
+
+  join(): Promise<JoinOutcome> {
+    return request<JoinOutcome>("/api/v1/users/me/join", { method: "POST" });
+  },
+};
+
 export const accessApi = {
   load(): Promise<Access> {
     return request<Access>("/api/v1/access");

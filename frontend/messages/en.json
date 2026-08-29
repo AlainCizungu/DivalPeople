@@ -1778,5 +1778,21 @@
       "NOTABLE": "Notable change",
       "INFORMATIONAL": "For information"
     }
+  },
+  "joining": {
+    "joinTitle": "Join your organisation",
+    "joinBody": "Your address belongs to an organisation on DIP. Joining puts your account in it. You will not be able to see anything yet — an administrator there decides what you may do, and that is a separate step.",
+    "joinAction": "Join",
+    "joinedTitle": "You are in",
+    "joinedBody": "Sign in again so your account picks up the change, then wait for an administrator at your organisation to grant you access. They can see you now.",
+    "signInAgain": "Sign in again",
+    "pendingTitle": "Waiting for access",
+    "pendingBody": "Your account belongs to your organisation and has not been granted anything yet. An administrator there decides what each person may see, and this platform holds other institutions' credit records, so nobody is given access automatically. Ask whoever manages DIP at your organisation.",
+    "noOrganisationTitle": "No organisation uses this address",
+    "noOrganisationBody": "Nobody on DIP uses the domain of the address you signed in with. If your organisation takes part, ask an administrator there to invite you directly — an address at a free provider such as Gmail always has to be invited, because it identifies no organisation.",
+    "unverifiedTitle": "Confirm your address first",
+    "unverifiedBody": "Follow the link in the message sent when you registered, then sign in again. Until an address is confirmed it is something typed into a form rather than something you have shown you can read, and it is what decides which organisation you belong to.",
+    "noAddressTitle": "This account has no address",
+    "noAddressBody": "There is no email address on this account, so there is nothing to identify an organisation by. An administrator has to add one."
   }
 }
