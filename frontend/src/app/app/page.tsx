@@ -18,7 +18,6 @@ import {
   type Overview,
   type SearchResult,
 } from "@/api/client";
-import { Directory } from "@/components/dashboard/Directory";
 import { NetworkStrip } from "@/components/dashboard/NetworkStrip";
 import { Spotlight } from "@/components/dashboard/Spotlight";
 import {
@@ -551,14 +550,13 @@ export default function DashboardPage() {
           is, however good the second one looks in a demonstration. */}
       {overview && <NetworkStrip network={overview.network} />}
 
-      {/* TIER FIVE, and unconditional. The counts above are what is happening; this is what
-          exists, and it renders even when the overview call failed — a page that cannot reach the
-          server should still be able to tell somebody where everything is.
+      {/* The directory used to be tier five, here, and it has moved to /app/directory behind
+          Help → Explore DIP.
 
-          The id is the target of Help → Explore DIP in the top bar. */}
-      <div id="everything" className="scroll-mt-6">
-        <Directory />
-      </div>
+          It was the wrong thing at the bottom of this page. This page answers "what needs me this
+          morning"; a site map answers "what is in this product", which somebody asks twice in
+          their first week and rarely again — and it sat below every figure, so the front door
+          always ended in a list of links rather than in the work. */}
     </div>
   );
 }
@@ -708,20 +706,24 @@ function InquiryCta() {
   return (
     <Link
       href="/app/tix"
-      className="group flex flex-col justify-between rounded-lg border border-line bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue hover:shadow-md"
-      style={{ borderTop: `3px solid ${TIER.ask}` }}
+      // Filled, where its neighbour is white. The two sit side by side because the pairing is the
+      // teaching — "is this company in OUR book" is free and instant, "does anybody else report
+      // them" costs an inquiry and is recorded — and drawing them as two equal white cards left
+      // the difference to be read rather than seen. This one is the one that reaches the network,
+      // so it is the one that looks like it costs something.
+      //
+      // Navy rather than a colour from the severity palette. Nothing here is wrong; it is
+      // important, and on this platform red and amber mean a deadline has passed.
+      className="group flex flex-col justify-between rounded-lg bg-navy p-7 shadow-md ring-1 ring-navy/20 transition hover:-translate-y-0.5 hover:shadow-lg"
     >
       <div>
-        <p
-          className="mb-2 text-xs font-semibold tracking-[0.16em] uppercase"
-          style={{ color: TIER.ask }}
-        >
+        <p className="mb-2 text-xs font-semibold tracking-[0.16em] text-blue uppercase">
           {t.eyebrow}
         </p>
-        <h2 className="mb-2 text-xl font-bold text-navy">{t.title}</h2>
-        <p className="text-sm leading-relaxed text-muted">{t.note}</p>
+        <h2 className="mb-2 text-2xl font-bold text-white">{t.title}</h2>
+        <p className="text-base leading-relaxed text-white/75">{t.note}</p>
       </div>
-      <span className="mt-6 inline-flex items-center gap-2 self-start rounded bg-navy px-4 py-2.5 text-sm font-bold text-white transition group-hover:bg-navy/90">
+      <span className="mt-7 inline-flex items-center gap-2 self-start rounded bg-white px-5 py-3 text-base font-bold text-navy transition group-hover:bg-white/90">
         {t.action}
         <span
           aria-hidden="true"

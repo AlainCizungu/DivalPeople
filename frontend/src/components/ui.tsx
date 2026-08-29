@@ -73,8 +73,8 @@ export function Card({
       {(title || description || action) && (
         <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div>
-            {title && <h2 className="font-bold text-navy">{title}</h2>}
-            {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+            {title && <h2 className="text-lg font-bold text-navy">{title}</h2>}
+            {description && <p className="mt-0.5 text-[0.9375rem] text-muted">{description}</p>}
           </div>
           {action && <div className="shrink-0 pt-0.5">{action}</div>}
         </div>
@@ -87,6 +87,14 @@ export function Card({
 
 /**
  * The line that starts a tier of the page.
+ *
+ * <p><strong>On the sizes here and in Card.</strong> Both were a step smaller until somebody said
+ * the overview read small, and they were: 12px uppercase named a whole tier of a page while the
+ * figures under it were 48px, and a supporting note sat at the same 14px as a table cell. The
+ * scale moved one step — nothing doubled, nothing became a heading that was not one — and it moved
+ * in the shared primitive rather than on the overview alone. A second type scale that applies to
+ * one screen is how a product ends up with two, and the screens either side of the front door are
+ * built from these same two components.
  *
  * <p>The overview had four sections and one of them had a heading. Everything else began by simply
  * being the next thing, which is why the page reads as one long list of equally important boxes —
@@ -118,9 +126,9 @@ export function SectionHeading({
             className="h-3.5 w-1 rounded-full"
             style={{ background: accent }}
           />
-          <h2 className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">{title}</h2>
+          <h2 className="text-[0.8125rem] font-semibold tracking-[0.14em] text-muted uppercase">{title}</h2>
         </div>
-        {note && <p className="mt-1.5 max-w-2xl text-sm text-muted">{note}</p>}
+        {note && <p className="mt-1.5 max-w-2xl text-[0.9375rem] leading-relaxed text-muted">{note}</p>}
       </div>
       {action}
     </div>
@@ -155,7 +163,7 @@ export function Metric({
 }) {
   return (
     <div className="rounded-lg border border-line bg-white p-5">
-      <p className="text-sm text-muted">{label}</p>
+      <p className="text-[0.9375rem] text-muted">{label}</p>
       <p
         className={`mt-1 text-3xl font-bold tabular-nums ${
           tone === "serious"

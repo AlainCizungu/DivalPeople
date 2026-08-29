@@ -400,7 +400,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <TopBarMenu label={messages.common.help}>
               {(close) => (
-                <MenuLink href="/app#everything" onClick={close}>
+                <MenuLink
+                  // Was /app#everything, an anchor into the bottom of the overview. That section
+                  // is now its own page: the overview answers "what needs me this morning" and a
+                  // site map underneath it pushed the answer up and away.
+                  href="/app/directory"
+                  onClick={close}
+                  current={pathname === "/app/directory"}
+                >
                   {messages.common.exploreDip}
                 </MenuLink>
               )}

@@ -300,7 +300,7 @@ export function HoverTile({
       }`}
     >
       <p className={`text-muted ${lead ? "text-sm font-semibold" : "text-xs"}`}>{label}</p>
-      <p className={`mt-1 font-bold ${ink} ${lead ? "text-5xl" : "text-3xl"}`}>
+      <p className={`mt-1 font-bold ${ink} ${lead ? "text-6xl" : "text-4xl"}`}>
         {value === null ? <span className="text-muted">—</span> : <CountUp value={value} />}
       </p>
 
