@@ -93,18 +93,25 @@ else
     SSL=false; STARTTLS=true
 fi
 
-# THE WHOLE OBJECT IN ONE VALUE, not a field at a time.
+# FED AS A DOCUMENT ON STDIN, because -s cannot set this field.
 #
-# The first version used kcadm's dotted paths — `-s smtpServer.host=...` — which reported success
-# and stored nothing. RealmRepresentation.smtpServer is a Map, and what that syntax appears to
-# produce is a top-level property literally named "smtpServer.host", which Keycloak ignores as
-# unknown rather than refusing. Same failure as the tenant_id attribute: a 2xx, a realm that looks
-# configured in every listing, and nothing sent.
+# Two attempts failed before this one, both silently, both reporting success:
 #
-# Every value is a STRING, including port and the booleans. The map is Map<String,String>, and a
-# JSON number or boolean in it is a different type than the one being deserialised into.
+#   -s 'smtpServer.host=...'    dotted paths, one field at a time
+#   -s 'smtpServer={"host":..}' the whole map as a JSON value
+#
+# smtpServer is a Map<String,String>, and kcadm's -s does not put a JSON object into one. It
+# accepted both forms, returned zero, and stored nothing — while `-s resetPasswordAllowed=true` on
+# the very same command worked, which is what made this so slow to see: realm updates plainly
+# functioned, so the fault looked like it had to be somewhere else.
+#
+# `-f -` sends a representation rather than a field assignment, and kcadm still merges it with what
+# is already there. Proven by a curl PUT to the same endpoint returning 204 and the value appearing.
+#
+# Every value is a STRING, including port and the booleans, because Map<String,String> is what it
+# deserialises into.
 SMTP_JSON=$(printf \
-    '{"host":"%s","port":"%s","from":"%s","fromDisplayName":"%s","replyTo":"%s","auth":"true","user":"%s","password":"%s","ssl":"%s","starttls":"%s"}' \
+    '{"smtpServer":{"host":"%s","port":"%s","from":"%s","fromDisplayName":"%s","replyTo":"%s","auth":"true","user":"%s","password":"%s","ssl":"%s","starttls":"%s"}}' \
     "$SMTP_HOST" "$SMTP_PORT" "$SMTP_FROM" "$SMTP_FROM_NAME" "$SMTP_REPLY_TO" \
     "$SMTP_USER" "$SMTP_PASSWORD" "$SSL" "$STARTTLS")
 
@@ -114,7 +121,11 @@ set -eu
 $KC config credentials --server http://localhost:8081 --realm master \\
     --user '$ADMIN' --password '$ADMIN_PASSWORD' > /dev/null
 
-$KC update realms/$REALM -s 'smtpServer=$SMTP_JSON'
+# A quoted heredoc, so nothing in the JSON — a password with a dollar sign, say — is expanded a
+# second time by the shell inside the container.
+$KC update realms/$REALM -f - <<'SMTP_DOCUMENT'
+$SMTP_JSON
+SMTP_DOCUMENT
 
 echo "--- sign-in settings that need a mail server to work"
 # resetPasswordAllowed puts "Forgot password?" on the sign-in page. It is useless without SMTP,
