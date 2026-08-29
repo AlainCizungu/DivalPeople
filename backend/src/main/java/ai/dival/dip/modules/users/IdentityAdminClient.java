@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -156,13 +157,54 @@ public class IdentityAdminClient {
             delete(token, base, remove);
         }
 
-        List<Map<String, Object>> add = roles.stream()
-                .filter(role -> !held.contains(role))
-                .map(role -> readRole(token, role))
-                .toList();
-        if (!add.isEmpty()) {
-            post(token, base, add);
+        Set<String> wanted = roles.stream().filter(role -> !held.contains(role))
+                .collect(Collectors.toSet());
+        if (wanted.isEmpty()) {
+            return;
         }
+
+        // The roles this particular account could be given, asked user-by-user rather than of the
+        // realm. See availableTo for why that distinction is the whole fix.
+        Map<String, Map<String, Object>> available = availableTo(token, base);
+
+        List<Map<String, Object>> add = new ArrayList<>();
+        for (String role : wanted) {
+            Map<String, Object> representation = available.get(role);
+            if (representation == null) {
+                throw new IdentityAdminException(
+                        "The identity provider will not assign " + role + " to this account. The "
+                                + "realm and this application disagree about what roles exist, or "
+                                + "the service account may not hand this one out.");
+            }
+            add.add(Map.of("id", representation.get("id"), "name", role));
+        }
+        post(token, base, add);
+    }
+
+    /**
+     * Every realm role this account could be given, by name.
+     *
+     * <p><strong>This is the 403.</strong> Assigning a role needs its id, not its name, and the
+     * obvious way to turn one into the other is {@code GET /admin/realms/{realm}/roles/{name}} —
+     * which is a read of the realm, and needs {@code view-realm}. The service account has
+     * {@code manage-users} and {@code view-users} and nothing else, on my own insistence, so every
+     * invitation created the account, failed here, and rolled back.
+     *
+     * <p>{@code role-mappings/realm/available} answers the same question scoped to one user, which
+     * is a user read and covered by {@code view-users}. Same ids, same names, no wider privilege.
+     *
+     * <p>The lesson is not that the narrow grant was wrong. It is that "grant the least" has to be
+     * paired with exercising every path against it, because the failure surfaces as one call in
+     * the middle of a sequence rather than at start-up, and the account it half-creates outlives
+     * the error.
+     */
+    private Map<String, Map<String, Object>> availableTo(String token, String base) {
+        return getList(token, base + "/available").stream()
+                .filter(role -> role.get("name") != null && role.get("id") != null)
+                .collect(Collectors.toMap(
+                        role -> String.valueOf(role.get("name")),
+                        role -> role,
+                        (first, second) -> first));
     }
 
     /**
@@ -330,18 +372,6 @@ public class IdentityAdminClient {
         } catch (RestClientException failed) {
             throw refusal(failed);
         }
-    }
-
-    /** A role as Keycloak represents it: the mapping endpoint wants the id, not the name. */
-    private Map<String, Object> readRole(String token, String role) {
-        Map<String, Object> found =
-                get(token, "/admin/realms/" + properties.realm() + "/roles/" + role);
-        if (found.get("id") == null) {
-            throw new IdentityAdminException(
-                    "The identity provider has no role called " + role + ". The realm and this "
-                            + "application disagree about what roles exist.");
-        }
-        return Map.of("id", found.get("id"), "name", role);
     }
 
     /**
