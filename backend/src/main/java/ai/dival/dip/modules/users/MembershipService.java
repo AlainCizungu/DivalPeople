@@ -89,10 +89,10 @@ public class MembershipService {
         audit.record(INVITE_ATTEMPTED, "UserAccount", address, AuditService.OUTCOME_SUCCESS,
                 actorId, "Roles: " + String.join(", ", granted));
 
-        UUID created;
+        String token = identity.token();
+        UUID created = null;
         String password;
         try {
-            String token = identity.token();
             created = identity.createUser(token, address, displayName, tenant);
             identity.setRoles(token, created, granted);
 
@@ -101,13 +101,46 @@ public class MembershipService {
         } catch (IdentityAdminClient.IdentityAdminException refused) {
             audit.record(INVITED, "UserAccount", address, AuditService.OUTCOME_FAILURE, actorId,
                     "Status " + refused.status());
-            throw explain(refused, address);
+            throw explain(refused, address, undo(token, created, address, actorId));
         }
 
         audit.record(INVITED, "UserAccount", address, AuditService.OUTCOME_SUCCESS, actorId,
                 "Roles: " + String.join(", ", granted));
 
         return new Invitation(created, address, List.copyOf(granted), password);
+    }
+
+    /**
+     * Removes an account that was created and could not be finished.
+     *
+     * <p>This is the failure that produced three unusable accounts on the first deployment: the
+     * create succeeded, something after it did not, and what remained was a user with no roles and
+     * no password — invisible on the members screen, which only lists people who have signed in,
+     * and holding the address, so every retry came back "already in use". The administrator sees a
+     * feature that refuses to create an account that does not appear to exist.
+     *
+     * <p>Deleting is right here and nowhere else. The rule against deletion protects audit
+     * history, and an account created ninety milliseconds ago has none — nothing was attributed to
+     * it, nobody signed in as it, and it never became a person.
+     *
+     * <p>If the delete itself fails, that is said out loud rather than swallowed. The address stays
+     * held and somebody has to clear it by hand; a message that pretends otherwise sends the
+     * administrator into a loop.
+     *
+     * @return true when the half-made account was cleared away
+     */
+    private boolean undo(String token, UUID created, String address, UUID actorId) {
+        if (created == null) {
+            return true;
+        }
+        try {
+            identity.deleteUser(token, created);
+            return true;
+        } catch (IdentityAdminClient.IdentityAdminException stuck) {
+            audit.record(INVITED, "UserAccount", address, AuditService.OUTCOME_FAILURE, actorId,
+                    "Created but unfinished, and could not be removed: status " + stuck.status());
+            return false;
+        }
     }
 
     /**
@@ -118,14 +151,17 @@ public class MembershipService {
      * body contains, which is to say nothing, and the form looked as though pressing the button
      * did not work.
      *
-     * <p>The two cases differ in who can act. A conflict is the caller's to resolve and they need
-     * the address named. Anything else is this deployment's problem — a service account whose
-     * secret has been rotated out from under it, a Keycloak that is down — and the person in front
-     * of the form can do nothing but tell somebody, so it says so rather than inviting them to
-     * retry.
+     * <p>Three cases, separated by who can act. A conflict is the caller's to resolve and they
+     * need the address named. A half-made account nobody could remove is theirs to escalate, and
+     * the sentence has to say so or they will retry forever. Anything else is the deployment's
+     * problem — a rotated secret, a Keycloak that is down — and the person at the form can do
+     * nothing but tell somebody.
+     *
+     * @param address    the address invited, or null on the paths that change an existing account
+     * @param cleanedUp  false when an account was created and could not be removed again
      */
     private RuntimeException explain(IdentityAdminClient.IdentityAdminException refused,
-                                     String address) {
+                                     String address, boolean cleanedUp) {
         // The address is null on the paths that change an existing account, where a conflict
         // cannot arise and where naming the resource would produce a sentence about a user id
         // being "already in use" — true of every account that exists, and meaningless to read.
@@ -136,10 +172,18 @@ public class MembershipService {
                             + "below, they may already have an account with another institution, "
                             + "or have been invited and not yet signed in.");
         }
+        if (!cleanedUp) {
+            return new PolicyRefusedException(
+                    "The account was created and could not be finished, and could not be removed "
+                            + "either. " + address + " is held at the identity provider by an "
+                            + "account that cannot sign in. Somebody with server access has to "
+                            + "delete it before this address can be used.");
+        }
         return new PolicyRefusedException(
-                "The identity provider did not accept the request, so nothing was changed. This "
-                        + "is a problem with the deployment rather than with what you typed; the "
-                        + "status it answered with is in the server log.");
+                "The identity provider did not accept the request, so nothing was changed and no "
+                        + "account was left behind. This is a problem with the deployment rather "
+                        + "than with what you typed; the status it answered with is in the server "
+                        + "log.");
     }
 
     /**
@@ -159,7 +203,7 @@ public class MembershipService {
         try {
             identity.setRoles(token, userId, granted);
         } catch (IdentityAdminClient.IdentityAdminException refused) {
-            throw explain(refused, null);
+            throw explain(refused, null, true);
         }
     }
 
@@ -179,7 +223,7 @@ public class MembershipService {
         try {
             identity.setEnabled(token, userId, active);
         } catch (IdentityAdminClient.IdentityAdminException refused) {
-            throw explain(refused, null);
+            throw explain(refused, null, true);
         }
     }
 

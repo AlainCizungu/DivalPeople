@@ -1,6 +1,8 @@
 package ai.dival.dip.modules.users;
 
+import ai.dival.dip.common.security.Roles;
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
@@ -9,8 +11,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -46,8 +50,15 @@ public class IdentityAdminClient {
     public IdentityAdminClient(IdentityAdminProperties properties) {
         this.properties = properties;
 
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Duration.ofMillis(properties.timeoutMs()));
+        // The JDK client rather than SimpleClientHttpRequestFactory, which is built on
+        // HttpURLConnection. Keycloak removes role mappings with a DELETE that carries a body, and
+        // HttpURLConnection's handling of that is unreliable — it is the one request shape in this
+        // class that a conventional client gets wrong, and it sits in the middle of creating an
+        // account, where a failure leaves half a user behind.
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(properties.timeoutMs()))
+                .build();
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(client);
         factory.setReadTimeout(Duration.ofMillis(properties.timeoutMs()));
         this.http = RestClient.builder().requestFactory(factory).build();
     }
@@ -108,21 +119,62 @@ public class IdentityAdminClient {
         return UUID.fromString(path.substring(slash + 1));
     }
 
-    /** Replaces the account's realm roles with exactly this set. */
+    /**
+     * Makes the account's DIP roles exactly this set, and leaves everything else alone.
+     *
+     * <p><strong>Only roles DIP declares are touched.</strong> The first version read every realm
+     * role the account held and deleted the lot before adding the wanted ones, which on a
+     * newly-created account means deleting {@code default-roles-dip} — Keycloak's own composite,
+     * carrying {@code offline_access}, {@code uma_authorization} and the account-console mappings
+     * that every user in the realm is given. Stripping it is not DIP's business: those roles say
+     * what somebody may do with their own Keycloak account, not what they may do in this product,
+     * and an institution's administrator changing a colleague's job title should not silently
+     * revoke their ability to manage their own credentials.
+     *
+     * <p>So the set difference is computed against {@link Roles#all()} and nothing outside it is
+     * removed or added. It also makes the operation idempotent in the useful direction: a role
+     * already held is not removed and re-added, which was two calls and a window in which the
+     * account had neither.
+     */
     public void setRoles(String token, UUID userId, Set<String> roles) {
         String base = "/admin/realms/" + properties.realm() + "/users/" + userId
                 + "/role-mappings/realm";
 
-        List<Map<String, Object>> held = getList(token, base);
-        if (!held.isEmpty()) {
-            delete(token, base, held);
-        }
-        if (roles.isEmpty()) {
-            return;
+        List<String> declared = Roles.all();
+
+        List<Map<String, Object>> ours = getList(token, base).stream()
+                .filter(held -> declared.contains(String.valueOf(held.get("name"))))
+                .toList();
+        Set<String> held = ours.stream()
+                .map(role -> String.valueOf(role.get("name")))
+                .collect(Collectors.toSet());
+
+        List<Map<String, Object>> remove = ours.stream()
+                .filter(role -> !roles.contains(String.valueOf(role.get("name"))))
+                .toList();
+        if (!remove.isEmpty()) {
+            delete(token, base, remove);
         }
 
-        List<Map<String, Object>> wanted = roles.stream().map(role -> readRole(token, role)).toList();
-        post(token, base, wanted);
+        List<Map<String, Object>> add = roles.stream()
+                .filter(role -> !held.contains(role))
+                .map(role -> readRole(token, role))
+                .toList();
+        if (!add.isEmpty()) {
+            post(token, base, add);
+        }
+    }
+
+    /**
+     * Removes an account outright.
+     *
+     * <p>The one place DIP deletes rather than disables, and only for an account it created
+     * moments earlier that could not be finished. Half a user — created, with no roles and no
+     * password — is worse than none: it holds the address, so the administrator who retries is
+     * told it is already in use, and nothing on any screen explains why.
+     */
+    public void deleteUser(String token, UUID userId) {
+        delete(token, "/admin/realms/" + properties.realm() + "/users/" + userId, null);
     }
 
     /** Sets a temporary password. The account must change it at first sign-in. */
@@ -226,15 +278,27 @@ public class IdentityAdminClient {
         }
     }
 
+    /**
+     * A DELETE, with a body when Keycloak needs one.
+     *
+     * <p>Removing role mappings is a DELETE that carries the roles to remove, which is unusual
+     * enough that not every HTTP client will send it. A null body means a plain DELETE, for
+     * removing a resource by its path.
+     */
     private void delete(String token, String path, Object body) {
         try {
-            http.method(org.springframework.http.HttpMethod.DELETE)
+            RestClient.RequestBodySpec request = http.method(HttpMethod.DELETE)
                     .uri(properties.baseUrl() + path)
-                    .header("Authorization", "Bearer " + token)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .toBodilessEntity();
+                    .header("Authorization", "Bearer " + token);
+
+            if (body == null) {
+                request.retrieve().toBodilessEntity();
+            } else {
+                request.contentType(MediaType.APPLICATION_JSON)
+                        .body(body)
+                        .retrieve()
+                        .toBodilessEntity();
+            }
         } catch (RestClientException failed) {
             throw refusal(failed);
         }
