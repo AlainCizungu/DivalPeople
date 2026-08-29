@@ -101,8 +101,30 @@ imported into a deployment.
    both refuse that port. An SSH tunnel is the only way in:
 
    ```bash
-   ssh -i <your-key.pem> -L 8081:localhost:8081 ubuntu@<host>
+   ssh -i ~/.ssh/dip-test.pem -L 8081:localhost:8081 ubuntu@dip.dival.ai
    ```
+
+   For the deployed instance, that key and hostname are the real ones. Neither is a secret — the
+   hostname is public and the key file lives on the operator's own machine — and writing them down
+   is the point: this document previously said `<your-key.pem>` and `<host>`, and the day the
+   terminal closed it took four rounds of searching a laptop to get back in. A runbook that only
+   works for somebody who already remembers the answer is not a runbook.
+
+   Better still, in `~/.ssh/config` on the operator's machine, so nothing has to be remembered:
+
+   ```
+   Host dip
+       HostName dip.dival.ai
+       User ubuntu
+       IdentityFile ~/.ssh/dip-test.pem
+   ```
+
+   Then `ssh dip`, and `ssh -L 8081:localhost:8081 dip` for the tunnel.
+
+   **Keep the key out of `~/Downloads`.** That is the directory people empty when a disk fills up,
+   and this key is the only way into a host holding other institutions' credit records. Losing it
+   means the EC2 console's Instance Connect is the way back — which works, and is worth knowing
+   before it is needed. The `age` backup key has no equivalent fallback.
 
    An earlier version of this document had you forward to the container's address on the Docker
    bridge, on the argument that publishing a port at all was the greater risk. That address
