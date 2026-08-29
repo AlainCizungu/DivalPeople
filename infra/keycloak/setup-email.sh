@@ -88,10 +88,25 @@ echo "  host $SMTP_HOST:$SMTP_PORT, from $SMTP_FROM"
 # STARTTLS on 587, implicit TLS on 465. Getting this pair wrong produces a connection that hangs
 # rather than an error, so it is derived from the port rather than asked for.
 if [ "$SMTP_PORT" = "465" ]; then
-    TLS_FLAGS="-s 'smtpServer.ssl=true' -s 'smtpServer.starttls=false'"
+    SSL=true; STARTTLS=false
 else
-    TLS_FLAGS="-s 'smtpServer.ssl=false' -s 'smtpServer.starttls=true'"
+    SSL=false; STARTTLS=true
 fi
+
+# THE WHOLE OBJECT IN ONE VALUE, not a field at a time.
+#
+# The first version used kcadm's dotted paths — `-s smtpServer.host=...` — which reported success
+# and stored nothing. RealmRepresentation.smtpServer is a Map, and what that syntax appears to
+# produce is a top-level property literally named "smtpServer.host", which Keycloak ignores as
+# unknown rather than refusing. Same failure as the tenant_id attribute: a 2xx, a realm that looks
+# configured in every listing, and nothing sent.
+#
+# Every value is a STRING, including port and the booleans. The map is Map<String,String>, and a
+# JSON number or boolean in it is a different type than the one being deserialised into.
+SMTP_JSON=$(printf \
+    '{"host":"%s","port":"%s","from":"%s","fromDisplayName":"%s","replyTo":"%s","auth":"true","user":"%s","password":"%s","ssl":"%s","starttls":"%s"}' \
+    "$SMTP_HOST" "$SMTP_PORT" "$SMTP_FROM" "$SMTP_FROM_NAME" "$SMTP_REPLY_TO" \
+    "$SMTP_USER" "$SMTP_PASSWORD" "$SSL" "$STARTTLS")
 
 $COMPOSE exec -T keycloak sh -s <<INNER
 set -eu
@@ -99,16 +114,7 @@ set -eu
 $KC config credentials --server http://localhost:8081 --realm master \\
     --user '$ADMIN' --password '$ADMIN_PASSWORD' > /dev/null
 
-$KC update realms/$REALM \\
-    -s 'smtpServer.host=$SMTP_HOST' \\
-    -s 'smtpServer.port=$SMTP_PORT' \\
-    -s 'smtpServer.from=$SMTP_FROM' \\
-    -s 'smtpServer.fromDisplayName=$SMTP_FROM_NAME' \\
-    -s 'smtpServer.replyTo=$SMTP_REPLY_TO' \\
-    -s 'smtpServer.auth=true' \\
-    -s 'smtpServer.user=$SMTP_USER' \\
-    -s 'smtpServer.password=$SMTP_PASSWORD' \\
-    $TLS_FLAGS
+$KC update realms/$REALM -s 'smtpServer=$SMTP_JSON'
 
 echo "--- sign-in settings that need a mail server to work"
 # resetPasswordAllowed puts "Forgot password?" on the sign-in page. It is useless without SMTP,
@@ -140,7 +146,10 @@ $KC update clients/\$CID -r $REALM \\
 
 echo "--- checking it was stored"
 $KC get realms/$REALM --fields smtpServer | grep -q "$SMTP_HOST" || {
-    echo "the mail server did not save. Nothing will be sent." >&2
+    echo >&2
+    echo "The mail server did not save, and Keycloak reported no error." >&2
+    echo "This is what it holds instead (password masked):" >&2
+    $KC get realms/$REALM --fields smtpServer | sed 's/"password".*/"password" : "<set>",/' >&2
     exit 1
 }
 echo "  ok"
