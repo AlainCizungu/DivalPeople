@@ -1,11 +1,18 @@
 #!/bin/sh
 # Give DIP the ability to create accounts, as narrowly as Keycloak allows.
 #
-#   sh infra/keycloak/setup-identity-admin.sh
+#   sh infra/keycloak/setup-identity-admin.sh          set it up
+#   sh infra/keycloak/setup-identity-admin.sh rotate   replace the secret
 #
 # Run on the server, from the repository root, with the stack up and the realm already built by
-# setup-realm.sh. Prints a client secret at the end; that secret goes in deploy.env and nowhere
-# else.
+# setup-realm.sh.
+#
+# THE SECRET IS NEVER PRINTED. It is written straight into infra/deploy.env and the script reports
+# only that a value of some length landed there. The first version of this script printed it for
+# you to copy, which took about a minute to go wrong: a credential on a terminal is a credential in
+# a scrollback, in a screenshot, and in whatever you pasted the output into to ask what it meant.
+# There is no reason a human ever has to read this string — the only thing that needs it is a
+# container on the same host.
 #
 # WHAT THIS TURNS ON. Until it runs, /app/access shows the member list and no invite form, and
 # accounts are made by hand with kcadm. After it runs, an institution's own TENANT_ADMIN can add
@@ -34,10 +41,16 @@
 #
 # The script checks afterwards that exactly these two are attached, and fails if a third appeared.
 #
-# IDEMPOTENT-ISH, in the same way setup-realm.sh is: creating something that exists prints a
-# conflict and carries on. Re-running is safe. It will NOT rotate the secret — for that, see the
-# note at the bottom.
+# IDEMPOTENT. Creating something that exists prints a conflict and carries on; the deploy.env lines
+# are replaced rather than appended, so re-running does not leave two of anything. Re-running
+# WITHOUT `rotate` reuses the existing secret; with it, the old one stops working immediately.
 set -eu
+
+MODE=${1:-setup}
+case "$MODE" in
+    setup|rotate) ;;
+    *) echo "usage: $0 [setup|rotate]" >&2; exit 2 ;;
+esac
 
 ENV_FILE=infra/deploy.env
 COMPOSE="docker compose --env-file $ENV_FILE -f infra/docker-compose.deploy.yml"
@@ -60,8 +73,11 @@ ADMIN_PASSWORD=$(value KEYCLOAK_ADMIN_PASSWORD)
 
 [ -n "$ADMIN" ] && [ -n "$ADMIN_PASSWORD" ] || fail "KEYCLOAK_ADMIN or KEYCLOAK_ADMIN_PASSWORD missing"
 
+# --- the client, its service account, and exactly two roles -------------------
+#
 # Everything below runs inside the container. `sh -c` with the script on stdin keeps the admin
 # password out of `docker compose exec`'s argument list, and so out of the process table.
+if [ "$MODE" = setup ]; then
 $COMPOSE exec -T keycloak sh -s <<INNER
 set -eu
 
@@ -117,11 +133,10 @@ echo "  granted: \$GRANTED"
 for ROLE in \$GRANTED; do
     case "\$ROLE" in
         manage-users|view-users) ;;
-        "") ;;
         *)
             echo >&2
-            echo "\$CLIENT holds \$ROLE on realm-management, which it must not." >&2
-            echo "Remove it before putting the secret in deploy.env:" >&2
+            echo "$CLIENT holds \$ROLE on realm-management, which it must not." >&2
+            echo "Remove it before the secret goes anywhere:" >&2
             echo "  kcadm.sh remove-roles -r $REALM --uid \$SA --cclientid realm-management --rolename \$ROLE" >&2
             exit 1
             ;;
@@ -136,35 +151,89 @@ case "\$GRANTED" in
     *view-users*) ;;
     *) echo "view-users was not granted; the backend could not check whose tenant an account is in, which is the check that keeps one institution out of another's staff." >&2; exit 1 ;;
 esac
-
-echo
-echo "=== put these in infra/deploy.env ==="
-echo "DIP_IDENTITY_ADMIN_BASE_URL=http://keycloak:8081"
-echo "DIP_IDENTITY_ADMIN_REALM=$REALM"
-echo "DIP_IDENTITY_ADMIN_CLIENT_ID=$CLIENT"
-printf 'DIP_IDENTITY_ADMIN_CLIENT_SECRET='
-$KC get clients/\$CID/client-secret -r $REALM --fields value --format csv --noquotes
 INNER
+fi
+
+# --- the secret, captured and never displayed --------------------------------
+#
+# A separate exec, whose entire stdout is the secret and nothing else. Splitting it from the noisy
+# phase above is what makes the capture safe: one command, one line, no progress messages to strip
+# and no chance of a "(exists)" ending up in deploy.env as a credential.
+echo "--- secret"
+if [ "$MODE" = rotate ]; then
+    echo "  generating a new one; the previous secret stops working now"
+    SECRET_VERB=create
+else
+    echo "  reading the existing one"
+    SECRET_VERB=get
+fi
+
+SECRET=$($COMPOSE exec -T keycloak sh -s <<INNER
+set -eu
+$KC config credentials --server http://localhost:8081 --realm master \\
+    --user '$ADMIN' --password '$ADMIN_PASSWORD' > /dev/null
+CID=\$($KC get clients -r $REALM -q clientId=$CLIENT --fields id --format csv --noquotes)
+[ -n "\$CID" ] || { echo "no client called $CLIENT; run this without 'rotate' first" >&2; exit 1; }
+$KC $SECRET_VERB clients/\$CID/client-secret -r $REALM --fields value --format csv --noquotes
+INNER
+)
+
+# Carriage returns and stray whitespace removed here rather than in the pipeline above, because a
+# `tr` on the end of that command substitution would swallow a non-zero exit from the exec — and
+# the failure worth catching is exactly the one where the container errored and printed nothing.
+SECRET=$(printf '%s' "$SECRET" | tr -d ' \t\r\n')
+
+# A Keycloak secret is 32 characters. Anything much shorter means the capture picked up something
+# that is not a secret — an error line, an empty response — and writing that into deploy.env would
+# produce a backend that starts, reports itself configured, and fails at the moment somebody
+# invites a colleague. Which is the failure this whole design exists to avoid.
+[ "${#SECRET}" -ge 16 ] || fail \
+    "the identity provider returned ${#SECRET} characters, which is not a secret. $ENV_FILE was not touched."
+
+# --- deploy.env --------------------------------------------------------------
+#
+# Replaced, not appended. Docker Compose takes the LAST assignment in the file, so appending would
+# work by accident and leave a trail of dead secrets above it — each one still valid until rotated,
+# each one readable by anything that can read the file.
+umask 077
+TMP=$(mktemp)
+trap 'rm -f "$TMP"' EXIT INT TERM
+grep -v '^DIP_IDENTITY_ADMIN_' "$ENV_FILE" > "$TMP" || true
+{
+    echo ""
+    echo "# Written by infra/keycloak/setup-identity-admin.sh. The secret belongs to the"
+    echo "# $CLIENT service account and nothing else uses it."
+    echo "DIP_IDENTITY_ADMIN_BASE_URL=http://keycloak:8081"
+    echo "DIP_IDENTITY_ADMIN_REALM=$REALM"
+    echo "DIP_IDENTITY_ADMIN_CLIENT_ID=$CLIENT"
+    echo "DIP_IDENTITY_ADMIN_CLIENT_SECRET=$SECRET"
+} >> "$TMP"
+
+# cat into the original rather than mv, so the file keeps its own ownership and permissions
+# instead of inheriting mktemp's. deploy.env holds every secret on this host and its mode is not
+# something to re-derive.
+cat "$TMP" > "$ENV_FILE"
+
+echo "  wrote ${#SECRET} characters to $ENV_FILE (not shown, and there is no reason to look)"
 
 cat <<'NOTE'
 
-Then restart the backend so it reads them:
+--- restart the backend so it reads them
 
   docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml up -d backend
 
-The invite form appears on Access & permissions for anyone with TENANT_ADMIN. If it does not, the
-backend has fewer than all three of base URL, client id and secret — the feature is all four or
-nothing on purpose, because a half-configured client fails at the moment somebody uses it.
+`up -d` and not `restart`: restart reuses the existing container with the environment it was
+created with, so it would come back knowing nothing about any of this.
 
-The base URL is the container name, not dip.dival.ai. Admin traffic has no business leaving the
-private network to come back in through the proxy, and Keycloak's admin API on a public hostname
-is an attack surface with no upside.
+Then the invite form appears on Access & permissions for anyone holding TENANT_ADMIN. If it does
+not, the backend is missing at least one of base URL, client id and secret — the feature is all or
+nothing on purpose, because a half-configured client fails at the moment somebody uses it rather
+than at start-up.
 
-TO ROTATE THE SECRET, which you should do if it has ever been pasted anywhere it might be read:
+--- if the secret is ever exposed
 
-  docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml exec -T keycloak \
-    /opt/keycloak/bin/kcadm.sh create clients/<CID>/client-secret -r dip
+  sh infra/keycloak/setup-identity-admin.sh rotate
 
-then put the new value in deploy.env and restart the backend. Nothing else uses it, so the only
-cost of rotating is the restart.
+The old one stops working immediately and the new one never reaches a screen. Nothing but the
+backend uses it, so the only cost is the restart above.
 NOTE

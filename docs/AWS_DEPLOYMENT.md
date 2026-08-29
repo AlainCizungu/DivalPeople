@@ -204,10 +204,26 @@ sh infra/keycloak/setup-identity-admin.sh
 
 It creates a second confidential client, `dip-identity-admin`, with a service account, grants that
 account `manage-users` and `view-users` on `realm-management` and nothing else, reads the grants
-back and fails if anything else is attached, then prints four lines for `deploy.env`. Restart the
-backend and the invite form appears on **Access & permissions** for anyone with `TENANT_ADMIN`.
+back and fails if anything else is attached, then **writes the four values into `infra/deploy.env`
+itself**. Restart the backend with `up -d backend` — not `restart`, which reuses the container's
+existing environment — and the invite form appears on **Access & permissions** for anyone with
+`TENANT_ADMIN`.
 
-Three things about it are deliberate:
+If the secret is ever exposed:
+
+```bash
+sh infra/keycloak/setup-identity-admin.sh rotate
+```
+
+The old one stops working immediately. Nothing but the backend uses it, so the cost is one
+restart.
+
+Four things about it are deliberate:
+
+- **The secret is never printed.** The first version of this script printed it to copy by hand,
+  and that took about a minute to go wrong — a credential on a terminal is a credential in a
+  scrollback, a screenshot, and whatever you pasted the output into to ask what it meant. No human
+  needs to read this string; the only thing that needs it is a container on the same host.
 
 - **A different client from `dip-web`.** One leak should not cost both sign-in and user management.
 - **Not `realm-admin`.** It is one line and it always works, which is the temptation. With
