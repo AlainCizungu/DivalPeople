@@ -91,6 +91,31 @@ dip:
   #
   # No key is committed. Absent one, both switches are inert: questions are read by rule and answers
   # are rendered from figures, which is less impressive and equally true.
+  # LETTING AN INSTITUTION MANAGE ITS OWN ACCOUNTS.
+  #
+  # Off unless configured, and it is the first place DIP can CHANGE who exists rather than merely
+  # verify a token somebody else issued. That is a real widening of what a compromised backend
+  # could do, and the price of not being a helpdesk for every institution's staff turnover.
+  #
+  # The service account needs `manage-users` and `view-users` on realm-management, and NOTHING
+  # else. Not `realm-admin`. The difference is whether a stolen secret can create a user inside a
+  # tenant — bad, and bounded by MembershipRules — or reconfigure the realm, mint clients and
+  # rewrite the mapper that puts tenant_id in the token in the first place. The second is
+  # unrecoverable and nothing here needs it.
+  #
+  # A DIFFERENT client from dip-web, with a different secret. Reusing the web client's would mean
+  # one leak costs both sign-in and user management.
+  #
+  # base-url is where Keycloak is reachable FROM THE BACKEND — the container name on the deployed
+  # stack, not the public hostname. Admin traffic has no business leaving the private network to
+  # come back in through the proxy.
+  identity-admin:
+    base-url: ${DIP_IDENTITY_ADMIN_BASE_URL:}
+    realm: ${DIP_IDENTITY_ADMIN_REALM:dip}
+    client-id: ${DIP_IDENTITY_ADMIN_CLIENT_ID:}
+    client-secret: ${DIP_IDENTITY_ADMIN_CLIENT_SECRET:}
+    timeout-ms: ${DIP_IDENTITY_ADMIN_TIMEOUT_MS:5000}
+
   ai:
     enabled: ${DIP_AI_ENABLED:false}
     narrate: ${DIP_AI_NARRATE:false}

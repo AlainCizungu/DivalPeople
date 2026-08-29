@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * User and membership endpoints.
  *
- * <p>There is no create endpoint by design: accounts come into existence by authenticating, so
- * this API cannot mint an identity the provider does not know about.
+ * <p>Read-only, and it stays that way. Creating an account is a different act with a different
+ * guard, and it lives in {@link MembershipController} — which holds the credentials that can
+ * change who exists, so that this controller does not.
  */
 @RestController
 @RequestMapping("/api/v1/users")
