@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,6 +32,17 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class MembershipService {
+
+    /**
+     * The only place the identity provider's own status reaches the log.
+     *
+     * <p>It has to be written here because {@link #explain} replaces the exception, and whatever
+     * replaces it is what the web layer sees. The message shown to the administrator says the
+     * details are in the server log, and until this existed that sentence was false — the
+     * exception carrying the status was caught, translated and dropped, so the log had nothing.
+     * Telling somebody where to look and putting nothing there is worse than saying nothing.
+     */
+    private static final Logger log = LoggerFactory.getLogger(MembershipService.class);
 
     /**
      * Recorded before the identity provider is called, so a failure that never returns still
@@ -162,6 +175,11 @@ public class MembershipService {
      */
     private RuntimeException explain(IdentityAdminClient.IdentityAdminException refused,
                                      String address, boolean cleanedUp) {
+        // Status and message only. Never the exception, whose stack can carry the request, and
+        // the request carries the bearer token.
+        log.warn("Identity provider refused a membership change: status={} cleanedUp={} — {}",
+                refused.status(), cleanedUp, refused.getMessage());
+
         // The address is null on the paths that change an existing account, where a conflict
         // cannot arise and where naming the resource would produce a sentence about a user id
         // being "already in use" — true of every account that exists, and meaningless to read.
