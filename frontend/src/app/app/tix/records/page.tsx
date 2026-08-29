@@ -19,6 +19,7 @@ import {
   Pill,
   type Tone,
 } from "@/components/ui";
+import { ListActions } from "@/components/ListActions";
 import { Band, CountUp } from "@/components/visual/motion";
 
 /** The edge on a row, matching the pill in it. */
@@ -193,8 +194,12 @@ export default function RecordsPage() {
       )}
 
       {/* Counts on the tabs, so an empty Individuals list is visibly empty rather than looking
-          like a filter that failed. */}
-      <div className="mb-4 flex flex-wrap gap-2">
+          like a filter that failed.
+
+          The two actions sit on the same line, at the far end. They act on what the filter has
+          left on screen — narrow the list to individuals and the download holds individuals —
+          which is why they belong beside the filter rather than in the page header above it. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {(["ALL", "BUSINESS", "INDIVIDUAL"] as const).map((option) => (
           <button
             key={option}
@@ -217,6 +222,21 @@ export default function RecordsPage() {
             </span>
           </button>
         ))}
+
+        <div className="ml-auto">
+          <ListActions
+            rows={shown}
+            filename="dip-records"
+            columns={[
+              { heading: t.subject, value: (r) => r.subjectName },
+              { heading: t.amount, value: (r) => `${r.amount} ${r.currency}` },
+              { heading: t.service, value: (r) => r.serviceCategory },
+              { heading: t.defaultDate, value: (r) => r.defaultDate },
+              { heading: t.status, value: (r) => messages.tix.statuses[r.status] },
+              { heading: t.retention, value: (r) => r.retentionUntil },
+            ]}
+          />
+        </div>
       </div>
 
       <Card>

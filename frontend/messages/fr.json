@@ -46,7 +46,9 @@
     "profile": "Profil",
     "exploreDip": "Explorer DIP",
     "signedInAs": "Connecté en tant que",
-    "openMenu": "Ouvrir le menu"
+    "openMenu": "Ouvrir le menu",
+    "download": "Télécharger en CSV",
+    "print": "Imprimer"
   },
   "dashboard": {
     "title": "Vue d’ensemble",

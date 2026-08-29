@@ -12,6 +12,7 @@ import {
 } from "@/api/client";
 import Link from "next/link";
 import { Card, EmptyState, ErrorNotice, Metric } from "@/components/ui";
+import { ListActions } from "@/components/ListActions";
 import { Band, CountUp, HoverTile, Ring } from "@/components/visual/motion";
 
 /**
@@ -164,7 +165,24 @@ export default function ExecutivePage() {
       )}
 
       {briefing?.activity && (
-        <Card title={t.activityTitle} description={t.activityNote}>
+        <Card
+          title={t.activityTitle}
+          description={t.activityNote}
+          // Thirteen months of counts is the one thing on this page somebody carries into a
+          // meeting. It was readable on screen and nowhere else.
+          action={
+            <ListActions
+              rows={briefing.activity}
+              filename="dip-activity"
+              columns={[
+                { heading: t.activityMonth, value: (m) => m.month },
+                { heading: t.activityDeclared, value: (m) => String(m.declared) },
+                { heading: t.activityInquiries, value: (m) => String(m.inquiries) },
+                { heading: t.activityRefused, value: (m) => String(m.refused) },
+              ]}
+            />
+          }
+        >
           <ActivityChart months={briefing.activity} locale={locale} t={t} />
         </Card>
       )}

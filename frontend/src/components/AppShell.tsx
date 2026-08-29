@@ -145,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line bg-white px-4 py-3 md:px-6">
+      <header className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line bg-white px-4 py-3 print:hidden md:px-6">
         {/* Home, and the only way back to it now that the menu is gone.
 
             It points at /app rather than at the marketing site, which is where the menu's brand
@@ -268,11 +268,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Full width now, where it used to start 256px in. That space was a menu on every screen of
           a product whose screens are mostly tables and figures, and the overview in particular was
           being read in a column narrower than it was designed for. */}
-      <main className="flex-1 p-4 md:p-6">{children}</main>
+      <main className="flex-1 p-4 md:p-6 print:p-0">{children}</main>
 
       {/* Every screen, bottom right, closed until asked for. The questions this answers are the
-          ones somebody thinks of while looking at something else. */}
-      <AskDipLauncher />
+          ones somebody thinks of while looking at something else.
+
+          print:hidden along with the bar. A floating help button over the corner of a printed
+          exposure report is the clearest possible sign that nobody tried printing one. */}
+      <div className="print:hidden">
+        <AskDipLauncher />
+      </div>
     </div>
   );
 }

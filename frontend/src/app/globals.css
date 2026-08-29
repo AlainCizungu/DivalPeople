@@ -45,3 +45,46 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Printing.
+ *
+ * A list on a credit committee's table is a real output of this product: an
+ * exposure report, a book of records, thirteen months of activity. What comes
+ * out of a browser by default is that list wrapped in navigation, with a
+ * floating help button over the corner of it.
+ *
+ * So the chrome is removed, backgrounds are dropped so a table does not use a
+ * cartridge of ink to render its own zebra striping, and tables are told not
+ * to break a row across two pages — a row split in half is a figure attached to
+ * the wrong company.
+ * ------------------------------------------------------------------------- */
+@media print {
+  /* Every surface flat. Shadows and tinted panels are screen affordances; on
+     paper they are grey boxes that make the text underneath harder to read. */
+  * {
+    box-shadow: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  /* Rows and cards stay whole. */
+  tr,
+  li,
+  figure,
+  table {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* A link printed as blue underlined text is a link nobody can follow. */
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}
