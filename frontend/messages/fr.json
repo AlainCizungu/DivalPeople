@@ -48,7 +48,8 @@
     "signedInAs": "Connecté en tant que",
     "openMenu": "Ouvrir le menu",
     "download": "Télécharger en CSV",
-    "print": "Imprimer"
+    "print": "Imprimer",
+    "newInquiry": "Nouvelle consultation"
   },
   "dashboard": {
     "title": "Vue d’ensemble",

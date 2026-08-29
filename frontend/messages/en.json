@@ -48,7 +48,8 @@
     "signedInAs": "Signed in as",
     "openMenu": "Open menu",
     "download": "Download as CSV",
-    "print": "Print"
+    "print": "Print",
+    "newInquiry": "New inquiry"
   },
   "dashboard": {
     "title": "Overview",

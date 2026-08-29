@@ -727,7 +727,7 @@ function InquiryPanel() {
         </h2>
         <p className="text-base leading-relaxed text-white/70">{t.note}</p>
       </div>
-      <span className="mt-8 inline-flex items-center gap-2 self-start rounded-lg bg-white px-6 py-3.5 text-base font-bold text-navy transition group-hover:bg-white/90">
+      <span className="mt-8 inline-flex items-center gap-2.5 self-start rounded-lg bg-white px-8 py-4 text-lg font-bold text-navy shadow-sm transition group-hover:bg-white/90">
         {t.action}
         <span aria-hidden="true" className="transition group-hover:translate-x-1">
           →

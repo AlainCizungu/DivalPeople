@@ -99,6 +99,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isPlatformAdmin = profile?.roles.includes("PLATFORM_ADMIN") ?? false;
 
+  /**
+   * Whether this account may ask the exchange anything.
+   *
+   * <p>The same role the endpoint enforces. Somebody without it sees no button rather than a
+   * button that refuses — a control that is always denied teaches people to ignore refusals,
+   * which is expensive on a platform where most refusals mean something.
+   */
+  const canInquire = profile?.roles.includes("TIX_INQUIRER") ?? false;
+
   const groups = buildNavigation(t, { isPlatformAdmin });
 
   /**
@@ -217,6 +226,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1">
+            {/* THE ONE ACTION IN THE BAR, and the only filled control in it.
+
+                An inquiry is what this platform is for, and it was reachable from the front door
+                and from one dropdown — so from anywhere else in the product it was two clicks and
+                a decision about which menu. A standing button costs one slot in the bar and
+                removes that from every screen.
+
+                Deliberately the only one. A bar with three coloured buttons has no primary action,
+                it has three things shouting; this stays loud by being alone. */}
+            {canInquire && (
+              <Link
+                href="/app/tix"
+                className="mr-1 hidden rounded-lg bg-blue px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-dark sm:inline-flex"
+              >
+                {messages.common.newInquiry}
+              </Link>
+            )}
+
             <LanguageSwitcher />
 
             <TopBarLink
