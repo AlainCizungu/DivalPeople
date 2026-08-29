@@ -264,6 +264,35 @@ public class IdentityAdminClient {
                 Map.of("type", "password", "value", password, "temporary", true));
     }
 
+    /**
+     * Records which institution an existing account belongs to.
+     *
+     * <p>Used once, when somebody joins by proving an address. Every request that account ever
+     * makes afterwards is trusted on this attribute, because it is what the {@code tenant_id} claim
+     * in the access token is built from — so this single write is the moment a stranger becomes a
+     * member of an institution.
+     *
+     * <p><strong>Reads the account first and writes the attributes back merged.</strong> Keycloak's
+     * user update replaces the whole attribute map, so sending only {@code tenant_id} would delete
+     * every other attribute the account has. There are none today. There will be, and the day
+     * somebody adds one this would quietly remove it for exactly the accounts that joined by
+     * themselves — a bug that appears months later and only for some users, which is the worst kind
+     * to be handed.
+     */
+    public void assignTenant(String token, UUID userId, UUID tenantId) {
+        Map<String, Object> user =
+                get(token, "/admin/realms/" + properties.realm() + "/users/" + userId);
+
+        Map<String, Object> attributes = new java.util.LinkedHashMap<>();
+        if (user.get("attributes") instanceof Map<?, ?> existing) {
+            existing.forEach((key, value) -> attributes.put(String.valueOf(key), value));
+        }
+        attributes.put("tenant_id", List.of(tenantId.toString()));
+
+        put(token, "/admin/realms/" + properties.realm() + "/users/" + userId,
+                Map.of("attributes", attributes));
+    }
+
     /** Enables or disables an account. Disabling is how somebody leaves; nothing is deleted. */
     public void setEnabled(String token, UUID userId, boolean enabled) {
         put(token, "/admin/realms/" + properties.realm() + "/users/" + userId,
