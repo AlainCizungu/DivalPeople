@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useMessages } from "@/i18n/LocaleProvider";
 import {
   ApiError,
@@ -184,32 +183,24 @@ export default function CreditCheckPage() {
 
       {/* Before an inquiry has been run, and replaced by the answer.
           Same rule as the search screen: nothing goes above the form, because the form is what
-          people came for. This fills the space that is empty anyway and disappears on the first
-          answer.
+          people came for. This fills space that is empty anyway and disappears on the first answer.
 
-          The words are doing real work here, not captioning a picture. The image shows a search
-          box over a map of institutions, which reads as browsing the network — and browsing is
-          the one thing this exchange is built to refuse. So the panel states what actually comes
-          back, on the screen where somebody is about to ask: a status and a count, never which
-          institution, never how much, never a list. A caption on a marketing page could only say
-          that to people already reading the small print; here it is next to the button. */}
+          THE WORDS DO REAL WORK HERE; they were never a caption. What comes back from the exchange
+          is a status and a count — never which institution, never how much, never a list — and
+          that belongs next to the button somebody is about to press. Said on a marketing page it
+          only reaches people already reading the small print.
+
+          The photograph that used to sit beside them has gone back to the landing page. It showed
+          a search box over a map of institutions, which reads as browsing the network, and
+          browsing is the one thing this exchange is built to refuse. It was also doing something
+          a working screen should not: making itself look like an advertisement for itself. A
+          photograph sells the product to somebody deciding whether to buy it. This screen is for
+          somebody who already has it and wants an answer. */}
       {!result && !error && (
-        <div className="mt-6 overflow-hidden rounded-lg border border-line bg-white">
-          <div className="grid items-center gap-6 md:grid-cols-[1fr_1fr]">
-            <div className="px-6 py-8 md:px-8">
-              <h2 className="text-lg font-bold text-navy">{t.beforeTitle}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{t.beforeBody}</p>
-              <p className="mt-4 text-xs leading-relaxed text-muted">{t.beforeGrowth}</p>
-            </div>
-            <Image
-              src="/network-reach.webp"
-              alt=""
-              width={1536}
-              height={1024}
-              className="h-full w-full object-cover"
-              sizes="(max-width: 768px) 100vw, 480px"
-            />
-          </div>
+        <div className="mt-6 rounded-lg border border-line bg-white px-6 py-7 md:px-8">
+          <h2 className="text-lg font-bold text-navy">{t.beforeTitle}</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">{t.beforeBody}</p>
+          <p className="mt-4 max-w-3xl text-xs leading-relaxed text-muted">{t.beforeGrowth}</p>
         </div>
       )}
 
