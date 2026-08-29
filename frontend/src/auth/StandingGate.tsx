@@ -29,9 +29,13 @@ import { useMessages } from "@/i18n/LocaleProvider";
  * person who edits it out of their own browser gains exactly nothing. It exists so that the refusal
  * is legible.
  *
- * <p>It renders instead of the shell rather than inside it. A navigation menu whose every link
- * leads to a refusal is worse than no menu — it invites somebody to try each one and conclude the
- * product is broken.
+ * <p>It renders instead of the shell rather than inside it. A bar whose every menu leads to a
+ * refusal is worse than no bar — it invites somebody to try each one and conclude the product is
+ * broken.
+ *
+ * <p><strong>It does not block the first paint.</strong> See the note above the early return. The
+ * short version: waiting for this answer before drawing anything cost every person a round trip
+ * before their first pixel, to spare a new joiner a brief flash of a product they cannot use yet.
  */
 export function StandingGate({ children }: { children: React.ReactNode }) {
   const messages = useMessages();
@@ -77,17 +81,26 @@ export function StandingGate({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Nothing is drawn until the answer is known. Showing the application and then replacing it a
-  // moment later would be a flash of somebody else's product.
-  if (standing === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted">{messages.common.loading}</p>
-      </div>
-    );
-  }
-
-  if (standing.member && standing.hasAccess) {
+  /**
+   * The application is drawn while the answer is still in flight.
+   *
+   * <p>It used to block: nothing rendered until standing came back, on the reasoning that showing
+   * the product and replacing it a moment later is a flash of somebody else's screen. That
+   * reasoning is right about the pending account and wrong about the cost, because it put a blank
+   * page in front of <em>every</em> load for <em>everybody</em> — one extra round trip before the
+   * first pixel, which on a link with 60ms of latency to the nearest region is a third of a second
+   * of nothing, every time anybody refreshes.
+   *
+   * <p>The trade is deliberate and it is lopsided. Somebody waiting for approval may see the shell
+   * for a moment before the notice replaces it; that person is new, it happens once, and the
+   * screens behind it refuse them anyway. Everybody else — which is everybody, all day — stops
+   * paying for it.
+   *
+   * <p>The server is unaffected either way. It refuses an account with no institution and no roles
+   * whether or not this component has heard back yet, which is what makes rendering optimistically
+   * a presentation choice rather than a hole.
+   */
+  if (standing === null || (standing.member && standing.hasAccess)) {
     return <>{children}</>;
   }
 
