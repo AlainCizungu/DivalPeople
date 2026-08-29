@@ -84,6 +84,18 @@ echo "--- realm"
 $KC create realms -s realm=$REALM -s enabled=true || echo "  (exists)"
 
 echo "--- client"
+# BOTH SPELLINGS OF THE SITE URL, separated by Keycloak's '##'.
+#
+# post.logout.redirect.uris is matched exactly, and SITE_URL is written without a trailing slash
+# while this line used to add one — so the application asked to return to
+# https://dip.example.com and the client permitted only https://dip.example.com/ . Sign-in worked,
+# every screen worked, and sign-out ended at "Invalid redirect uri" with nothing naming the
+# character at fault. It was wrong from the first realm ever built and stayed hidden because
+# nobody signs out while they are still getting something working.
+#
+# Registering both costs nothing: they are the same page, and an exact list of two is still an
+# exact list. A wildcard would have been the quick fix and is the one place it must not be used —
+# post-logout is a redirect the provider performs with a session in flight.
 $KC create clients -r $REALM \\
     -s clientId=$CLIENT \\
     -s enabled=true \\
@@ -94,7 +106,7 @@ $KC create clients -r $REALM \\
     -s serviceAccountsEnabled=false \\
     -s 'redirectUris=["$SITE_URL/api/auth/callback"]' \\
     -s 'webOrigins=["$SITE_URL"]' \\
-    -s 'attributes={"post.logout.redirect.uris":"$SITE_URL/"}' || echo "  (exists)"
+    -s 'attributes={"post.logout.redirect.uris":"$SITE_URL##$SITE_URL/"}' || echo "  (exists)"
 
 CID=\$($KC get clients -r $REALM -q clientId=$CLIENT --fields id --format csv --noquotes)
 [ -n "\$CID" ] || { echo "could not find the client after creating it" >&2; exit 1; }
