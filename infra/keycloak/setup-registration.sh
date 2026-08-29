@@ -5,8 +5,16 @@
 #   sh infra/keycloak/setup-registration.sh apply    do it
 #
 # Run on the server, from the repository root, with the stack up, the realm built, and a mail
-# server configured (setup-email.sh) — registration without email verification is not a feature,
-# it is an open door.
+# server configured (setup-email.sh).
+#
+# THE MAIL SERVER IS REQUIRED FOR USEFULNESS, NOT FOR SAFETY, and an earlier version of this
+# comment had that wrong — it called registration without verification "an open door". It is not.
+# JoiningService refuses to put anybody in an institution unless the token says the address is
+# verified, so an account created without a mail server can register and then do precisely
+# nothing. What it produces is a dead end: somebody signs up, waits for a message that cannot be
+# sent, and concludes the product is broken. That is a good reason to refuse and a different one,
+# and stating it accurately matters because the wrong reason invites somebody to "just turn off
+# the check" one day.
 #
 # WHAT THIS OPENS, PRECISELY. A sign-up form appears on the sign-in page and anybody on the
 # internet can create an account in this realm. That sounds alarming and is not, because of what
@@ -19,7 +27,9 @@
 # WHY verifyEmail MATTERS MORE HERE THAN ANYWHERE. Without it, the address on an account is
 # something typed into a form. With it, it is something the person demonstrably reads. The entire
 # join decision — which institution's credit records this person will eventually see — rests on
-# that difference and on nothing else.
+# that difference and on nothing else. The application enforces it independently, by reading the
+# email_verified claim, so this realm flag is the belt to that pair of braces rather than the only
+# thing holding them up.
 #
 # THE TRAP THIS SCRIPT EXISTS TO AVOID. Realm-level verifyEmail applies to EVERY account, not just
 # new ones. Turn it on with an account that has no email address, or an unverified one, and that
@@ -68,8 +78,18 @@ echo "--- mail server"
 # accounts that can never be verified and therefore never join anything — a sign-up form that
 # silently leads nowhere, which is worse than no sign-up form.
 $KC get realms/$REALM --fields smtpServer | grep -q 'host' || {
-    echo "this realm has no mail server, so nothing could verify an address." >&2
+    echo >&2
+    echo "This realm has no mail server, so no address could ever be confirmed." >&2
+    echo >&2
+    echo "That is not a security hole — JoiningService refuses to put anybody in an institution" >&2
+    echo "without a verified address, so accounts created here would register and then be able to" >&2
+    echo "do nothing at all. It is a dead end, which is worse than a closed door: somebody signs" >&2
+    echo "up, waits for a message that cannot be sent, and concludes the product is broken." >&2
+    echo >&2
     echo "Run infra/keycloak/setup-email.sh first." >&2
+    echo >&2
+    echo "To open registration anyway, for a demonstration and not for real users:" >&2
+    echo "  kcadm.sh update realms/$REALM -s registrationAllowed=true" >&2
     exit 1
 }
 echo "  present"
