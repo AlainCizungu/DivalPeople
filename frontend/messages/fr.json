@@ -16,6 +16,7 @@
     "search": "Recherche universelle",
     "executive": "Intelligence de direction",
     "records": "Mes déclarations",
+    "profile360": "Profil 360°",
     "inquiries": "Consultations",
     "declare": "Déclarations",
     "subjectRequests": "Demandes des personnes",
@@ -120,6 +121,7 @@
       "search": "Trouvez une entreprise ou une personne dans votre propre portefeuille.",
       "executive": "Treize mois d'activité, et chaque chiffre ouvre les lignes qui le composent.",
       "records": "Tout ce que votre organisation a déclaré, et la date où chaque enregistrement cesse d'être visible.",
+      "profile360": "Le tableau complet d'une entreprise : votre dossier, ce que l'échange répond, et ce qu'il refuse.",
       "inquiries": "Demandez à l'échange ce que les autres institutions ont signalé sur quelqu'un.",
       "declare": "Signalez un abonné en défaut. Seul le statut circule sur l'échange.",
       "subjectRequests": "Demandes des personnes du registre, chacune assortie d'un délai légal.",
@@ -1757,7 +1759,10 @@
     "unpaidNow": "Impayé",
     "nothingUnpaid": "Aucun impayé",
     "settledBefore": "Déjà réglé",
-    "settledBeforeNote": "Échu chez vous puis payé"
+    "settledBeforeNote": "Échu chez vous puis payé",
+    "chooseEyebrow": "L'échange",
+    "chooseTitle": "Profil 360°",
+    "chooseSubtitle": "Choisissez une entreprise de votre portefeuille pour voir tout ce que la plateforme peut en dire."
   },
   "monitoring": {
     "eyebrow": "Surveillance continue",

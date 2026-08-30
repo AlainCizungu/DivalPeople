@@ -59,6 +59,7 @@ export type ItemId =
   | "search"
   | "executive"
   | "records"
+  | "profile360"
   | "inquiries"
   | "declare"
   | "subjectRequests"
@@ -141,6 +142,11 @@ export function buildNavigation(
         // person in our book?" two places to look for one question, and neither of them named
         // the amount owed. Records answers both, with the kind as a filter.
         { id: "records", href: "/app/tix/records", label: t.records },
+        // The 360 profile is a view of one company rather than a place, so this points at a
+        // chooser: search your book, pick a company, land on its profile. Without it the only
+        // route in was find the company, open its file, click through — three steps for one
+        // thought.
+        { id: "profile360", href: "/app/profile", label: t.profile360 },
         { id: "inquiries", href: "/app/tix", label: t.inquiries },
         { id: "declare", href: "/app/tix/declare", label: t.declare },
       ],

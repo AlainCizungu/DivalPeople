@@ -77,6 +77,7 @@ export function Directory() {
     search: t.search,
     executive: t.executive,
     records: t.records,
+    profile360: t.profile360,
     inquiries: t.inquiries,
     declare: t.declare,
     subjectRequests: t.subjectRequests,

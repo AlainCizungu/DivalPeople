@@ -16,6 +16,7 @@
     "search": "Universal search",
     "executive": "Executive intelligence",
     "records": "My records",
+    "profile360": "Profile 360°",
     "inquiries": "Inquiries",
     "declare": "Declarations",
     "subjectRequests": "Subject requests",
@@ -120,6 +121,7 @@
       "search": "Find a business or a person in your own book.",
       "executive": "Thirteen months of activity, and every figure opens the rows behind it.",
       "records": "Everything your organisation has declared, and when each stops being visible.",
+      "profile360": "The full picture on one company: your file, what the exchange answers, and what it will not.",
       "inquiries": "Ask the exchange what other institutions have reported about somebody.",
       "declare": "Report a subscriber who has defaulted. Only the status crosses the exchange.",
       "subjectRequests": "Cases raised by the people in the registry, each on a statutory deadline.",
@@ -1757,7 +1759,10 @@
     "unpaidNow": "Unpaid",
     "nothingUnpaid": "Nothing unpaid",
     "settledBefore": "Settled before",
-    "settledBeforeNote": "Fell due with you and was paid"
+    "settledBeforeNote": "Fell due with you and was paid",
+    "chooseEyebrow": "The exchange",
+    "chooseTitle": "360° profile",
+    "chooseSubtitle": "Pick a company in your book to see everything the platform can say about it."
   },
   "monitoring": {
     "eyebrow": "Continuous monitoring",
