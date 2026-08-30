@@ -158,7 +158,10 @@ $KC create users -r $REALM \\
     -s emailVerified=true \\
     -s 'attributes.tenant_id=["$TENANT_A"]' || echo "  (exists)"
 
-UID_=\$($KC get users -r $REALM -q username='$MY_USER' --fields id --format csv --noquotes)
+# exact=true: the username query is a substring match, so creating "alain" after
+# "alaincizungu@gmail.com" exists would return both ids and every command after this would act on
+# the wrong one, or on two.
+UID_=\$($KC get users -r $REALM -q username='$MY_USER' -q exact=true --fields id --format csv --noquotes | head -1)
 [ -n "\$UID_" ] || { echo "could not find the user after creating it" >&2; exit 1; }
 
 $KC set-password -r $REALM --userid \$UID_ --new-password '$MY_PASSWORD'

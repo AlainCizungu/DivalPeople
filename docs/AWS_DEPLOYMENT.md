@@ -329,7 +329,7 @@ in this state. A realm built before that fix can. To check:
 ```bash
 docker compose --env-file infra/deploy.env -f infra/docker-compose.deploy.yml \
   exec -T keycloak /opt/keycloak/bin/kcadm.sh get users -r dip \
-  -q username=<your username> --fields username,attributes
+  -q username=<your username> -q exact=true --fields username,attributes
 ```
 
 An empty `attributes` is the fault. Either re-run `setup-realm.sh`, or set the policy and the

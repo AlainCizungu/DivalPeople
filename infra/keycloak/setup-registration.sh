@@ -125,7 +125,11 @@ NO_ADDRESS=""
 UNVERIFIED=""
 for U in \$($KC get users -r $REALM --fields username --format csv --noquotes | tr -d '\r'); do
     [ -n "\$U" ] || continue
-    ID=\$($KC get users -r $REALM -q username="\$U" --fields id --format csv --noquotes | tr -d '\r')
+    # exact=true, and it is not optional. Keycloak's username query is a SUBSTRING match, so
+    # "alain" also returns "alaincizungu@gmail.com" — two ids in one variable, and the next call
+    # gets two arguments and fails. Worse when it does not fail: any script that takes the first
+    # line and acts on it is acting on whichever account the server happened to return first.
+    ID=\$($KC get users -r $REALM -q username="\$U" -q exact=true --fields id --format csv --noquotes | tr -d '\r' | head -1)
     [ -n "\$ID" ] || continue
 
     INFO=\$($KC get users/\$ID -r $REALM --fields username,email,emailVerified,enabled)
@@ -151,7 +155,7 @@ if [ -n "\$NO_ADDRESS" ]; then
     echo >&2
     echo "  Give each one an address, then run this again:" >&2
     echo >&2
-    echo "    ID=\\\$($KC get users -r $REALM -q username=NAME --fields id --format csv --noquotes)" >&2
+    echo "    ID=\\\$($KC get users -r $REALM -q username=NAME -q exact=true --fields id --format csv --noquotes)" >&2
     echo "    $KC update users/\\\$ID -r $REALM -s email=someone@example.cd" >&2
     echo >&2
     exit 1
