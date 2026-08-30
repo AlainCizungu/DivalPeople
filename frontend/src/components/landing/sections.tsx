@@ -80,22 +80,6 @@ export function ExchangeSection() {
             </li>
           ))}
         </ol>
-
-        {/* Came back from inside the product, where it sat beside the inquiry form.
-            A photograph on a working screen makes it look like an advertisement for itself, and
-            the person on that screen already bought the thing and is trying to get an answer out
-            of it. Here it is doing the job it was made for: this section is the one that explains
-            what the network is to somebody who has not yet decided. */}
-        <div className="mt-12 overflow-hidden rounded-2xl border border-line bg-white shadow-lg">
-          <Image
-            src="/network-reach.webp"
-            alt=""
-            width={1536}
-            height={1024}
-            className="h-auto w-full"
-            sizes="(max-width: 1024px) 100vw, 1024px"
-          />
-        </div>
       </div>
     </section>
   );
@@ -254,6 +238,28 @@ export function NationalTrustSection() {
           ))}
         </div>
 
+        {/* Back where it belongs, in the gap it left.
+            It went to the exchange section for a few hours on the argument that the section
+            explaining the network should carry the picture of it. Wrong on two counts. The
+            exchange section is five numbered steps and a photograph under them is decoration
+            below a diagram; and this image is dark and blue, which sat oddly on a pale surface
+            and sits naturally here.
+
+            The argument matters more than the colour. This section is the governance claim — the
+            one institutions actually interrogate — and what the picture shows is a search across
+            a network of institutions, which is precisely the capability the four cards above are
+            promising is governed. A photograph next to a claim about restraint is doing work; the
+            same photograph under a list of steps is filling space. */}
+        <div className="mt-12 overflow-hidden rounded-2xl border border-[#1e3d63]">
+          <Image
+            src="/network-reach.webp"
+            alt=""
+            width={1536}
+            height={1024}
+            className="h-auto w-full"
+            sizes="(max-width: 1024px) 100vw, 1024px"
+          />
+        </div>
       </div>
     </section>
   );

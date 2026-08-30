@@ -190,12 +190,13 @@ export default function CreditCheckPage() {
           that belongs next to the button somebody is about to press. Said on a marketing page it
           only reaches people already reading the small print.
 
-          The photograph that used to sit beside them has gone back to the landing page. It showed
-          a search box over a map of institutions, which reads as browsing the network, and
-          browsing is the one thing this exchange is built to refuse. It was also doing something
-          a working screen should not: making itself look like an advertisement for itself. A
-          photograph sells the product to somebody deciding whether to buy it. This screen is for
-          somebody who already has it and wants an answer. */}
+          The photograph that used to sit beside them is on the landing page, under the national
+          trust framework. It showed a search box over a map of institutions, which reads as
+          browsing the network — and browsing is the one thing this exchange is built to refuse,
+          so it was making a claim here that the screen beneath it spends its time denying. It was
+          also doing something a working screen should not: making itself look like an
+          advertisement for itself. A photograph sells the product to somebody deciding whether to
+          buy it. This screen is for somebody who already has it and wants an answer. */}
       {!result && !error && (
         <div className="mt-6 rounded-lg border border-line bg-white px-6 py-7 md:px-8">
           <h2 className="text-lg font-bold text-navy">{t.beforeTitle}</h2>
