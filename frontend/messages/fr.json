@@ -937,7 +937,7 @@
     "newSourceName": "Description",
     "addSource": "Enregistrer la source",
     "uploadTitle": "Déposer une livraison",
-    "uploadDescription": "Le fichier est transmis tel quel et analysé côté serveur, afin que l’empreinte et les lignes enregistrées décrivent les mêmes octets.",
+    "uploadDescription": "Le fichier est transmis tel quel et analysé côté serveur.",
     "source": "Source",
     "file": "Fichier",
     "fileHint": "CSV ou XLSX. Un en-tête situé sous des lignes vides ou un total sans libellé est détecté ; les champs entre guillemets, les virgules dans les noms et les fins de ligne Windows sont gérés. Les dates d’un classeur arrivent sous forme de numéros de série Excel, et l’ancien format binaire .xls n’est pas pris en charge.",
@@ -973,7 +973,7 @@
       "REVERTED": "Retiré"
     },
     "profileTitle": "Contenu de cette livraison",
-    "profileDescription": "Compté sur toutes les lignes, et rien ici ne décide de la signification d’une colonne. Laquelle est un solde et laquelle un identifiant reste une question ouverte ; combien de cellules sont remplies ne l’est pas.",
+    "profileDescription": "Compté sur toutes les lignes. Rien ici ne décide de la signification d’une colonne.",
     "profileAction": "Analyser la livraison",
     "profileEmpty": "Rien à compter.",
     "colColumn": "Colonne",
@@ -1006,7 +1006,7 @@
     "asAt": "La livraison reflète la situation au",
     "asAtHint": "La date à laquelle ces soldes étaient exacts. Demandée plutôt que devinée : l’export ne contient aucune date, et chaque enregistrement qui en est issu démarre ici son délai de conservation.",
     "mappingTitle": "Signification de ces colonnes",
-    "mappingDescription": "Votre réponse, pas la nôtre. Le profil ci-dessus indique quelles colonnes sont uniques, constantes ou entièrement numériques — DIP ne peut pas savoir laquelle de dix colonnes numériques est le solde, et ne le devinera pas.",
+    "mappingDescription": "Le profil ci-dessus indique quelles colonnes sont uniques, constantes ou entièrement numériques. DIP ne devinera pas laquelle est le solde.",
     "mappingCurrent": "En vigueur",
     "mappingVersion": "Version",
     "mappingNone": "Aucune correspondance définie pour cette source. Rien ne peut en être dérivé tant qu’il n’y en a pas.",
@@ -1075,7 +1075,7 @@
     "slugHint": "Minuscules, avec tirets. Apparaît dans les URL et ne peut plus être modifié.",
     "sectorHint": "Détermine l’édition sectorielle que verra l’organisation.",
     "add": "Intégrer",
-    "onboardingNote": "Conformément à DATA_GOVERNANCE.md, une source n’est acceptée qu’une fois l’accord de partage, la définition des usages autorisés, les règles de conservation et un import pilote en place. Cet écran crée le compte, pas l’autorisation.",
+    "onboardingNote": "Une source n’est acceptée qu’une fois l’accord de partage, la définition des usages autorisés, les règles de conservation et un import pilote en place. Cet écran crée le compte, pas l’autorisation.",
     "needPlatformAdmin": "Cette vue appartient à l’exploitant du réseau. Connectez-vous comme administrateur de la plateforme pour y accéder.",
     "editions": {
       "TELECOM": "Opérateur télécom",
@@ -1095,13 +1095,13 @@
     "awaitingErasure": "En attente d’effacement",
     "awaitingErasureNote": "Durée de conservation dépassée, pas encore purgés. Ce chiffre devrait revenir à zéro chaque matin.",
     "exposureTitle": "Encours par devise",
-    "exposureDescription": "Jamais additionnés en un total unique. Ajouter 500 USD à 500 CDF produit un nombre qui ne représente rien, et qui paraît parfaitement normal sur un tableau de bord.",
+    "exposureDescription": "Jamais additionnés en un total unique. 500 USD plus 500 CDF ne représente rien.",
     "colCurrency": "Devise",
     "colOutstanding": "En souffrance",
     "colContested": "Contesté",
     "colSettled": "Recouvré",
     "agingTitle": "Ancienneté",
-    "agingDescription": "Mesurée à partir de la date d’exigibilité, non de la date de déclaration. Les créances réglées n’y figurent pas — sinon un portefeuille paraîtrait d’autant plus ancien qu’il aurait été recouvré.",
+    "agingDescription": "Mesurée à partir de la date d’exigibilité, non de la date de déclaration. Les créances réglées n’y figurent pas.",
     "agingFootnote": "Les tranches reprennent les colonnes des exports télécoms que nous recevons. La limite au-delà de 270 jours est la nôtre : les fichiers source intitulent leur dernière colonne « 360 + » sans rien entre les deux, et personne n’a confirmé auprès de l’opérateur où se range une créance de 300 jours.",
     "bands": {
       "NOT_DUE": "Pas encore échu",
@@ -1121,7 +1121,7 @@
     "provenanceTitle": "Origine de ces enregistrements",
     "provenanceDeclared": "Déclarés via l’API ou cette application",
     "provenanceImported": "Issus d’un fichier importé",
-    "provenanceNote": "Enregistrements issus d’un fichier déposé, comptés séparément de ceux déclarés via l’API. Les deux sont de véritables enregistrements soumis aux mêmes règles ; la distinction porte sur la provenance, afin qu’un auditeur demandant d’où vient un chiffre obtienne une réponse à l’écran.",
+    "provenanceNote": "Enregistrements issus d’un fichier déposé, comptés séparément de ceux déclarés via l’API. Les deux sont soumis aux mêmes règles.",
     "empty": "Votre organisation n’a encore rien déclaré : il n’y a donc rien à classer.",
     "noAccess": "Votre compte peut interroger l’échange mais pas déclarer d’enregistrements ; il n’y a donc pas d’encours à afficher.",
     "eyebrow": "Intelligence de portefeuille",
@@ -1296,7 +1296,7 @@
       "DENIED": "Refusé",
       "FAILURE": "Échec"
     },
-    "actorNote": "Les comptes sont affichés par identifiant et non par nom. Le journal n’appartient à aucune partie de la plateforme en particulier : il ne dépend donc délibérément pas de celle qui connaît le nom des personnes.",
+    "actorNote": "Les comptes sont affichés par identifiant et non par nom.",
     "immutableNote": "Les lignes sont ajoutées et jamais modifiées. Une correction est un nouvel événement, jamais une retouche — c’est pourquoi une tentative refusée y figure toujours.",
     "eyebrow": "Gouvernance",
     "shapeNote": "Ce dont se compose l'activité de cet opérateur. Sélectionnez-en une pour filtrer les événements ci-dessous."
@@ -1354,14 +1354,14 @@
       "DISPUTES_ARE_NOT_DISCLOSED": "Un enregistrement contesté est déjà retiré de toutes les réponses de l'échange, avant même que quiconque ne tranche. Déclarer la contestation elle-même rétablirait cette divulgation par un autre chemin et ferait de l'exercice d'un droit une chose qui coûte à celui qui l'exerce.",
       "NO_FRAUD_SIGNAL_IS_COMPUTABLE": "Le signal sur lequel reposait ce facteur — un identifiant détenu par deux sujets différents — ne peut pas se produire : les deux index uniques de la table des identifiants l'interdisent, ce qui est précisément ce qui fait qu'un numéro RCCM désigne une seule société. Le facteur a donc indiqué « Faible » sur chaque évaluation jamais produite, soit la façon la plus rassurante possible de dire qu'on n'a rien regardé."
     },
-    "modelNote": "Évalué selon le modèle {version}. Chaque facteur et sa pondération sont publiés ci-dessus ; rien ici n'est une boîte noire.",
+    "modelNote": "Évalué selon le modèle {version}. Chaque facteur et sa pondération figurent ci-dessus.",
     "noIndicator": "Aucune évaluation : l'échange n'a pas confirmé de correspondance, il n'y a donc rien à évaluer."
   },
   "settings": {
     "title": "Paramètres",
     "subtitle": "Ce que cette installation est configurée pour faire, et d'où vient chaque valeur.",
     "loadFailed": "Impossible de charger la configuration.",
-    "readOnly": "Lecture seule. Raccourcir une durée de conservation rendrait des enregistrements immédiatement échus ; modifier ces valeurs est une décision assortie d'une trace d'audit, pas un champ de saisie sur une page.",
+    "readOnly": "Lecture seule. Raccourcir une durée de conservation rendrait des enregistrements immédiatement échus.",
     "valueHeader": "Valeur",
     "sourceHeader": "Source",
     "notSet": "Non défini",
@@ -1377,7 +1377,7 @@
       "rights": "Le délai pour répondre à une personne qui interroge le registre sur son propre dossier. Nettement raccourci en août 2026 : l'accès disposait de soixante jours et le reste de trente. Chaque demande conserve le délai qui lui a été appliqué lors de son introduction ; ce changement vaut donc pour les demandes nouvelles et ne rend pas la file d'hier en retard.",
       "reporting": "Une devise absente de cette liste est refusée et non pondérée par défaut : la ligne manquante est elle-même un paramètre. Le CDF n'est délibérément pas défini, car le fixer suppose de choisir un taux USD/CDF qui évolue et dont quelqu'un doit répondre.",
       "exchange": "L'échange contient les enregistrements de concurrents et chaque requête est individuellement légitime. La limite ne rend pas un balayage impossible ; elle le ralentit assez pour que la piste d'audit soit lue.",
-      "models": "Fixés par une version plutôt que par la configuration, et affichés parce qu'un seuil que l'on ne peut pas voir est un seuil qu'il faut croire sur parole."
+      "models": "Fixés par une version plutôt que par la configuration."
     },
     "keys": {
       "RETENTION_SIMPLE_YEARS": "Un premier impayé non régularisé",
@@ -1417,7 +1417,7 @@
     "title": "Accès et permissions",
     "subtitle": "Qui détient quel rôle ici, et ce que ce rôle permet réellement.",
     "loadFailed": "Impossible de charger les accès et permissions.",
-    "derivedNote": "Cette liste est lue à chaque chargement à partir des contrôles que l'application applique. Ce n'est pas une description entretenue à côté du code : elle ne peut donc pas s'en écarter.",
+    "derivedNote": "Lue à chaque chargement à partir des contrôles que l'application applique.",
     "readOnlyNote": "Lecture seule. Les rôles sont détenus par le fournisseur d'identité ; c'est là qu'une attribution est enregistrée.",
     "rolesTitle": "Ce que permet chaque rôle",
     "rolesDescription": "Compté en points d'accès, regroupés par partie du produit.",
@@ -1431,7 +1431,7 @@
     "endpoints": "{count} points d'accès",
     "grantsNothing": "N'accorde rien. Ce rôle peut être attribué et ne changera rien pour la personne qui le reçoit.",
     "authenticatedRole": "Toute personne connectée",
-    "authenticatedNote": "Ce n'est pas un rôle. Points d'accès ouverts à tout compte connecté, chacun étant une décision délibérée, listés pour que le catalogue ne les omette pas en silence.",
+    "authenticatedNote": "Ce n'est pas un rôle. Points d'accès ouverts à tout compte connecté.",
     "never": "Jamais",
     "inactive": "Inactif",
     "eyebrow": "Gouvernance",

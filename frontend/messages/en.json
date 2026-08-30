@@ -937,7 +937,7 @@
     "newSourceName": "Description",
     "addSource": "Register source",
     "uploadTitle": "Upload a delivery",
-    "uploadDescription": "The file is sent as-is and parsed on the server, so the checksum and the stored rows describe the same bytes.",
+    "uploadDescription": "The file is sent as-is and parsed on the server.",
     "source": "Source",
     "file": "File",
     "fileHint": "CSV or XLSX. A header that sits below blank rows or an unlabelled total is found; quoted fields, commas inside names and Windows line endings are handled. Dates in a spreadsheet arrive as Excel serial numbers, and the old binary .xls is not supported.",
@@ -973,7 +973,7 @@
       "REVERTED": "Withdrawn"
     },
     "profileTitle": "What is in this delivery",
-    "profileDescription": "Counted over every row, and nothing here decides what any column means. Which one is a balance and which is an identifier is still an open question; how many cells are filled is not.",
+    "profileDescription": "Counted over every row. Nothing here decides what a column means.",
     "profileAction": "Profile the delivery",
     "profileEmpty": "Nothing to count.",
     "colColumn": "Column",
@@ -1006,7 +1006,7 @@
     "asAt": "The delivery is as at",
     "asAtHint": "The date these balances were true. Asked rather than guessed: the export carries no dates, and every record derived from it starts its retention clock here.",
     "mappingTitle": "What these columns mean",
-    "mappingDescription": "Your answer, not ours. The profile above says which columns are unique, which are constant and which are entirely numeric — DIP cannot tell which of ten numeric columns is the balance, and will not guess.",
+    "mappingDescription": "The profile above says which columns are unique, which are constant and which are entirely numeric. DIP will not guess which one is the balance.",
     "mappingCurrent": "In force",
     "mappingVersion": "Version",
     "mappingNone": "No mapping defined for this source yet. Nothing can be derived until there is one.",
@@ -1075,7 +1075,7 @@
     "slugHint": "Lower case, hyphenated. Appears in URLs and cannot be changed afterwards.",
     "sectorHint": "Decides which industry edition the organisation sees.",
     "add": "Onboard",
-    "onboardingNote": "Per DATA_GOVERNANCE.md, a source is not accepted until the sharing agreement, permitted-use definition, retention rules and a pilot import are all in place. This screen creates the account, not the permission.",
+    "onboardingNote": "A source is not accepted until the sharing agreement, permitted-use definition, retention rules and a pilot import are all in place. This screen creates the account, not the permission.",
     "needPlatformAdmin": "This view belongs to whoever runs the network. Sign in as a platform administrator to see it.",
     "editions": {
       "TELECOM": "Telecom operator",
@@ -1095,13 +1095,13 @@
     "awaitingErasure": "Awaiting erasure",
     "awaitingErasureNote": "Past retention and not yet purged. This should be back to zero every morning.",
     "exposureTitle": "Exposure by currency",
-    "exposureDescription": "Never combined into one total. Adding 500 USD to 500 CDF gives a number that is not of anything, and it looks entirely normal on a dashboard.",
+    "exposureDescription": "Never combined into one total. 500 USD plus 500 CDF is not a number of anything.",
     "colCurrency": "Currency",
     "colOutstanding": "Outstanding",
     "colContested": "Contested",
     "colSettled": "Recovered",
     "agingTitle": "Aging",
-    "agingDescription": "Measured from the date the obligation fell due, not the date it was reported. Settled debts are not aged — otherwise a portfolio would look older the more of it you had recovered.",
+    "agingDescription": "Measured from the date the obligation fell due, not the date it was reported. Settled debts are not aged.",
     "agingFootnote": "The bands match the columns of the telecom exports we receive. The boundary above 270 days is ours: the source files label their last column “360 +” with nothing between, so where a 300-day debt belongs has not been confirmed with the operator.",
     "bands": {
       "NOT_DUE": "Not yet due",
@@ -1121,7 +1121,7 @@
     "provenanceTitle": "Where these records came from",
     "provenanceDeclared": "Declared through the API or this application",
     "provenanceImported": "Derived from an imported file",
-    "provenanceNote": "Records derived from an uploaded file, counted separately from those declared through the API. Both are real records held to the same rules; the distinction is provenance, so an auditor asking where a figure came from gets an answer on the screen.",
+    "provenanceNote": "Records derived from an uploaded file, counted separately from those declared through the API. Both are held to the same rules.",
     "empty": "Your organisation has not declared anything yet, so there is nothing to age.",
     "noAccess": "Your account can make inquiries but not declare records, so there is no portfolio to show.",
     "eyebrow": "Portfolio intelligence",
@@ -1296,7 +1296,7 @@
       "DENIED": "Refused",
       "FAILURE": "Failed"
     },
-    "actorNote": "Accounts are shown by identifier rather than by name. The trail belongs to no single part of the platform, so it deliberately does not depend on the part that knows people's names.",
+    "actorNote": "Accounts are shown by identifier rather than by name.",
     "immutableNote": "Rows are appended and never changed. A correction is a further event, never an edit — which is why a refused attempt is still here.",
     "eyebrow": "Governance",
     "shapeNote": "What this operator's activity consists of. Select one to filter the events below."
@@ -1354,14 +1354,14 @@
       "DISPUTES_ARE_NOT_DISCLOSED": "A record under dispute is already withheld from every answer the exchange gives, before anybody decides who is right. Reporting the dispute itself would restore that disclosure by another route and make contesting a record something that costs the person who contests it.",
       "NO_FRAUD_SIGNAL_IS_COMPUTABLE": "The signal this factor rested on — one identifier held by two different subjects — cannot occur: both unique indexes on the identifier table forbid it, which is exactly how a business register number resolves to one company. So the factor reported Low on every assessment ever made, which is the most reassuring possible way to report having looked at nothing."
     },
-    "modelNote": "Assessed under model {version}. Every factor and its weight is published above; nothing here is a black box.",
+    "modelNote": "Assessed under model {version}. Every factor and its weight is above.",
     "noIndicator": "No assessment: the exchange did not confirm a match, so there is nothing to assess."
   },
   "settings": {
     "title": "Settings",
     "subtitle": "What this deployment is configured to do, and where each value came from.",
     "loadFailed": "Could not load the configuration.",
-    "readOnly": "Read-only. Shortening a retention period would put records past due the moment it was saved, so changing these is a decision with an audit entry behind it rather than a text box on a page.",
+    "readOnly": "Read-only. Shortening a retention period would put records past due the moment it was saved.",
     "valueHeader": "Value",
     "sourceHeader": "Source",
     "notSet": "Not set",
@@ -1377,7 +1377,7 @@
       "rights": "How long there is to answer somebody asking about their own record. Shortened sharply in August 2026 — access was sixty days and everything else thirty. A case keeps the deadline it was given when it was raised, so this binds new requests rather than making yesterday's queue overdue.",
       "reporting": "A currency absent from this list is refused rather than defaulted, so the row that is missing is itself a setting. CDF is deliberately unset: choosing it means choosing a USD/CDF rate that moves and that somebody has to own.",
       "exchange": "The exchange holds competitors' records and every request is individually legitimate. The limit does not make a bulk sweep impossible; it makes it slow enough for the audit trail to be read.",
-      "models": "Compiled into a release rather than configured, and shown because a threshold you cannot see is a threshold you have to take on trust."
+      "models": "Compiled into a release rather than configured."
     },
     "keys": {
       "RETENTION_SIMPLE_YEARS": "A first, unsettled default",
@@ -1417,7 +1417,7 @@
     "title": "Access and permissions",
     "subtitle": "Who holds which role here, and what holding it actually permits.",
     "loadFailed": "Could not load access and permissions.",
-    "derivedNote": "This list is read from the guards the application enforces, every time the page loads. It is not a description maintained alongside the code, so it cannot drift from it.",
+    "derivedNote": "Read from the guards the application enforces, every time this page loads.",
     "readOnlyNote": "Read-only. Roles are held in the identity provider; granting one there is where the decision is recorded.",
     "rolesTitle": "What each role permits",
     "rolesDescription": "Counted in endpoints, grouped by the part of the product they belong to.",
@@ -1431,7 +1431,7 @@
     "endpoints": "{count} endpoints",
     "grantsNothing": "Grants nothing. This role can be assigned and will change nothing for the person who receives it.",
     "authenticatedRole": "Anybody signed in",
-    "authenticatedNote": "Not a role. Endpoints open to every signed-in account, each one a deliberate decision, listed so the catalogue does not silently omit them.",
+    "authenticatedNote": "Not a role. Endpoints open to every signed-in account.",
     "never": "Never",
     "inactive": "Inactive",
     "eyebrow": "Governance",
