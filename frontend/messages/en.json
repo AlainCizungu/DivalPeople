@@ -795,7 +795,7 @@
     "governance": {
       "eyebrow": "Governed by Design",
       "title": "Intelligence without surrendering control.",
-      "body": "Each participating institution retains ownership of its operational data. DIP controls access through permissions, audit trails, purpose-based workflows, tenant isolation, and configurable information-sharing rules.",
+      "body": "Each participating institution owns its operational data. DIP decides who may read what, records every access with the purpose it was given, and keeps one institution's records out of another's reach at the database.",
       "cards": [
         {
           "badge": "SECURITY",
@@ -805,17 +805,17 @@
         {
           "badge": "AUDIT",
           "title": "Complete Traceability",
-          "body": "Every search, report, update, export, and risk review can be logged and investigated."
+          "body": "Every inquiry, declaration, import and decision is recorded — with the account that did it and the purpose it was given. Rows are appended, never edited."
         },
         {
           "badge": "PRIVACY",
           "title": "Data Minimization",
-          "body": "Share the intelligence required for a decision without unnecessarily exposing underlying operational data."
+          "body": "Share the intelligence required for a decision without exposing the underlying operational data."
         },
         {
           "badge": "HUMAN REVIEW",
           "title": "Decision Support",
-          "body": "DIP provides risk evidence and recommendations; authorized institutions retain final decision authority."
+          "body": "DIP supplies the evidence and publishes how it was weighed. The institution decides."
         }
       ]
     },

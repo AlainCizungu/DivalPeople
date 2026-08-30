@@ -795,7 +795,7 @@
     "governance": {
       "eyebrow": "Gouvernance par conception",
       "title": "L’intelligence sans renoncer au contrôle.",
-      "body": "Chaque institution participante conserve la propriété de ses données opérationnelles. DIP contrôle les accès par des autorisations, des pistes d’audit, des flux liés à une finalité, l’isolation des locataires et des règles de partage configurables.",
+      "body": "Chaque institution participante reste propriétaire de ses données opérationnelles. DIP décide qui peut lire quoi, enregistre chaque accès avec la finalité déclarée, et tient les enregistrements d'une institution hors de portée d'une autre, au niveau de la base.",
       "cards": [
         {
           "badge": "SÉCURITÉ",
@@ -805,17 +805,17 @@
         {
           "badge": "AUDIT",
           "title": "Traçabilité complète",
-          "body": "Chaque recherche, rapport, mise à jour, export et analyse de risque peut être journalisé et investigué."
+          "body": "Chaque consultation, déclaration, import et décision est enregistré — avec le compte qui l'a fait et la finalité déclarée. Les lignes sont ajoutées, jamais modifiées."
         },
         {
           "badge": "CONFIDENTIALITÉ",
           "title": "Minimisation des données",
-          "body": "Partagez l’information nécessaire à une décision sans exposer inutilement les données opérationnelles sous-jacentes."
+          "body": "Partagez l'information nécessaire à une décision sans exposer les données opérationnelles sous-jacentes."
         },
         {
           "badge": "REVUE HUMAINE",
           "title": "Aide à la décision",
-          "body": "DIP fournit preuves de risque et recommandations ; les institutions autorisées conservent l’autorité de décision finale."
+          "body": "DIP fournit les preuves et publie leur pondération. L'institution décide."
         }
       ]
     },
