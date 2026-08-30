@@ -53,7 +53,7 @@
   },
   "dashboard": {
     "title": "Overview",
-    "subtitle": "Counted where the data is, as at {date}. Every figure opens the list it came from.",
+    "subtitle": "As at {date}. Every figure opens the list behind it.",
     "waitingTitle": "Waiting on somebody",
     "overdue": "Rights cases overdue",
     "overdueNote": "Past the deadline the Code sets. Missing one is itself grounds for a complaint",
@@ -64,7 +64,7 @@
     "awaitingPublication": "Checked, not yet accepted",
     "awaitingPublicationNote": "Somebody started and stopped",
     "registerTitle": "Your register",
-    "registerDescription": "Records this organisation declared. Not the national total — no operator sees that.",
+    "registerDescription": "Records this organisation declared, not the national total.",
     "declaredRecords": "Records declared",
     "openRecords": "Outstanding",
     "contestedRecords": "Contested",
@@ -98,20 +98,20 @@
     "lookup": {
       "eyebrow": "Your own book",
       "title": "Look up a company",
-      "note": "Your own book, by name or identifier. Three characters minimum. Opens the company's file — the 360° profile is one click further, because that one asks the exchange.",
+      "note": "By name or identifier. Three characters minimum.",
       "placeholder": "Trans-Congo, or CD/KIN/RCCM/16-B-5150",
       "action": "Search",
       "noResults": "No company of that name or identifier is in your book.",
       "records": "{count} record(s)"
     },
     "activityTitle": "Thirteen months of declarations",
-    "activityDescription": "What you declared, month by month. Hover a bar for the figure.",
+    "activityDescription": "What you declared, month by month.",
     "noActivity": "No activity series available for your account.",
     "openExecutive": "Open executive intelligence",
     "inquiry": {
       "eyebrow": "The exchange",
       "title": "Check a company you have never dealt with",
-      "note": "Ask every participating institution at once. You learn how many report an unpaid obligation — never which, and never how much. Costs one inquiry and is recorded with your stated purpose.",
+      "note": "How many institutions report an unpaid obligation — never which, never how much. Costs one inquiry, recorded with your purpose.",
       "action": "Make an inquiry"
     },
     "directory": {
@@ -136,11 +136,9 @@
       "settings": "What this deployment is configured to do, and where each value came from."
     },
     "sections": {
-      "lookupTitle": "Ask a question",
-      "lookupNote": "Two questions, and they are not the same one. Your own book is free and instant; the exchange costs an inquiry and is recorded against your stated purpose.",
-      "waitingNote": "Statutory deadlines first. These are the only figures on this page that are ever coloured.",
+      "waitingNote": "Statutory deadlines first.",
       "bookTitle": "Your book",
-      "bookNote": "What this organisation has declared, and what it has been doing month by month."
+      "bookNote": "What this organisation has declared, month by month."
     },
     "actions": {
       "openCases": "Open the cases",
@@ -166,7 +164,7 @@
     },
     "network": {
       "title": "DIP network",
-      "subtitle": "The exchange as a whole. Counted from the same records an inquiry reaches, and never resolvable to a participant.",
+      "subtitle": "The exchange as a whole. Never resolvable to a participant.",
       "action": "See the participants",
       "institutions": "Participating institutions",
       "contributingNote": "{count} holding records an inquiry can reach today",
@@ -179,7 +177,7 @@
       "sharedNote": "Subjects owing two or more institutions — the figure no single operator can produce",
       "today": "Declared today",
       "todayNote": "Records added across the network since midnight",
-      "boundary": "These are counts and nothing else. The exchange holds no figure that says which institutions overlap, and this strip is computed so that pairing never leaves the database."
+      "boundary": "Counts only. Nothing here says which institutions overlap."
     }
   },
   "tix": {

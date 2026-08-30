@@ -53,7 +53,7 @@
   },
   "dashboard": {
     "title": "Vue d’ensemble",
-    "subtitle": "Compté à la source, au {date}. Chaque chiffre ouvre la liste dont il provient.",
+    "subtitle": "Au {date}. Chaque chiffre ouvre la liste correspondante.",
     "waitingTitle": "En attente d’une intervention",
     "overdue": "Demandes hors délai",
     "overdueNote": "Au-delà du délai fixé par le Code. Le dépassement fonde à lui seul une plainte",
@@ -64,7 +64,7 @@
     "awaitingPublication": "Vérifiées, non acceptées",
     "awaitingPublicationNote": "Commencées puis interrompues",
     "registerTitle": "Votre registre",
-    "registerDescription": "Les enregistrements déclarés par votre organisation. Pas le total national : aucun opérateur ne le voit.",
+    "registerDescription": "Les enregistrements déclarés par votre organisation, pas le total national.",
     "declaredRecords": "Enregistrements déclarés",
     "openRecords": "En cours",
     "contestedRecords": "Contestés",
@@ -98,20 +98,20 @@
     "lookup": {
       "eyebrow": "Votre propre registre",
       "title": "Rechercher une entreprise",
-      "note": "Votre propre portefeuille, par nom ou identifiant. Trois caractères minimum. Ouvre le dossier de l'entreprise — le profil 360° est un clic plus loin, car celui-là interroge l'échange.",
+      "note": "Par nom ou identifiant. Trois caractères minimum.",
       "placeholder": "Trans-Congo, ou CD/KIN/RCCM/16-B-5150",
       "action": "Rechercher",
       "noResults": "Aucune entreprise de ce nom ou identifiant dans votre portefeuille.",
       "records": "{count} enregistrement(s)"
     },
     "activityTitle": "Treize mois de déclarations",
-    "activityDescription": "Ce que vous avez déclaré, mois par mois. Survolez une barre pour le chiffre.",
+    "activityDescription": "Ce que vous avez déclaré, mois par mois.",
     "noActivity": "Aucune série d'activité disponible pour votre compte.",
     "openExecutive": "Ouvrir l'intelligence dirigeante",
     "inquiry": {
       "eyebrow": "L'échange",
       "title": "Vérifiez une entreprise que vous ne connaissez pas",
-      "note": "Interrogez toutes les institutions participantes d'un coup. Vous apprenez combien déclarent un impayé — jamais lesquelles, jamais combien. Coûte une consultation, enregistrée avec le motif que vous indiquez.",
+      "note": "Combien d'institutions déclarent un impayé — jamais lesquelles, jamais combien. Coûte une consultation, enregistrée avec votre motif.",
       "action": "Lancer une consultation"
     },
     "directory": {
@@ -136,11 +136,9 @@
       "settings": "Ce que ce déploiement est configuré pour faire, et l'origine de chaque valeur."
     },
     "sections": {
-      "lookupTitle": "Poser une question",
-      "lookupNote": "Deux questions, et ce ne sont pas les mêmes. Votre propre livre est gratuit et immédiat ; l'échange coûte une interrogation et est enregistré avec la finalité que vous déclarez.",
-      "waitingNote": "Les délais légaux d'abord. Ce sont les seuls chiffres de cette page qui prennent une couleur.",
+      "waitingNote": "Les délais légaux d'abord.",
       "bookTitle": "Votre livre",
-      "bookNote": "Ce que votre organisation a déclaré, et ce qu'elle a fait mois par mois."
+      "bookNote": "Ce que votre organisation a déclaré, mois par mois."
     },
     "actions": {
       "openCases": "Ouvrir les dossiers",
@@ -166,7 +164,7 @@
     },
     "network": {
       "title": "Réseau DIP",
-      "subtitle": "L'échange dans son ensemble. Compté sur les mêmes enregistrements qu'une interrogation atteint, et jamais rattachable à un participant.",
+      "subtitle": "L'échange dans son ensemble. Jamais rattachable à un participant.",
       "action": "Voir les participants",
       "institutions": "Institutions participantes",
       "contributingNote": "{count} détenant des enregistrements atteignables aujourd'hui",
@@ -179,7 +177,7 @@
       "sharedNote": "Sujets devant à deux institutions ou plus — le chiffre qu'aucun opérateur seul ne peut produire",
       "today": "Déclarés aujourd'hui",
       "todayNote": "Enregistrements ajoutés dans le réseau depuis minuit",
-      "boundary": "Ce ne sont que des comptages. L'échange ne détient aucun chiffre indiquant quelles institutions se recoupent, et cette bande est calculée de sorte que cette association ne quitte jamais la base."
+      "boundary": "Des comptages uniquement. Rien ici n'indique quelles institutions se recoupent."
     }
   },
   "tix": {
