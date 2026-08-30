@@ -58,7 +58,10 @@ export async function GET(request: NextRequest) {
     return failed(request, "exchange");
   }
 
-  const claims = decodeJwtPayload(tokens.id_token ?? tokens.access_token);
+  // Both, separately. Identity comes from the id token and roles from the access token — see
+  // profileFromClaims, and the bug that made every role list empty for months.
+  const idClaims = decodeJwtPayload(tokens.id_token ?? tokens.access_token);
+  const accessClaims = decodeJwtPayload(tokens.access_token);
   const id = newSessionId();
 
   await writeSession(id, {
@@ -66,7 +69,7 @@ export async function GET(request: NextRequest) {
     refreshToken: tokens.refresh_token,
     idToken: tokens.id_token,
     expiresAt: Date.now() + tokens.expires_in * 1000,
-    profile: profileFromClaims(claims),
+    profile: profileFromClaims(idClaims, accessClaims),
   });
 
   const returnTo = safePath(decodeReturnTo(encodedReturnTo));

@@ -105,17 +105,50 @@ export function sessionCookieOptions(maxAgeSeconds: number) {
   };
 }
 
-/** Claims we are willing to hand to the browser, pulled from the id token. */
-export function profileFromClaims(claims: Record<string, unknown>): SessionProfile {
-  const realmAccess = claims.realm_access as { roles?: string[] } | undefined;
+/**
+ * Claims we are willing to hand to the browser.
+ *
+ * <p><strong>Identity from the id token, roles from the access token.</strong> They are different
+ * tokens for different jobs and Keycloak treats them that way: the id token says who somebody is,
+ * the access token says what they may do. Keycloak's realm-roles mapper writes `realm_access` into
+ * the access token and — by default, and in this realm — not into the id token at all.
+ *
+ * <p>Reading roles from the id token therefore produced an empty list for every account that has
+ * ever signed in, silently, since this file was written. Nothing failed. The screens that gate on a
+ * role simply never drew: the inquiry panel on the front door, the platform operator's own
+ * participants entry, the decide and withdraw actions on subject requests. Every one of them looked
+ * like a feature that had not been built rather than one being hidden, which is the worst way for a
+ * permission check to be wrong — the loud failure would have been caught in a minute.
+ *
+ * <p>It is also why this takes two argument objects rather than one. Merging the tokens before
+ * calling would have hidden which claim came from where, and the whole bug was not knowing that.
+ *
+ * <p><strong>This remains a usability signal and not a decision.</strong> Every one of those
+ * screens is enforced by the server; a browser that lies to itself about its roles gets refused
+ * exactly as before. What it buys is that the refusal stops being invisible.
+ */
+export function profileFromClaims(
+  idClaims: Record<string, unknown>,
+  accessClaims: Record<string, unknown> = idClaims,
+): SessionProfile {
+  // Preferring the access token, falling back to the id token, so a realm configured the other way
+  // round — the mapper flipped to id.token.claim — still works rather than breaking the opposite
+  // way for whoever did that.
+  const fromAccess = (accessClaims.realm_access as { roles?: string[] } | undefined)?.roles;
+  const fromId = (idClaims.realm_access as { roles?: string[] } | undefined)?.roles;
+
   return {
-    sub: String(claims.sub ?? ""),
-    name: typeof claims.name === "string" ? claims.name : undefined,
-    email: typeof claims.email === "string" ? claims.email : undefined,
+    sub: String(idClaims.sub ?? ""),
+    name: typeof idClaims.name === "string" ? idClaims.name : undefined,
+    email: typeof idClaims.email === "string" ? idClaims.email : undefined,
     preferredUsername:
-      typeof claims.preferred_username === "string" ? claims.preferred_username : undefined,
-    tenantId: typeof claims.tenant_id === "string" ? claims.tenant_id : undefined,
-    roles: Array.isArray(realmAccess?.roles) ? realmAccess.roles : [],
+      typeof idClaims.preferred_username === "string" ? idClaims.preferred_username : undefined,
+    tenantId: typeof idClaims.tenant_id === "string" ? idClaims.tenant_id : undefined,
+    roles: Array.isArray(fromAccess)
+      ? fromAccess
+      : Array.isArray(fromId)
+        ? fromId
+        : [],
   };
 }
 
