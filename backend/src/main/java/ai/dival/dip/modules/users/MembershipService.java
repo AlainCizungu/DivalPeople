@@ -124,11 +124,13 @@ public class MembershipService {
                 } catch (IdentityAdminClient.IdentityAdminException notSent) {
                     // Named separately because it is the failure this path will actually hit, and
                     // the generic "a problem with the deployment" would cost somebody an hour.
-                    // Keycloak reports only that it could not hand the message over; whether the
-                    // realm has no mail server, the credentials are wrong, or the provider refused
-                    // this particular recipient are indistinguishable from here.
-                    log.warn("Could not send an invitation to {}: status={}", address,
-                            notSent.status());
+                    //
+                    // The log carries Keycloak's own sentence, not just the status. "User email
+                    // missing" and "Invalid redirect uri" are two entirely different problems that
+                    // both arrive as 400, and a bare 400 says only that something was wrong with a
+                    // request nobody can see.
+                    log.warn("Could not send an invitation to {}: {}", address,
+                            notSent.getMessage());
                     undo(token, created, address, actorId);
                     throw new PolicyRefusedException(
                             "The account could not be created because the invitation email could "

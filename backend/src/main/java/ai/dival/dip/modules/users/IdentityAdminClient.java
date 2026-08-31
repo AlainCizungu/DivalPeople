@@ -39,9 +39,10 @@ import org.springframework.web.client.RestClientException;
  * handful of times a week; a cache would be state to invalidate, a lifetime to get wrong, and a
  * credential held in memory for longer, in exchange for a saving nobody would measure.
  *
- * <p>Failures are wrapped rather than propagated raw. A {@code RestClientException} carrying a
- * Keycloak error body can contain the client secret in a header dump, and it would land in the API
- * response and the log.
+ * <p>Failures are wrapped rather than propagated raw, because {@code RestClientException.getMessage()}
+ * embeds the request and the request carries the bearer token. Keycloak's own {@code errorMessage}
+ * field is kept — that is the server's answer rather than a copy of what was sent, and dropping it
+ * meant a 400 arrived with no reason at all.
  */
 @Component
 public class IdentityAdminClient {
@@ -472,14 +473,52 @@ public class IdentityAdminClient {
      * their own sentence.
      */
     private static IdentityAdminException refusal(RestClientException failed) {
-        int status = failed instanceof HttpStatusCodeException coded
-                ? coded.getStatusCode().value()
-                : 0;
-        // The status only. Not failed.getMessage(), which embeds the response body, and not the
-        // exception as a cause, because the request it carries carries the bearer token.
-        return new IdentityAdminException(status == 0
-                ? "The identity provider could not be reached."
-                : "The identity provider refused the change with status " + status + ".", status);
+        if (!(failed instanceof HttpStatusCodeException coded)) {
+            return new IdentityAdminException("The identity provider could not be reached.", 0);
+        }
+
+        int status = coded.getStatusCode().value();
+        String reason = errorMessageIn(coded.getResponseBodyAsString());
+
+        return new IdentityAdminException(
+                reason == null
+                        ? "The identity provider refused the change with status " + status + "."
+                        : "The identity provider refused the change with status " + status
+                                + ": " + reason,
+                status);
+    }
+
+    /**
+     * Keycloak's own sentence, and nothing else from the response.
+     *
+     * <p>The first version discarded the body entirely, on the reasoning that a Keycloak error can
+     * carry the client secret. That is true of {@code RestClientException.getMessage()}, which
+     * embeds the request, and of the exception as a cause — and it is not true of the response
+     * body, which is Keycloak's answer rather than a copy of what was sent.
+     *
+     * <p>The caution cost more than it saved. A 400 arrived with no reason attached and the only
+     * way to learn why was to reproduce the call by hand with curl, which is a round trip and a
+     * paragraph of shell for something the server had already said.
+     *
+     * <p>Only the {@code errorMessage} field, capped. Keycloak puts a human sentence there — "User
+     * email missing", "Invalid redirect uri" — and taking that one field rather than the whole body
+     * means a future error shape cannot smuggle anything else into an API response or a log line.
+     */
+    private static String errorMessageIn(String body) {
+        if (body == null || body.isBlank()) {
+            return null;
+        }
+        int start = body.indexOf("\"errorMessage\"");
+        if (start < 0) {
+            return null;
+        }
+        int open = body.indexOf('"', body.indexOf(':', start) + 1);
+        int close = open < 0 ? -1 : body.indexOf('"', open + 1);
+        if (open < 0 || close < 0) {
+            return null;
+        }
+        String message = body.substring(open + 1, close);
+        return message.length() > 200 ? message.substring(0, 200) : message;
     }
 
     /**
