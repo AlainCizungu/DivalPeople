@@ -144,10 +144,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(response.status, code, message);
   }
 
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  return (await response.json()) as T;
+  // AN EMPTY BODY IS NOT ALWAYS A 204.
+  //
+  // A Spring controller method declared void answers 200 with nothing in it, and this used to
+  // check only for 204 and then call .json() on the empty string — "Unexpected end of JSON input",
+  // thrown at the caller as if the request had failed. It had not: suspending a member worked
+  // every time and reported an error every time, which is the shape of bug that gets the same
+  // button pressed three more times.
+  //
+  // Reading the text first and parsing only when there is something to parse covers both, and
+  // covers the next void endpoint somebody adds without them having to know this happened.
+  const body = await response.text();
+  return (body ? JSON.parse(body) : undefined) as T;
 }
 
 export type OrgUnitType =
