@@ -64,6 +64,30 @@ class TabularReaderTest {
     }
 
     @Test
+    @DisplayName("a totals row LABELLED total is preamble too, not only an unlabelled one")
+    void skipsALabelledTotalsRow() {
+        // The case the rule above did not cover, found by a test delivery rather than by reading.
+        // "TOTAL" is a word, so allNumbers says this is not a totals line, so it was taken as the
+        // header — six cells against a real header of eleven, and every row in the file was then
+        // refused for not lining up with a header two rows above the one it had.
+        //
+        // A header cannot be narrower than the table. rowsFrom enforces exactly that on every data
+        // row, so a shorter row is preamble whatever words are in it.
+        List<Map<String, String>> rows = read("""
+                TELECOM MOKILI - BALANCE AGEE
+                Extraction du 31/08/2026
+
+                ,,,,TOTAL,38412.00
+                No compte,Client,Ville,Statut,30 jours,60 jours,90 jours,Balance,Date facture
+                00001,Trans-Congo,Kinshasa,SUSPENDU,,,2356.00,2356.00,02/12/2025
+                """);
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("Client", "Trans-Congo");
+        assertThat(rows.get(0).values()).doesNotContain("38412.00");
+    }
+
+    @Test
     @DisplayName("a header whose names are numbers is still the header")
     void numericHeadingsAreNotPreamble() {
         // Both halves of the rule are load-bearing. Skipping every all-numeric row would step
