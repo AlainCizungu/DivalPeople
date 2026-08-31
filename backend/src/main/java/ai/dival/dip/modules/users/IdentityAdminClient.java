@@ -2,9 +2,7 @@ package ai.dival.dip.modules.users;
 
 import ai.dival.dip.common.security.Roles;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -24,6 +22,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * The part that talks to Keycloak, and nothing else.
@@ -246,17 +245,50 @@ public class IdentityAdminClient {
      * @throws IdentityAdminException when the realm has no mail server, or the send fails
      */
     public void sendInvitation(String token, UUID userId) {
-        String path = "/admin/realms/" + properties.realm() + "/users/" + userId
-                + "/execute-actions-email"
-                + "?client_id=" + encode(properties.inviteClientId())
-                + "&redirect_uri=" + encode(properties.inviteRedirectUri())
-                + "&lifespan=" + properties.inviteLifespanSeconds();
+        // BUILT AS A URI, NOT AS A STRING, and the difference is the whole bug this replaced.
+        //
+        // The first version percent-encoded the query values itself and handed the finished string
+        // to RestClient.uri(String) — which treats its argument as a URI TEMPLATE and encodes it
+        // again. "https%3A%2F%2Fdip.dival.ai%2F" became "https%253A%252F%252F...", so Keycloak
+        // received a redirect_uri that was not a URI and answered "Invalid redirect uri".
+        //
+        // The message was accurate and led away from the cause: the redirect URI is registered on
+        // the client, and the identical call by hand with curl succeeded. Nothing was wrong with
+        // the configuration; the request was mangled between building it and sending it.
+        //
+        // build() rather than build(true): the builder encodes the values exactly once.
+        URI uri = UriComponentsBuilder
+                .fromUriString(properties.baseUrl())
+                .path("/admin/realms/" + properties.realm() + "/users/" + userId
+                        + "/execute-actions-email")
+                .queryParam("client_id", properties.inviteClientId())
+                .queryParam("redirect_uri", properties.inviteRedirectUri())
+                .queryParam("lifespan", properties.inviteLifespanSeconds())
+                .build()
+                .toUri();
 
-        put(token, path, List.of("UPDATE_PASSWORD", "VERIFY_EMAIL"));
+        putTo(token, uri, List.of("UPDATE_PASSWORD", "VERIFY_EMAIL"));
     }
 
-    private static String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    /**
+     * A PUT to an already-built URI.
+     *
+     * <p>Separate from {@link #put} because that one concatenates a path onto the base URL and
+     * lets RestClient expand the result as a template — fine for a path made of a realm name and a
+     * uuid, and wrong for anything carrying an encoded query value.
+     */
+    private void putTo(String token, URI uri, Object body) {
+        try {
+            http.put()
+                    .uri(uri)
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException failed) {
+            throw refusal(failed);
+        }
     }
 
     /** Sets a temporary password. The account must change it at first sign-in. */
