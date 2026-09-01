@@ -222,69 +222,53 @@ final class TabularReader {
             widest = Math.max(widest, filled(row));
         }
 
-        // The table's width, taken from the row length that occurs most often.
-        //
-        // A HEADER CANNOT BE NARROWER THAN THE TABLE, and this is not a heuristic: rowsFrom below
-        // refuses any data row whose cell count differs from the header's. Choosing a shorter row
-        // as the header therefore guarantees the refusal rather than risking it, so a row that
-        // does not span the table is preamble whatever it contains.
-        //
-        // That is what the allNumbers rule alone could not say. It skips an UNLABELLED total — a
-        // row of pure figures — and the export that motivated it had one. A total labelled
-        // "TOTAL", which is what most billing systems write, contains a word, reads as a row of
-        // names, and was taken as the header; the real header two rows below then had eleven cells
-        // against its six and every row in the file was refused for not lining up. The message was
-        // accurate and pointed at the data.
-        int width = tableWidth(grid);
-
         int limit = Math.min(grid.size(), MAX_PREAMBLE_ROWS);
+
+        // THE HEADER IS THE ROW THE DATA LINES UP WITH.
+        //
+        // Two tests, and both are needed. The first — enough values, and not all of them figures —
+        // rejects blank lines, one-cell titles and an unlabelled total. It was the whole rule
+        // once, and it let a total LABELLED "TOTAL" through: a word among the figures reads as a
+        // row of names. The real header two rows below then had eleven cells against its six, and
+        // every row in the file was refused for not lining up with a header it never had.
+        //
+        // The second test is the fix, and it is not another guess about what a totals row looks
+        // like. rowsFrom refuses any data row whose cell count differs from the header's, so the
+        // right header is the candidate that the most rows beneath it actually match. A totals
+        // line matches nothing below it; the header matches the whole table.
+        //
+        // Ties keep the earliest row, which is what makes a two-line file behave. In
+        // "Customer,Balance" over "Acme,100,extra" neither row matches anything below it, the
+        // first is the header, and the second is refused for being ragged — which is the right
+        // answer and the one an earlier attempt at this fix got wrong, silently promoting the
+        // data row to header because it was wider.
+        int best = -1;
+        int bestMatches = -1;
         for (int i = 0; i < limit; i++) {
             List<String> row = grid.get(i);
-            if (row.size() != width) {
-                continue;
-            }
             int count = filled(row);
             boolean narrower = count < widest;
-            if (!narrower || (count >= 2 && !allNumbers(row))) {
-                return i;
+            if (!(!narrower || (count >= 2 && !allNumbers(row)))) {
+                continue;
             }
+            int matches = 0;
+            for (int j = i + 1; j < grid.size(); j++) {
+                if (grid.get(j).size() == row.size()) {
+                    matches++;
+                }
+            }
+            if (matches > bestMatches) {
+                best = i;
+                bestMatches = matches;
+            }
+        }
+        if (best >= 0) {
+            return best;
         }
         throw new PolicyRefusedException(
                 "No header row was found in the first " + limit + " rows. A header is a row of "
                         + "column names above the data; without one there is no way to say what "
                         + "any value means.");
-    }
-
-    /**
-     * How many cells a row of this table has.
-     *
-     * <p>The most common row length rather than the longest. A stray note dropped into a far
-     * column below the data would make the maximum wrong, and a table is defined by what its rows
-     * mostly look like — every real data row has the header's width, which is the property this
-     * is recovering.
-     *
-     * <p>Empty rows are ignored. A trailing newline is not evidence about anything.
-     */
-    private static int tableWidth(List<List<String>> grid) {
-        Map<Integer, Integer> counts = new LinkedHashMap<>();
-        for (List<String> row : grid) {
-            if (row.isEmpty()) {
-                continue;
-            }
-            counts.merge(row.size(), 1, Integer::sum);
-        }
-        int width = 0;
-        int best = 0;
-        for (Map.Entry<Integer, Integer> entry : counts.entrySet()) {
-            // Ties go to the wider row. Two candidate widths in equal number means one of them is
-            // preamble, and preamble is the short one.
-            if (entry.getValue() > best
-                    || (entry.getValue() == best && entry.getKey() > width)) {
-                width = entry.getKey();
-                best = entry.getValue();
-            }
-        }
-        return width;
     }
 
     /**
