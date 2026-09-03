@@ -2,6 +2,7 @@ package ai.dival.dip.modules.access;
 
 import ai.dival.dip.common.security.Roles;
 import ai.dival.dip.modules.users.CurrentUserService;
+import ai.dival.dip.modules.users.MembershipService;
 import ai.dival.dip.modules.users.UserAccount;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -66,6 +68,17 @@ public class AccessService {
     private final CurrentUserService users;
 
     /**
+     * Only for reading whether an account may still sign in.
+     *
+     * <p>That answer is not in this database. Suspending somebody writes to the identity provider
+     * and nothing else, so the {@code active} column on the local row is true for every person who
+     * has ever signed in and has never once been written to. The members list was reading it and
+     * showing "Active" beside accounts that had just been suspended — not a missing feature but a
+     * confident false statement, on the one screen whose job is to say who can get in.
+     */
+    private final MembershipService membership;
+
+    /**
      * Computed once and kept.
      *
      * <p>Handler mappings are fixed at startup, so rescanning per request would spend work to
@@ -77,9 +90,11 @@ public class AccessService {
 
     public AccessService(
             @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping,
-            CurrentUserService users) {
+            CurrentUserService users,
+            MembershipService membership) {
         this.handlerMapping = handlerMapping;
         this.users = users;
+        this.membership = membership;
     }
 
     /**
@@ -91,6 +106,10 @@ public class AccessService {
         List<Member> members = canSeeMembers
                 ? users.listTenantMembers().stream().map(Member::from).toList()
                 : null;
+
+        if (members != null) {
+            members = withSignInState(members);
+        }
 
         List<RoleAccess> roles = new ArrayList<>();
         for (RoleAccess role : roleCatalogue()) {
@@ -104,6 +123,47 @@ public class AccessService {
                     myRoles.contains(role.role())));
         }
         return new Access(roles, members);
+    }
+
+    /**
+     * Replaces the local {@code active} flag with what the identity provider says.
+     *
+     * <p>When the provider cannot be reached, or this deployment has no service account, the local
+     * value stands and the screen degrades to what it showed before rather than to a blank list.
+     * That is the lesser of the two wrongs available: a stale "Active" is what the product has
+     * always shown, whereas an empty members page during a Keycloak hiccup looks like data loss.
+     */
+    private List<Member> withSignInState(List<Member> members) {
+        List<UUID> subjects = new ArrayList<>();
+        for (Member member : members) {
+            try {
+                subjects.add(UUID.fromString(member.userId()));
+            } catch (IllegalArgumentException notAnIdentifier) {
+                // A subject that is not a UUID belongs to an identity provider that is not this
+                // one. Nothing to ask about it; it keeps its local value.
+            }
+        }
+
+        Map<UUID, Boolean> allowed = membership.signInAllowed(subjects);
+        if (allowed.isEmpty()) {
+            return members;
+        }
+
+        List<Member> answered = new ArrayList<>(members.size());
+        for (Member member : members) {
+            Boolean state = allowed.get(asUuid(member.userId()));
+            answered.add(state == null ? member : new Member(member.userId(), member.email(),
+                    member.displayName(), member.roles(), state, member.lastSeenAt()));
+        }
+        return List.copyOf(answered);
+    }
+
+    private static UUID asUuid(String value) {
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException notAnIdentifier) {
+            return null;
+        }
     }
 
     private List<RoleAccess> roleCatalogue() {
@@ -235,6 +295,9 @@ public class AccessService {
     /**
      * @param userId     the account's identifier at the identity provider
      * @param roles      as recorded when this person last signed in, not as Keycloak holds them now
+     * @param active     whether the account may sign in. Read from the identity provider, which is
+     *                   where suspension is written; falls back to the local column only when the
+     *                   provider cannot be reached
      * @param lastSeenAt null for somebody who has never signed in
      */
     public record Member(String userId, String email, String displayName, List<String> roles,

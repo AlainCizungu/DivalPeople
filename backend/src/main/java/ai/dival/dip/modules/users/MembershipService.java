@@ -5,7 +5,9 @@ import ai.dival.dip.common.error.AccessRefusedException;
 import ai.dival.dip.common.error.ConflictException;
 import ai.dival.dip.common.error.PolicyRefusedException;
 import ai.dival.dip.common.tenancy.TenantContext;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -72,6 +74,29 @@ public class MembershipService {
     /** Whether an invitation travels as an emailed link rather than a password on screen. */
     public boolean invitesByEmail() {
         return identity.invitesByEmail();
+    }
+
+    /**
+     * Which of these accounts may currently sign in, according to the identity provider.
+     *
+     * <p>Empty when this deployment has no service account. The caller then has no answer rather
+     * than a wrong one, which is the same shape as every other thing that needs the provider.
+     *
+     * <p>No tenant check here, deliberately, and it is worth saying why that is safe: the caller
+     * passes ids it already holds, and it only holds ids for its own members. A tenant check would
+     * be a second round trip per account to confirm something the caller could not have got wrong.
+     */
+    public Map<UUID, Boolean> signInAllowed(Collection<UUID> userIds) {
+        if (!identity.configured() || userIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            return identity.enabledFor(identity.token(), userIds);
+        } catch (IdentityAdminClient.IdentityAdminException unreachable) {
+            log.warn("Could not read sign-in state from the identity provider: {}",
+                    unreachable.getMessage());
+            return Map.of();
+        }
     }
 
     /** Roles this institution may hand out, for the form. Never includes the platform's own. */
@@ -276,6 +301,13 @@ public class MembershipService {
         } catch (IdentityAdminClient.IdentityAdminException refused) {
             throw explain(refused, null, true);
         }
+
+        // The provider first, then the local row, and in that order deliberately. If the provider
+        // refuses, nothing local should claim the change happened; if the local write fails after
+        // the provider succeeded, the person really is suspended and the screen still says so,
+        // because AccessService reads the provider. The failure that costs something is the other
+        // way round.
+        users.recordActive(TenantContext.require(), userId.toString(), active);
     }
 
     /**

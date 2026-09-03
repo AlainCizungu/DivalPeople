@@ -106,6 +106,10 @@ public class UserAccount extends TenantOwnedEntity {
         this.active = false;
     }
 
+    public void reactivate() {
+        this.active = true;
+    }
+
     public String getSubject() {
         return subject;
     }

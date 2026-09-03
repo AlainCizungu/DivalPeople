@@ -33,6 +33,8 @@ class UserProvisioningTest extends AbstractIntegrationTest {
     private UserAccountRepository users;
     @Autowired
     private CurrentUserService currentUserService;
+    @Autowired
+    private UserAccountService accounts;
 
     private UUID operatorA;
     private UUID operatorB;
@@ -137,6 +139,63 @@ class UserProvisioningTest extends AbstractIntegrationTest {
 
         assertThatThrownBy(() -> currentUserService.requireCurrentUser())
                 .isInstanceOf(TenantContext.TenantContextMissingException.class);
+    }
+
+    @Test
+    @DisplayName("suspending somebody stops them being notified, and is visible without Keycloak")
+    void suspensionIsRecordedLocallyAndNotOnlyAtTheProvider() {
+        String subject = UUID.randomUUID().toString();
+        authenticateAs(subject, "olivier@example.test", "Olivier", "TIX_DECLARANT");
+        TenantContext.runAs(operatorA, currentUserService::requireCurrentUser);
+
+        assertThat(TenantContext.runAsResult(operatorA,
+                () -> accounts.findByRole(operatorA, "TIX_DECLARANT")))
+                .as("before suspension he is somebody the platform would write to")
+                .hasSize(1);
+
+        boolean written = TenantContext.runAsResult(operatorA,
+                () -> accounts.recordActive(operatorA, subject, false));
+
+        assertThat(written).isTrue();
+        assertThat(TenantContext.runAsResult(operatorA,
+                () -> accounts.findByRole(operatorA, "TIX_DECLARANT")))
+                .as("a suspended account should not be told about disputes or corrections; the "
+                        + "active column was never written by anything before this, so it was")
+                .isEmpty();
+
+        // And back. Suspension is reversible in the product, so it has to be reversible here.
+        TenantContext.runAs(operatorA, () -> accounts.recordActive(operatorA, subject, true));
+        assertThat(TenantContext.runAsResult(operatorA,
+                () -> accounts.findByRole(operatorA, "TIX_DECLARANT")))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("recording suspension against another institution's member changes nothing")
+    void suspensionWillNotReachAcrossTheTenantBoundary() {
+        String subject = UUID.randomUUID().toString();
+        authenticateAs(subject, "ally@example.test", "Ally", "TIX_INQUIRER");
+        TenantContext.runAs(operatorA, currentUserService::requireCurrentUser);
+
+        // Operator B naming operator A's member. The caller has already been checked upstream;
+        // this asserts the write refuses on its own rather than on somebody else's promise.
+        boolean written = TenantContext.runAsResult(operatorB,
+                () -> accounts.recordActive(operatorB, subject, false));
+
+        assertThat(written).isFalse();
+        assertThat(TenantContext.runAsResult(operatorA,
+                () -> accounts.findByRole(operatorA, "TIX_INQUIRER"))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("suspending an invited account that has never signed in is not an error")
+    void anAccountWithNoLocalRowIsNotAFailure() {
+        // The local row is written on first sign-in, so somebody invited yesterday has none. The
+        // provider still suspends them; there is simply nothing here to keep in step.
+        boolean written = TenantContext.runAsResult(operatorA,
+                () -> accounts.recordActive(operatorA, UUID.randomUUID().toString(), false));
+
+        assertThat(written).isFalse();
     }
 
     /** Puts a JWT principal with the given realm roles into the security context. */

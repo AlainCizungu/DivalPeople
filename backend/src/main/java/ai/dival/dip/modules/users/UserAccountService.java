@@ -44,4 +44,36 @@ public class UserAccountService {
     public List<UserAccount> findByRole(UUID tenantId, String role) {
         return users.findByTenantIdAndRolesContainingAndActiveTrue(tenantId, role);
     }
+
+    /**
+     * Records locally that an account has been suspended or restored at the identity provider.
+     *
+     * <p>The provider decides; this row follows. It is written because the {@code active} column is
+     * read by things that cannot ask Keycloak — {@link #findByRole} is the one that matters, since
+     * it picks who gets told about a dispute or a corrected record, and it filters on this column.
+     * Until this existed the column had never been written by anything, so a suspended person went
+     * on being notified about their former employer's credit records indefinitely.
+     *
+     * <p>Returns false when there is no local row, which is the ordinary state of somebody invited
+     * and not yet arrived: the row is created on first sign-in. Nothing to correct, and not an
+     * error.
+     *
+     * <p>The tenant is checked here rather than trusted. The caller has checked it too; this is
+     * the row being written, and a write that finds a record in another institution should refuse
+     * rather than proceed on the strength of somebody else's check.
+     */
+    @Transactional
+    public boolean recordActive(UUID tenantId, String subject, boolean active) {
+        Optional<UserAccount> found = users.findBySubject(subject)
+                .filter(user -> tenantId.equals(user.getTenantId()));
+        found.ifPresent(user -> {
+            if (active) {
+                user.reactivate();
+            } else {
+                user.deactivate();
+            }
+            users.save(user);
+        });
+        return found.isPresent();
+    }
 }

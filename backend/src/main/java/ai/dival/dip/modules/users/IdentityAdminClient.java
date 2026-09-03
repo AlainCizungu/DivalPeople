@@ -7,6 +7,8 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -330,6 +332,39 @@ public class IdentityAdminClient {
     public void setEnabled(String token, UUID userId, boolean enabled) {
         put(token, "/admin/realms/" + properties.realm() + "/users/" + userId,
                 Map.of("enabled", enabled));
+    }
+
+    /**
+     * Whether each of these accounts may currently sign in.
+     *
+     * <p>Read from the identity provider because that is where the answer lives. The local
+     * {@code user_account} row has an {@code active} column that nothing has ever written: it is
+     * true for everybody, and the members screen was showing it as though it meant something.
+     * Suspending somebody worked and the row beside their name went on saying "active".
+     *
+     * <p>One call per account rather than a listing of the realm. The listing would be quicker and
+     * would pull every institution's staff into this process to use a handful of rows from it; a
+     * member list is tens of people, and this only runs on one screen.
+     *
+     * <p>Failures return what has been gathered so far rather than throwing. The screen's job is to
+     * show who is in an institution, and it should not go blank because the identity provider is
+     * slow — a missing entry reads as unknown, which is honest.
+     */
+    public Map<UUID, Boolean> enabledFor(String token, Collection<UUID> userIds) {
+        Map<UUID, Boolean> states = new LinkedHashMap<>();
+        for (UUID id : userIds) {
+            try {
+                Object enabled = get(token, "/admin/realms/" + properties.realm() + "/users/" + id)
+                        .get("enabled");
+                if (enabled instanceof Boolean value) {
+                    states.put(id, value);
+                }
+            } catch (IdentityAdminException unreadable) {
+                // An account deleted at the provider but still holding a local row is the ordinary
+                // case here, and it is not a reason to fail the whole screen.
+            }
+        }
+        return states;
     }
 
     /**
